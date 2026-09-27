@@ -261,7 +261,7 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
           onClick={() => setOpen(false)}
         >
           <div
-            className="flex flex-col w-[680px] max-w-[90vw] h-[80vh] rounded-xl border border-border/50 bg-[#1e1d1c] overflow-hidden"
+            className="flex flex-col w-[1200px] max-w-[95vw] h-[92vh] rounded-xl border border-border/50 bg-[#1e1d1c] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/30">
