@@ -1,0 +1,176 @@
+"use client"
+
+import { useMemo } from "react"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import { BarChart, Bar, XAxis, CartesianGrid } from "recharts"
+import type { Order } from "./types"
+
+const chartConfig = {
+  thisWeek: {
+    label: "This week",
+    color: "var(--chart-2)",
+  },
+  lastWeek: {
+    label: "Last week",
+    color: "var(--chart-3)",
+  },
+} satisfies ChartConfig
+
+const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+
+type OrderActivityChartProps = {
+  orders: Order[]
+}
+
+export function OrderActivityChart({ orders }: OrderActivityChartProps) {
+  const { chartData, percentChange } = useMemo(() => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const dayOfWeek = today.getDay()
+
+    // Start of this week (Monday)
+    const startOfThisWeek = new Date(today)
+    startOfThisWeek.setDate(
+      today.getDate() - ((dayOfWeek === 0 ? 7 : dayOfWeek) - 1)
+    )
+
+    // Start of last week
+    const startOfLastWeek = new Date(startOfThisWeek)
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7)
+
+    const data = Array.from({ length: 7 }, (_, i) => {
+      const thisWeekDay = new Date(startOfThisWeek)
+      thisWeekDay.setDate(startOfThisWeek.getDate() + i)
+
+      const lastWeekDay = new Date(startOfLastWeek)
+      lastWeekDay.setDate(startOfLastWeek.getDate() + i)
+
+      const thisWeekCount = orders.filter((o) => {
+        const d = new Date(o.created_at)
+        return (
+          d.getFullYear() === thisWeekDay.getFullYear() &&
+          d.getMonth() === thisWeekDay.getMonth() &&
+          d.getDate() === thisWeekDay.getDate()
+        )
+      }).length
+
+      const lastWeekCount = orders.filter((o) => {
+        const d = new Date(o.created_at)
+        return (
+          d.getFullYear() === lastWeekDay.getFullYear() &&
+          d.getMonth() === lastWeekDay.getMonth() &&
+          d.getDate() === lastWeekDay.getDate()
+        )
+      }).length
+
+      return {
+        day: DAY_LABELS[(1 + i) % 7], // Monday = index 0
+        thisWeek: thisWeekCount,
+        lastWeek: lastWeekCount,
+      }
+    })
+
+    const totalThisWeek = data.reduce((s, d) => s + d.thisWeek, 0)
+    const totalLastWeek = data.reduce((s, d) => s + d.lastWeek, 0)
+    const pct =
+      totalLastWeek === 0
+        ? totalThisWeek > 0
+          ? 100
+          : 0
+        : Math.round(
+            ((totalThisWeek - totalLastWeek) / totalLastWeek) * 100
+          )
+
+    return { chartData: data, percentChange: pct }
+  }, [orders])
+
+  const isUp = percentChange >= 0
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Order Activity</CardTitle>
+        <CardDescription>Last 7 days compared to previous week</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-[180px] w-full">
+          <BarChart data={chartData} barGap={2}>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis
+              dataKey="day"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar
+              dataKey="thisWeek"
+              fill="var(--color-thisWeek)"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={24}
+            />
+            <Bar
+              dataKey="lastWeek"
+              fill="var(--color-lastWeek)"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={24}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+      <CardFooter className="gap-2 text-sm">
+        <span
+          className="inline-flex items-center gap-1 font-medium"
+          style={{ color: isUp ? "#5a9c6a" : "#c05a5a" }}
+        >
+          {isUp ? (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path
+                d="M7 11V3M7 3L3.5 6.5M7 3L10.5 6.5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path
+                d="M7 3V11M7 11L3.5 7.5M7 11L10.5 7.5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+          {Math.abs(percentChange)}%
+        </span>
+        <span className="text-muted-foreground">vs last week</span>
+      </CardFooter>
+    </Card>
+  )
+}
