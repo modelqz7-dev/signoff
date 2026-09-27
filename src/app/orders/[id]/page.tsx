@@ -28,21 +28,25 @@ export default function OrderPage() {
   const [password, setPassword] = useState("")
   const [savingPassword, setSavingPassword] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
       if (!session?.user) { router.replace("/login"); return }
 
-      const { data: shopData } = await supabase
+      const { data: shopData, error: shopError } = await supabase
         .from("shops").select("*").eq("user_id", session.user.id).maybeSingle()
+      if (shopError) throw shopError
 
-      if (!shopData) { setLoading(false); return }
+      if (!shopData) { setLoadError("Shop not found for this account"); setLoading(false); return }
       setShop(shopData as Shop)
 
-      const { data: orderData } = await supabase
-        .from("orders").select("*").eq("id", orderId).single()
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders").select("*").eq("id", orderId).maybeSingle()
+      if (orderError) throw orderError
 
       if (orderData) {
         setOrder(orderData as Order)
@@ -50,7 +54,11 @@ export default function OrderPage() {
       }
       setLoading(false)
     }
-    init()
+    init().catch((e) => {
+      console.error("Order load error:", e)
+      setLoadError(e?.message || "Failed to load order")
+      setLoading(false)
+    })
   }, [router, orderId])
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -132,7 +140,9 @@ export default function OrderPage() {
   if (!order) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">Order not found</p>
+        <p className={`text-sm ${loadError ? "text-destructive" : "text-muted-foreground"}`}>
+          {loadError || "Order not found"}
+        </p>
       </div>
     )
   }
