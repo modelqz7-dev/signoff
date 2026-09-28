@@ -61,7 +61,10 @@ export function PDFViewer({
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const scaleRef = useRef(1)
-  const anchorRef = useRef<{ left: number; top: number } | null>(null)
+  const pageRef = useRef<HTMLDivElement>(null)
+  // Point of the page (as a fraction of its size) that must stay under the cursor / fingers
+  // at (px, py) in the viewing area while zooming.
+  const anchorRef = useRef<{ fx: number; fy: number; px: number; py: number } | null>(null)
   const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null)
   // Fingers on the page (touch pinch-zoom) and the pinch in progress.
   const pointersRef = useRef(new Map<number, { x: number; y: number }>())
@@ -214,10 +217,17 @@ export function PDFViewer({
     if (!el || next === prev) return
     const px = cx ?? el.clientWidth / 2
     const py = cy ?? el.clientHeight / 2
-    const ratio = next / prev
-    anchorRef.current = {
-      left: (el.scrollLeft + px - PAD) * ratio - px + PAD,
-      top: (el.scrollTop + py - PAD) * ratio - py + PAD,
+    // Measure where the page really is (it is centered while smaller than the viewing area).
+    const pageEl = pageRef.current
+    if (pageEl) {
+      const area = el.getBoundingClientRect()
+      const r = pageEl.getBoundingClientRect()
+      anchorRef.current = {
+        fx: r.width ? (area.left + px - r.left) / r.width : 0.5,
+        fy: r.height ? (area.top + py - r.top) / r.height : 0.5,
+        px,
+        py,
+      }
     }
     scaleRef.current = next
     setScale(next)
@@ -226,12 +236,16 @@ export function PDFViewer({
   useLayoutEffect(() => {
     scaleRef.current = scale
     const el = scrollRef.current
-    if (el && anchorRef.current) {
-      el.scrollLeft = anchorRef.current.left
-      el.scrollTop = anchorRef.current.top
+    const a = anchorRef.current
+    if (el && a && cssW) {
+      // Where the page starts inside the scrolled content: centered, or at the padding when larger.
+      const pageLeft = Math.max((el.clientWidth - cssW) / 2, PAD)
+      const pageTop = Math.max((el.clientHeight - cssH) / 2, PAD)
+      el.scrollLeft = pageLeft + a.fx * cssW - a.px
+      el.scrollTop = pageTop + a.fy * cssH - a.py
       anchorRef.current = null
     }
-  }, [scale])
+  }, [scale, cssW, cssH])
 
   function goToPage(p: number) {
     setPage(Math.min(Math.max(p, 1), totalPages))
@@ -497,6 +511,7 @@ export function PDFViewer({
           >
             <div className="flex min-h-full min-w-full w-max items-center justify-center" style={{ padding: PAD }}>
               <div
+                ref={pageRef}
                 className={`relative shrink-0 ${onAddPin && !dragging ? "cursor-crosshair" : ""}`}
                 style={{ width: cssW, height: cssH }}
                 onClick={handlePageClick}
