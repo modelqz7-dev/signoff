@@ -265,7 +265,7 @@ export default function OrderPage() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="flex gap-6">
 
             {/* Left — main content, centered */}

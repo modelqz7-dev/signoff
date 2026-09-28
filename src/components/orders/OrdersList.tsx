@@ -105,8 +105,8 @@ export function OrdersList({
           })}
         </div>
 
-        <div className="flex items-center gap-2">
-          <InputGroup className="w-64">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <InputGroup className="min-w-0 flex-1 sm:w-64 sm:flex-none">
             <InputGroupAddon>
               <SearchIcon />
             </InputGroupAddon>
@@ -124,7 +124,7 @@ export function OrdersList({
               </InputGroupAddon>
             )}
           </InputGroup>
-          <Button variant="outline" size="sm" onPress={() => setSort(sort === "newest" ? "deadline" : "newest")}>
+          <Button variant="outline" size="sm" className="shrink-0" onPress={() => setSort(sort === "newest" ? "deadline" : "newest")}>
             <ArrowUpDownIcon />
             {sort === "newest" ? t("Newest") : t("Deadline")}
           </Button>
@@ -141,7 +141,54 @@ export function OrdersList({
             </Button>
           </div>
         ) : (
-          <Table>
+          <>
+          {/* Phones: one compact card per order */}
+          <ul className="divide-y divide-border sm:hidden">
+            {visible.map((order) => {
+              const status = STATUS_MAP[order.status]
+              const comments = openComments.get(order.id) ?? 0
+              const active = order.status === "await" || order.status === "changes"
+              const lateDays = active && order.deadline
+                ? Math.floor((today.getTime() - new Date(order.deadline + "T00:00:00").getTime()) / DAY)
+                : 0
+              return (
+                <li key={order.id}>
+                  <Link href={`/orders/${order.id}`} className="flex items-center gap-3 px-4 py-3 transition-colors active:bg-hover">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground">{order.title}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {[order.client_name, order.code].filter(Boolean).join(" · ")}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="border-0 px-2 py-0.5 text-[11px]"
+                          style={{ backgroundColor: status.bg, color: status.color }}
+                        >
+                          {t(status.label)}
+                        </Badge>
+                        {comments > 0 && (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <PinOutlineIcon className="size-3" />
+                            {comments}
+                          </span>
+                        )}
+                        {order.deadline && (
+                          <span className={lateDays > 0 ? "text-destructive" : "text-muted-foreground"}>
+                            {lateDays > 0 ? t("{n}d overdue", { n: lateDays }) : formatDate(order.deadline, now, locale)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {order.value > 0 && <span className="shrink-0 text-sm tabular-nums text-foreground">{money(order.value)}</span>}
+                    <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+
+          <Table className="hidden sm:table">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="pl-4">{t("Order")}</TableHead>
@@ -235,6 +282,7 @@ export function OrdersList({
               })}
             </TableBody>
           </Table>
+          </>
         )}
       </Card>
 

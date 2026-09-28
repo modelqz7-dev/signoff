@@ -234,6 +234,7 @@ export const ru: Record<string, string> = {
   "Manufacturer": "Производство",
   "Manufacturers": "Производству",
   "Member since": "С нами с",
+  "Menu": "Меню",
   "Monthly": "Помесячно",
   "Move approved orders to production": "Утверждённые заказы — сразу в производство",
   "Needs attention": "Требует внимания",

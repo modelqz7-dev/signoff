@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { XIcon } from "lucide-react"
+import { OPEN_NAV_EVENT } from "@/lib/panels"
 import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
@@ -15,25 +17,87 @@ type SidebarProps = {
 
 export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   const [panel, setPanel] = useState<PanelId | null>(null)
-  const { t } = useT()
+  // Phones and tablets: the sidebar slides in as a drawer from the header's menu button.
+  const [drawer, setDrawer] = useState(false)
 
-  // Other parts of the UI (e.g. the header avatar) can open a panel too.
+  // Other parts of the UI (e.g. the header avatar) can open a panel or the drawer too.
   useEffect(() => {
-    function onOpen(e: Event) { setPanel((e as CustomEvent<PanelId>).detail) }
+    function onOpen(e: Event) { setPanel((e as CustomEvent<PanelId>).detail); setDrawer(false) }
+    function onNav() { setDrawer(true) }
     window.addEventListener(OPEN_PANEL_EVENT, onOpen)
-    return () => window.removeEventListener(OPEN_PANEL_EVENT, onOpen)
+    window.addEventListener(OPEN_NAV_EVENT, onNav)
+    return () => {
+      window.removeEventListener(OPEN_PANEL_EVENT, onOpen)
+      window.removeEventListener(OPEN_NAV_EVENT, onNav)
+    }
   }, [])
+
+  useEffect(() => {
+    if (!drawer) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false) }
+    const onResize = () => { if (window.innerWidth >= 1024) setDrawer(false) }
+    document.addEventListener("keydown", onKey)
+    window.addEventListener("resize", onResize)
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", onResize)
+      document.body.style.overflow = ""
+    }
+  }, [drawer])
+
+  const openPanelFromNav = (id: PanelId) => { setPanel(id); setDrawer(false) }
 
   return (
     <>
+    {/* Desktop */}
     <aside
-      className="sticky top-0 self-start flex h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto"
+      className="sticky top-0 self-start hidden h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
       style={{
         marginLeft: open ? 0 : -220,
         opacity: open ? 1 : 0,
         pointerEvents: open ? "auto" : "none",
       }}
     >
+      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} />
+    </aside>
+
+    {/* Phones and tablets */}
+    {drawer && (
+      <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="absolute inset-0 bg-black/40 animate-in fade-in-0 duration-200"
+          onClick={() => setDrawer(false)}
+        />
+        <aside className="absolute inset-y-0 left-0 flex w-[260px] max-w-[85vw] flex-col overflow-y-auto border-r border-border/50 bg-sidebar shadow-xl animate-in slide-in-from-left duration-200">
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setDrawer(false)}
+            className="absolute top-4 right-3 rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground"
+          >
+            <XIcon className="size-4" />
+          </button>
+          <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} />
+        </aside>
+      </div>
+    )}
+    <SidebarPanel panel={panel} onClose={() => setPanel(null)} />
+    </>
+  )
+}
+
+function SidebarContent({ activePage, panel, onPanel }: {
+  activePage: string
+  panel: PanelId | null
+  onPanel: (id: PanelId) => void
+}) {
+  const { t } = useT()
+  const setPanel = onPanel
+  return (
+    <>
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center px-5 py-5">
         <Logo />
@@ -59,8 +123,6 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
       </nav>
 
       <PlanCard onOpen={() => setPanel("billing")} />
-    </aside>
-    <SidebarPanel panel={panel} onClose={() => setPanel(null)} />
     </>
   )
 }

@@ -114,7 +114,7 @@ function Tile({
   return (
     <Card size="sm" className="gap-3 px-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs text-muted-foreground">{label}</span>
+        <span className="line-clamp-2 min-w-0 text-xs leading-snug text-muted-foreground">{label}</span>
         <span className="flex size-7 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: tint, color }}>
           <Icon className="size-3.5" />
         </span>
