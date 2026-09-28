@@ -1,5 +1,6 @@
 import { adminClient } from "@/lib/server/notify"
 import { can } from "@/lib/plans"
+import { signedFileUrl } from "@/lib/server/portal"
 
 /**
  * Public branding of an order's portal: the workshop name, its logo on plans with branding,
@@ -21,7 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const branded = can(shop, "branding")
     return Response.json({
       shopName: shop.name ?? "",
-      logoUrl: branded ? shop.logo_url ?? null : null,
+      logoUrl: branded ? await signedFileUrl(db, shop.logo_url) : null,
       badge: !branded,
     })
   } catch (e) {

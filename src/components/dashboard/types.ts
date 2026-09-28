@@ -11,7 +11,9 @@ export type Order = {
   value: number
   stage: string
   status: OrderStatus
-  password: string
+  /** Plain-text password of orders from before hashing; new ones only have password_hash. */
+  password?: string | null
+  password_hash?: string | null
   notes: string
   deadline: string | null
   file_url: string | null

@@ -24,6 +24,7 @@ import { openPanel } from "@/lib/panels"
 import { markLinkShared } from "@/lib/onboarding"
 import { UpgradeChip } from "@/components/plans/PlanBits"
 import { cn } from "@/lib/utils"
+import { useFileUrl } from "@/lib/files"
 import { isPdfUrl } from "@/lib/utils"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
@@ -54,10 +55,12 @@ export default function OrderPage() {
   const [viewVersion, setViewVersion] = useState<number | null>(null)
   const oldVersion = versions.find((v) => v.version === viewVersion) ?? null
   const shownVersion = oldVersion?.version ?? order?.version
-  const fileUrl = oldVersion?.file_url ?? order?.file_url ?? null
+  const storedUrl = oldVersion?.file_url ?? order?.file_url ?? null
+  // Files are private: show them through a short-lived signed link.
+  const fileUrl = useFileUrl(storedUrl)
   const pins = pinsOfVersion(allPins, shownVersion)
   const numbers = usePinNumbers(pins)
-  const isPdf = isPdfUrl(fileUrl)
+  const isPdf = isPdfUrl(storedUrl)
   const canSeeHistory = can(shop, "versions")
 
   function handleSelectPin(pin: Pin) {
@@ -83,7 +86,6 @@ export default function OrderPage() {
 
       if (orderData) {
         setOrder(orderData as Order)
-        setPassword((orderData as Order).password || "")
       }
       setLoading(false)
     }
@@ -109,17 +111,27 @@ export default function OrderPage() {
     setUploading(false)
   }
 
-  async function handleSavePassword() {
+  // The password is hashed on the server and never comes back, so we only know whether one is set.
+  const passwordSet = !!(order?.password_hash || order?.password)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  async function savePassword(value: string) {
     if (!order) return
     setSavingPassword(true)
-
-    const { data } = await supabase
-      .from("orders")
-      .update({ password: password.trim() })
-      .eq("id", order.id)
-      .select().single()
-
-    if (data) setOrder(data as Order)
+    setPasswordError(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`/api/orders/${order.id}/password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+      body: JSON.stringify({ password: value }),
+    }).catch(() => null)
+    const body = await res?.json().catch(() => null)
+    if (res?.ok && body) {
+      setOrder({ ...order, password: "", password_hash: body.hasPassword ? "set" : null })
+      setPassword("")
+    } else {
+      setPasswordError(t("Couldn't save the password"))
+    }
     setSavingPassword(false)
   }
 
@@ -207,25 +219,33 @@ export default function OrderPage() {
           <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
             <Label className="text-xs">{t("Access Password")}</Label>
             <Input
-              type="text"
-              placeholder={t("Set a password")}
+              type="password"
+              autoComplete="new-password"
+              placeholder={passwordSet ? t("New password") : t("Set a password")}
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               className="text-sm"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={handleSavePassword}
-              isDisabled={savingPassword || password === (order.password || "")}
-              className="w-full mt-1"
-            >
-              {savingPassword ? t("Saving...") : t("Save Password")}
-            </Button>
-            <p className="text-[11px] text-muted-foreground/60 mt-1">
-              {order.password
+            <div className="mt-1 flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => savePassword(password.trim())}
+                isDisabled={savingPassword || !password.trim()}
+                className="flex-1"
+              >
+                {savingPassword ? t("Saving...") : passwordSet ? t("Change password") : t("Save Password")}
+              </Button>
+              {passwordSet && (
+                <Button variant="ghost" size="sm" onPress={() => savePassword("")} isDisabled={savingPassword}>
+                  {t("Remove")}
+                </Button>
+              )}
+            </div>
+            <p className={`mt-1 text-[11px] ${passwordError ? "text-destructive" : "text-muted-foreground/60"}`}>
+              {passwordError ?? (passwordSet
                 ? t("Password is set. Client needs this to access.")
-                : t("No password. Anyone with the link can view.")}
+                : t("No password. Anyone with the link can view."))}
             </p>
           </div>
         </div>
@@ -245,7 +265,7 @@ export default function OrderPage() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="flex gap-6">
 
             {/* Left — main content, centered */}
@@ -355,7 +375,11 @@ export default function OrderPage() {
                       {t("You're looking at version {n}. The client sees the latest version.", { n: oldVersion.version })}
                     </p>
                   )}
-                  {fileUrl ? (
+                  {storedUrl && !fileUrl ? (
+                    <div className="flex h-48 items-center justify-center rounded-lg bg-muted/60 text-sm text-muted-foreground">
+                      {t("Loading file...")}
+                    </div>
+                  ) : fileUrl ? (
                     <div className="flex flex-col gap-4">
                       {isPdf ? (
                         <PDFViewer
@@ -388,7 +412,7 @@ export default function OrderPage() {
                           </svg>
                           {t("Download")}
                         </a>
-                        <span className="min-w-0 truncate text-xs text-muted-foreground">{fileNameFromUrl(fileUrl)}</span>
+                        <span className="min-w-0 truncate text-xs text-muted-foreground">{fileNameFromUrl(storedUrl)}</span>
                         <button
                           onClick={() => fileRef.current?.click()}
                           disabled={uploading}

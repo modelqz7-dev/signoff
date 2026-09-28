@@ -111,7 +111,7 @@ export default function Dashboard() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex flex-1 gap-5 overflow-y-auto p-6">
+        <div className="flex flex-1 gap-5 overflow-y-auto p-4 sm:p-6">
           {/* Center content */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             <GettingStarted orders={orders} shop={shop} onNewOrder={() => setNewOrderOpen(true)} />

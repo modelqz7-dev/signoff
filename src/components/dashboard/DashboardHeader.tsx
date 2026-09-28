@@ -2,9 +2,11 @@
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { openPanel } from "@/components/dashboard/SidebarPanels"
+import { openNav, openPanel } from "@/lib/panels"
+import { MenuIcon } from "lucide-react"
 import { useProfile } from "@/lib/profile"
 import { useT } from "@/lib/i18n"
+import { useFileUrl } from "@/lib/files"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -21,7 +23,8 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const profile = useProfile()
   const { t } = useT()
-  const photo = avatarUrl || profile?.avatarUrl || ""
+  // Older photos live in the private files bucket and need a signed link.
+  const photo = useFileUrl(avatarUrl || profile?.avatarUrl) || ""
   const initials = shopName
     .split(" ")
     .map((w) => w[0])
@@ -30,10 +33,14 @@ export function DashboardHeader({
     .slice(0, 2)
 
   return (
-    <header className="flex h-16 items-center justify-between border-b px-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-base font-light tracking-wide text-foreground">
-          {t("Welcome back,")} <span className="font-medium">{shopName}</span>
+    <header className="flex h-14 items-center justify-between gap-3 border-b px-4 sm:h-16 sm:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <Button variant="ghost" size="icon" className="-ml-2 lg:hidden" onPress={openNav} aria-label={t("Menu")}>
+          <MenuIcon className="text-muted-foreground" />
+        </Button>
+        <h1 className="truncate text-sm font-light tracking-wide text-foreground sm:text-base">
+          <span className="hidden sm:inline">{t("Welcome back,")} </span>
+          <span className="font-medium">{shopName}</span>
         </h1>
       </div>
 
@@ -41,6 +48,7 @@ export function DashboardHeader({
         <Button
           variant="ghost"
           size="icon"
+          className="hidden lg:inline-flex"
           onPress={onToggleSidebar}
           aria-label={t("Toggle sidebar")}
         >

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
-import { uploadOrderFile } from "@/lib/versions"
+import { uploadPublicAsset, useFileUrl } from "@/lib/files"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
 import { openPanel, type PanelId } from "@/lib/panels"
@@ -120,6 +120,7 @@ function ProfilePanel() {
   const router = useRouter()
   const { email, shop, setShop, loading } = useAccount()
   const profile = useProfile()
+  const avatarSrc = useFileUrl(profile?.avatarUrl) || ""
   const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -175,7 +176,7 @@ function ProfilePanel() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <Avatar className="size-14">
-          <AvatarImage src={profile.avatarUrl} alt="" />
+          <AvatarImage src={avatarSrc} alt="" />
           <AvatarFallback className="text-sm">{initials || "S"}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
@@ -272,6 +273,7 @@ function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const allowed = can(shop, "branding")
+  const logoSrc = useFileUrl(shop?.logo_url)
 
   async function save(logoUrl: string | null) {
     if (!shop) return
@@ -289,7 +291,7 @@ function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop
     if (file.size > MAX_LOGO_BYTES) { setError(t("Image must be under 2 MB")); return }
     setBusy(true)
     try {
-      await save(await uploadOrderFile(shop.id, file))
+      await save(await uploadPublicAsset(shop.id, file, "logo"))
     } catch (err) {
       setError((err as Error)?.message || t("Something went wrong"))
     }
@@ -311,8 +313,8 @@ function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop
       </Label>
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted px-2">
-          {shop?.logo_url ? (
-            <img src={shop.logo_url} alt="" className="max-h-8 max-w-full object-contain" />
+          {logoSrc ? (
+            <img src={logoSrc} alt="" className="max-h-8 max-w-full object-contain" />
           ) : (
             <span className="text-[11px] text-muted-foreground">{t("No logo")}</span>
           )}

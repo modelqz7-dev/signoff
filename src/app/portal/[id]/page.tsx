@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { useParams } from "next/navigation"
-import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
 import { Badge } from "@/components/ui/badge"
@@ -11,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import type { Order } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
-import { pinsOfVersion, usePinNumbers, usePins, type NewPin, type Pin } from "@/lib/pins"
+import { pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { usePortal } from "@/lib/portal-client"
 import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
@@ -26,21 +25,21 @@ export default function PortalPage() {
   const params = useParams()
   const orderId = params.id as string
 
-  const [phase, setPhase] = useState<"auth" | "view">("auth")
   const [password, setPassword] = useState("")
-  const [clientName, setClientName] = useState("")
+  const [nameInput, setNameInput] = useState("")
   const [authError, setAuthError] = useState("")
   const { t, locale } = useT()
   const brand = usePortalBrand(orderId)
 
-  const [order, setOrder] = useState<Order | null>(null)
+  // Everything goes through the server: the database itself is closed to portal visitors.
+  const portal = usePortal(orderId)
+  const { phase, order, viewer: clientName, setResolved, movePin, deletePin } = portal
   const [loading, setLoading] = useState(false)
 
-  const { pins: allPins, addPin: addPinToOrder, setResolved, movePin, deletePin } = usePins(phase === "view" ? orderId : null)
   // The client always works on the latest version; comments on earlier versions stay with them.
-  const pins = pinsOfVersion(allPins, order?.version)
-  const addPin = (pin: NewPin, author: string) =>
-    addPinToOrder(order?.version !== undefined ? { ...pin, version: order.version } : pin, author)
+  const pins = pinsOfVersion(portal.pins, order?.version)
+  // The server puts the comment on the current version under the visitor's name.
+  const addPin = (pin: NewPin) => portal.addPin(pin)
   // No accounts in the portal: a client can move and delete only comments left under their name.
   const canEdit = (pin: Pin) => pin.author_name === clientName
   const numbers = usePinNumbers(pins)
@@ -63,47 +62,19 @@ export default function PortalPage() {
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault()
-    if (!clientName.trim()) { setAuthError(t("Enter your name")); return }
+    if (!nameInput.trim()) { setAuthError(t("Enter your name")); return }
     setLoading(true)
     setAuthError("")
-
-    const { data: orderData, error } = await supabase
-      .from("orders").select("*").eq("id", orderId).single()
-
-    if (error || !orderData) {
-      setAuthError(t("Order not found"))
-      setLoading(false)
-      return
-    }
-
-    const ord = orderData as Order
-
-    if (ord.password && ord.password !== password) {
-      setAuthError(t("Incorrect password"))
-      setLoading(false)
-      return
-    }
-
-    setOrder(ord)
-    setPhase("view")
+    const error = await portal.enter(nameInput.trim(), password)
     setLoading(false)
+    if (!error) { setPassword(""); return }
+    setAuthError(
+      error === "wrong_password" ? t("Incorrect password")
+      : error === "too_many_attempts" ? t("Too many attempts. Try again in 15 minutes.")
+      : error === "not_found" ? t("Order not found")
+      : t("Something went wrong")
+    )
   }
-
-  // Realtime order updates (pins are synced by usePins)
-  useEffect(() => {
-    if (phase !== "view") return
-
-    const orderSub = supabase
-      .channel(`order-${orderId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
-        (payload) => { if (payload.new) setOrder(payload.new as Order) }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(orderSub)
-    }
-  }, [phase, orderId])
 
   function handleFileClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!fileContainerRef.current) return
@@ -127,7 +98,7 @@ export default function PortalPage() {
         page: 1,
         title: pinTitle.trim(),
         description: pinDesc.trim() || null,
-      }, clientName)
+      })
       setPendingPin(null)
       setPinTitle("")
       setPinDesc("")
@@ -147,24 +118,13 @@ export default function PortalPage() {
     if (!order) return
     setActionLoading(true)
     setActionError(null)
-
-    // Record who approved (retention.sql adds approved_by; skip it until then).
-    const patch: Record<string, string> = { status: newStatus }
-    if (newStatus === "approved" && order.approved_at !== undefined) patch.approved_by = clientName
-    const { data, error } = await supabase
-      .from("orders")
-      .update(patch)
-      .eq("id", order.id)
-      .select()
-
+    const ok = await portal.decide(newStatus)
     setActionLoading(false)
     setConfirm(null)
-    // With RLS a refused update returns no rows instead of an error.
-    if (error || !data?.length) {
+    if (!ok) {
       setActionError(t("Couldn't save your decision. Please try again."))
       return
     }
-    setOrder(data[0] as Order)
     setDone(newStatus)
   }
 
@@ -173,6 +133,22 @@ export default function PortalPage() {
     return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric", month: "long", day: "numeric",
     })
+  }
+
+  if (phase === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">{t("Loading...")}</p>
+      </div>
+    )
+  }
+
+  if (phase === "missing") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <p className="text-sm text-muted-foreground">{t("Order not found")}</p>
+      </div>
+    )
   }
 
   // ── Auth screen ──
@@ -198,21 +174,25 @@ export default function PortalPage() {
                 <Input
                   id="portal-name"
                   placeholder={t("John Doe")}
-                  value={clientName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientName(e.target.value)}
+                  value={nameInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNameInput(e.target.value)}
+                  autoComplete="name"
                   required
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="portal-pass">{t("Password")}</Label>
-                <Input
-                  id="portal-pass"
-                  type="password"
-                  placeholder={t("Enter access password")}
-                  value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                />
-              </div>
+              {portal.hasPassword && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="portal-pass">{t("Password")}</Label>
+                  <Input
+                    id="portal-pass"
+                    type="password"
+                    placeholder={t("Enter access password")}
+                    value={password}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+              )}
               {authError && <p className="text-sm text-destructive">{authError}</p>}
               <Button type="submit" isDisabled={loading}>
                 {loading ? t("Loading...") : t("View Order")}
@@ -309,7 +289,7 @@ export default function PortalPage() {
                       key={order.file_url}
                       url={order.file_url}
                       pins={pins}
-                      onAddPin={(pin) => addPin(pin, clientName)}
+                      onAddPin={addPin}
                       onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
                       onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
                       onDeletePin={(pin) => deletePin(pin.id)}

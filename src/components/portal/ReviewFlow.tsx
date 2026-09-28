@@ -33,7 +33,7 @@ export function ReviewSteps({ status }: { status: Order["status"] }) {
 }
 
 /** Shown instead of the steps once the client has approved. */
-export function ApprovedBanner({ order }: { order: Order }) {
+export function ApprovedBanner({ order }: { order: Pick<Order, "approved_at" | "approved_by"> }) {
   const { t, locale } = useT()
   const when = order.approved_at ? new Date(order.approved_at).toLocaleDateString(locale, { dateStyle: "long" }) : null
   return (

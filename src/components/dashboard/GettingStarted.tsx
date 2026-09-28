@@ -51,7 +51,7 @@ export function GettingStarted({ orders, shop, onNewOrder }: { orders: Order[]; 
       <div className="h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
         <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
       </div>
-      <ol className="grid gap-1 sm:grid-cols-2 lg:grid-cols-5">
+      <ol className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {steps.map((step, i) => {
           const body = (
             <>
