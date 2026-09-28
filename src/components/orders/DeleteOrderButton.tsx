@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { Order } from "@/components/dashboard/types"
 import { deleteOrder } from "@/lib/orders"
+import { notifyPlanChanged } from "@/lib/use-plan"
 import { useT } from "@/lib/i18n"
 
 /** Trash icon button that asks for confirmation, then deletes the order, its comments and file. */
@@ -21,6 +22,7 @@ export function DeleteOrderButton({ order, onDeleted }: { order: Order; onDelete
     setError(null)
     try {
       await deleteOrder(order)
+      notifyPlanChanged()
       setOpen(false)
       onDeleted()
     } catch (e) {

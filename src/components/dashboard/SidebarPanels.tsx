@@ -14,20 +14,15 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
-import { PLANS, planById } from "@/lib/plans"
+import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
+import { uploadOrderFile } from "@/lib/versions"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
+import { openPanel, type PanelId } from "@/lib/panels"
+import { notifyPlanChanged, usePlanUsage } from "@/lib/use-plan"
+import { BillingCycleToggle, PlanPrice, UpgradeChip, UsageMeter } from "@/components/plans/PlanBits"
 
-export type PanelId =
-  | "profile" | "billing" | "notifications" | "security" | "appearance"
-  | "help" | "contact" | "docs" | "status"
-
-/** Dispatch `new CustomEvent(OPEN_PANEL_EVENT, { detail: "profile" })` to open a panel from anywhere. */
-export const OPEN_PANEL_EVENT = "signoff:open-panel"
-
-export function openPanel(panel: PanelId) {
-  window.dispatchEvent(new CustomEvent(OPEN_PANEL_EVENT, { detail: panel }))
-}
+export { OPEN_PANEL_EVENT, openPanel, type PanelId } from "@/lib/panels"
 
 // Where clients and shops can reach you. Leave a field empty to hide it.
 const SUPPORT = {
@@ -131,7 +126,8 @@ function ProfilePanel() {
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
   const value = name ?? shop?.name ?? ""
-  const plan = planById(shop?.plan)
+  const plan = effectivePlan(shop)
+  const trialDays = trialDaysLeft(shop)
   const { t, locale } = useT()
   const initials = (shop?.name || email).split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
 
@@ -243,13 +239,15 @@ function ProfilePanel() {
         </div>
       </div>
 
+      <PortalLogo shop={shop} onSaved={setShop} />
+
       <Message status={status} />
 
       <div className="divide-y divide-border border-y border-border">
         <Row label={t("Email")}>{email || "—"}</Row>
         <Row label={t("Plan")}>
           <span className="flex items-center justify-end gap-2">
-            {plan.name}
+            {trialDays > 0 ? t("{plan} trial", { plan: plan.name }) : plan.name}
             <button type="button" className="text-xs text-accent hover:underline" onClick={() => openPanel("billing")}>
               {t("Change")}
             </button>
@@ -265,34 +263,125 @@ function ProfilePanel() {
   )
 }
 
+const MAX_LOGO_BYTES = 2 * 1024 * 1024
+
+/** The workshop's logo shown to clients at the top of the portal (Go and Pro). */
+function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) => void }) {
+  const { t } = useT()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const allowed = can(shop, "branding")
+
+  async function save(logoUrl: string | null) {
+    if (!shop) return
+    const { data, error } = await supabase.from("shops").update({ logo_url: logoUrl }).eq("id", shop.id).select().maybeSingle()
+    if (error || !data) throw error ?? new Error(t("Couldn't save the logo"))
+    onSaved(data as Shop)
+  }
+
+  async function onPicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !shop) return
+    setError(null)
+    if (!file.type.startsWith("image/")) { setError(t("Choose an image file")); return }
+    if (file.size > MAX_LOGO_BYTES) { setError(t("Image must be under 2 MB")); return }
+    setBusy(true)
+    try {
+      await save(await uploadOrderFile(shop.id, file))
+    } catch (err) {
+      setError((err as Error)?.message || t("Something went wrong"))
+    }
+    setBusy(false)
+  }
+
+  async function remove() {
+    setBusy(true)
+    setError(null)
+    try { await save(null) } catch (err) { setError((err as Error)?.message || t("Something went wrong")) }
+    setBusy(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="flex items-center gap-2">
+        {t("Portal logo")}
+        {!allowed && <UpgradeChip feature="branding" />}
+      </Label>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted px-2">
+          {shop?.logo_url ? (
+            <img src={shop.logo_url} alt="" className="max-h-8 max-w-full object-contain" />
+          ) : (
+            <span className="text-[11px] text-muted-foreground">{t("No logo")}</span>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || !allowed || busy}>
+          {busy ? t("Uploading...") : shop?.logo_url ? t("Change") : t("Upload")}
+        </Button>
+        {shop?.logo_url && (
+          <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={remove} disabled={busy}>
+            {t("Remove")}
+          </button>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPicked} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Clients see it at the top of the portal and on approval certificates, instead of the Nodly badge.")}
+      </p>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  )
+}
+
 function BillingPanel() {
-  const { shop, setShop, loading } = useAccount()
+  const usage = usePlanUsage()
+  const [yearly, setYearly] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const current = planById(shop?.plan)
-  const { t } = useT()
+  const { t, locale } = useT()
 
   async function choose(id: string) {
-    if (!shop) return
+    if (!usage) return
     setSwitching(id)
     setError(null)
-    const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", shop.id).select().maybeSingle()
+    const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", usage.shop.id).select().maybeSingle()
     if (error || !data) setError(error?.message || t("Couldn't change the plan"))
     else {
-      setShop(data as Shop)
+      notifyPlanChanged()
       // The pressed "Choose" button disappears; keep focus inside the dialog so Esc still works.
       requestAnimationFrame(() => document.getElementById(`plan-${id}`)?.focus())
     }
     setSwitching(null)
   }
 
-  if (loading) return <p className="text-muted-foreground">{t("Loading...")}</p>
+  if (!usage) return <p className="text-muted-foreground">{t("Loading...")}</p>
+
+  const trialEnds = usage.shop.trial_ends_at ? new Date(usage.shop.trial_ends_at).toLocaleDateString(locale) : ""
 
   return (
     <div className="flex flex-col gap-3">
+      {usage.trialDays > 0 && usage.chosen.id === "free" && (
+        <div className="rounded-lg bg-accent/10 px-3 py-2 text-xs ring-1 ring-accent/30">
+          <p className="font-medium text-foreground">
+            {t("Pro trial: {n} days left", { n: usage.trialDays })}
+          </p>
+          <p className="mt-0.5 text-muted-foreground">
+            {t("Everything in Pro is unlocked until {date}. Then you move to Free unless you choose a plan.", { date: trialEnds })}
+          </p>
+        </div>
+      )}
+
+      <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />
+
+      <div className="flex justify-center pt-1">
+        <BillingCycleToggle yearly={yearly} onChange={setYearly} />
+      </div>
+
       <div className="flex flex-col gap-2">
         {PLANS.map((plan) => {
-          const isCurrent = plan.id === current.id
+          const isCurrent = plan.id === usage.chosen.id
           return (
             <div
               key={plan.id}
@@ -306,10 +395,10 @@ function BillingPanel() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <p className="font-medium">{plan.name}</p>
-                  <p className="text-xs text-muted-foreground">{t(plan.price)}</p>
+                  <PlanPrice plan={plan} yearly={yearly} className="text-xs text-muted-foreground" />
                 </div>
                 <ul className="mt-1 flex flex-col gap-0.5">
-                  {plan.features.map((f) => (
+                  {plan.highlights.map((f) => (
                     <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CheckIcon className="size-3 shrink-0 text-accent" />
                       {t(f)}
@@ -320,7 +409,7 @@ function BillingPanel() {
               {isCurrent ? (
                 <span className="rounded-md bg-accent/20 px-2 py-0.5 text-xs text-foreground">{t("Current")}</span>
               ) : (
-                <Button size="sm" variant="outline" onPress={() => choose(plan.id)} isDisabled={!shop || !!switching}>
+                <Button size="sm" variant="outline" onPress={() => choose(plan.id)} isDisabled={!!switching}>
                   {switching === plan.id ? t("Switching...") : t("Choose")}
                 </Button>
               )}
@@ -691,6 +780,9 @@ function StatusPanel() {
     { name: "Database", state: "checking" },
     { name: "Authentication", state: "checking" },
     { name: "Live updates", state: "checking" },
+    { name: "Server", state: "checking" },
+    { name: "Telegram notifications", state: "checking" },
+    { name: "Email notifications", state: "checking" },
   ])
 
   useEffect(() => {
@@ -707,6 +799,18 @@ function StatusPanel() {
     supabase.auth.getSession().then(({ data, error }) => {
       update("Authentication", error ? "down" : "ok", error ? error.message : data.session ? "Signed in" : "Signed out")
     })
+
+    fetch("/api/health", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((h: { database?: { ok: boolean; ms?: number; error?: string }; telegram?: boolean; email?: boolean }) => {
+        const db = h.database
+        update("Server", db?.ok ? "ok" : "down", db?.ok ? `${db.ms} ms` : db?.error?.includes("not configured") ? "Not configured" : "Unavailable")
+        update("Telegram notifications", h.telegram ? "ok" : "down", h.telegram ? "Configured" : "Not configured")
+        update("Email notifications", h.email ? "ok" : "down", h.email ? "Configured" : "Not configured")
+      })
+      .catch(() => {
+        for (const name of ["Server", "Telegram notifications", "Email notifications"]) update(name, "down", "No connection")
+      })
 
     const channel = supabase.channel(`status-${Date.now()}`)
     const timeout = setTimeout(() => update("Live updates", "down", "No connection"), 8000)

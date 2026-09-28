@@ -91,7 +91,8 @@ export function PDFViewer({
     async function load() {
       try {
         const pdfjsLib = await import("pdfjs-dist")
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+        // Served from /public (scripts/copy-pdf-worker.mjs), always the same version as pdfjs-dist.
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
         const doc = await pdfjsLib.getDocument(url).promise
         if (!cancelled) {
           setPdf(doc)

@@ -30,6 +30,7 @@ import { ThemeToggle } from "@/components/ThemeToggle"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinMarker } from "@/components/orders/pins"
 import { PLANS } from "@/lib/plans"
+import { BillingCycleToggle, PlanPrice } from "@/components/plans/PlanBits"
 import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -443,14 +444,18 @@ function Features({ t }: { t: T }) {
 // ── Pricing ─────────────────────────────────────────────
 
 function Pricing({ t }: { t: T }) {
+  const [yearly, setYearly] = useState(false)
   return (
     <section id="pricing" className="scroll-mt-16 border-t border-border py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
           eyebrow={t("Pricing")}
           title={t("Simple plans that grow with you")}
-          text={t("Everything is free during early access. Paid plans will be announced before any charge.")}
+          text={t("Every new account gets 14 days of Pro for free, no card needed. Then stay on Free or pick a plan.")}
         />
+        <div className="mb-8 flex justify-center">
+          <BillingCycleToggle yearly={yearly} onChange={setYearly} />
+        </div>
         <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-3">
           {PLANS.map((plan) => {
             const featured = plan.id === "go"
@@ -460,9 +465,9 @@ function Pricing({ t }: { t: T }) {
                   <p className="font-medium">{plan.name}</p>
                   {featured && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] text-accent">{t("Recommended")}</span>}
                 </div>
-                <p className="text-3xl font-semibold tracking-tight">{t(plan.price)}</p>
+                <PlanPrice plan={plan} yearly={yearly} className="text-3xl font-semibold tracking-tight" />
                 <ul className="flex flex-col gap-2">
-                  {plan.features.map((f) => (
+                  {plan.highlights.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckIcon className="size-4 shrink-0 text-accent" />
                       {t(f)}
@@ -488,7 +493,7 @@ function Faq({ t }: { t: T }) {
     [t("Do my clients need an account?"), t("No. They open the link, enter their name and, if you set one, the password.")],
     [t("Which files can I upload?"), t("PDF files with any number of pages, and PNG or JPG images.")],
     [t("Can a client see my other orders?"), t("No. Each link opens exactly one order.")],
-    [t("How much does it cost?"), t("Nodly is free during early access. Paid plans will be announced in advance.")],
+    [t("How much does it cost?"), t("There is a free plan with up to 3 active orders, and Go and Pro for more. New accounts get 14 days of Pro for free. No charges during early access.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
   return (
