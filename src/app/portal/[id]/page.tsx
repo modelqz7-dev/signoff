@@ -17,6 +17,7 @@ import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 export default function PortalPage() {
   const params = useParams()
@@ -155,7 +156,10 @@ export default function PortalPage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <LanguageSwitcher className="mx-auto mb-2" />
+            <div className="mx-auto mb-2 flex items-center gap-1">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
             <CardTitle className="text-base">{t("Order Portal")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               {t("Enter your details to view this order.")}
@@ -217,7 +221,10 @@ export default function PortalPage() {
           <span className="text-xs text-muted-foreground">
             {t("Viewing as")} <span className="text-foreground font-medium">{clientName}</span>
           </span>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -288,14 +295,7 @@ export default function PortalPage() {
                           onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
                         />
                       ))}
-                      {pendingPin && (
-                        <div
-                          className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--status-changes)] text-white flex items-center justify-center text-[10px] font-bold animate-pulse"
-                          style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%` }}
-                        >
-                          +
-                        </div>
-                      )}
+                      {pendingPin && <PinMarker pin={{ ...pendingPin, resolved: false }} pending />}
                     </div>
                   )}
 

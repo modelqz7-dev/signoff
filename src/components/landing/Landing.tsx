@@ -28,6 +28,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { STATUS_MAP } from "@/components/dashboard/types"
+import { PinMarker } from "@/components/orders/pins"
 import { PLANS } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
@@ -214,19 +215,10 @@ function HeroMock({ t }: { t: T }) {
                 </div>
               </div>
               {pins.map((p) => (
-                <span
-                  key={p.n}
-                  className={cn(
-                    "absolute flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-white shadow-md ring-2 ring-white",
-                    p.active && "ring-4 ring-accent/40"
-                  )}
-                  style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                >
-                  {p.n}
-                </span>
+                <PinMarker key={p.n} pin={{ x: p.x, y: p.y, resolved: false }} number={p.n} selected={p.active} />
               ))}
               {/* comment card to the left of pin 3, kept inside the page */}
-              <div className="absolute top-[72%] left-[74%] w-[58%] -translate-x-[calc(100%+14px)] -translate-y-1/2 rounded-lg bg-popover p-2 text-popover-foreground shadow-xl ring-1 ring-foreground/10 sm:p-2.5">
+              <div className="absolute top-[72%] left-[74%] w-[58%] -translate-x-[calc(100%+14px)] -translate-y-[85%] rounded-lg bg-popover p-2 text-popover-foreground shadow-xl ring-1 ring-foreground/10 sm:p-2.5">
                 <p className="text-[11px] font-medium">{t("Make the logo 20% bigger")}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">Anna · {t("2 min ago")}</p>
               </div>
