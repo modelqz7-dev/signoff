@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { openPanel } from "@/components/dashboard/SidebarPanels"
 import { useProfile } from "@/lib/profile"
 import { useT } from "@/lib/i18n"
+import { useFileUrl } from "@/lib/files"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -21,7 +22,8 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const profile = useProfile()
   const { t } = useT()
-  const photo = avatarUrl || profile?.avatarUrl || ""
+  // Older photos live in the private files bucket and need a signed link.
+  const photo = useFileUrl(avatarUrl || profile?.avatarUrl) || ""
   const initials = shopName
     .split(" ")
     .map((w) => w[0])

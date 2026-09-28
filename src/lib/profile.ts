@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { uploadPublicAsset } from "@/lib/files"
 
 /** Personal profile data, kept in the Supabase auth user's metadata (no extra table needed). */
 export type Profile = {
@@ -12,7 +13,6 @@ export type Profile = {
 
 export const ACTIVITIES = ["Designer", "Freelancer", "Print shop", "Studio", "Manufacturer", "Other"] as const
 
-const AVATAR_BUCKET = "order-files"
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 
 function fromMetadata(user: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined): Profile {
@@ -48,10 +48,5 @@ export async function updateProfile(data: { avatar_url?: string; activity?: stri
 export async function uploadAvatar(file: File, shopId: string) {
   if (!file.type.startsWith("image/")) throw new Error("Choose an image file")
   if (file.size > MAX_AVATAR_BYTES) throw new Error("Image must be under 2 MB")
-  const ext = file.name.split(".").pop() || "png"
-  const path = `${shopId}/avatar-${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, { contentType: file.type })
-  if (error) throw error
-  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
-  await updateProfile({ avatar_url: data.publicUrl })
+  await updateProfile({ avatar_url: await uploadPublicAsset(shopId, file, "avatar") })
 }

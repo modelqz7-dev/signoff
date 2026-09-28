@@ -13,6 +13,7 @@ import { pinsOfVersion, type Pin } from "@/lib/pins"
 import { can } from "@/lib/plans"
 import { fileNameFromUrl } from "@/lib/versions"
 import { getOrCreateShop } from "@/lib/shop"
+import { useFileUrl } from "@/lib/files"
 import { useT } from "@/lib/i18n"
 
 /**
@@ -25,6 +26,7 @@ export default function CertificatePage() {
   const { t, locale } = useT()
   const [state, setState] = useState<{ shop: Shop; order: Order; pins: Pin[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const logoSrc = useFileUrl(state?.shop.logo_url)
 
   useEffect(() => {
     async function load() {
@@ -92,8 +94,8 @@ export default function CertificatePage() {
       <article className="mx-auto flex max-w-[210mm] flex-col gap-8 rounded-xl bg-white p-12 text-neutral-900 shadow-sm ring-1 ring-black/5 print:rounded-none print:p-0 print:shadow-none print:ring-0">
         <header className="flex items-start justify-between gap-6">
           <div className="flex items-center gap-3">
-            {shop.logo_url ? (
-              <img src={shop.logo_url} alt={shop.name} className="h-10 max-w-[180px] object-contain" />
+            {logoSrc ? (
+              <img src={logoSrc} alt={shop.name} className="h-10 max-w-[180px] object-contain" />
             ) : (
               <span className="text-lg font-semibold">{shop.name}</span>
             )}
