@@ -3,6 +3,7 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { openPanel } from "@/components/dashboard/SidebarPanels"
+import { useProfile } from "@/lib/profile"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -17,6 +18,8 @@ export function DashboardHeader({
   sidebarOpen,
   onToggleSidebar,
 }: DashboardHeaderProps) {
+  const profile = useProfile()
+  const photo = avatarUrl || profile?.avatarUrl || ""
   const initials = shopName
     .split(" ")
     .map((w) => w[0])
@@ -98,7 +101,7 @@ export function DashboardHeader({
           className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={shopName} />
+            <AvatarImage key={photo} src={photo} alt={shopName} />
             <AvatarFallback>{initials || "S"}</AvatarFallback>
           </Avatar>
         </button>
