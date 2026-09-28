@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/types"
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, planById } from "@/lib/plans"
 import { useT } from "@/lib/i18n"
@@ -252,6 +253,9 @@ function ProfilePanel() {
               {t("Change")}
             </button>
           </span>
+        </Row>
+        <Row label={t("Language")}>
+          <span className="flex justify-end"><LanguageSwitcher /></span>
         </Row>
         <Row label={t("Member since")}>{shop ? new Date(shop.created_at).toLocaleDateString(locale) : "—"}</Row>
       </div>
