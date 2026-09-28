@@ -8,7 +8,10 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const secret = webhookSecret()
   if (!secret) {
-    return Response.json({ error: "NOTIFY_WEBHOOK_SECRET is not configured on this deployment (redeploy after adding it)" }, { status: 500 })
+    return Response.json(
+      { error: "NOTIFY_WEBHOOK_SECRET is not configured on this deployment (redeploy after adding it)", ...envReport() },
+      { status: 500 },
+    )
   }
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(secret)) {
     return Response.json({ error: "NOTIFY_WEBHOOK_SECRET may only contain letters, digits, _ and -" }, { status: 500 })
@@ -30,4 +33,26 @@ export async function GET(request: Request) {
     }),
   })
   return Response.json(await res.json(), { status: res.ok ? 200 : 502 })
+}
+
+const SERVER_VARS = [
+  "NOTIFY_WEBHOOK_SECRET",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "TELEGRAM_BOT_TOKEN",
+  "RESEND_API_KEY",
+  "NOTIFY_FROM_EMAIL",
+]
+
+/** Which settings this deployment sees — names and yes/no only, never values. */
+function envReport() {
+  const set = Object.fromEntries(SERVER_VARS.map((name) => [name, Boolean(process.env[name]?.trim())]))
+  const similar = Object.keys(process.env).filter(
+    (name) => /WEBHOOK|NOTIFY/i.test(name) && !SERVER_VARS.includes(name),
+  )
+  return {
+    set,
+    similarNames: similar,
+    deployment: process.env.VERCEL_ENV ?? null,
+    commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+  }
 }
