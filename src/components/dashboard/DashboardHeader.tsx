@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { openPanel } from "@/components/dashboard/SidebarPanels"
 import { useProfile } from "@/lib/profile"
 import { useT } from "@/lib/i18n"
-import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -39,7 +38,6 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2">
-        <LanguageSwitcher className="mr-1" />
         <Button
           variant="ghost"
           size="icon"

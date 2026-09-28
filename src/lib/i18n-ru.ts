@@ -116,6 +116,7 @@ export const ru: Record<string, string> = {
   "In production.": "В производстве.",
   "Incorrect password": "Неверный пароль",
   "John Doe": "Иван Иванов",
+  "Language": "Язык",
   "Last week": "Прошлая неделя",
   "Light": "Светлая",
   "Live": "Онлайн",
