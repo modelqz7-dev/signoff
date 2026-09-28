@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
 
@@ -31,17 +33,13 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true">
-          <rect x="0.5" y="0.5" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1" fill="none" />
-          <line x1="3" y1="8.5" x2="14" y2="8.5" stroke="currentColor" strokeWidth="1" />
-        </svg>
-        <span className="text-[15px] tracking-tight text-foreground">Signoff</span>
-      </div>
+      <Link href="/dashboard" className="flex items-center px-5 py-5">
+        <Logo />
+      </Link>
 
       <nav className="flex-1 px-2.5 pt-1 pb-4">
         <SectionLabel>{t("General")}</SectionLabel>
-        <NavItem icon={dashboardIcon} label={t("Dashboard")} active={activePage === "dashboard"} href="/" />
+        <NavItem icon={dashboardIcon} label={t("Dashboard")} active={activePage === "dashboard"} href="/dashboard" />
         <NavItem icon={ordersIcon} label={t("Orders")} active={activePage === "orders"} href="/orders" />
 
         <SectionLabel className="mt-5">{t("Account")}</SectionLabel>

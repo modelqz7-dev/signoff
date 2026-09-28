@@ -40,11 +40,11 @@ const TITLES: Record<PanelId, { title: string; description: string }> = {
   billing: { title: "Billing", description: "Your plan and payments." },
   notifications: { title: "Notifications", description: "How you hear about client activity." },
   security: { title: "Security", description: "Your password and client access." },
-  appearance: { title: "Appearance", description: "How Signoff looks." },
+  appearance: { title: "Appearance", description: "How Nodly looks." },
   help: { title: "Help Center", description: "Getting an order approved, step by step." },
   contact: { title: "Contact Us", description: "Questions, bugs or ideas." },
   docs: { title: "Documentation", description: "Statuses, comments and shortcuts." },
-  status: { title: "Status", description: "Live check of the services Signoff depends on." },
+  status: { title: "Status", description: "Live check of the services Nodly depends on." },
 }
 
 export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClose: () => void }) {

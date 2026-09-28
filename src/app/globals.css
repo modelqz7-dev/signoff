@@ -154,6 +154,11 @@
   html.dark {
     color-scheme: dark;
   }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
   * {
     @apply border-border outline-ring/50;
   }
