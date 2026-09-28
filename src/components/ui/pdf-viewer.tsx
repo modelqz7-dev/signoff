@@ -63,6 +63,9 @@ export function PDFViewer({
   const scaleRef = useRef(1)
   const anchorRef = useRef<{ left: number; top: number } | null>(null)
   const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null)
+  // Fingers on the page (touch pinch-zoom) and the pinch in progress.
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>())
+  const pinchRef = useRef<{ dist: number; scale: number } | null>(null)
   const draggedRef = useRef(false)
   // A press that started on a marker or comment card must not end up adding a new pin.
   const pressOnPinUiRef = useRef(false)
@@ -262,8 +265,16 @@ export function PDFViewer({
       const factor = Math.exp(-e.deltaY * 0.0015)
       zoomTo(scaleRef.current * factor, e.clientX - rect.left, e.clientY - rect.top)
     }
+    // Safari's own pinch gesture would zoom the whole web page instead of the PDF.
+    const stopGesture = (e: Event) => e.preventDefault()
     el.addEventListener("wheel", onWheel, { passive: false })
-    return () => el.removeEventListener("wheel", onWheel)
+    el.addEventListener("gesturestart", stopGesture)
+    el.addEventListener("gesturechange", stopGesture)
+    return () => {
+      el.removeEventListener("wheel", onWheel)
+      el.removeEventListener("gesturestart", stopGesture)
+      el.removeEventListener("gesturechange", stopGesture)
+    }
   }, [open])
 
   useEffect(() => {
@@ -283,9 +294,25 @@ export function PDFViewer({
     return () => window.removeEventListener("keydown", onKey)
   }, [open, totalPages])
 
+  function pinchDistance() {
+    const [a, b] = [...pointersRef.current.values()]
+    return Math.hypot(a.x - b.x, a.y - b.y)
+  }
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     const el = scrollRef.current
     if (!el || e.button !== 0) return
+    if (e.pointerType === "touch") {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (pointersRef.current.size === 2) {
+        // Second finger: pinch-zoom the page instead of panning.
+        pinchRef.current = { dist: pinchDistance(), scale: scaleRef.current }
+        dragRef.current = null
+        draggedRef.current = true
+        setDragging(false)
+        return
+      }
+    }
     // Don't start panning from the comment form or markers.
     pressOnPinUiRef.current = !!(e.target as HTMLElement).closest("[data-pin-ui]")
     if (pressOnPinUiRef.current) return
@@ -294,6 +321,16 @@ export function PDFViewer({
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (pointersRef.current.has(e.pointerId)) pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const pinch = pinchRef.current
+    if (pinch && pointersRef.current.size >= 2) {
+      const el = scrollRef.current
+      if (!el) return
+      const [a, b] = [...pointersRef.current.values()]
+      const rect = el.getBoundingClientRect()
+      zoomTo(pinch.scale * (pinchDistance() / pinch.dist), (a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top)
+      return
+    }
     const d = dragRef.current
     const el = scrollRef.current
     if (!d || !el) return
@@ -310,7 +347,15 @@ export function PDFViewer({
     }
   }
 
-  function onPointerUp() {
+  function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    pointersRef.current.delete(e.pointerId)
+    if (pinchRef.current) {
+      // Keep suppressing clicks until the last finger lifts, so a pinch never adds a pin.
+      if (pointersRef.current.size < 2) pinchRef.current = null
+      dragRef.current = null
+      draggedRef.current = true
+      return
+    }
     draggedRef.current = !!dragRef.current?.moved
     dragRef.current = null
     setDragging(false)
@@ -404,7 +449,7 @@ export function PDFViewer({
         isOpen={open}
         onOpenChange={setOpen}
         showCloseButton={false}
-        className="flex h-[94vh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
+        className="flex h-[94dvh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
         <DialogTitle className="sr-only">{t("Document preview")}</DialogTitle>
 
@@ -441,6 +486,9 @@ export function PDFViewer({
         <div className="flex min-h-0 flex-1">
           <div
             ref={scrollRef}
+            data-pin-bounds
+            // Panning and pinch-zoom are handled here, so the browser must not zoom the web page.
+            style={{ touchAction: "none" }}
             className={`min-h-0 min-w-0 flex-1 overflow-auto bg-background outline-none select-none ${dragging ? "cursor-grabbing" : scale > 1 && !onAddPin ? "cursor-grab" : ""}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}

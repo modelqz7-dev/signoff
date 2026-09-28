@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { CheckIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -201,14 +201,48 @@ export function PinPopover({
   y: number
   children: React.ReactNode
 }) {
+  const ref = useRef<HTMLDivElement>(null)
   const left = x > 60
   const up = y > 60
+
+  // Keep the card fully on screen: nudge it back inside the viewing area (the element marked
+  // data-pin-bounds, or the window) when the pin sits near an edge or the screen is narrow.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const bounds = el.closest("[data-pin-bounds]")
+    function fit() {
+      if (!el) return
+      el.style.marginLeft = "0px"
+      el.style.marginTop = "0px"
+      const r = el.getBoundingClientRect()
+      const b = bounds?.getBoundingClientRect() ?? { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
+      const M = 8
+      let dx = 0
+      let dy = 0
+      if (r.right > b.right - M) dx = b.right - M - r.right
+      if (r.left + dx < b.left + M) dx = b.left + M - r.left
+      if (r.bottom > b.bottom - M) dy = b.bottom - M - r.bottom
+      if (r.top + dy < b.top + M) dy = b.top + M - r.top
+      el.style.marginLeft = `${dx}px`
+      el.style.marginTop = `${dy}px`
+    }
+    fit()
+    bounds?.addEventListener("scroll", fit, { passive: true })
+    window.addEventListener("resize", fit)
+    return () => {
+      bounds?.removeEventListener("scroll", fit)
+      window.removeEventListener("resize", fit)
+    }
+  }, [x, y])
+
   // The outer box handles placement, the inner one the pop-in animation (both use transforms).
   return (
     <div
+      ref={ref}
       data-pin-ui
       onClick={(e) => e.stopPropagation()}
-      className="absolute z-20 w-72"
+      className="absolute z-20 w-72 max-w-[calc(100vw-2rem)]"
       style={{
         left: `${x}%`,
         top: `${y}%`,
