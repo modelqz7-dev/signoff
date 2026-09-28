@@ -1,0 +1,133 @@
+// Server-only helpers for Telegram and email notifications. Never import from client code:
+// they use the Supabase service-role key and the bot / email API keys.
+import { createClient } from "@supabase/supabase-js"
+
+export type NotifyShop = {
+  id: string
+  user_id: string
+  name: string
+  notify_email: boolean | null
+  notify_telegram: boolean | null
+  telegram_chat_id: string | null
+  notify_lang: string | null
+}
+
+export function adminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured")
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
+/** Constant-time-ish comparison for shared secrets. */
+export function secretMatches(given: string | null, expected: string | undefined) {
+  if (!given || !expected || given.length !== expected.length) return false
+  let diff = 0
+  for (let i = 0; i < given.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i)
+  return diff === 0
+}
+
+export async function sendTelegram(chatId: string, text: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured" }
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+    })
+    return res.ok ? { ok: true } : { ok: false, error: `Telegram ${res.status}: ${await res.text()}` }
+  } catch (e) {
+    return { ok: false, error: `Telegram: ${(e as Error).message}` }
+  }
+}
+
+export async function sendEmail(to: string, subject: string, html: string) {
+  const key = process.env.RESEND_API_KEY
+  const from = process.env.NOTIFY_FROM_EMAIL || "Nodly <onboarding@resend.dev>"
+  if (!key) return { ok: false, error: "RESEND_API_KEY is not configured" }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ from, to, subject, html }),
+    })
+    return res.ok ? { ok: true } : { ok: false, error: `Resend ${res.status}: ${await res.text()}` }
+  } catch (e) {
+    return { ok: false, error: `Resend: ${(e as Error).message}` }
+  }
+}
+
+export function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
+type Lang = "en" | "ru"
+
+const TEXT = {
+  en: {
+    comment: (who: string, order: string) => `💬 ${who} left a comment on “${order}”`,
+    approved: (order: string) => `✅ The client approved “${order}”`,
+    changes: (order: string) => `✏️ The client requested changes on “${order}”`,
+    open: "Open order",
+    page: (n: number) => `page ${n}`,
+    footer: "You get this because notifications are on in Nodly → Notifications.",
+  },
+  ru: {
+    comment: (who: string, order: string) => `💬 ${who} оставил(а) комментарий к «${order}»`,
+    approved: (order: string) => `✅ Клиент утвердил «${order}»`,
+    changes: (order: string) => `✏️ Клиент попросил правки по «${order}»`,
+    open: "Открыть заказ",
+    page: (n: number) => `стр. ${n}`,
+    footer: "Вы получили это письмо, потому что уведомления включены в Nodly → Уведомления.",
+  },
+}
+
+export type NotifyEvent =
+  | { kind: "comment"; orderTitle: string; author: string; title: string; description: string | null; page: number }
+  | { kind: "approved" | "changes"; orderTitle: string }
+
+/** Builds the Telegram text and the email subject/body for an event. */
+export function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
+  const L = TEXT[lang]
+  const order = escapeHtml(event.orderTitle)
+  const headline =
+    event.kind === "comment" ? L.comment(escapeHtml(event.author), order)
+    : event.kind === "approved" ? L.approved(order)
+    : L.changes(order)
+  const details = event.kind === "comment"
+    ? `<b>${escapeHtml(event.title)}</b>${event.description ? `\n${escapeHtml(event.description)}` : ""}\n<i>${L.page(event.page)}</i>`
+    : ""
+  const telegram = [headline, details, `<a href="${orderUrl}">${L.open}</a>`].filter(Boolean).join("\n\n")
+  const subject = headline.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+  const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f1e1d">
+<p style="margin:0 0 12px">${headline}</p>
+${details ? `<p style="margin:0 0 16px;padding:12px 14px;background:#f6f5f3;border-radius:10px">${details.replace(/\n/g, "<br>")}</p>` : ""}
+<p style="margin:0 0 24px"><a href="${orderUrl}" style="display:inline-block;background:#1f1e1d;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">${L.open}</a></p>
+<p style="margin:0;font-size:12px;color:#8a8987">${L.footer}</p>
+</div>`
+  return { telegram, subject, html }
+}
+
+/** Sends an event to every channel the shop has enabled. Returns per-channel results. */
+export async function notifyShop(shop: NotifyShop, event: NotifyEvent, orderUrl: string) {
+  const lang: Lang = shop.notify_lang === "ru" ? "ru" : "en"
+  const msg = renderEvent(event, lang, orderUrl)
+  const results: Record<string, unknown> = {}
+
+  if (shop.notify_telegram !== false && shop.telegram_chat_id) {
+    results.telegram = await sendTelegram(shop.telegram_chat_id, msg.telegram)
+  }
+  if (shop.notify_email !== false) {
+    try {
+      const { data, error } = await adminClient().auth.admin.getUserById(shop.user_id)
+      const email = data.user?.email
+      results.email = email
+        ? await sendEmail(email, msg.subject, msg.html)
+        : { ok: false, error: error?.message || "owner has no email" }
+    } catch (e) {
+      results.email = { ok: false, error: (e as Error).message }
+    }
+  }
+  return results
+}

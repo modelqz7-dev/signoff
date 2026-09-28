@@ -15,6 +15,7 @@ import { StatusDonut } from "@/components/dashboard/StatusDonut"
 import { QuickOrderCard } from "@/components/dashboard/QuickOrderCard"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
+import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 
 export default function Dashboard() {
@@ -39,11 +40,7 @@ export default function Dashboard() {
 
       const user = session.user
 
-      const { data: shopData, error: shopError } = await supabase
-        .from("shops")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle()
+      const { data: shopData, error: shopError } = await getOrCreateShop(user)
 
       if (shopError || !shopData) {
         console.error("Shop error:", shopError)

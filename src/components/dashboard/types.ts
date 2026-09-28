@@ -24,6 +24,12 @@ export type Shop = {
   name: string
   plan: string
   created_at: string
+  // Notification settings (see supabase/notifications.sql)
+  notify_email?: boolean
+  notify_telegram?: boolean
+  telegram_chat_id?: string | null
+  telegram_link_code?: string | null
+  notify_lang?: string
 }
 
 export const STATUS_MAP: Record<

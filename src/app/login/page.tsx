@@ -1,21 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
+import { AuthField, AuthMessage, AuthShell } from "@/components/auth/AuthShell"
 import { useT } from "@/lib/i18n"
-import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { Logo } from "@/components/Logo"
-import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,10 +21,7 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError || !data.session) {
       setError(authError?.message || t("Sign in failed"))
@@ -45,69 +33,46 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <LanguageSwitcher className="mx-auto mb-3" />
-          <Link href="/" className="mx-auto mb-2">
-            <Logo markClassName="size-7" className="[&>span:last-child]:text-lg" />
-          </Link>
-          <CardTitle className="text-base">{t("Sign in")}</CardTitle>
-          <CardDescription>
-            {t("Enter your credentials to continue")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="email"
-                className="text-sm text-muted-foreground"
-              >
-                {t("Email")}
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setEmail(e.target.value)
-                }
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="password"
-                className="text-sm text-muted-foreground"
-              >
-                {t("Password")}
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t("Password")}
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
-                required
-              />
-            </div>
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
-            <Button
-              type="submit"
-              isDisabled={loading}
-              className="w-full"
-            >
-              {loading ? t("Signing in...") : t("Sign in")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell
+      title={t("Sign in")}
+      description={t("Enter your credentials to continue")}
+      footer={
+        <>
+          {t("No account yet?")}{" "}
+          <Link href="/signup" className="text-accent hover:underline">{t("Create one")}</Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <AuthField
+          id="email"
+          label={t("Email")}
+          type="email"
+          autoComplete="email"
+          placeholder="you@company.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <AuthField
+          id="password"
+          label={t("Password")}
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          aside={
+            <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
+              {t("Forgot password?")}
+            </Link>
+          }
+        />
+        {error && <AuthMessage kind="error">{error}</AuthMessage>}
+        <Button type="submit" isDisabled={loading} className="w-full">
+          {loading ? t("Signing in...") : t("Sign in")}
+        </Button>
+      </form>
+    </AuthShell>
   )
 }

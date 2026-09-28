@@ -17,6 +17,7 @@ import { PinList, PinMarker } from "@/components/orders/pins"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
+import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 
 export default function OrderPage() {
@@ -54,8 +55,7 @@ export default function OrderPage() {
       if (sessionError) throw sessionError
       if (!session?.user) { router.replace("/login"); return }
 
-      const { data: shopData, error: shopError } = await supabase
-        .from("shops").select("*").eq("user_id", session.user.id).maybeSingle()
+      const { data: shopData, error: shopError } = await getOrCreateShop(session.user)
       if (shopError) throw shopError
 
       if (!shopData) { setLoadError(t("Shop not found for this account")); setLoading(false); return }

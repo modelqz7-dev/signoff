@@ -10,6 +10,7 @@ import { OrdersList } from "@/components/orders/OrdersList"
 import { Button } from "@/components/ui/button"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
+import { getOrCreateShop } from "@/lib/shop"
 import { PlusIcon } from "lucide-react"
 import { useT } from "@/lib/i18n"
 
@@ -28,8 +29,7 @@ export default function OrdersPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { router.replace("/login"); return }
 
-      const { data: shopData, error: shopError } = await supabase
-        .from("shops").select("*").eq("user_id", session.user.id).maybeSingle()
+      const { data: shopData, error: shopError } = await getOrCreateShop(session.user)
 
       if (shopError || !shopData) { setLoading(false); return }
       setShop(shopData as Shop)
