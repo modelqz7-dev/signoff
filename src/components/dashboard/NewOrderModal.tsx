@@ -19,6 +19,10 @@ import { today, getLocalTimeZone, parseDate, type DateValue } from "@internation
 import type { Order } from "./types"
 import { useT } from "@/lib/i18n"
 import { I18nProvider } from "react-aria-components"
+import { isPlanLimitError, planById, PLANS, type Plan } from "@/lib/plans"
+import { loadPlanUsage, notifyPlanChanged } from "@/lib/use-plan"
+import { openPanel } from "@/lib/panels"
+import { UsageMeter } from "@/components/plans/PlanBits"
 
 type NewOrderModalProps = {
   shopId: string
@@ -38,6 +42,17 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
   const [notes, setNotes] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Set when the shop has as many active orders as its plan allows.
+  const [limit, setLimit] = useState<{ plan: Plan; used: number } | null>(null)
+
+  useEffect(() => {
+    if (!open || !shopId) return
+    let cancelled = false
+    loadPlanUsage(shopId).then((usage) => {
+      if (!cancelled) setLimit(usage?.atLimit ? { plan: usage.plan, used: usage.activeOrders } : null)
+    })
+    return () => { cancelled = true }
+  }, [open, shopId])
 
   function reset() {
     setTitle("")
@@ -98,11 +113,17 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
     setSaving(false)
 
     if (insertErr) {
-      setError(insertErr.message)
+      // The database refuses orders over the plan limit (supabase/plans.sql).
+      if (isPlanLimitError(insertErr)) {
+        const usage = await loadPlanUsage(shopId)
+        const plan = usage?.plan ?? planById("free")
+        setLimit({ plan, used: usage?.activeOrders ?? plan.activeOrders ?? 0 })
+      } else setError(insertErr.message)
       return
     }
 
     if (data) {
+      notifyPlanChanged()
       onCreated?.(data as Order)
       reset()
       onOpenChange(false)
@@ -110,6 +131,16 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
   }
 
   if (!open) return null
+
+  if (limit) {
+    return (
+      <PlanLimitDialog
+        plan={limit.plan}
+        used={limit.used}
+        onOpenChange={onOpenChange}
+      />
+    )
+  }
 
   return (
     <Dialog
@@ -211,6 +242,50 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
           </Button>
         </DialogFooter>
       </form>
+    </Dialog>
+  )
+}
+
+/** Shown instead of the form when the plan's active-order limit is reached. */
+function PlanLimitDialog({ plan, used, onOpenChange }: {
+  plan: Plan
+  used: number
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useT()
+  const next = PLANS[PLANS.findIndex((p) => p.id === plan.id) + 1]
+
+  return (
+    <Dialog isOpen onOpenChange={onOpenChange} className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{t("You've reached your plan limit")}</DialogTitle>
+        <DialogDescription>
+          {t("The {plan} plan includes up to {n} active orders. Approved orders don't count, so finishing one frees a slot.", {
+            plan: plan.name,
+            n: plan.activeOrders ?? used,
+          })}
+        </DialogDescription>
+      </DialogHeader>
+
+      <UsageMeter used={used} limit={plan.activeOrders} />
+
+      {next && (
+        <div className="rounded-lg bg-accent/10 p-3 text-sm ring-1 ring-accent/30">
+          <p className="font-medium text-foreground">
+            {next.activeOrders === null
+              ? t("{plan}: unlimited active orders", { plan: next.name })
+              : t("{plan}: up to {n} active orders", { plan: next.name, n: next.activeOrders })}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{next.highlights.slice(1, 4).map((h) => t(h)).join(" · ")}</p>
+        </div>
+      )}
+
+      <DialogFooter>
+        <DialogClose variant="outline">{t("Close")}</DialogClose>
+        <Button onPress={() => { onOpenChange(false); openPanel("billing") }}>
+          {t("See plans")}
+        </Button>
+      </DialogFooter>
     </Dialog>
   )
 }

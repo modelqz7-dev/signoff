@@ -18,6 +18,7 @@ import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { BrandMark, MadeWithNodly, usePortalBrand } from "@/components/portal/PortalBrand"
 
 export default function PortalPage() {
   const params = useParams()
@@ -28,6 +29,7 @@ export default function PortalPage() {
   const [clientName, setClientName] = useState("")
   const [authError, setAuthError] = useState("")
   const { t, locale } = useT()
+  const brand = usePortalBrand(orderId)
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
@@ -160,6 +162,7 @@ export default function PortalPage() {
               <LanguageSwitcher />
               <ThemeToggle />
             </div>
+            {brand?.shopName && <BrandMark brand={brand} className="mx-auto mb-1 justify-center" />}
             <CardTitle className="text-base">{t("Order Portal")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               {t("Enter your details to view this order.")}
@@ -194,6 +197,7 @@ export default function PortalPage() {
             </form>
           </CardContent>
         </Card>
+        <MadeWithNodly brand={brand} />
       </div>
     )
   }
@@ -207,8 +211,9 @@ export default function PortalPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
       <header className="flex items-center justify-between border-b border-border/40 px-6 py-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-medium text-foreground">{order.title}</h1>
+        <div className="flex min-w-0 items-center gap-3">
+          <BrandMark brand={brand} className="border-r border-border/40 pr-3" />
+          <h1 className="truncate text-sm font-medium text-foreground">{order.title}</h1>
           <Badge
             variant="secondary"
             className="border-0 text-[11px] px-2 py-0.5"
@@ -398,6 +403,7 @@ export default function PortalPage() {
           </div>
         </aside>
       </div>
+      <MadeWithNodly brand={brand} />
     </div>
   )
 }

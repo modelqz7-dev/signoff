@@ -5,6 +5,8 @@ import Link from "next/link"
 import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
+import { usePlanUsage } from "@/lib/use-plan"
+import { UsageMeter } from "@/components/plans/PlanBits"
 
 type SidebarProps = {
   open: boolean
@@ -55,9 +57,47 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
         <NavItem icon={docsIcon} label={t("Documentation")} active={panel === "docs"} onClick={() => setPanel("docs")} />
         <NavItem icon={statusIcon} label={t("Status")} active={panel === "status"} onClick={() => setPanel("status")} />
       </nav>
+
+      <PlanCard onOpen={() => setPanel("billing")} />
     </aside>
     <SidebarPanel panel={panel} onClose={() => setPanel(null)} />
     </>
+  )
+}
+
+/** Plan, trial and active-order usage at the bottom of the sidebar. */
+function PlanCard({ onOpen }: { onOpen: () => void }) {
+  const usage = usePlanUsage()
+  const { t } = useT()
+  if (!usage) return null
+  const onTrial = usage.trialDays > 0 && usage.chosen.id === "free"
+  const nearLimit = usage.plan.activeOrders !== null && usage.activeOrders >= usage.plan.activeOrders - 1
+
+  return (
+    <div className="mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10">
+      <div className="flex items-baseline justify-between gap-2 text-xs whitespace-nowrap">
+        <span className="truncate font-medium text-foreground">
+          {onTrial ? t("{plan} trial", { plan: usage.plan.name }) : t("{plan} plan", { plan: usage.plan.name })}
+        </span>
+        {onTrial && (
+          <span className="text-[11px] text-muted-foreground">{t("{n}d left", { n: usage.trialDays })}</span>
+        )}
+      </div>
+      <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />
+      {(onTrial || usage.chosen.id !== "pro") && (
+        <button
+          type="button"
+          onClick={onOpen}
+          className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+            nearLimit || onTrial
+              ? "bg-primary text-primary-foreground hover:opacity-90"
+              : "bg-muted text-foreground hover:bg-hover"
+          }`}
+        >
+          {onTrial ? t("Choose a plan") : t("Upgrade")}
+        </button>
+      )}
+    </div>
   )
 }
 

@@ -19,12 +19,12 @@ export function adminClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
-/** Constant-time-ish comparison for shared secrets. */
 /** NOTIFY_WEBHOOK_SECRET without stray whitespace (a pasted value often ends with a newline). */
 export function webhookSecret() {
   return process.env.NOTIFY_WEBHOOK_SECRET?.trim() || undefined
 }
 
+/** Constant-time-ish comparison for shared secrets. */
 export function secretMatches(given: string | null, expected: string | undefined) {
   given = given?.trim() ?? null
   if (!given || !expected || given.length !== expected.length) return false

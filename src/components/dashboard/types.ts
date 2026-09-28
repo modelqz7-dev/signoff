@@ -30,6 +30,9 @@ export type Shop = {
   telegram_chat_id?: string | null
   telegram_link_code?: string | null
   notify_lang?: string
+  // Plans (see supabase/plans.sql)
+  trial_ends_at?: string | null
+  logo_url?: string | null
 }
 
 export const STATUS_MAP: Record<
