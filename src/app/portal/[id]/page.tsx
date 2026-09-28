@@ -13,6 +13,7 @@ import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
 import { pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { usePortal } from "@/lib/portal-client"
+import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
@@ -286,7 +287,7 @@ export default function PortalPage() {
                 <CardContent>
                   {isPdf ? (
                     <PDFViewer
-                      key={order.file_url}
+                      key={fileKey(order.file_url)}
                       url={order.file_url}
                       pins={pins}
                       onAddPin={addPin}

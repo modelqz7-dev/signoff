@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Order } from "@/components/dashboard/types"
 import type { NewPin, Pin } from "@/lib/pins"
+import { fileKey } from "@/lib/storage-path"
 
 /** The order as the portal sees it: private fields (password, client email…) are never sent. */
 export type PortalOrder = Pick<
@@ -13,6 +14,17 @@ export type PortalOrder = Pick<
 type Phase = "loading" | "auth" | "view" | "missing"
 
 const POLL_MS = 5000
+
+/**
+ * Every refresh brings a freshly signed file link. Keep the one already loaded while it points
+ * to the same file, so the PDF isn't downloaded again and an open viewer doesn't close.
+ */
+function keepFileLink(prev: PortalOrder | null, next: PortalOrder): PortalOrder {
+  if (prev?.file_url && next.file_url && fileKey(prev.file_url) === fileKey(next.file_url)) {
+    return { ...next, file_url: prev.file_url }
+  }
+  return next
+}
 
 function sortPins(pins: Pin[]) {
   return [...pins].sort((a, b) => a.created_at.localeCompare(b.created_at))
@@ -46,7 +58,7 @@ export function usePortal(orderId: string) {
   const load = useCallback(async () => {
     const { res, body } = await api(`${base}/state`)
     if (res.ok && body) {
-      setOrder(body.order)
+      setOrder((prev) => keepFileLink(prev, body.order))
       setPins(sortPins(body.pins))
       setViewer(body.viewer)
       setPhase("view")
@@ -119,7 +131,7 @@ export function usePortal(orderId: string) {
   const decide = useCallback(async (status: "approved" | "changes") => {
     const { res, body } = await api(`${base}/decision`, { method: "POST", body: JSON.stringify({ status }) })
     if (!res.ok || !body?.order) return false
-    setOrder(body.order)
+    setOrder((prev) => keepFileLink(prev, body.order))
     return true
   }, [base])
 

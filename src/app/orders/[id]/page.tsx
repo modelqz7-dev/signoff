@@ -25,6 +25,7 @@ import { markLinkShared } from "@/lib/onboarding"
 import { UpgradeChip } from "@/components/plans/PlanBits"
 import { cn } from "@/lib/utils"
 import { useFileUrl } from "@/lib/files"
+import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
@@ -383,7 +384,7 @@ export default function OrderPage() {
                     <div className="flex flex-col gap-4">
                       {isPdf ? (
                         <PDFViewer
-                          key={fileUrl}
+                          key={fileKey(storedUrl)}
                           url={fileUrl}
                           pins={pins}
                           onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
