@@ -24,15 +24,15 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-// Deterministic color from string
+// Deterministic gray tone from string (the interface is monochrome)
 function initialsColor(name: string): string {
   const colors = [
     "#8a8783",
-    "#c09a5a",
-    "#5a9c6a",
-    "#9a6ab0",
-    "#c07a6a",
-    "#6a8fc0",
+    "#6f6c68",
+    "#a19e9a",
+    "#5c5955",
+    "#96928d",
+    "#7a7672",
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {

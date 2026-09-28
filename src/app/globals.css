@@ -92,14 +92,14 @@
   /* Comment pins sit on the client's artwork, so they keep one strong neutral in both themes. */
   --pin: #2b2926;
   --pin-resolved: #8a8783;
-  --status-await: #2f7a85;
-  --status-await-bg: rgba(58, 135, 146, 0.12);
+  --status-await: #2b2926;
+  --status-await-bg: rgba(31, 30, 29, 0.09);
   --status-changes: #976a1f;
   --status-changes-bg: rgba(192, 154, 90, 0.18);
   --status-approved: #3a7a4a;
   --status-approved-bg: rgba(90, 156, 106, 0.16);
-  --status-prod: #6b6966;
-  --status-prod-bg: rgba(31, 30, 29, 0.07);
+  --status-prod: #8a8783;
+  --status-prod-bg: rgba(31, 30, 29, 0.05);
 }
 
 /* Dark theme (the original palette) */
@@ -139,14 +139,14 @@
   --hover-strong: rgba(255, 255, 255, 0.09);
   --scrollbar: rgba(214, 213, 212, 0.15);
   --scrollbar-hover: rgba(214, 213, 212, 0.25);
-  --status-await: #4e99a3;
-  --status-await-bg: rgba(78, 153, 163, 0.1);
+  --status-await: #e2e0dd;
+  --status-await-bg: rgba(226, 224, 221, 0.1);
   --status-changes: #c09a5a;
   --status-changes-bg: rgba(192, 154, 90, 0.1);
   --status-approved: #5a9c6a;
   --status-approved-bg: rgba(90, 156, 106, 0.1);
-  --status-prod: rgba(214, 213, 212, 0.65);
-  --status-prod-bg: rgba(214, 213, 212, 0.06);
+  --status-prod: #7c7a77;
+  --status-prod-bg: rgba(214, 213, 212, 0.05);
 }
 
 @layer base {
