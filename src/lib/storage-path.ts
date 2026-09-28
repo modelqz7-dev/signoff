@@ -11,6 +11,13 @@ export function storageObject(url: string | null | undefined) {
   return { bucket: match[1], path: decodeURIComponent(match[2]) }
 }
 
+/** The same stored file whatever signed-link token it comes with (for React keys and caching). */
+export function fileKey(url: string | null | undefined) {
+  if (!url) return ""
+  const obj = storageObject(url)
+  return obj ? `${obj.bucket}/${obj.path}` : url.split("?")[0]
+}
+
 /** Files in the private bucket need a signed URL to be opened. */
 export function needsSignedUrl(url: string | null | undefined) {
   return storageObject(url)?.bucket === FILES_BUCKET

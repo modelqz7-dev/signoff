@@ -99,7 +99,9 @@ export function PDFViewer({
         const pdfjsLib = await import("pdfjs-dist")
         // Served from /public (scripts/copy-pdf-worker.mjs), always the same version as pdfjs-dist.
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
-        const doc = await pdfjsLib.getDocument(url).promise
+        // Fetch only the parts needed for the visible page when the server supports ranges,
+        // so the first page shows up sooner on slow mobile connections.
+        const doc = await pdfjsLib.getDocument({ url, disableAutoFetch: true }).promise
         if (!cancelled) {
           setPdf(doc)
           setTotalPages(doc.numPages)
