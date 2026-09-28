@@ -21,7 +21,7 @@ import type { Order } from "./types"
 const chartConfig = {
   thisWeek: {
     label: "This week",
-    color: "var(--chart-2)",
+    color: "var(--chart-1)",
   },
   lastWeek: {
     label: "Last week",
@@ -100,15 +100,27 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
   const isUp = percentChange >= 0
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Order Activity</CardTitle>
-        <CardDescription>Last 7 days compared to previous week</CardDescription>
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <CardTitle>Order Activity</CardTitle>
+          <CardDescription>New orders this week vs last week</CardDescription>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-[2px]" style={{ backgroundColor: "var(--chart-1)" }} />
+            This week
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-[2px]" style={{ backgroundColor: "var(--chart-3)" }} />
+            Last week
+          </span>
+        </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[180px] w-full">
+        <ChartContainer config={chartConfig} className="h-[200px] w-full">
           <BarChart data={chartData} barGap={2}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} />
             <XAxis
               dataKey="day"
               tickLine={false}

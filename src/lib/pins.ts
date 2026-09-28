@@ -65,10 +65,23 @@ export function usePins(orderId: string | null) {
         }
       )
       .subscribe((status) => {
-        // (Re)load once the subscription is live so nothing created in between is missed.
+        // Reload once the subscription is live so nothing created in between is missed.
         if (status === "SUBSCRIBED") load()
       })
-    return () => { supabase.removeChannel(channel) }
+    // Load right away too, so pins show even if realtime is unavailable.
+    let cancelled = false
+    supabase
+      .from("order_pins").select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true })
+      .then(({ data, error }) => {
+        if (error) console.error("Pins load error:", error)
+        else if (!cancelled) setPins(sortPins(data as Pin[]))
+      })
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
   }, [orderId, load])
 
   const addPin = useCallback(async (pin: NewPin, authorName: string) => {
@@ -112,6 +125,54 @@ export function usePins(orderId: string | null) {
   }, [load])
 
   return { pins, addPin, setResolved, movePin, deletePin, reload: load }
+}
+
+/**
+ * Comments across many orders (the dashboard), newest first, kept live via realtime.
+ * Realtime `in` filters accept up to 100 values, so only the 100 most recent orders are tracked.
+ */
+export function useShopPins(orderIds: string[]) {
+  const [pins, setPins] = useState<Pin[]>([])
+  const ids = orderIds.slice(0, 100)
+  const key = ids.join(",")
+
+  useEffect(() => {
+    if (!key) return
+    const list = key.split(",")
+    const newestFirst = (rows: Pin[]) => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at))
+    let cancelled = false
+
+    async function load() {
+      const { data, error } = await supabase.from("order_pins").select("*").in("order_id", list)
+      if (error) console.error("Pins load error:", error)
+      else if (!cancelled) setPins(newestFirst(data as Pin[]))
+    }
+
+    const channel = supabase
+      .channel(`shop-pins-${list.length}-${list[0]}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_pins", filter: `order_id=in.(${key})` },
+        (payload) => {
+          if (payload.eventType === "DELETE") return
+          const row = payload.new as Pin
+          setPins((prev) => newestFirst([...prev.filter((p) => p.id !== row.id), row]))
+        }
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "order_pins" }, (payload) => {
+        const id = (payload.old as Partial<Pin>).id
+        if (id) setPins((prev) => prev.filter((p) => p.id !== id))
+      })
+      .subscribe((status) => { if (status === "SUBSCRIBED") load() })
+    load()
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
+  }, [key])
+
+  return key ? pins : []
 }
 
 /** Stable pin numbers (by creation order) so the client and the shop see the same "#3". */

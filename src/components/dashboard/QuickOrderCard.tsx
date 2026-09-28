@@ -35,7 +35,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
 
   return (
     <>
-      <Card className="aspect-[1/0.85] flex flex-col p-4">
+      <Card className="h-full min-h-[260px] flex flex-col p-4">
         {/* + New Order — fills remaining space, always centered */}
         <div className="flex flex-1 items-center justify-center">
           <button
