@@ -20,7 +20,13 @@ export function adminClient() {
 }
 
 /** Constant-time-ish comparison for shared secrets. */
+/** NOTIFY_WEBHOOK_SECRET without stray whitespace (a pasted value often ends with a newline). */
+export function webhookSecret() {
+  return process.env.NOTIFY_WEBHOOK_SECRET?.trim() || undefined
+}
+
 export function secretMatches(given: string | null, expected: string | undefined) {
+  given = given?.trim() ?? null
   if (!given || !expected || given.length !== expected.length) return false
   let diff = 0
   for (let i = 0; i < given.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i)
