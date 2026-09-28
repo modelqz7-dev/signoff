@@ -334,16 +334,130 @@ function BillingPanel() {
   )
 }
 
+const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || ""
+
+function Switch({ checked, onChange, disabled, label }: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative h-5 w-9 shrink-0 rounded-full transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+        checked ? "bg-accent" : "bg-muted-foreground/30"
+      )}
+    >
+      <span className={cn("absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform", checked && "translate-x-4")} />
+    </button>
+  )
+}
+
 function NotificationsPanel() {
-  const { t } = useT()
+  const { t, lang } = useT()
+  const { email, shop, setShop, loading } = useAccount()
+  const [error, setError] = useState<string | null>(null)
+  const [connecting, setConnecting] = useState(false)
+
+  // Pick up the Telegram connection when the user comes back from the bot.
+  useEffect(() => {
+    if (!shop) return
+    const id = shop.id
+    async function refresh() {
+      const { data } = await supabase.from("shops").select("*").eq("id", id).maybeSingle()
+      if (data) setShop(data as Shop)
+    }
+    window.addEventListener("focus", refresh)
+    return () => window.removeEventListener("focus", refresh)
+  }, [shop, setShop])
+
+  async function save(patch: Partial<Shop>) {
+    if (!shop) return false
+    setError(null)
+    // Notifications are sent in the language the owner uses the app in.
+    const { data, error: saveError } = await supabase
+      .from("shops").update({ ...patch, notify_lang: lang }).eq("id", shop.id).select().maybeSingle()
+    if (saveError || !data) {
+      setError(saveError?.message || t("Couldn't save the settings"))
+      return false
+    }
+    setShop(data as Shop)
+    return true
+  }
+
+  async function connectTelegram() {
+    setConnecting(true)
+    const code = crypto.randomUUID().replace(/-/g, "")
+    // Open the tab right away (popup blockers), then point it at the bot once the code is saved.
+    const tab = window.open("", "_blank")
+    if (await save({ telegram_link_code: code })) {
+      const link = `https://t.me/${TELEGRAM_BOT}?start=${code}`
+      if (tab) tab.location.href = link
+      else window.location.href = link
+    } else tab?.close()
+    setConnecting(false)
+  }
+
+  if (loading) return <p className="text-muted-foreground">{t("Loading...")}</p>
+
+  const telegramConnected = !!shop?.telegram_chat_id
+
   return (
     <div className="flex flex-col gap-3">
       <div className="divide-y divide-border border-y border-border">
+        <div className="flex items-center justify-between gap-4 py-3">
+          <div className="min-w-0">
+            <p className="text-foreground">{t("Email")}</p>
+            <p className="truncate text-xs text-muted-foreground">{email}</p>
+          </div>
+          <Switch
+            label={t("Email notifications")}
+            checked={shop?.notify_email !== false}
+            disabled={!shop}
+            onChange={(v) => save({ notify_email: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 py-3">
+          <div className="min-w-0">
+            <p className="text-foreground">Telegram</p>
+            <p className="text-xs text-muted-foreground">
+              {telegramConnected ? t("Connected") : TELEGRAM_BOT ? t("Not connected") : t("The Telegram bot isn't set up yet")}
+            </p>
+          </div>
+          {telegramConnected ? (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-destructive"
+                onClick={() => save({ telegram_chat_id: null })}
+              >
+                {t("Disconnect")}
+              </button>
+              <Switch
+                label={t("Telegram notifications")}
+                checked={shop?.notify_telegram !== false}
+                onChange={(v) => save({ notify_telegram: v })}
+              />
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onPress={connectTelegram} isDisabled={!shop || !TELEGRAM_BOT || connecting}>
+              {t("Connect Telegram")}
+            </Button>
+          )}
+        </div>
+
         <Row label={t("Live updates on the order page")}><span className="text-chart-4">{t("On")}</span></Row>
-        <Row label={t("Email notifications")}><span className="text-muted-foreground">{t("Coming soon")}</span></Row>
-        <Row label={t("Telegram notifications")}><span className="text-muted-foreground">{t("Coming soon")}</span></Row>
       </div>
-      <Note>{t("New client comments, moved pins and status changes appear on the order page instantly, with no reload needed.")}</Note>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <Note>{t("You'll be notified when a client leaves a comment, approves a design or asks for changes. Messages come in the language you use Nodly in.")}</Note>
     </div>
   )
 }

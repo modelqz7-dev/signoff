@@ -124,7 +124,7 @@ function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
               <Link href="/login" className="hidden px-2 text-sm text-muted-foreground hover:text-foreground sm:block">
                 {t("Sign in")}
               </Link>
-              <CtaLink href="/login" className="h-8 px-3">{t("Start free")}</CtaLink>
+              <CtaLink href="/signup" className="h-8 px-3">{t("Start free")}</CtaLink>
             </>
           )}
         </div>
@@ -157,7 +157,7 @@ function Hero({ t, signedIn }: { t: T; signedIn: boolean }) {
             {t("Share a PDF or image in one link. Clients pin comments right on the file, you see them live, and the order moves to approved in one click.")}
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <CtaLink href={signedIn ? "/dashboard" : "/login"}>
+            <CtaLink href={signedIn ? "/dashboard" : "/signup"}>
               {signedIn ? t("Open dashboard") : t("Start free")}
               <ArrowRightIcon className="size-4" />
             </CtaLink>
@@ -469,7 +469,7 @@ function Pricing({ t }: { t: T }) {
                     </li>
                   ))}
                 </ul>
-                <CtaLink href="/login" variant={featured ? "primary" : "outline"} className="mt-auto w-full">
+                <CtaLink href="/signup" variant={featured ? "primary" : "outline"} className="mt-auto w-full">
                   {t("Start free")}
                 </CtaLink>
               </Card>
@@ -527,7 +527,7 @@ function FinalCta({ t, signedIn }: { t: T; signedIn: boolean }) {
           <p className="relative max-w-lg text-sm text-muted-foreground sm:text-base">
             {t("Create an order, upload the design and send the link. Your client will take it from there.")}
           </p>
-          <CtaLink href={signedIn ? "/dashboard" : "/login"} className="relative">
+          <CtaLink href={signedIn ? "/dashboard" : "/signup"} className="relative">
             {signedIn ? t("Open dashboard") : t("Start free")}
             <ArrowRightIcon className="size-4" />
           </CtaLink>
