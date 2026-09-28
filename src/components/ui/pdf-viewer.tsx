@@ -469,7 +469,7 @@ export function PDFViewer({
                 ))}
                 {pending && (
                   <>
-                    <PinMarker pin={{ ...pending, resolved: false }} number="+" selected />
+                    <PinMarker pin={{ ...pending, resolved: false }} pending />
                     <PinPopover x={pending.x} y={pending.y}>
                       <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
                     </PinPopover>

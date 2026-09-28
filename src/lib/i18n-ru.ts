@@ -73,6 +73,7 @@ export const ru: Record<string, string> = {
   "Code": "Код",
   "Collect comments": "Соберите комментарии",
   "Coming soon": "Скоро",
+  "Comment {n}": "Комментарий {n}",
   "Comments": "Комментарии",
   "Comments ({n})": "Комментарии ({n})",
   "Comments arrive live; the client approves or asks for changes.": "Комментарии приходят сразу, клиент утверждает или просит правки.",

@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { CheckIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { CheckIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,9 +16,25 @@ function formatDate(dateStr: string, locale: string) {
   })
 }
 
+/** Teardrop pin; the tip (bottom center) sits exactly on the commented spot. */
+function PinShape({ fill }: { fill: string }) {
+  return (
+    <svg viewBox="0 0 24 30" aria-hidden="true" className="absolute inset-0 size-full drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
+      <path
+        d="M12 29c0 0-9-8.4-9-16a9 9 0 0 1 18 0c0 7.6-9 16-9 16z"
+        style={{ fill }}
+        stroke="#ffffff"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 /**
- * Round numbered marker, positioned in % of the page so it lands on the same spot at any zoom.
- * With `onMove` it can be dragged; the new position is reported in % of its parent (the page).
+ * Numbered comment pin, positioned in % of the page so it lands on the same spot at any zoom.
+ * The pin's tip marks the spot. With `onMove` it can be dragged; the new position is reported
+ * in % of its parent (the page). `pending` shows a pencil for a comment being written.
  */
 export function PinMarker({
   pin,
@@ -27,34 +43,45 @@ export function PinMarker({
   onSelect,
   onMove,
   small,
+  pending,
 }: {
   pin: Pick<Pin, "x" | "y" | "resolved">
-  number: number | string
+  number?: number | string
   selected?: boolean
   onSelect?: () => void
   onMove?: (x: number, y: number) => void
   small?: boolean
+  pending?: boolean
 }) {
-  const dragRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null)
+  const dragRef = useRef<{ startX: number; startY: number; dx: number; dy: number; moved: boolean } | null>(null)
   const justDraggedRef = useRef(false)
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
   const { t } = useT()
 
-  function positionFromEvent(e: React.PointerEvent<HTMLButtonElement>) {
+  function pointerPercent(e: React.PointerEvent<HTMLButtonElement>) {
     const rect = e.currentTarget.parentElement!.getBoundingClientRect()
-    const clamp = (v: number) => Math.min(Math.max(v, 0), 100)
     return {
-      x: clamp(((e.clientX - rect.left) / rect.width) * 100),
-      y: clamp(((e.clientY - rect.top) / rect.height) * 100),
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
     }
   }
+
+  const clamp = (v: number) => Math.min(Math.max(v, 0), 100)
 
   function onPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
     if (!onMove || e.button !== 0) return
     e.stopPropagation()
     // Capture right away so fast drags that leave the marker keep reporting to it.
     e.currentTarget.setPointerCapture(e.pointerId)
-    dragRef.current = { startX: e.clientX, startY: e.clientY, moved: false }
+    // Remember where on the pin it was grabbed, so the tip doesn't jump to the cursor.
+    const p = pointerPercent(e)
+    dragRef.current = { startX: e.clientX, startY: e.clientY, dx: p.x - pin.x, dy: p.y - pin.y, moved: false }
+  }
+
+  function positionFromEvent(e: React.PointerEvent<HTMLButtonElement>) {
+    const d = dragRef.current!
+    const p = pointerPercent(e)
+    return { x: clamp(p.x - d.dx), y: clamp(p.y - d.dy) }
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
@@ -66,9 +93,9 @@ export function PinMarker({
 
   function onPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
     const d = dragRef.current
-    dragRef.current = null
-    if (!d?.moved) return
+    if (!d?.moved) { dragRef.current = null; return }
     const pos = positionFromEvent(e)
+    dragRef.current = null
     justDraggedRef.current = true
     setDragPos(null)
     onMove?.(pos.x, pos.y)
@@ -76,11 +103,13 @@ export function PinMarker({
 
   const x = dragPos?.x ?? pin.x
   const y = dragPos?.y ?? pin.y
+  const fill = pending ? "var(--status-changes)" : pin.resolved ? "var(--status-prod)" : "var(--accent)"
 
   return (
     <button
       type="button"
       data-pin-ui
+      aria-label={pending ? t("New comment") : typeof number === "number" ? t("Comment {n}", { n: number }) : undefined}
       onClick={(e) => {
         e.stopPropagation()
         if (justDraggedRef.current) { justDraggedRef.current = false; return }
@@ -93,17 +122,29 @@ export function PinMarker({
       tabIndex={onSelect ? 0 : -1}
       title={onMove ? t("Drag to move") : undefined}
       className={cn(
-        "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full font-semibold text-white shadow-md ring-2 ring-white transition-transform",
-        small ? "size-5 text-[9px]" : "size-7 text-[11px]",
+        "absolute z-10 -translate-x-1/2 -translate-y-full touch-none origin-bottom font-semibold text-white outline-none transition-transform focus-visible:scale-110",
+        small ? "h-[20px] w-[16px] text-[8px]" : "h-[28px] w-[22px] text-[10px]",
         onSelect || onMove ? "cursor-pointer hover:scale-110" : "pointer-events-none",
         onMove && "cursor-grab",
         dragPos && "scale-125 cursor-grabbing",
-        pin.resolved ? "bg-muted-foreground/70" : "bg-accent",
-        selected && "scale-110 ring-accent/50 ring-4"
+        selected && "scale-115",
+        pending && "animate-in zoom-in-50 duration-200"
       )}
       style={{ left: `${x}%`, top: `${y}%` }}
     >
-      {pin.resolved ? <CheckIcon className="size-3" /> : number}
+      {selected && (
+        <span className="absolute top-[4%] left-1/2 aspect-square w-[160%] -translate-x-1/2 -translate-y-[18%] rounded-full bg-accent/25" aria-hidden="true" />
+      )}
+      <PinShape fill={fill} />
+      <span className="absolute inset-x-0 top-0 flex h-[80%] items-center justify-center leading-none">
+        {pending ? (
+          <PencilIcon className={small ? "size-2" : "size-2.5"} strokeWidth={2.5} />
+        ) : pin.resolved ? (
+          <CheckIcon className={small ? "size-2" : "size-3"} strokeWidth={3} />
+        ) : (
+          number
+        )}
+      </span>
     </button>
   )
 }
@@ -129,7 +170,7 @@ export function PinPopover({
       style={{
         left: `${x}%`,
         top: `${y}%`,
-        transform: `translate(${left ? "calc(-100% - 20px)" : "20px"}, ${up ? "calc(-100% + 12px)" : "-12px"})`,
+        transform: `translate(${left ? "calc(-100% - 18px)" : "18px"}, ${up ? "calc(-100% - 6px)" : "-34px"})`,
       }}
     >
       <div
