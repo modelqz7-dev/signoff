@@ -1,4 +1,4 @@
-import { adminClient, secretMatches, sendTelegram } from "@/lib/server/notify"
+import { adminClient, secretMatches, sendTelegram, webhookSecret } from "@/lib/server/notify"
 
 /**
  * Telegram bot updates. Connecting works through a deep link from the Notifications panel:
@@ -8,7 +8,7 @@ import { adminClient, secretMatches, sendTelegram } from "@/lib/server/notify"
 type Update = { message?: { chat: { id: number }; text?: string; from?: { language_code?: string } } }
 
 export async function POST(request: Request) {
-  if (!secretMatches(request.headers.get("x-telegram-bot-api-secret-token"), process.env.NOTIFY_WEBHOOK_SECRET)) {
+  if (!secretMatches(request.headers.get("x-telegram-bot-api-secret-token"), webhookSecret())) {
     return Response.json({ error: "unauthorized" }, { status: 401 })
   }
   const update = (await request.json()) as Update

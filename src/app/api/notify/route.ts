@@ -1,4 +1,4 @@
-import { adminClient, notifyShop, secretMatches, type NotifyShop } from "@/lib/server/notify"
+import { adminClient, notifyShop, secretMatches, webhookSecret, type NotifyShop } from "@/lib/server/notify"
 
 /**
  * Called by Supabase Database Webhooks (see supabase/notifications.sql for setup):
@@ -16,7 +16,7 @@ type WebhookPayload = {
 const SHOP_COLUMNS = "id, user_id, name, notify_email, notify_telegram, telegram_chat_id, notify_lang"
 
 export async function POST(request: Request) {
-  if (!secretMatches(request.headers.get("x-webhook-secret"), process.env.NOTIFY_WEBHOOK_SECRET)) {
+  if (!secretMatches(request.headers.get("x-webhook-secret"), webhookSecret())) {
     return Response.json({ error: "unauthorized" }, { status: 401 })
   }
 
