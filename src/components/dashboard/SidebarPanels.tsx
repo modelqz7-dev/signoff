@@ -14,12 +14,13 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
-import { PLANS, effectivePlan, trialDaysLeft } from "@/lib/plans"
+import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
+import { uploadOrderFile } from "@/lib/versions"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
 import { openPanel, type PanelId } from "@/lib/panels"
 import { notifyPlanChanged, usePlanUsage } from "@/lib/use-plan"
-import { BillingCycleToggle, PlanPrice, UsageMeter } from "@/components/plans/PlanBits"
+import { BillingCycleToggle, PlanPrice, UpgradeChip, UsageMeter } from "@/components/plans/PlanBits"
 
 export { OPEN_PANEL_EVENT, openPanel, type PanelId } from "@/lib/panels"
 
@@ -238,6 +239,8 @@ function ProfilePanel() {
         </div>
       </div>
 
+      <PortalLogo shop={shop} onSaved={setShop} />
+
       <Message status={status} />
 
       <div className="divide-y divide-border border-y border-border">
@@ -256,6 +259,78 @@ function ProfilePanel() {
         <Row label={t("Member since")}>{shop ? new Date(shop.created_at).toLocaleDateString(locale) : "—"}</Row>
       </div>
       <Button variant="outline" onPress={signOut}>{t("Sign out")}</Button>
+    </div>
+  )
+}
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024
+
+/** The workshop's logo shown to clients at the top of the portal (Go and Pro). */
+function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) => void }) {
+  const { t } = useT()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const allowed = can(shop, "branding")
+
+  async function save(logoUrl: string | null) {
+    if (!shop) return
+    const { data, error } = await supabase.from("shops").update({ logo_url: logoUrl }).eq("id", shop.id).select().maybeSingle()
+    if (error || !data) throw error ?? new Error(t("Couldn't save the logo"))
+    onSaved(data as Shop)
+  }
+
+  async function onPicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !shop) return
+    setError(null)
+    if (!file.type.startsWith("image/")) { setError(t("Choose an image file")); return }
+    if (file.size > MAX_LOGO_BYTES) { setError(t("Image must be under 2 MB")); return }
+    setBusy(true)
+    try {
+      await save(await uploadOrderFile(shop.id, file))
+    } catch (err) {
+      setError((err as Error)?.message || t("Something went wrong"))
+    }
+    setBusy(false)
+  }
+
+  async function remove() {
+    setBusy(true)
+    setError(null)
+    try { await save(null) } catch (err) { setError((err as Error)?.message || t("Something went wrong")) }
+    setBusy(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="flex items-center gap-2">
+        {t("Portal logo")}
+        {!allowed && <UpgradeChip feature="branding" />}
+      </Label>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted px-2">
+          {shop?.logo_url ? (
+            <img src={shop.logo_url} alt="" className="max-h-8 max-w-full object-contain" />
+          ) : (
+            <span className="text-[11px] text-muted-foreground">{t("No logo")}</span>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || !allowed || busy}>
+          {busy ? t("Uploading...") : shop?.logo_url ? t("Change") : t("Upload")}
+        </Button>
+        {shop?.logo_url && (
+          <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={remove} disabled={busy}>
+            {t("Remove")}
+          </button>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPicked} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Clients see it at the top of the portal and on approval certificates, instead of the Nodly badge.")}
+      </p>
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }

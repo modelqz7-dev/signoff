@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import type { Order } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
-import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { pinsOfVersion, usePinNumbers, usePins, type NewPin, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
@@ -34,7 +34,11 @@ export default function PortalPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const { pins, addPin, setResolved, movePin, deletePin } = usePins(phase === "view" ? orderId : null)
+  const { pins: allPins, addPin: addPinToOrder, setResolved, movePin, deletePin } = usePins(phase === "view" ? orderId : null)
+  // The client always works on the latest version; comments on earlier versions stay with them.
+  const pins = pinsOfVersion(allPins, order?.version)
+  const addPin = (pin: NewPin, author: string) =>
+    addPinToOrder(order?.version !== undefined ? { ...pin, version: order.version } : pin, author)
   // No accounts in the portal: a client can move and delete only comments left under their name.
   const canEdit = (pin: Pin) => pin.author_name === clientName
   const numbers = usePinNumbers(pins)
@@ -137,9 +141,12 @@ export default function PortalPage() {
     if (!order) return
     setActionLoading(true)
 
+    // Record who approved (retention.sql adds approved_by; skip it until then).
+    const patch: Record<string, string> = { status: newStatus }
+    if (newStatus === "approved" && order.approved_at !== undefined) patch.approved_by = clientName
     await supabase
       .from("orders")
-      .update({ status: newStatus })
+      .update(patch)
       .eq("id", order.id)
 
     setActionLoading(false)
@@ -262,7 +269,14 @@ export default function PortalPage() {
             {order.file_url && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">{t("File")}</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    {t("File")}
+                    {(order.version ?? 1) > 1 && (
+                      <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[11px] font-normal text-accent">
+                        {t("version {n}", { n: order.version ?? 1 })}
+                      </span>
+                    )}
+                  </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
                   </p>
@@ -270,6 +284,7 @@ export default function PortalPage() {
                 <CardContent>
                   {isPdf ? (
                     <PDFViewer
+                      key={order.file_url}
                       url={order.file_url}
                       pins={pins}
                       onAddPin={(pin) => addPin(pin, clientName)}

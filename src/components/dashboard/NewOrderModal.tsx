@@ -23,6 +23,7 @@ import { isPlanLimitError, planById, PLANS, type Plan } from "@/lib/plans"
 import { loadPlanUsage, notifyPlanChanged } from "@/lib/use-plan"
 import { openPanel } from "@/lib/panels"
 import { UsageMeter } from "@/components/plans/PlanBits"
+import { uploadOrderFile } from "@/lib/versions"
 
 type NewOrderModalProps = {
   shopId: string
@@ -77,17 +78,12 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
     let fileUrl: string | null = null
 
     if (file) {
-      const ext = file.name.split(".").pop()
-      const path = `${shopId}/${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage
-        .from("order-files")
-        .upload(path, file)
-
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage
-          .from("order-files")
-          .getPublicUrl(path)
-        fileUrl = urlData.publicUrl
+      try {
+        fileUrl = await uploadOrderFile(shopId, file)
+      } catch (e) {
+        setSaving(false)
+        setError((e as Error)?.message || t("Couldn't upload the file"))
+        return
       }
     }
 

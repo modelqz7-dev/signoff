@@ -16,6 +16,19 @@ export type Order = {
   deadline: string | null
   file_url: string | null
   created_at: string
+  // Versions and approval (see supabase/retention.sql); undefined until that script runs.
+  version?: number
+  approved_at?: string | null
+  approved_by?: string | null
+  status_changed_at?: string | null
+}
+
+export type OrderVersion = {
+  id: string
+  order_id: string
+  version: number
+  file_url: string
+  created_at: string
 }
 
 export type Shop = {

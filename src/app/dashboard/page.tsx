@@ -13,6 +13,8 @@ import { CalendarWidget } from "@/components/dashboard/CalendarWidget"
 import { UpcomingOrders } from "@/components/dashboard/UpcomingOrders"
 import { StatusDonut } from "@/components/dashboard/StatusDonut"
 import { QuickOrderCard } from "@/components/dashboard/QuickOrderCard"
+import { GettingStarted } from "@/components/dashboard/GettingStarted"
+import { NewOrderModal } from "@/components/dashboard/NewOrderModal"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
@@ -24,6 +26,7 @@ export default function Dashboard() {
   const [shop, setShop] = useState<Shop | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [newOrderOpen, setNewOrderOpen] = useState(false)
   const { t } = useT()
   const pins = useShopPins(orders.map((o) => o.id))
 
@@ -111,6 +114,8 @@ export default function Dashboard() {
         <div className="flex flex-1 gap-5 overflow-y-auto p-6">
           {/* Center content */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
+            <GettingStarted orders={orders} shop={shop} onNewOrder={() => setNewOrderOpen(true)} />
+
             <KpiRow orders={orders} pins={pins} />
 
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -139,6 +144,13 @@ export default function Dashboard() {
           </aside>
         </div>
       </div>
+
+      <NewOrderModal
+        shopId={shop?.id || ""}
+        open={newOrderOpen}
+        onOpenChange={setNewOrderOpen}
+        onCreated={(order) => setOrders((prev) => [order, ...prev])}
+      />
     </div>
   )
 }

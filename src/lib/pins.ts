@@ -15,9 +15,16 @@ export type Pin = {
   author_name: string
   resolved: boolean
   created_at: string
+  /** File version the comment was left on (supabase/retention.sql); missing means 1. */
+  version?: number
 }
 
-export type NewPin = Pick<Pin, "x" | "y" | "page" | "title" | "description">
+export type NewPin = Pick<Pin, "x" | "y" | "page" | "title" | "description"> & { version?: number }
+
+/** Comments left on one version of the file. */
+export function pinsOfVersion(pins: Pin[], version: number | undefined) {
+  return pins.filter((p) => (p.version ?? 1) === (version ?? 1))
+}
 
 function sortPins(pins: Pin[]) {
   return [...pins].sort((a, b) => a.created_at.localeCompare(b.created_at))

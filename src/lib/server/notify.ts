@@ -48,15 +48,24 @@ export async function sendTelegram(chatId: string, text: string) {
   }
 }
 
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts: { fromName?: string; replyTo?: string } = {},
+) {
   const key = process.env.RESEND_API_KEY
-  const from = process.env.NOTIFY_FROM_EMAIL || "Nodly <onboarding@resend.dev>"
+  let from = process.env.NOTIFY_FROM_EMAIL || "Nodly <onboarding@resend.dev>"
   if (!key) return { ok: false, error: "RESEND_API_KEY is not configured" }
+  if (opts.fromName) {
+    const address = from.match(/<([^>]+)>/)?.[1] ?? from.trim()
+    from = `${opts.fromName.replace(/[<>"\r\n]/g, "")} <${address}>`
+  }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ from, to, subject, html }),
+      body: JSON.stringify({ from, to, subject, html, ...(opts.replyTo ? { reply_to: opts.replyTo } : {}) }),
     })
     return res.ok ? { ok: true } : { ok: false, error: `Resend ${res.status}: ${await res.text()}` }
   } catch (e) {
@@ -136,4 +145,34 @@ export async function notifyShop(shop: NotifyShop, event: NotifyEvent, orderUrl:
     }
   }
   return results
+}
+
+const REMINDER = {
+  en: {
+    subject: (order: string) => `Reminder: “${order}” is waiting for your review`,
+    body: (shop: string, order: string, name: string) =>
+      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your feedback on “${order}”. Open the design, leave comments right on it, or approve it in one click.`,
+    open: "Review the design",
+    footer: (shop: string) => `Sent by Nodly on behalf of ${shop}. Reply to this email to reach them.`,
+  },
+  ru: {
+    subject: (order: string) => `Напоминание: «${order}» ждёт вашего ответа`,
+    body: (shop: string, order: string, name: string) =>
+      `${name ? `Здравствуйте, ${name}!` : "Здравствуйте!"}<br><br>${shop} ждёт вашего ответа по «${order}». Откройте макет, оставьте комментарии прямо на нём или утвердите одной кнопкой.`,
+    open: "Посмотреть макет",
+    footer: (shop: string) => `Письмо отправлено через Nodly от имени «${shop}». Чтобы связаться с ними, просто ответьте на него.`,
+  },
+}
+
+/** Email to a client who hasn't reviewed a design yet. */
+export function renderReminder(lang: Lang, shopName: string, orderTitle: string, clientName: string, portalUrl: string) {
+  const L = REMINDER[lang]
+  const shop = escapeHtml(shopName)
+  const order = escapeHtml(orderTitle)
+  const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f1e1d">
+<p style="margin:0 0 20px">${L.body(shop, order, escapeHtml(clientName))}</p>
+<p style="margin:0 0 24px"><a href="${portalUrl}" style="display:inline-block;background:#1f1e1d;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">${L.open}</a></p>
+<p style="margin:0;font-size:12px;color:#8a8987">${L.footer(shop)}</p>
+</div>`
+  return { subject: L.subject(orderTitle), html }
 }
