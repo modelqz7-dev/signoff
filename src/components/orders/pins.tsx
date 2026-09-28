@@ -228,7 +228,7 @@ export function PinDetails({
     try {
       await onDelete?.()
     } catch (e) {
-      setError((e as Error)?.message || t("Failed to delete"))
+      setError(t((e as Error)?.message || "Failed to delete"))
       setDeleting(false)
       setConfirmDelete(false)
     }

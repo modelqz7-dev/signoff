@@ -248,6 +248,8 @@ export const ru: Record<string, string> = {
   "What should be changed? (optional)": "Что нужно изменить? (необязательно)",
   "Workshop name": "Название мастерской",
   "Your Name *": "Ваше имя *",
+  "You don't have permission to delete this order": "Нет прав на удаление этого заказа. Нужна политика удаления в Supabase.",
+  "Not allowed to delete this comment": "Нет прав на удаление этого комментария. Нужна политика удаления в Supabase.",
   "Your choice is saved in this browser and switches instantly.": "Выбор сохраняется в этом браузере и применяется сразу.",
   "Your password and client access.": "Ваш пароль и доступ клиентов.",
   "Your plan and payments.": "Ваш тариф и оплата.",

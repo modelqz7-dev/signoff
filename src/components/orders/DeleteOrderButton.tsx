@@ -24,7 +24,7 @@ export function DeleteOrderButton({ order, onDeleted }: { order: Order; onDelete
       setOpen(false)
       onDeleted()
     } catch (e) {
-      setError((e as Error)?.message || t("Failed to delete order"))
+      setError(t((e as Error)?.message || "Failed to delete order"))
     }
     setDeleting(false)
   }
