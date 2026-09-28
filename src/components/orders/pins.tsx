@@ -116,18 +116,30 @@ export function PinPopover({
   y: number
   children: React.ReactNode
 }) {
+  const left = x > 60
+  const up = y > 60
+  // The outer box handles placement, the inner one the pop-in animation (both use transforms).
   return (
     <div
       data-pin-ui
       onClick={(e) => e.stopPropagation()}
-      className="absolute z-20 w-72 rounded-xl bg-popover p-3 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/10"
+      className="absolute z-20 w-72"
       style={{
         left: `${x}%`,
         top: `${y}%`,
-        transform: `translate(${x > 60 ? "calc(-100% - 20px)" : "20px"}, ${y > 60 ? "calc(-100% + 12px)" : "-12px"})`,
+        transform: `translate(${left ? "calc(-100% - 20px)" : "20px"}, ${up ? "calc(-100% + 12px)" : "-12px"})`,
       }}
     >
-      {children}
+      <div
+        className={cn(
+          "rounded-xl bg-popover p-3 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/10",
+          "animate-in fade-in-0 zoom-in-90 duration-200 ease-out",
+          left ? "slide-in-from-right-2" : "slide-in-from-left-2",
+          left ? (up ? "origin-bottom-right" : "origin-top-right") : (up ? "origin-bottom-left" : "origin-top-left")
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }

@@ -401,7 +401,7 @@ export function PDFViewer({
         isOpen={open}
         onOpenChange={setOpen}
         showCloseButton={false}
-        className="flex h-[94vh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw] [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
+        className="flex h-[94vh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
         <DialogTitle className="sr-only">Document preview</DialogTitle>
 
