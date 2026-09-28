@@ -243,6 +243,8 @@ export default function OrderPage() {
                           url={order.file_url}
                           pins={pins}
                           onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                          onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
+                          onDeletePin={(pin) => deletePin(pin.id)}
                           focusPin={focusPin}
                         />
                       ) : (
