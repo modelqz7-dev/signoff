@@ -5,12 +5,15 @@ import { today, getLocalTimeZone } from "@internationalized/date"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import type { Order } from "./types"
+import { useT } from "@/lib/i18n"
+import { I18nProvider } from "react-aria-components"
 
 type CalendarWidgetProps = {
   orders: Order[]
 }
 
 export function CalendarWidget({ orders }: CalendarWidgetProps) {
+  const { locale } = useT()
   const todayDate = today(getLocalTimeZone())
 
   const orderDates = useMemo(() => {
@@ -26,6 +29,7 @@ export function CalendarWidget({ orders }: CalendarWidgetProps) {
   return (
     <Card size="sm">
       <CardContent className="p-1">
+        <I18nProvider locale={locale}>
         <Calendar
           captionLayout="dropdown"
           defaultValue={todayDate}
@@ -45,6 +49,7 @@ export function CalendarWidget({ orders }: CalendarWidgetProps) {
             )
           }}
         />
+        </I18nProvider>
       </CardContent>
     </Card>
   )

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, CartesianGrid } from "recharts"
 import type { Order } from "./types"
+import { useT } from "@/lib/i18n"
 
 const chartConfig = {
   thisWeek: {
@@ -30,12 +31,19 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+const DAY_LABELS_RU = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]
 
 type OrderActivityChartProps = {
   orders: Order[]
 }
 
 export function OrderActivityChart({ orders }: OrderActivityChartProps) {
+  const { t, lang } = useT()
+  const days = lang === "ru" ? DAY_LABELS_RU : DAY_LABELS
+  const config = {
+    thisWeek: { ...chartConfig.thisWeek, label: t("This week") },
+    lastWeek: { ...chartConfig.lastWeek, label: t("Last week") },
+  } satisfies ChartConfig
   const { chartData, percentChange } = useMemo(() => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -77,7 +85,7 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
       }).length
 
       return {
-        day: DAY_LABELS[(1 + i) % 7], // Monday = index 0
+        day: days[(1 + i) % 7], // Monday = index 0
         thisWeek: thisWeekCount,
         lastWeek: lastWeekCount,
       }
@@ -95,7 +103,7 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
           )
 
     return { chartData: data, percentChange: pct }
-  }, [orders])
+  }, [orders, days])
 
   const isUp = percentChange >= 0
 
@@ -103,22 +111,22 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
     <Card className="h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <CardTitle>Order Activity</CardTitle>
-          <CardDescription>New orders this week vs last week</CardDescription>
+          <CardTitle>{t("Order Activity")}</CardTitle>
+          <CardDescription>{t("New orders this week vs last week")}</CardDescription>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="size-2 rounded-[2px]" style={{ backgroundColor: "var(--chart-1)" }} />
-            This week
+            {t("This week")}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="size-2 rounded-[2px]" style={{ backgroundColor: "var(--chart-3)" }} />
-            Last week
+            {t("Last week")}
           </span>
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[200px] w-full">
+        <ChartContainer config={config} className="h-[200px] w-full">
           <BarChart data={chartData} barGap={2}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -181,7 +189,7 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
           )}
           {Math.abs(percentChange)}%
         </span>
-        <span className="text-muted-foreground">vs last week</span>
+        <span className="text-muted-foreground">{t("vs last week")}</span>
       </CardFooter>
     </Card>
   )

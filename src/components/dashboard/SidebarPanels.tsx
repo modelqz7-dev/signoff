@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, planById } from "@/lib/plans"
+import { useT } from "@/lib/i18n"
 
 export type PanelId =
   | "profile" | "billing" | "notifications" | "security" | "appearance"
@@ -49,13 +50,14 @@ export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClos
   const [shown, setShown] = useState<PanelId | null>(panel)
   if (panel && panel !== shown) setShown(panel)
   const meta = shown ? TITLES[shown] : null
+  const { t } = useT()
 
   return (
     <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="sm:max-w-md">
       {meta && (
         <DialogHeader>
-          <DialogTitle>{meta.title}</DialogTitle>
-          <DialogDescription>{meta.description}</DialogDescription>
+          <DialogTitle>{t(meta.title)}</DialogTitle>
+          <DialogDescription>{t(meta.description)}</DialogDescription>
         </DialogHeader>
       )}
       {shown === "profile" && <ProfilePanel />}
@@ -128,6 +130,7 @@ function ProfilePanel() {
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
   const value = name ?? shop?.name ?? ""
   const plan = planById(shop?.plan)
+  const { t, locale } = useT()
   const initials = (shop?.name || email).split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
 
   async function run(task: () => Promise<void>, okText?: string) {
@@ -136,7 +139,7 @@ function ProfilePanel() {
       await task()
       if (okText) setStatus({ ok: true, text: okText })
     } catch (e) {
-      setStatus({ ok: false, text: (e as Error)?.message || "Something went wrong" })
+      setStatus({ ok: false, text: (e as Error)?.message || t("Something went wrong") })
     }
   }
 
@@ -147,10 +150,10 @@ function ProfilePanel() {
     await run(async () => {
       const { data, error } = await supabase
         .from("shops").update({ name: value.trim() }).eq("id", shop.id).select().maybeSingle()
-      if (error || !data) throw error ?? new Error("Couldn't save the name")
+      if (error || !data) throw error ?? new Error(t("Couldn't save the name"))
       setShop(data as Shop)
       setName(null)
-    }, "Saved. Reload to see it in the header.")
+    }, t("Saved. Reload to see it in the header."))
     setSaving(false)
   }
 
@@ -168,7 +171,7 @@ function ProfilePanel() {
     router.replace("/login")
   }
 
-  if (loading || !profile) return <p className="text-muted-foreground">Loading...</p>
+  if (loading || !profile) return <p className="text-muted-foreground">{t("Loading...")}</p>
 
   return (
     <div className="flex flex-col gap-4">
@@ -178,12 +181,12 @@ function ProfilePanel() {
           <AvatarFallback className="text-sm">{initials || "S"}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{shop?.name || "Your workshop"}</p>
-          <p className="truncate text-xs text-muted-foreground">{profile.activity || "Add your activity below"}</p>
+          <p className="truncate font-medium">{shop?.name || t("Your workshop")}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile.activity ? t(profile.activity) : t("Add your activity below")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || uploading}>
-            {uploading ? "Uploading..." : "Change photo"}
+            {uploading ? t("Uploading...") : t("Change photo")}
           </Button>
           {profile.avatarUrl && (
             <button
@@ -191,7 +194,7 @@ function ProfilePanel() {
               className="text-[11px] text-muted-foreground hover:text-foreground"
               onClick={() => run(() => updateProfile({ avatar_url: "" }))}
             >
-              Remove
+              {t("Remove")}
             </button>
           )}
         </div>
@@ -199,7 +202,7 @@ function ProfilePanel() {
       </div>
 
       <form onSubmit={saveName} className="flex flex-col gap-2">
-        <Label htmlFor="panel-shop-name">Workshop name</Label>
+        <Label htmlFor="panel-shop-name">{t("Workshop name")}</Label>
         <div className="flex gap-2">
           <Input
             id="panel-shop-name"
@@ -208,13 +211,13 @@ function ProfilePanel() {
             disabled={!shop}
           />
           <Button type="submit" isDisabled={!shop || saving || !value.trim() || value.trim() === shop.name}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("Saving...") : t("Save")}
           </Button>
         </div>
       </form>
 
       <div className="flex flex-col gap-2">
-        <Label>What do you do?</Label>
+        <Label>{t("What do you do?")}</Label>
         <div className="flex flex-wrap gap-1.5">
           {ACTIVITIES.map((a) => {
             const active = profile.activity === a
@@ -231,7 +234,7 @@ function ProfilePanel() {
                     : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                {a}
+                {t(a)}
               </button>
             )
           })}
@@ -241,18 +244,18 @@ function ProfilePanel() {
       <Message status={status} />
 
       <div className="divide-y divide-border border-y border-border">
-        <Row label="Email">{email || "—"}</Row>
-        <Row label="Plan">
+        <Row label={t("Email")}>{email || "—"}</Row>
+        <Row label={t("Plan")}>
           <span className="flex items-center justify-end gap-2">
             {plan.name}
             <button type="button" className="text-xs text-accent hover:underline" onClick={() => openPanel("billing")}>
-              Change
+              {t("Change")}
             </button>
           </span>
         </Row>
-        <Row label="Member since">{shop ? new Date(shop.created_at).toLocaleDateString() : "—"}</Row>
+        <Row label={t("Member since")}>{shop ? new Date(shop.created_at).toLocaleDateString(locale) : "—"}</Row>
       </div>
-      <Button variant="outline" onPress={signOut}>Sign out</Button>
+      <Button variant="outline" onPress={signOut}>{t("Sign out")}</Button>
     </div>
   )
 }
@@ -262,13 +265,14 @@ function BillingPanel() {
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const current = planById(shop?.plan)
+  const { t } = useT()
 
   async function choose(id: string) {
     if (!shop) return
     setSwitching(id)
     setError(null)
     const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", shop.id).select().maybeSingle()
-    if (error || !data) setError(error?.message || "Couldn't change the plan")
+    if (error || !data) setError(error?.message || t("Couldn't change the plan"))
     else {
       setShop(data as Shop)
       // The pressed "Choose" button disappears; keep focus inside the dialog so Esc still works.
@@ -277,7 +281,7 @@ function BillingPanel() {
     setSwitching(null)
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading...</p>
+  if (loading) return <p className="text-muted-foreground">{t("Loading...")}</p>
 
   return (
     <div className="flex flex-col gap-3">
@@ -297,22 +301,22 @@ function BillingPanel() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <p className="font-medium">{plan.name}</p>
-                  <p className="text-xs text-muted-foreground">{plan.price}</p>
+                  <p className="text-xs text-muted-foreground">{t(plan.price)}</p>
                 </div>
                 <ul className="mt-1 flex flex-col gap-0.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CheckIcon className="size-3 shrink-0 text-accent" />
-                      {f}
+                      {t(f)}
                     </li>
                   ))}
                 </ul>
               </div>
               {isCurrent ? (
-                <span className="rounded-md bg-accent/20 px-2 py-0.5 text-xs text-foreground">Current</span>
+                <span className="rounded-md bg-accent/20 px-2 py-0.5 text-xs text-foreground">{t("Current")}</span>
               ) : (
                 <Button size="sm" variant="outline" onPress={() => choose(plan.id)} isDisabled={!shop || !!switching}>
-                  {switching === plan.id ? "Switching..." : "Choose"}
+                  {switching === plan.id ? t("Switching...") : t("Choose")}
                 </Button>
               )}
             </div>
@@ -320,28 +324,27 @@ function BillingPanel() {
         })}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Note>No charges during early access: you can switch plans freely. Billing will be announced before any payment.</Note>
+      <Note>{t("No charges during early access: you can switch plans freely. Billing will be announced before any payment.")}</Note>
     </div>
   )
 }
 
 function NotificationsPanel() {
+  const { t } = useT()
   return (
     <div className="flex flex-col gap-3">
       <div className="divide-y divide-border border-y border-border">
-        <Row label="Live updates on the order page"><span className="text-chart-4">On</span></Row>
-        <Row label="Email notifications"><span className="text-muted-foreground">Coming soon</span></Row>
-        <Row label="Telegram notifications"><span className="text-muted-foreground">Coming soon</span></Row>
+        <Row label={t("Live updates on the order page")}><span className="text-chart-4">{t("On")}</span></Row>
+        <Row label={t("Email notifications")}><span className="text-muted-foreground">{t("Coming soon")}</span></Row>
+        <Row label={t("Telegram notifications")}><span className="text-muted-foreground">{t("Coming soon")}</span></Row>
       </div>
-      <Note>
-        New client comments, moved pins and status changes appear on the order page instantly, with no
-        reload needed.
-      </Note>
+      <Note>{t("New client comments, moved pins and status changes appear on the order page instantly, with no reload needed.")}</Note>
     </div>
   )
 }
 
 function SecurityPanel() {
+  const { t } = useT()
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [saving, setSaving] = useState(false)
@@ -350,15 +353,15 @@ function SecurityPanel() {
   async function change(e: React.FormEvent) {
     e.preventDefault()
     setStatus(null)
-    if (password.length < 8) return setStatus({ ok: false, text: "Use at least 8 characters" })
-    if (password !== confirm) return setStatus({ ok: false, text: "Passwords don't match" })
+    if (password.length < 8) return setStatus({ ok: false, text: t("Use at least 8 characters") })
+    if (password !== confirm) return setStatus({ ok: false, text: t("Passwords don't match") })
     setSaving(true)
     const { error } = await supabase.auth.updateUser({ password })
     if (error) setStatus({ ok: false, text: error.message })
     else {
       setPassword("")
       setConfirm("")
-      setStatus({ ok: true, text: "Password updated" })
+      setStatus({ ok: true, text: t("Password updated") })
     }
     setSaving(false)
   }
@@ -366,7 +369,7 @@ function SecurityPanel() {
   return (
     <div className="flex flex-col gap-4">
       <form onSubmit={change} className="flex flex-col gap-2">
-        <Label htmlFor="panel-new-password">New password</Label>
+        <Label htmlFor="panel-new-password">{t("New password")}</Label>
         <Input
           id="panel-new-password"
           type="password"
@@ -374,7 +377,7 @@ function SecurityPanel() {
           value={password}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
         />
-        <Label htmlFor="panel-confirm-password" className="mt-1">Confirm password</Label>
+        <Label htmlFor="panel-confirm-password" className="mt-1">{t("Confirm password")}</Label>
         <Input
           id="panel-confirm-password"
           type="password"
@@ -385,39 +388,38 @@ function SecurityPanel() {
         <div className="mt-1 flex items-center justify-between gap-3">
           <Message status={status} />
           <Button type="submit" variant="outline" className="ml-auto" isDisabled={saving || !password || !confirm}>
-            {saving ? "Updating..." : "Change password"}
+            {saving ? t("Updating...") : t("Change password")}
           </Button>
         </div>
       </form>
-      <Note>
-        Client portal links are protected per order: set an access password on each order page before
-        sharing the link.
-      </Note>
+      <Note>{t("Client portal links are protected per order: set an access password on each order page before sharing the link.")}</Note>
     </div>
   )
 }
 
 function AppearancePanel() {
+  const { t } = useT()
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-lg border border-ring p-3">
           <div className="mb-2 h-12 rounded-md bg-background ring-1 ring-border" />
-          <p className="font-medium">Dark</p>
-          <p className="text-xs text-muted-foreground">Active</p>
+          <p className="font-medium">{t("Dark")}</p>
+          <p className="text-xs text-muted-foreground">{t("Active")}</p>
         </div>
         <div className="rounded-lg border border-border p-3 opacity-50">
           <div className="mb-2 h-12 rounded-md bg-white" />
-          <p className="font-medium">Light</p>
-          <p className="text-xs text-muted-foreground">Coming soon</p>
+          <p className="font-medium">{t("Light")}</p>
+          <p className="text-xs text-muted-foreground">{t("Coming soon")}</p>
         </div>
       </div>
-      <Note>The client portal uses the same dark theme, so drawings and photos keep good contrast.</Note>
+      <Note>{t("The client portal uses the same dark theme, so drawings and photos keep good contrast.")}</Note>
     </div>
   )
 }
 
 function HelpPanel() {
+  const { t } = useT()
   const steps = [
     ["Create an order", "Orders → New Order. Add the client and deadline."],
     ["Upload the file", "Attach the PDF or image on the order page."],
@@ -433,8 +435,8 @@ function HelpPanel() {
             {i + 1}
           </span>
           <div>
-            <p className="font-medium">{title}</p>
-            <p className="text-xs text-muted-foreground">{text}</p>
+            <p className="font-medium">{t(title)}</p>
+            <p className="text-xs text-muted-foreground">{t(text)}</p>
           </div>
         </li>
       ))}
@@ -443,13 +445,14 @@ function HelpPanel() {
 }
 
 function ContactPanel() {
+  const { t } = useT()
   const hasContacts = SUPPORT.email || SUPPORT.telegram
   return (
     <div className="flex flex-col gap-3">
       {hasContacts ? (
         <div className="divide-y divide-border border-y border-border">
           {SUPPORT.email && (
-            <Row label="Email">
+            <Row label={t("Email")}>
               <a href={`mailto:${SUPPORT.email}`} className="text-accent hover:underline">{SUPPORT.email}</a>
             </Row>
           )}
@@ -467,14 +470,15 @@ function ContactPanel() {
           )}
         </div>
       ) : (
-        <Note>Contact details will be added here soon.</Note>
+        <Note>{t("Contact details will be added here soon.")}</Note>
       )}
-      <p className="text-xs text-muted-foreground">We usually reply within one working day.</p>
+      <p className="text-xs text-muted-foreground">{t("We usually reply within one working day.")}</p>
     </div>
   )
 }
 
 function DocsPanel() {
+  const { t } = useT()
   const statusHelp: Record<OrderStatus, string> = {
     await: "Waiting for the client to review.",
     changes: "The client asked for changes.",
@@ -490,32 +494,31 @@ function DocsPanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-muted-foreground">Order statuses</p>
+        <p className="text-xs font-medium text-muted-foreground">{t("Order statuses")}</p>
         {(Object.keys(STATUS_MAP) as OrderStatus[]).map((key) => (
           <div key={key} className="flex items-center gap-3">
             <span
               className="w-24 shrink-0 rounded-md px-2 py-0.5 text-center text-xs"
               style={{ backgroundColor: STATUS_MAP[key].bg, color: STATUS_MAP[key].color }}
             >
-              {STATUS_MAP[key].label}
+              {t(STATUS_MAP[key].label)}
             </span>
-            <span className="text-xs text-muted-foreground">{statusHelp[key]}</span>
+            <span className="text-xs text-muted-foreground">{t(statusHelp[key])}</span>
           </div>
         ))}
       </div>
       <div className="flex flex-col gap-1">
-        <p className="text-xs font-medium text-muted-foreground">Comments</p>
+        <p className="text-xs font-medium text-muted-foreground">{t("Comments")}</p>
         <p className="text-xs text-muted-foreground">
-          Clients click anywhere on a page to pin a comment, and can drag or delete their own pins. Pins keep
-          their exact spot at any zoom. You can resolve them from the order page.
+          {t("Clients click anywhere on a page to pin a comment, and can drag or delete their own pins. Pins keep their exact spot at any zoom. You can resolve them from the order page.")}
         </p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-medium text-muted-foreground">File viewer shortcuts</p>
+        <p className="text-xs font-medium text-muted-foreground">{t("File viewer shortcuts")}</p>
         {shortcuts.map(([keys, action]) => (
           <div key={keys} className="flex items-center gap-3 text-xs">
             <kbd className="w-12 shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-center font-mono">{keys}</kbd>
-            <span className="text-muted-foreground">{action}</span>
+            <span className="text-muted-foreground">{t(action)}</span>
           </div>
         ))}
       </div>
@@ -526,6 +529,7 @@ function DocsPanel() {
 type Check = { name: string; state: "checking" | "ok" | "down"; detail?: string }
 
 function StatusPanel() {
+  const { t } = useT()
   const [checks, setChecks] = useState<Check[]>([
     { name: "Database", state: "checking" },
     { name: "Authentication", state: "checking" },
@@ -574,9 +578,9 @@ function StatusPanel() {
     <div className="flex flex-col gap-3">
       <div className="divide-y divide-border border-y border-border">
         {checks.map((c) => (
-          <Row key={c.name} label={c.name}>
+          <Row key={c.name} label={t(c.name)}>
             <span className="flex items-center justify-end gap-2">
-              <span className="text-xs text-muted-foreground">{c.detail}</span>
+              <span className="text-xs text-muted-foreground">{c.detail ? t(c.detail) : null}</span>
               <span
                 className={cn(
                   "size-2 rounded-full",
@@ -590,7 +594,7 @@ function StatusPanel() {
         ))}
       </div>
       <Note>
-        {allOk ? "All systems operational." : anyDown ? "Some services are unavailable right now." : "Checking..."}
+        {allOk ? t("All systems operational.") : anyDown ? t("Some services are unavailable right now.") : t("Checking...")}
       </Note>
     </div>
   )

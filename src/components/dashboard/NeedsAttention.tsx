@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useNow } from "@/lib/use-now"
 import type { Pin } from "@/lib/pins"
 import { STATUS_MAP, type Order } from "./types"
+import { useT } from "@/lib/i18n"
 
 const DAY = 1000 * 60 * 60 * 24
 
@@ -15,6 +16,7 @@ type Item = { order: Order; overdueDays: number; changes: boolean; comments: num
 /** Orders that wait on the shop: overdue, changes requested, or open client comments. */
 export function NeedsAttention({ orders, pins }: { orders: Order[]; pins: Pin[] }) {
   const now = useNow()
+  const { t } = useT()
 
   const items = useMemo(() => {
     const today = new Date(now)
@@ -39,14 +41,14 @@ export function NeedsAttention({ orders, pins }: { orders: Order[]; pins: Pin[] 
   return (
     <Card size="sm" className="px-1">
       <CardHeader>
-        <CardTitle className="text-sm">Needs attention</CardTitle>
-        <CardDescription className="text-xs">Orders waiting on you</CardDescription>
+        <CardTitle className="text-sm">{t("Needs attention")}</CardTitle>
+        <CardDescription className="text-xs">{t("Orders waiting on you")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-0.5 px-1.5">
         {items.length === 0 && (
           <div className="flex items-center gap-2 px-2 py-6 text-xs text-muted-foreground">
             <CheckCircle2Icon className="size-4 text-chart-4" />
-            All caught up — nothing needs your attention.
+            {t("All caught up — nothing needs your attention.")}
           </div>
         )}
         {items.map(({ order, overdueDays, changes, comments }) => (
@@ -62,7 +64,7 @@ export function NeedsAttention({ orders, pins }: { orders: Order[]; pins: Pin[] 
             <div className="flex shrink-0 items-center gap-1.5">
               {overdueDays > 0 && (
                 <span className="rounded-md bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">
-                  Overdue {overdueDays}d
+                  {t("Overdue {n}d", { n: overdueDays })}
                 </span>
               )}
               {changes && (
@@ -70,7 +72,7 @@ export function NeedsAttention({ orders, pins }: { orders: Order[]; pins: Pin[] 
                   className="rounded-md px-1.5 py-0.5 text-[10px]"
                   style={{ backgroundColor: STATUS_MAP.changes.bg, color: STATUS_MAP.changes.color }}
                 >
-                  Changes
+                  {t(STATUS_MAP.changes.label)}
                 </span>
               )}
               {comments > 0 && (

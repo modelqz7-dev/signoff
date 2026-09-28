@@ -15,6 +15,8 @@ import type { Order } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
 import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export default function PortalPage() {
   const params = useParams()
@@ -24,6 +26,7 @@ export default function PortalPage() {
   const [password, setPassword] = useState("")
   const [clientName, setClientName] = useState("")
   const [authError, setAuthError] = useState("")
+  const { t, locale } = useT()
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
@@ -47,7 +50,7 @@ export default function PortalPage() {
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault()
-    if (!clientName.trim()) { setAuthError("Enter your name"); return }
+    if (!clientName.trim()) { setAuthError(t("Enter your name")); return }
     setLoading(true)
     setAuthError("")
 
@@ -55,7 +58,7 @@ export default function PortalPage() {
       .from("orders").select("*").eq("id", orderId).single()
 
     if (error || !orderData) {
-      setAuthError("Order not found")
+      setAuthError(t("Order not found"))
       setLoading(false)
       return
     }
@@ -63,7 +66,7 @@ export default function PortalPage() {
     const ord = orderData as Order
 
     if (ord.password && ord.password !== password) {
-      setAuthError("Incorrect password")
+      setAuthError(t("Incorrect password"))
       setLoading(false)
       return
     }
@@ -141,7 +144,7 @@ export default function PortalPage() {
 
   function formatDate(dateStr: string | null): string {
     if (!dateStr) return "—"
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric", month: "long", day: "numeric",
     })
   }
@@ -152,36 +155,37 @@ export default function PortalPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#171615] p-4">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-base">Order Portal</CardTitle>
+            <LanguageSwitcher className="mx-auto mb-2" />
+            <CardTitle className="text-base">{t("Order Portal")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Enter your details to view this order.
+              {t("Enter your details to view this order.")}
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAuth} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="portal-name">Your Name *</Label>
+                <Label htmlFor="portal-name">{t("Your Name *")}</Label>
                 <Input
                   id="portal-name"
-                  placeholder="John Doe"
+                  placeholder={t("John Doe")}
                   value={clientName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientName(e.target.value)}
                   required
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="portal-pass">Password</Label>
+                <Label htmlFor="portal-pass">{t("Password")}</Label>
                 <Input
                   id="portal-pass"
                   type="password"
-                  placeholder="Enter access password"
+                  placeholder={t("Enter access password")}
                   value={password}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 />
               </div>
               {authError && <p className="text-sm text-destructive">{authError}</p>}
               <Button type="submit" isDisabled={loading}>
-                {loading ? "Loading..." : "View Order"}
+                {loading ? t("Loading...") : t("View Order")}
               </Button>
             </form>
           </CardContent>
@@ -206,12 +210,15 @@ export default function PortalPage() {
             className="border-0 text-[11px] px-2 py-0.5"
             style={{ backgroundColor: status.bg, color: status.color }}
           >
-            {status.label}
+            {t(status.label)}
           </Badge>
         </div>
-        <span className="text-xs text-muted-foreground">
-          Viewing as <span className="text-foreground font-medium">{clientName}</span>
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {t("Viewing as")} <span className="text-foreground font-medium">{clientName}</span>
+          </span>
+          <LanguageSwitcher />
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -221,17 +228,17 @@ export default function PortalPage() {
 
             {/* Order info */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <InfoBlock label="Client" value={order.client_name || "—"} />
-              <InfoBlock label="Price" value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
-              <InfoBlock label="Deadline" value={formatDate(order.deadline)} />
-              <InfoBlock label="Created" value={formatDate(order.created_at)} />
+              <InfoBlock label={t("Client")} value={order.client_name || "—"} />
+              <InfoBlock label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
+              <InfoBlock label={t("Deadline")} value={formatDate(order.deadline)} />
+              <InfoBlock label={t("Created")} value={formatDate(order.created_at)} />
             </div>
 
             {/* Notes */}
             {order.notes && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Notes</CardTitle>
+                  <CardTitle className="text-sm">{t("Notes")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.notes}</p>
@@ -243,9 +250,9 @@ export default function PortalPage() {
             {order.file_url && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">File</CardTitle>
+                  <CardTitle className="text-sm">{t("File")}</CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    {isPdf ? "Open the file and click anywhere on a page to leave a comment." : "Click on the file to leave a comment."}
+                    {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -295,24 +302,24 @@ export default function PortalPage() {
                   {/* New pin form */}
                   {pendingPin && (
                     <div className="mt-4 rounded-lg border border-border/40 p-4 flex flex-col gap-3">
-                      <p className="text-xs font-medium text-foreground">New Comment</p>
+                      <p className="text-xs font-medium text-foreground">{t("New comment")}</p>
                       <Input
-                        placeholder="Title *"
+                        placeholder={t("Title *")}
                         value={pinTitle}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPinTitle(e.target.value)}
                         className="text-sm"
                       />
                       <Textarea
-                        placeholder="Description (optional)"
+                        placeholder={t("Description (optional)")}
                         value={pinDesc}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPinDesc(e.target.value)}
                         rows={2}
                         className="text-sm"
                       />
                       <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onPress={() => setPendingPin(null)}>Cancel</Button>
+                        <Button variant="outline" size="sm" onPress={() => setPendingPin(null)}>{t("Cancel")}</Button>
                         <Button size="sm" onPress={handleSavePin} isDisabled={savingPin || !pinTitle.trim()}>
-                          {savingPin ? "Saving..." : "Add Pin"}
+                          {savingPin ? t("Saving...") : t("Add comment")}
                         </Button>
                       </div>
                     </div>
@@ -338,7 +345,7 @@ export default function PortalPage() {
             {!order.file_url && (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <p className="text-sm text-muted-foreground">No file uploaded yet.</p>
+                  <p className="text-sm text-muted-foreground">{t("No file uploaded yet.")}</p>
                 </CardContent>
               </Card>
             )}
@@ -355,7 +362,7 @@ export default function PortalPage() {
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 1.5l3.5 3.5L5 14.5H1.5V11z" />
                   </svg>
-                  Request Changes
+                  {t("Request Changes")}
                 </span>
               </Button>
               <Button
@@ -367,7 +374,7 @@ export default function PortalPage() {
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 8.5l3 3 7-7" />
                   </svg>
-                  Approve
+                  {t("Approve")}
                 </span>
               </Button>
             </div>
@@ -378,7 +385,7 @@ export default function PortalPage() {
         {/* Right sidebar — pins list */}
         <aside className="hidden w-[280px] shrink-0 border-l border-border/40 lg:flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-border/40">
-            <h2 className="text-sm font-medium text-foreground">Comments ({pins.filter((p) => !p.resolved).length})</h2>
+            <h2 className="text-sm font-medium text-foreground">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</h2>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             <PinList

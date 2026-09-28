@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
 import { PinComposer, PinDetails, PinList, PinMarker, PinPopover } from "@/components/orders/pins"
 import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { useT } from "@/lib/i18n"
 
 type PDFViewerProps = {
   url: string
@@ -81,6 +82,7 @@ export function PDFViewer({
   const scrollToPinRef = useRef<string | null>(null)
 
   const numbers = usePinNumbers(pins)
+  const { t } = useT()
   const pagePins = pins.filter((p) => p.page === page)
   const selectedPin = pagePins.find((p) => p.id === selectedId) || null
 
@@ -356,7 +358,7 @@ export function PDFViewer({
   if (error) {
     return (
       <div className={`flex items-center justify-center py-12 ${className || ""}`}>
-        <p className="text-sm text-destructive">{error}</p>
+        <p className="text-sm text-destructive">{t(error)}</p>
       </div>
     )
   }
@@ -364,7 +366,7 @@ export function PDFViewer({
   if (!totalPages) {
     return (
       <div className={`flex items-center justify-center py-12 ${className || ""}`}>
-        <p className="text-sm text-muted-foreground">Loading PDF...</p>
+        <p className="text-sm text-muted-foreground">{t("Loading PDF...")}</p>
       </div>
     )
   }
@@ -386,7 +388,7 @@ export function PDFViewer({
         </div>
         {totalPages > 1 && (
           <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded">
-            {totalPages} pages
+            {t("{n} pages", { n: totalPages })}
           </div>
         )}
         {pins.some((p) => !p.resolved) && (
@@ -403,34 +405,34 @@ export function PDFViewer({
         showCloseButton={false}
         className="flex h-[94vh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
-        <DialogTitle className="sr-only">Document preview</DialogTitle>
+        <DialogTitle className="sr-only">{t("Document preview")}</DialogTitle>
 
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1.5">
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon-sm" aria-label="Previous page" onPress={() => goToPage(page - 1)} isDisabled={page <= 1}>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Previous page")} onPress={() => goToPage(page - 1)} isDisabled={page <= 1}>
               <ChevronLeftIcon />
             </Button>
             <span className="min-w-14 text-center text-xs tabular-nums text-muted-foreground">
               {page} / {totalPages}
             </span>
-            <Button variant="ghost" size="icon-sm" aria-label="Next page" onPress={() => goToPage(page + 1)} isDisabled={page >= totalPages}>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Next page")} onPress={() => goToPage(page + 1)} isDisabled={page >= totalPages}>
               <ChevronRightIcon />
             </Button>
           </div>
 
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon-sm" aria-label="Zoom out" onPress={() => zoomTo(scale / 1.25)} isDisabled={scale <= MIN_SCALE}>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom out")} onPress={() => zoomTo(scale / 1.25)} isDisabled={scale <= MIN_SCALE}>
               <MinusIcon />
             </Button>
-            <Button variant="ghost" size="sm" className="min-w-14 tabular-nums text-muted-foreground" aria-label="Fit page" onPress={() => zoomTo(1)}>
+            <Button variant="ghost" size="sm" className="min-w-14 tabular-nums text-muted-foreground" aria-label={t("Fit page")} onPress={() => zoomTo(1)}>
               {Math.round(scale * 100)}%
             </Button>
-            <Button variant="ghost" size="icon-sm" aria-label="Zoom in" onPress={() => zoomTo(scale * 1.25)} isDisabled={scale >= MAX_SCALE}>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom in")} onPress={() => zoomTo(scale * 1.25)} isDisabled={scale >= MAX_SCALE}>
               <PlusIcon />
             </Button>
           </div>
 
-          <Button variant="ghost" size="icon-sm" aria-label="Close" slot="close">
+          <Button variant="ghost" size="icon-sm" aria-label={t("Close")} slot="close">
             <XIcon />
           </Button>
         </div>
@@ -490,8 +492,8 @@ export function PDFViewer({
 
           <aside className="hidden w-72 shrink-0 flex-col border-l border-border md:flex">
             <div className="border-b border-border px-4 py-3">
-              <p className="text-sm font-medium">Comments ({pins.filter((p) => !p.resolved).length})</p>
-              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">Click on the page to add one, drag a pin to move it.</p>}
+              <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
+              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />
