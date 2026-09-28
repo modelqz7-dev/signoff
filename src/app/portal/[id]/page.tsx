@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import type { Order } from "@/components/dashboard/types"
-import { PinList, PinMarker } from "@/components/orders/pins"
+import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
 import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
 
@@ -28,7 +28,9 @@ export default function PortalPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const { pins, addPin, setResolved } = usePins(phase === "view" ? orderId : null)
+  const { pins, addPin, setResolved, movePin, deletePin } = usePins(phase === "view" ? orderId : null)
+  // No accounts in the portal: a client can move and delete only comments left under their name.
+  const canEdit = (pin: Pin) => pin.author_name === clientName
   const numbers = usePinNumbers(pins)
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
   const isPdf = isPdfUrl(order?.file_url)
@@ -253,6 +255,9 @@ export default function PortalPage() {
                       pins={pins}
                       onAddPin={(pin) => addPin(pin, clientName)}
                       onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                      onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
+                      onDeletePin={(pin) => deletePin(pin.id)}
+                      canEdit={canEdit}
                       focusPin={focusPin}
                     />
                   ) : (
@@ -273,6 +278,7 @@ export default function PortalPage() {
                           number={numbers.get(pin.id) ?? ""}
                           selected={pin.id === selectedPinId}
                           onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
+                          onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
                         />
                       ))}
                       {pendingPin && (
@@ -314,26 +320,14 @@ export default function PortalPage() {
 
                   {/* Selected pin detail */}
                   {selectedPin && !pendingPin && !isPdf && (
-                    <div className="mt-4 rounded-lg border border-border/40 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{selectedPin.title}</p>
-                          {selectedPin.description && (
-                            <p className="text-xs text-muted-foreground mt-1">{selectedPin.description}</p>
-                          )}
-                          <p className="text-[11px] text-muted-foreground/60 mt-2">
-                            by {selectedPin.author_name} &middot; {formatDate(selectedPin.created_at)}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onPress={() => setResolved(selectedPin.id, true)}
-                          className="shrink-0 text-xs"
-                        >
-                          Resolve
-                        </Button>
-                      </div>
+                    <div className="mt-4 rounded-lg border border-border/40 p-4 text-sm">
+                      <PinDetails
+                        key={selectedPin.id}
+                        pin={selectedPin}
+                        number={numbers.get(selectedPin.id) ?? 0}
+                        onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
+                        onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
+                      />
                     </div>
                   )}
                 </CardContent>
