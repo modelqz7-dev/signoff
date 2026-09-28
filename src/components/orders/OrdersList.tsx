@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowUpDownIcon, ChevronRightIcon, FileIcon, FileTextIcon, MessageSquareIcon, SearchIcon, XIcon } from "lucide-react"
+import { ArrowUpDownIcon, ChevronRightIcon, FileIcon, FileTextIcon, SearchIcon, XIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
+import { PinOutlineIcon } from "@/components/orders/pins"
 import { STATUS_MAP, type Order, type OrderStatus } from "@/components/dashboard/types"
 import type { Pin } from "@/lib/pins"
 import { cn, isPdfUrl } from "@/lib/utils"
@@ -193,7 +194,7 @@ export function OrdersList({
                     <TableCell className="hidden sm:table-cell">
                       {comments > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-xs text-foreground">
-                          <MessageSquareIcon className="size-3" />
+                          <PinOutlineIcon className="size-3 text-accent" />
                           {comments}
                         </span>
                       ) : (

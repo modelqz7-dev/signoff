@@ -2,7 +2,8 @@
 
 import { useMemo } from "react"
 import Link from "next/link"
-import { CheckCircle2Icon, MessageSquareIcon } from "lucide-react"
+import { CheckCircle2Icon } from "lucide-react"
+import { PinOutlineIcon } from "@/components/orders/pins"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNow } from "@/lib/use-now"
 import type { Pin } from "@/lib/pins"
@@ -77,7 +78,7 @@ export function NeedsAttention({ orders, pins }: { orders: Order[]; pins: Pin[] 
               )}
               {comments > 0 && (
                 <span className="flex items-center gap-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] text-foreground">
-                  <MessageSquareIcon className="size-3" />
+                  <PinOutlineIcon className="size-3 text-accent" />
                   {comments}
                 </span>
               )}
