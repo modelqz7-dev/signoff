@@ -780,6 +780,9 @@ function StatusPanel() {
     { name: "Database", state: "checking" },
     { name: "Authentication", state: "checking" },
     { name: "Live updates", state: "checking" },
+    { name: "Server", state: "checking" },
+    { name: "Telegram notifications", state: "checking" },
+    { name: "Email notifications", state: "checking" },
   ])
 
   useEffect(() => {
@@ -796,6 +799,18 @@ function StatusPanel() {
     supabase.auth.getSession().then(({ data, error }) => {
       update("Authentication", error ? "down" : "ok", error ? error.message : data.session ? "Signed in" : "Signed out")
     })
+
+    fetch("/api/health", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((h: { database?: { ok: boolean; ms?: number; error?: string }; telegram?: boolean; email?: boolean }) => {
+        const db = h.database
+        update("Server", db?.ok ? "ok" : "down", db?.ok ? `${db.ms} ms` : db?.error?.includes("not configured") ? "Not configured" : "Unavailable")
+        update("Telegram notifications", h.telegram ? "ok" : "down", h.telegram ? "Configured" : "Not configured")
+        update("Email notifications", h.email ? "ok" : "down", h.email ? "Configured" : "Not configured")
+      })
+      .catch(() => {
+        for (const name of ["Server", "Telegram notifications", "Email notifications"]) update(name, "down", "No connection")
+      })
 
     const channel = supabase.channel(`status-${Date.now()}`)
     const timeout = setTimeout(() => update("Live updates", "down", "No connection"), 8000)
