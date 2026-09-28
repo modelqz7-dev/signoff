@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
+import { useT } from "@/lib/i18n"
 
 type SidebarProps = {
   open: boolean
@@ -10,6 +11,7 @@ type SidebarProps = {
 
 export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   const [panel, setPanel] = useState<PanelId | null>(null)
+  const { t } = useT()
 
   // Other parts of the UI (e.g. the header avatar) can open a panel too.
   useEffect(() => {
@@ -38,22 +40,22 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
       </div>
 
       <nav className="flex-1 px-2.5 pt-1 pb-4">
-        <SectionLabel>General</SectionLabel>
-        <NavItem icon={dashboardIcon} label="Dashboard" active={activePage === "dashboard"} href="/" />
-        <NavItem icon={ordersIcon} label="Orders" active={activePage === "orders"} href="/orders" />
+        <SectionLabel>{t("General")}</SectionLabel>
+        <NavItem icon={dashboardIcon} label={t("Dashboard")} active={activePage === "dashboard"} href="/" />
+        <NavItem icon={ordersIcon} label={t("Orders")} active={activePage === "orders"} href="/orders" />
 
-        <SectionLabel className="mt-5">Account</SectionLabel>
-        <NavItem icon={profileIcon} label="Profile" active={panel === "profile"} onClick={() => setPanel("profile")} />
-        <NavItem icon={billingIcon} label="Billing" active={panel === "billing"} onClick={() => setPanel("billing")} />
-        <NavItem icon={notifIcon} label="Notifications" active={panel === "notifications"} onClick={() => setPanel("notifications")} />
-        <NavItem icon={securityIcon} label="Security" active={panel === "security"} onClick={() => setPanel("security")} />
-        <NavItem icon={appearanceIcon} label="Appearance" active={panel === "appearance"} onClick={() => setPanel("appearance")} />
+        <SectionLabel className="mt-5">{t("Account")}</SectionLabel>
+        <NavItem icon={profileIcon} label={t("Profile")} active={panel === "profile"} onClick={() => setPanel("profile")} />
+        <NavItem icon={billingIcon} label={t("Billing")} active={panel === "billing"} onClick={() => setPanel("billing")} />
+        <NavItem icon={notifIcon} label={t("Notifications")} active={panel === "notifications"} onClick={() => setPanel("notifications")} />
+        <NavItem icon={securityIcon} label={t("Security")} active={panel === "security"} onClick={() => setPanel("security")} />
+        <NavItem icon={appearanceIcon} label={t("Appearance")} active={panel === "appearance"} onClick={() => setPanel("appearance")} />
 
-        <SectionLabel className="mt-5">Support</SectionLabel>
-        <NavItem icon={helpIcon} label="Help Center" active={panel === "help"} onClick={() => setPanel("help")} />
-        <NavItem icon={contactIcon} label="Contact Us" active={panel === "contact"} onClick={() => setPanel("contact")} />
-        <NavItem icon={docsIcon} label="Documentation" active={panel === "docs"} onClick={() => setPanel("docs")} />
-        <NavItem icon={statusIcon} label="Status" active={panel === "status"} onClick={() => setPanel("status")} />
+        <SectionLabel className="mt-5">{t("Support")}</SectionLabel>
+        <NavItem icon={helpIcon} label={t("Help Center")} active={panel === "help"} onClick={() => setPanel("help")} />
+        <NavItem icon={contactIcon} label={t("Contact Us")} active={panel === "contact"} onClick={() => setPanel("contact")} />
+        <NavItem icon={docsIcon} label={t("Documentation")} active={panel === "docs"} onClick={() => setPanel("docs")} />
+        <NavItem icon={statusIcon} label={t("Status")} active={panel === "status"} onClick={() => setPanel("status")} />
       </nav>
     </aside>
     <SidebarPanel panel={panel} onClose={() => setPanel(null)} />

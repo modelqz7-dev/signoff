@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card"
 import type { Order, OrderStatus } from "./types"
 import { STATUS_MAP } from "./types"
+import { useT } from "@/lib/i18n"
 
 type StatusDonutProps = {
   orders: Order[]
@@ -25,6 +26,7 @@ const DONUT_COLORS: Record<OrderStatus, string> = {
 }
 
 export function StatusDonut({ orders }: StatusDonutProps) {
+  const { t } = useT()
   const counts = useMemo(() => {
     const map: Record<OrderStatus, number> = {
       await: 0,
@@ -71,7 +73,7 @@ export function StatusDonut({ orders }: StatusDonutProps) {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle className="text-sm">Status Breakdown</CardTitle>
+        <CardTitle className="text-sm">{t("Status Breakdown")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
         {/* Donut */}
@@ -119,7 +121,7 @@ export function StatusDonut({ orders }: StatusDonutProps) {
                 style={{ backgroundColor: DONUT_COLORS[key] }}
               />
               <span className="text-xs text-muted-foreground flex-1">
-                {STATUS_MAP[key].label}
+                {t(STATUS_MAP[key].label)}
               </span>
               <span className="text-xs font-medium text-foreground">
                 {counts[key]}

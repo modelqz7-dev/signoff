@@ -8,6 +8,9 @@ import { NewOrderModal } from "./NewOrderModal"
 import { OrdersListModal } from "@/components/dashboard/OrdersListModal"
 import type { Order } from "./types"
 import { STATUS_MAP } from "./types"
+import { useT } from "@/lib/i18n"
+import { useNow } from "@/lib/use-now"
+import { timeAgo } from "@/lib/utils"
 
 type QuickOrderCardProps = {
   orders: Order[]
@@ -16,18 +19,11 @@ type QuickOrderCardProps = {
   onOrderUpdated?: (order: Order) => void
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  return `${days}d ago`
-}
 
 export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated }: QuickOrderCardProps) {
   const [newModalOpen, setNewModalOpen] = useState(false)
+  const { t } = useT()
+  const now = useNow()
   const [listModalOpen, setListModalOpen] = useState(false)
   const preview = orders.slice(0, 3)
   const hasOrders = preview.length > 0
@@ -48,7 +44,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
                 <line x1="3" y1="8" x2="13" y2="8" />
               </svg>
             </div>
-            <span className="text-xs font-medium">New Order</span>
+            <span className="text-xs font-medium">{t("New Order")}</span>
           </button>
         </div>
 
@@ -66,14 +62,14 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{order.title}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{order.client_name} &middot; {timeAgo(order.created_at)}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{order.client_name} &middot; {timeAgo(order.created_at, now, t)}</p>
                     </div>
                     <Badge
                       variant="secondary"
                       className="shrink-0 border-0 text-[10px] px-1.5 py-0"
                       style={{ backgroundColor: status.bg, color: status.color }}
                     >
-                      {status.label}
+                      {t(status.label)}
                     </Badge>
                   </Link>
                 )
@@ -83,7 +79,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
                   onClick={() => setListModalOpen(true)}
                   className="text-xs text-[#4e99a3] hover:text-foreground transition-colors text-center py-1"
                 >
-                  See more ({orders.length - 3})
+                  {t("See more ({n})", { n: orders.length - 3 })}
                 </button>
               )}
             </div>
@@ -92,7 +88,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
 
         {/* No orders — small hint under the + button */}
         {!hasOrders && (
-          <p className="text-[11px] text-muted-foreground/60 text-center pb-1">No orders yet</p>
+          <p className="text-[11px] text-muted-foreground/60 text-center pb-1">{t("No orders yet")}</p>
         )}
       </Card>
 

@@ -15,6 +15,7 @@ import { StatusDonut } from "@/components/dashboard/StatusDonut"
 import { QuickOrderCard } from "@/components/dashboard/QuickOrderCard"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
+import { useT } from "@/lib/i18n"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [shop, setShop] = useState<Shop | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const { t } = useT()
   const pins = useShopPins(orders.map((o) => o.id))
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
       </div>
     )
   }

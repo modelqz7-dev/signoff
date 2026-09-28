@@ -12,6 +12,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
+import { useT } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,6 +21,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const { t } = useT()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,15 +33,12 @@ export default function LoginPage() {
       password,
     })
 
-    console.log("LOGIN RESULT:", { data, error: authError })
-
     if (authError || !data.session) {
-      setError(authError?.message || "Sign in failed")
+      setError(authError?.message || t("Sign in failed"))
       setLoading(false)
       return
     }
 
-    console.log("SESSION SET, redirecting...")
     window.location.href = "/"
   }
 
@@ -46,6 +46,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
+          <LanguageSwitcher className="mx-auto mb-3" />
           <div className="mx-auto mb-2 flex items-center gap-2">
             <svg
               width="28"
@@ -78,9 +79,9 @@ export default function LoginPage() {
               Signoff
             </span>
           </div>
-          <CardTitle className="text-base">Sign in</CardTitle>
+          <CardTitle className="text-base">{t("Sign in")}</CardTitle>
           <CardDescription>
-            Enter your credentials to continue
+            {t("Enter your credentials to continue")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,7 +91,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="text-sm text-muted-foreground"
               >
-                Email
+                {t("Email")}
               </label>
               <Input
                 id="email"
@@ -108,12 +109,12 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="text-sm text-muted-foreground"
               >
-                Password
+                {t("Password")}
               </label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Password"
+                placeholder={t("Password")}
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setPassword(e.target.value)
@@ -129,7 +130,7 @@ export default function LoginPage() {
               isDisabled={loading}
               className="w-full"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("Signing in...") : t("Sign in")}
             </Button>
           </form>
         </CardContent>

@@ -17,6 +17,7 @@ import { PinList, PinMarker } from "@/components/orders/pins"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 
 export default function OrderPage() {
   const router = useRouter()
@@ -33,6 +34,7 @@ export default function OrderPage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [copied, setCopied] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const { t, locale } = useT()
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
 
   // Client comments from the portal, updated live.
@@ -56,7 +58,7 @@ export default function OrderPage() {
         .from("shops").select("*").eq("user_id", session.user.id).maybeSingle()
       if (shopError) throw shopError
 
-      if (!shopData) { setLoadError("Shop not found for this account"); setLoading(false); return }
+      if (!shopData) { setLoadError(t("Shop not found for this account")); setLoading(false); return }
       setShop(shopData as Shop)
 
       const { data: orderData, error: orderError } = await supabase
@@ -71,7 +73,7 @@ export default function OrderPage() {
     }
     init().catch((e) => {
       console.error("Order load error:", e)
-      setLoadError(e?.message || "Failed to load order")
+      setLoadError(e?.message || t("Failed to load order"))
       setLoading(false)
     })
   }, [router, orderId])
@@ -139,7 +141,7 @@ export default function OrderPage() {
 
   function formatDate(dateStr: string | null): string {
     if (!dateStr) return "—"
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric", month: "long", day: "numeric",
     })
   }
@@ -147,7 +149,7 @@ export default function OrderPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
       </div>
     )
   }
@@ -156,7 +158,7 @@ export default function OrderPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className={`text-sm ${loadError ? "text-destructive" : "text-muted-foreground"}`}>
-          {loadError || "Order not found"}
+          {loadError || t("Order not found")}
         </p>
       </div>
     )
@@ -197,7 +199,7 @@ export default function OrderPage() {
                     className="border-0 text-xs px-2.5 py-1"
                     style={{ backgroundColor: status.bg, color: status.color }}
                   >
-                    {status.label}
+                    {t(status.label)}
                   </Badge>
                   <DeleteOrderButton order={order} onDeleted={() => router.replace("/orders")} />
                 </div>
@@ -206,19 +208,19 @@ export default function OrderPage() {
               {/* Info grid */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Details</CardTitle>
+                  <CardTitle className="text-sm">{t("Details")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-                    <InfoBlock label="Client" value={order.client_name || "—"} />
-                    <InfoBlock label="Email" value={order.client_email || "—"} />
-                    <InfoBlock label="Contact" value={order.client_contact || "—"} />
-                    <InfoBlock label="Price" value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
-                    <InfoBlock label="Deadline" value={formatDate(order.deadline)} />
-                    <InfoBlock label="Created" value={formatDate(order.created_at)} />
-                    <InfoBlock label="Status" value={status.label} color={status.color} />
-                    <InfoBlock label="Stage" value={order.stage || "—"} />
-                    <InfoBlock label="Code" value={order.code} />
+                    <InfoBlock label={t("Client")} value={order.client_name || "—"} />
+                    <InfoBlock label={t("Email")} value={order.client_email || "—"} />
+                    <InfoBlock label={t("Contact")} value={order.client_contact || "—"} />
+                    <InfoBlock label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
+                    <InfoBlock label={t("Deadline")} value={formatDate(order.deadline)} />
+                    <InfoBlock label={t("Created")} value={formatDate(order.created_at)} />
+                    <InfoBlock label={t("Status")} value={t(status.label)} color={status.color} />
+                    <InfoBlock label={t("Stage")} value={order.stage || "—"} />
+                    <InfoBlock label={t("Code")} value={order.code} />
                   </div>
                 </CardContent>
               </Card>
@@ -226,7 +228,7 @@ export default function OrderPage() {
               {order.notes && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Notes</CardTitle>
+                    <CardTitle className="text-sm">{t("Notes")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.notes}</p>
@@ -237,7 +239,7 @@ export default function OrderPage() {
               {/* File / PDF */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">File</CardTitle>
+                  <CardTitle className="text-sm">{t("File")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {order.file_url ? (
@@ -270,13 +272,13 @@ export default function OrderPage() {
                             <path d="M8 2v8M5 7l3 3 3-3" />
                             <path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2" />
                           </svg>
-                          Download
+                          {t("Download")}
                         </a>
                         <button
                           onClick={() => fileRef.current?.click()}
                           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          Replace file
+                          {t("Replace file")}
                         </button>
                       </div>
                     </div>
@@ -289,7 +291,7 @@ export default function OrderPage() {
                         <path d="M8 10V2M5 5l3-3 3 3" />
                         <path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2" />
                       </svg>
-                      <span className="text-sm">{uploading ? "Uploading..." : "Upload PDF or image"}</span>
+                      <span className="text-sm">{uploading ? t("Uploading...") : t("Upload PDF or image")}</span>
                       <span className="text-xs opacity-60">PDF, PNG, JPG</span>
                     </button>
                   )}
@@ -303,9 +305,9 @@ export default function OrderPage() {
               {/* Client comments */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Client comments ({pins.filter((p) => !p.resolved).length})</CardTitle>
+                  <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</CardTitle>
                   <CardDescription>
-                    Comments left in the client portal appear here instantly.{isPdf && " Click one to open it on the file."}
+                    {t("Comments left in the client portal appear here instantly.")}{isPdf && " " + t("Click one to open it on the file.")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -325,13 +327,13 @@ export default function OrderPage() {
             <aside className="hidden w-[300px] shrink-0 lg:flex flex-col gap-5 sticky top-0 self-start">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Client Portal</CardTitle>
-                  <CardDescription>Share this link with your client to view and approve.</CardDescription>
+                  <CardTitle className="text-sm">{t("Client Portal")}</CardTitle>
+                  <CardDescription>{t("Share this link with your client to view and approve.")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <Label className="text-xs">Portal Link</Label>
+                      <Label className="text-xs">{t("Portal Link")}</Label>
                       <Input
                         readOnly
                         value={getPortalUrl()}
@@ -348,7 +350,7 @@ export default function OrderPage() {
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M3 8.5l3 3 7-7" />
                             </svg>
-                            Copied
+                            {t("Copied")}
                           </span>
                         ) : (
                           <span className="flex items-center gap-1.5">
@@ -356,17 +358,17 @@ export default function OrderPage() {
                               <rect x="5" y="5" width="9" height="9" rx="1.5" />
                               <path d="M5 11H3.5A1.5 1.5 0 0 1 2 9.5v-7A1.5 1.5 0 0 1 3.5 1h7A1.5 1.5 0 0 1 12 2.5V5" />
                             </svg>
-                            Copy Link
+                            {t("Copy Link")}
                           </span>
                         )}
                       </Button>
                     </div>
 
                     <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
-                      <Label className="text-xs">Access Password</Label>
+                      <Label className="text-xs">{t("Access Password")}</Label>
                       <Input
                         type="text"
-                        placeholder="Set a password"
+                        placeholder={t("Set a password")}
                         value={password}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                         className="text-sm"
@@ -378,12 +380,12 @@ export default function OrderPage() {
                         isDisabled={savingPassword || password === (order.password || "")}
                         className="w-full mt-1"
                       >
-                        {savingPassword ? "Saving..." : "Save Password"}
+                        {savingPassword ? t("Saving...") : t("Save Password")}
                       </Button>
                       <p className="text-[11px] text-muted-foreground/60 mt-1">
                         {order.password
-                          ? "Password is set. Client needs this to access."
-                          : "No password. Anyone with the link can view."}
+                          ? t("Password is set. Client needs this to access.")
+                          : t("No password. Anyone with the link can view.")}
                       </p>
                     </div>
                   </div>

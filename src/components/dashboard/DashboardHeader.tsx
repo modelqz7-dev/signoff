@@ -4,6 +4,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { openPanel } from "@/components/dashboard/SidebarPanels"
 import { useProfile } from "@/lib/profile"
+import { useT } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -19,6 +21,7 @@ export function DashboardHeader({
   onToggleSidebar,
 }: DashboardHeaderProps) {
   const profile = useProfile()
+  const { t } = useT()
   const photo = avatarUrl || profile?.avatarUrl || ""
   const initials = shopName
     .split(" ")
@@ -31,16 +34,17 @@ export function DashboardHeader({
     <header className="flex h-16 items-center justify-between border-b px-6">
       <div className="flex items-center gap-3">
         <h1 className="text-base font-light tracking-wide text-foreground">
-          Welcome back, <span className="font-medium">{shopName}</span>
+          {t("Welcome back,")} <span className="font-medium">{shopName}</span>
         </h1>
       </div>
 
       <div className="flex items-center gap-2">
+        <LanguageSwitcher className="mr-1" />
         <Button
           variant="ghost"
           size="icon"
           onPress={onToggleSidebar}
-          aria-label="Toggle sidebar"
+          aria-label={t("Toggle sidebar")}
         >
           <svg
             width="16"
@@ -96,7 +100,7 @@ export function DashboardHeader({
 
         <button
           type="button"
-          aria-label="Profile"
+          aria-label={t("Profile")}
           onClick={() => openPanel("profile")}
           className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
 import { PlusIcon } from "lucide-react"
+import { useT } from "@/lib/i18n"
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -20,6 +21,7 @@ export default function OrdersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const pins = useShopPins(orders.map((o) => o.id))
+  const { t } = useT()
 
   useEffect(() => {
     async function init() {
@@ -53,7 +55,7 @@ export default function OrdersPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
       </div>
     )
   }
@@ -73,24 +75,24 @@ export default function OrdersPage() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="flex items-baseline gap-2">
-              <h2 className="text-base font-medium text-foreground">Orders</h2>
+              <h2 className="text-base font-medium text-foreground">{t("Orders")}</h2>
               <span className="text-sm text-muted-foreground">{orders.length}</span>
             </div>
             <Button size="sm" onPress={() => setModalOpen(true)}>
               <PlusIcon />
-              New Order
+              {t("New Order")}
             </Button>
           </div>
 
           {orders.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl py-20 text-center ring-1 ring-foreground/10">
-              <p className="text-sm text-foreground">No orders yet</p>
+              <p className="text-sm text-foreground">{t("No orders yet")}</p>
               <p className="max-w-xs text-xs text-muted-foreground">
-                Create an order, upload the design and share the portal link with your client.
+                {t("Create an order, upload the design and share the portal link with your client.")}
               </p>
               <Button size="sm" variant="outline" onPress={() => setModalOpen(true)}>
                 <PlusIcon />
-                Create your first order
+                {t("Create your first order")}
               </Button>
             </div>
           ) : (

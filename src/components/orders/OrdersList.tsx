@@ -15,15 +15,16 @@ import { STATUS_MAP, type Order, type OrderStatus } from "@/components/dashboard
 import type { Pin } from "@/lib/pins"
 import { cn, isPdfUrl } from "@/lib/utils"
 import { useNow } from "@/lib/use-now"
+import { useT } from "@/lib/i18n"
 
 const DAY = 1000 * 60 * 60 * 24
 const FILTERS: (OrderStatus | "all")[] = ["all", "await", "changes", "approved", "prod"]
 type Sort = "newest" | "deadline"
 
-function formatDate(date: string, now: number) {
+function formatDate(date: string, now: number, locale: string) {
   const d = new Date(date.length === 10 ? date + "T00:00:00" : date)
   const sameYear = d.getFullYear() === new Date(now).getFullYear()
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) })
+  return d.toLocaleDateString(locale, { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) })
 }
 
 function money(n: number) {
@@ -41,6 +42,7 @@ export function OrdersList({
 }) {
   const router = useRouter()
   const now = useNow()
+  const { t, locale } = useT()
   const [filter, setFilter] = useState<OrderStatus | "all">("all")
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState<Sort>("newest")
@@ -95,7 +97,7 @@ export function OrdersList({
                 )}
               >
                 {f !== "all" && <span className="size-1.5 rounded-full" style={{ backgroundColor: STATUS_MAP[f].color }} />}
-                {f === "all" ? "All" : STATUS_MAP[f].label}
+                {f === "all" ? t("All") : t(STATUS_MAP[f].label)}
                 <span className="text-muted-foreground">{counts[f] ?? 0}</span>
               </button>
             )
@@ -108,14 +110,14 @@ export function OrdersList({
               <SearchIcon />
             </InputGroupAddon>
             <InputGroupInput
-              placeholder="Search orders or clients"
+              placeholder={t("Search orders or clients")}
               value={query}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-              aria-label="Search orders"
+              aria-label={t("Search orders")}
             />
             {query && (
               <InputGroupAddon align="inline-end">
-                <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="hover:text-foreground">
+                <button type="button" aria-label={t("Clear search")} onClick={() => setQuery("")} className="hover:text-foreground">
                   <XIcon className="size-3.5" />
                 </button>
               </InputGroupAddon>
@@ -123,7 +125,7 @@ export function OrdersList({
           </InputGroup>
           <Button variant="outline" size="sm" onPress={() => setSort(sort === "newest" ? "deadline" : "newest")}>
             <ArrowUpDownIcon />
-            {sort === "newest" ? "Newest" : "Deadline"}
+            {sort === "newest" ? t("Newest") : t("Deadline")}
           </Button>
         </div>
       </div>
@@ -132,23 +134,23 @@ export function OrdersList({
       <Card className="gap-0 py-0">
         {visible.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-14 text-center">
-            <p className="text-sm text-muted-foreground">No orders match your filters.</p>
+            <p className="text-sm text-muted-foreground">{t("No orders match your filters.")}</p>
             <Button variant="ghost" size="sm" onPress={() => { setFilter("all"); setQuery("") }}>
-              Clear filters
+              {t("Clear filters")}
             </Button>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-4">Order</TableHead>
-                <TableHead className="hidden md:table-cell">Client</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Comments</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead className="hidden lg:table-cell">File</TableHead>
-                <TableHead className="w-20 pr-4"><span className="sr-only">Actions</span></TableHead>
+                <TableHead className="pl-4">{t("Order")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Client")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("Comments")}</TableHead>
+                <TableHead>{t("Deadline")}</TableHead>
+                <TableHead className="text-right">{t("Value")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("File")}</TableHead>
+                <TableHead className="w-20 pr-4"><span className="sr-only">{t("Actions")}</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -185,7 +187,7 @@ export function OrdersList({
                         className="border-0 px-2 py-0.5 text-[11px]"
                         style={{ backgroundColor: status.bg, color: status.color }}
                       >
-                        {status.label}
+                        {t(status.label)}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
@@ -201,8 +203,8 @@ export function OrdersList({
                     <TableCell className="whitespace-nowrap">
                       {order.deadline ? (
                         <>
-                          <p className="text-foreground">{formatDate(order.deadline, now)}</p>
-                          {lateDays > 0 && <p className="text-xs text-destructive">{lateDays}d overdue</p>}
+                          <p className="text-foreground">{formatDate(order.deadline, now, locale)}</p>
+                          {lateDays > 0 && <p className="text-xs text-destructive">{t("{n}d overdue", { n: lateDays })}</p>}
                         </>
                       ) : (
                         <span className="text-xs text-muted-foreground/60">—</span>
@@ -215,10 +217,10 @@ export function OrdersList({
                       {order.file_url ? (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           {isPdfUrl(order.file_url) ? <FileTextIcon className="size-3.5" /> : <FileIcon className="size-3.5" />}
-                          {isPdfUrl(order.file_url) ? "PDF" : "Image"}
+                          {isPdfUrl(order.file_url) ? "PDF" : t("Image")}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/60">No file</span>
+                        <span className="text-xs text-muted-foreground/60">{t("No file")}</span>
                       )}
                     </TableCell>
                     <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>
@@ -236,8 +238,8 @@ export function OrdersList({
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        Showing {visible.length} of {orders.length} order{orders.length === 1 ? "" : "s"}
-        {activeValue > 0 && <> · {money(activeValue)} in active orders</>}
+        {t("Showing {n} of {total}", { n: visible.length, total: orders.length })}
+        {activeValue > 0 && <> · {t("{value} in active orders", { value: money(activeValue) })}</>}
       </p>
     </div>
   )

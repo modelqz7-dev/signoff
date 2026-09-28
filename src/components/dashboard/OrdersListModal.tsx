@@ -9,6 +9,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { Order } from "./types"
 import { STATUS_MAP } from "./types"
+import { useT } from "@/lib/i18n"
+import { useNow } from "@/lib/use-now"
+import { timeAgo } from "@/lib/utils"
 
 type OrdersListModalProps = {
   orders: Order[]
@@ -16,17 +19,10 @@ type OrdersListModalProps = {
   onOpenChange: (open: boolean) => void
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  return `${days}d ago`
-}
 
 export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalProps) {
+  const { t } = useT()
+  const now = useNow()
   if (!open) return null
 
   return (
@@ -36,7 +32,7 @@ export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalP
       className="sm:max-w-[420px] h-[420px] [&>[data-slot=dialog]]:flex [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:min-h-0"
     >
       <DialogHeader>
-        <DialogTitle>All Orders ({orders.length})</DialogTitle>
+        <DialogTitle>{t("All Orders ({n})", { n: orders.length })}</DialogTitle>
       </DialogHeader>
 
       <div className="flex-1 overflow-y-auto -mx-4 px-4 min-h-0">
@@ -53,7 +49,7 @@ export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalP
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{order.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {order.client_name} &middot; {timeAgo(order.created_at)}
+                    {order.client_name} &middot; {timeAgo(order.created_at, now, t)}
                     {order.value > 0 && <span> &middot; ${order.value.toLocaleString()}</span>}
                   </p>
                 </div>
@@ -61,14 +57,14 @@ export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalP
                   {order.file_url ? (
                     <span className="text-[11px] text-[#4e99a3]">PDF</span>
                   ) : (
-                    <span className="text-[11px] text-muted-foreground/40">No file</span>
+                    <span className="text-[11px] text-muted-foreground/40">{t("No file")}</span>
                   )}
                   <Badge
                     variant="secondary"
                     className="border-0 text-[11px] px-2 py-0.5"
                     style={{ backgroundColor: status.bg, color: status.color }}
                   >
-                    {status.label}
+                    {t(status.label)}
                   </Badge>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5 text-muted-foreground/50" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M6 3l5 5-5 5" />

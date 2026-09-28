@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { Pin } from "@/lib/pins"
+import { useT } from "@/lib/i18n"
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString("en-US", {
+function formatDate(dateStr: string, locale: string) {
+  return new Date(dateStr).toLocaleString(locale, {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   })
 }
@@ -37,6 +38,7 @@ export function PinMarker({
   const dragRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null)
   const justDraggedRef = useRef(false)
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
+  const { t } = useT()
 
   function positionFromEvent(e: React.PointerEvent<HTMLButtonElement>) {
     const rect = e.currentTarget.parentElement!.getBoundingClientRect()
@@ -89,7 +91,7 @@ export function PinMarker({
       onPointerUp={onPointerUp}
       onPointerCancel={() => { dragRef.current = null; setDragPos(null) }}
       tabIndex={onSelect ? 0 : -1}
-      title={onMove ? "Drag to move" : undefined}
+      title={onMove ? t("Drag to move") : undefined}
       className={cn(
         "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full font-semibold text-white shadow-md ring-2 ring-white transition-transform",
         small ? "size-5 text-[9px]" : "size-7 text-[11px]",
@@ -151,6 +153,7 @@ export function PinComposer({
   onSave: (title: string, description: string) => Promise<void>
   onCancel: () => void
 }) {
+  const { t } = useT()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [saving, setSaving] = useState(false)
@@ -163,7 +166,7 @@ export function PinComposer({
     try {
       await onSave(title.trim(), description.trim())
     } catch (e) {
-      setError((e as Error)?.message || "Failed to save")
+      setError((e as Error)?.message || t("Failed to save"))
       setSaving(false)
     }
   }
@@ -178,24 +181,24 @@ export function PinComposer({
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save() }
       }}
     >
-      <p className="text-xs font-medium">New comment</p>
+      <p className="text-xs font-medium">{t("New comment")}</p>
       <Input
         autoFocus
-        placeholder="Title *"
+        placeholder={t("Title *")}
         value={title}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
       />
       <Textarea
-        placeholder="What should be changed? (optional)"
+        placeholder={t("What should be changed? (optional)")}
         value={description}
         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
         rows={3}
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onPress={onCancel}>Cancel</Button>
+        <Button type="button" variant="ghost" size="sm" onPress={onCancel}>{t("Cancel")}</Button>
         <Button type="submit" size="sm" isDisabled={saving || !title.trim()}>
-          {saving ? "Saving..." : "Add comment"}
+          {saving ? t("Saving...") : t("Add comment")}
         </Button>
       </div>
     </form>
@@ -213,6 +216,7 @@ export function PinDetails({
   onToggleResolved?: () => void
   onDelete?: () => Promise<void> | void
 }) {
+  const { t, locale } = useT()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -224,7 +228,7 @@ export function PinDetails({
     try {
       await onDelete?.()
     } catch (e) {
-      setError((e as Error)?.message || "Failed to delete")
+      setError((e as Error)?.message || t("Failed to delete"))
       setDeleting(false)
       setConfirmDelete(false)
     }
@@ -242,7 +246,7 @@ export function PinDetails({
             <p className="mt-1 text-xs whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>
           )}
           <p className="mt-1.5 text-[11px] text-muted-foreground/70">
-            {pin.author_name} · {formatDate(pin.created_at)} · page {pin.page}
+            {pin.author_name} · {formatDate(pin.created_at, locale)} · {t("page {n}", { n: pin.page })}
           </p>
         </div>
       </div>
@@ -258,12 +262,12 @@ export function PinDetails({
               className="mr-auto"
             >
               <Trash2Icon />
-              {deleting ? "Deleting..." : confirmDelete ? "Confirm delete" : "Delete"}
+              {deleting ? t("Deleting...") : confirmDelete ? t("Confirm delete") : t("Delete")}
             </Button>
           )}
           {onToggleResolved && (
             <Button variant="outline" size="sm" onPress={onToggleResolved}>
-              {pin.resolved ? <><RotateCcwIcon /> Reopen</> : <><CheckIcon /> Resolve</>}
+              {pin.resolved ? <><RotateCcwIcon /> {t("Reopen")}</> : <><CheckIcon /> {t("Resolve")}</>}
             </Button>
           )}
         </div>
@@ -286,6 +290,7 @@ export function PinList({
   onSelect?: (pin: Pin) => void
   emptyText?: string
 }) {
+  const { t } = useT()
   const open = pins.filter((p) => !p.resolved)
   const resolved = pins.filter((p) => p.resolved)
 
@@ -316,7 +321,7 @@ export function PinList({
             <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{pin.description}</p>
           )}
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground/70">
-            {pin.author_name} · p. {pin.page}
+            {pin.author_name} · {t("p. {n}", { n: pin.page })}
           </p>
         </div>
       </button>
@@ -324,7 +329,7 @@ export function PinList({
   }
 
   if (pins.length === 0) {
-    return <p className="py-6 text-center text-xs text-muted-foreground">{emptyText}</p>
+    return <p className="py-6 text-center text-xs text-muted-foreground">{t(emptyText)}</p>
   }
 
   return (
@@ -332,7 +337,7 @@ export function PinList({
       {open.map(item)}
       {resolved.length > 0 && (
         <>
-          <p className="mt-2 border-t border-border px-1 pt-3 text-[11px] text-muted-foreground/60">Resolved</p>
+          <p className="mt-2 border-t border-border px-1 pt-3 text-[11px] text-muted-foreground/60">{t("Resolved")}</p>
           {resolved.map(item)}
         </>
       )}
