@@ -1,8 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { openPanel } from "@/components/dashboard/SidebarPanels"
 
 type DashboardHeaderProps = {
   shopName: string
@@ -91,16 +91,17 @@ export function DashboardHeader({
           </svg>
         </Button>
 
-        <Link
-          href="/settings"
-          aria-label="Settings"
+        <button
+          type="button"
+          aria-label="Profile"
+          onClick={() => openPanel("profile")}
           className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatarUrl} alt={shopName} />
             <AvatarFallback>{initials || "S"}</AvatarFallback>
           </Avatar>
-        </Link>
+        </button>
       </div>
     </header>
   )
