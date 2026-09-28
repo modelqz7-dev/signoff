@@ -44,7 +44,7 @@ export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalP
                 key={order.id}
                 href={`/orders/${order.id}`}
                 onClick={() => onOpenChange(false)}
-                className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5 text-left transition-colors hover:bg-white/[.03]"
+                className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5 text-left transition-colors hover:bg-hover"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{order.title}</p>
@@ -55,7 +55,7 @@ export function OrdersListModal({ orders, open, onOpenChange }: OrdersListModalP
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {order.file_url ? (
-                    <span className="text-[11px] text-[#4e99a3]">PDF</span>
+                    <span className="text-[11px] text-accent">PDF</span>
                   ) : (
                     <span className="text-[11px] text-muted-foreground/40">{t("No file")}</span>
                   )}

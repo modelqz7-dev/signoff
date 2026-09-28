@@ -23,7 +23,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   return (
     <>
     <aside
-      className="sticky top-0 self-start flex h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-[#1e1d1c] transition-all duration-200 overflow-y-auto"
+      className="sticky top-0 self-start flex h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto"
       style={{
         marginLeft: open ? 0 : -220,
         opacity: open ? 1 : 0,
@@ -33,8 +33,8 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true">
-          <rect x="0.5" y="0.5" width="16" height="16" rx="3" stroke="#fff" strokeWidth="1" fill="none" />
-          <line x1="3" y1="8.5" x2="14" y2="8.5" stroke="#fff" strokeWidth="1" />
+          <rect x="0.5" y="0.5" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1" fill="none" />
+          <line x1="3" y1="8.5" x2="14" y2="8.5" stroke="currentColor" strokeWidth="1" />
         </svg>
         <span className="text-[15px] tracking-tight text-foreground">Signoff</span>
       </div>
@@ -65,7 +65,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
 
 function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`px-3 pb-1.5 pt-2 text-[11.5px] font-medium tracking-wide text-[#4e99a3] ${className || ""}`}>
+    <div className={`px-3 pb-1.5 pt-2 text-[11.5px] font-medium tracking-wide text-accent ${className || ""}`}>
       {children}
     </div>
   )
@@ -80,8 +80,8 @@ function NavItem({ icon, label, active, href, onClick }: {
 }) {
   const cls = `flex w-full items-center gap-2.5 rounded-[7px] px-3 py-[7px] text-[13.5px] transition-colors ${
     active
-      ? "bg-white/[.09] text-foreground font-medium"
-      : "text-muted-foreground hover:bg-white/[.06] hover:text-foreground"
+      ? "bg-hover-strong text-foreground font-medium"
+      : "text-muted-foreground hover:bg-hover hover:text-foreground"
   }`
 
   if (href) {

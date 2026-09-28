@@ -43,7 +43,7 @@ export function CalendarWidget({ orders }: CalendarWidgetProps) {
               <div className="flex flex-col items-center">
                 {renderProps.defaultChildren}
                 {hasOrder && (
-                  <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-[#4e99a3]" />
+                  <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-accent" />
                 )}
               </div>
             )

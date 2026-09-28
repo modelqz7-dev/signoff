@@ -154,7 +154,7 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
       <CardFooter className="gap-2 text-sm">
         <span
           className="inline-flex items-center gap-1 font-medium"
-          style={{ color: isUp ? "#5a9c6a" : "#c05a5a" }}
+          style={{ color: isUp ? "var(--status-approved)" : "var(--destructive)" }}
         >
           {isUp ? (
             <svg

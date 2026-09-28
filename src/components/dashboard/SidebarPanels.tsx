@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, planById } from "@/lib/plans"
+import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
 
 export type PanelId =
@@ -403,21 +404,59 @@ function SecurityPanel() {
 
 function AppearancePanel() {
   const { t } = useT()
+  const theme = useTheme()
+  const options: { id: Theme; label: string }[] = [
+    { id: "dark", label: t("Dark") },
+    { id: "light", label: t("Light") },
+  ]
+
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-ring p-3">
-          <div className="mb-2 h-12 rounded-md bg-background ring-1 ring-border" />
-          <p className="font-medium">{t("Dark")}</p>
-          <p className="text-xs text-muted-foreground">{t("Active")}</p>
-        </div>
-        <div className="rounded-lg border border-border p-3 opacity-50">
-          <div className="mb-2 h-12 rounded-md bg-white" />
-          <p className="font-medium">{t("Light")}</p>
-          <p className="text-xs text-muted-foreground">{t("Coming soon")}</p>
+        {options.map(({ id, label }) => {
+          const active = theme === id
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={active}
+              onClick={(e) => setTheme(id, { x: e.clientX, y: e.clientY })}
+              className={cn(
+                "rounded-lg border p-3 text-left transition-colors",
+                active ? "border-accent ring-1 ring-accent" : "border-border hover:bg-hover"
+              )}
+            >
+              <ThemePreview theme={id} />
+              <div className="mt-2 flex items-center justify-between">
+                <p className="font-medium">{label}</p>
+                {active && <CheckIcon className="size-4 text-accent" />}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+      <Note>{t("Your choice is saved in this browser and switches instantly.")}</Note>
+    </div>
+  )
+}
+
+/** Tiny static mock of the app in the given theme (fixed colors on purpose). */
+function ThemePreview({ theme }: { theme: Theme }) {
+  const c = theme === "dark"
+    ? { bg: "#171615", card: "#1e1d1c", line: "rgba(214,213,212,.18)", text: "rgba(214,213,212,.55)" }
+    : { bg: "#f6f5f3", card: "#ffffff", line: "rgba(31,30,29,.12)", text: "rgba(31,30,29,.35)" }
+  return (
+    <div className="flex h-16 gap-1.5 overflow-hidden rounded-md p-1.5" style={{ backgroundColor: c.bg, boxShadow: `inset 0 0 0 1px ${c.line}` }}>
+      <div className="w-5 rounded-sm" style={{ backgroundColor: c.card }} />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <div className="h-2 w-3/4 rounded-sm" style={{ backgroundColor: c.text }} />
+        <div className="flex flex-1 gap-1.5">
+          <div className="flex-1 rounded-sm" style={{ backgroundColor: c.card }} />
+          <div className="flex-1 rounded-sm" style={{ backgroundColor: c.card }}>
+            <div className="m-1 h-1.5 w-1/2 rounded-sm bg-[#4e99a3]" />
+          </div>
         </div>
       </div>
-      <Note>{t("The client portal uses the same dark theme, so drawings and photos keep good contrast.")}</Note>
     </div>
   )
 }

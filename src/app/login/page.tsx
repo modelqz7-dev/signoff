@@ -62,13 +62,13 @@ export default function LoginPage() {
                 width="24"
                 height="24"
                 rx="6"
-                stroke="#4e99a3"
+                stroke="var(--accent)"
                 strokeWidth="2.5"
                 fill="none"
               />
               <path
                 d="M9 14.5l3 3 7-7"
-                stroke="#4e99a3"
+                stroke="var(--accent)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"

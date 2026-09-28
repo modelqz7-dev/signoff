@@ -244,7 +244,7 @@ function DatePickerField({ value, onChange }: { value: string; onChange: (v: str
       <button
         type="button"
         onClick={() => setShowCal(!showCal)}
-        className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:bg-white/[.04]"
+        className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:bg-hover"
       >
         {value ? (
           <span>{formatDisplay(value)}</span>

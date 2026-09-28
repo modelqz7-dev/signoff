@@ -152,7 +152,7 @@ export default function PortalPage() {
   // ── Auth screen ──
   if (phase === "auth") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#171615] p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <LanguageSwitcher className="mx-auto mb-2" />
@@ -200,7 +200,7 @@ export default function PortalPage() {
   const selectedPin = pins.find((p) => p.id === selectedPinId) || null
 
   return (
-    <div className="min-h-screen bg-[#171615] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
       <header className="flex items-center justify-between border-b border-border/40 px-6 py-3">
         <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export default function PortalPage() {
                   ) : (
                     <div
                       ref={fileContainerRef}
-                      className="relative w-full rounded-lg border border-border/50 overflow-hidden bg-black/20 cursor-crosshair"
+                      className="relative w-full rounded-lg border border-border/50 overflow-hidden bg-muted/60 cursor-crosshair"
                       onClick={handleFileClick}
                     >
                       <img
@@ -290,7 +290,7 @@ export default function PortalPage() {
                       ))}
                       {pendingPin && (
                         <div
-                          className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#c09a5a] text-white flex items-center justify-center text-[10px] font-bold animate-pulse"
+                          className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--status-changes)] text-white flex items-center justify-center text-[10px] font-bold animate-pulse"
                           style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%` }}
                         >
                           +
@@ -368,7 +368,7 @@ export default function PortalPage() {
               <Button
                 onPress={() => handleAction("approved")}
                 isDisabled={actionLoading || order.status === "approved"}
-                className="px-6 bg-[#5a9c6a] hover:bg-[#4a8c5a] text-white"
+                className="px-6 bg-[var(--status-approved)] hover:opacity-90 text-white"
               >
                 <span className="flex items-center gap-2">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" strokeLinecap="round" strokeLinejoin="round">

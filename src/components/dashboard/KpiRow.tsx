@@ -80,7 +80,7 @@ export function KpiRow({ orders, pins }: { orders: Order[]; pins: Pin[] }) {
       <Tile
         icon={MessageSquareIcon}
         color="var(--accent)"
-        tint="rgba(78,153,163,.12)"
+        tint="color-mix(in oklab, var(--accent) 14%, transparent)"
         label={t("Open comments")}
         value={stats.openComments}
         of={t("of {n} total", { n: stats.pinsTotal })}

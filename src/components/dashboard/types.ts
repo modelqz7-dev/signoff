@@ -32,22 +32,22 @@ export const STATUS_MAP: Record<
 > = {
   await: {
     label: "Awaiting",
-    color: "var(--chart-1)",
-    bg: "rgba(78,153,163,.1)",
+    color: "var(--status-await)",
+    bg: "var(--status-await-bg)",
   },
   changes: {
     label: "Changes",
-    color: "#c09a5a",
-    bg: "rgba(192,154,90,.1)",
+    color: "var(--status-changes)",
+    bg: "var(--status-changes-bg)",
   },
   approved: {
     label: "Approved",
-    color: "#5a9c6a",
-    bg: "rgba(90,156,106,.1)",
+    color: "var(--status-approved)",
+    bg: "var(--status-approved-bg)",
   },
   prod: {
     label: "Production",
-    color: "var(--muted-foreground)",
-    bg: "rgba(214,213,212,.06)",
+    color: "var(--status-prod)",
+    bg: "var(--status-prod-bg)",
   },
 }
