@@ -2,16 +2,23 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
-import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, MessageSquareIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
+import { PinComposer, PinDetails, PinList, PinMarker, PinPopover } from "@/components/orders/pins"
+import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 
 type PDFViewerProps = {
   url: string
   className?: string
-  onPageClick?: (x: number, y: number, page: number) => void
-  overlay?: React.ReactNode
+  /** Comments to show on the pages, positioned in % of the page. */
+  pins?: Pin[]
+  /** When set, clicking a page in the viewer lets the user add a comment there. */
+  onAddPin?: (pin: NewPin) => Promise<void>
+  onToggleResolved?: (pin: Pin) => void
+  /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
+  focusPin?: { id: string; nonce: number } | null
 }
 
 const MIN_SCALE = 0.5
@@ -34,7 +41,7 @@ function isCancelled(e: unknown) {
   return (e as { name?: string } | null)?.name === "RenderingCancelledException"
 }
 
-export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerProps) {
+export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolved, focusPin }: PDFViewerProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null)
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -53,6 +60,13 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [pending, setPending] = useState<{ x: number; y: number } | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const scrollToPinRef = useRef<string | null>(null)
+
+  const numbers = usePinNumbers(pins)
+  const pagePins = pins.filter((p) => p.page === page)
+  const selectedPin = pagePins.find((p) => p.id === selectedId) || null
 
   useEffect(() => {
     let cancelled = false
@@ -188,6 +202,7 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
   }
 
   useLayoutEffect(() => {
+    scaleRef.current = scale
     const el = scrollRef.current
     if (el && anchorRef.current) {
       el.scrollLeft = anchorRef.current.left
@@ -198,8 +213,26 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
 
   function goToPage(p: number) {
     setPage(Math.min(Math.max(p, 1), totalPages))
+    setPending(null)
     scrollRef.current?.scrollTo({ left: 0, top: 0 })
   }
+
+  function selectPin(pin: Pin) {
+    setPending(null)
+    setSelectedId(pin.id)
+    setPage(pin.page)
+    scrollToPinRef.current = pin.id
+  }
+
+  // Bring a pin picked from the list into view when zoomed in.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    const pin = pins.find((p) => p.id === scrollToPinRef.current)
+    if (!el || !pin || pin.page !== page || !cssW) return
+    el.scrollLeft = PAD + (pin.x / 100) * cssW - el.clientWidth / 2
+    el.scrollTop = PAD + (pin.y / 100) * cssH - el.clientHeight / 2
+    scrollToPinRef.current = null
+  }, [pins, page, cssW, cssH, selectedId])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -218,8 +251,9 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
     if (!open) return
     function onKey(e: KeyboardEvent) {
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (e.key === "ArrowLeft") setPage((p) => Math.max(p - 1, 1))
-      else if (e.key === "ArrowRight") setPage((p) => Math.min(p + 1, totalPages))
+      if ((e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable=true]")) return
+      if (e.key === "ArrowLeft") { setPage((p) => Math.max(p - 1, 1)); setPending(null) }
+      else if (e.key === "ArrowRight") { setPage((p) => Math.min(p + 1, totalPages)); setPending(null) }
       else if (e.key === "+" || e.key === "=") zoomTo(scaleRef.current * 1.25)
       else if (e.key === "-") zoomTo(scaleRef.current / 1.25)
       else if (e.key === "0") zoomTo(1)
@@ -233,6 +267,8 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     const el = scrollRef.current
     if (!el || e.button !== 0) return
+    // Don't start panning from the comment form or markers.
+    if ((e.target as HTMLElement).closest("[data-pin-ui]")) return
     dragRef.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop, moved: false }
     draggedRef.current = false
   }
@@ -260,20 +296,41 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
     setDragging(false)
   }
 
-  function handleModalCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
+  function handlePageClick(e: React.MouseEvent<HTMLDivElement>) {
     if (draggedRef.current) { draggedRef.current = false; return }
-    if (!onPageClick || !modalCanvasRef.current) return
-    const rect = modalCanvasRef.current.getBoundingClientRect()
-    onPageClick(((e.clientX - rect.left) / rect.width) * 100, ((e.clientY - rect.top) / rect.height) * 100, page)
+    if ((e.target as HTMLElement).closest("[data-pin-ui]")) return
+    // First click outside an open comment just closes it.
+    if (selectedId) { setSelectedId(null); return }
+    if (!onAddPin) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    setPending({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    })
   }
 
-  function openModal() {
-    scaleRef.current = 1
+  async function savePending(title: string, description: string) {
+    if (!pending || !onAddPin) return
+    await onAddPin({ x: pending.x, y: pending.y, page, title, description: description || null })
+    setPending(null)
+  }
+
+  function openModal(pinId?: string) {
+    const pin = pins.find((p) => p.id === pinId)
     setScale(1)
     setRenderScale(1)
-    setPage(1)
+    setPage(pin?.page ?? 1)
     setPageSize(null)
+    setPending(null)
+    setSelectedId(pin?.id ?? null)
     setOpen(true)
+  }
+
+  // Opening from an external list (e.g. the comments sidebar): react to each new request once.
+  const [handledFocus, setHandledFocus] = useState<number | null>(null)
+  if (focusPin && totalPages && focusPin.nonce !== handledFocus) {
+    setHandledFocus(focusPin.nonce)
+    openModal(focusPin.id)
   }
 
   if (error) {
@@ -296,9 +353,12 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
     <>
       <div
         className={`relative rounded-lg border border-border overflow-hidden bg-white cursor-pointer group ${className || ""}`}
-        onClick={openModal}
+        onClick={() => openModal()}
       >
         <canvas ref={previewCanvasRef} className="w-full block" />
+        {pins.filter((p) => p.page === 1 && !p.resolved).map((pin) => (
+          <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
+        ))}
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
           <div className="rounded-full bg-black/60 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
             <ZoomInIcon className="size-6 text-white" />
@@ -309,7 +369,12 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
             {totalPages} pages
           </div>
         )}
-        {overlay}
+        {pins.some((p) => !p.resolved) && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded">
+            <MessageSquareIcon className="size-3" />
+            {pins.filter((p) => !p.resolved).length}
+          </div>
+        )}
       </div>
 
       <Dialog
@@ -350,23 +415,65 @@ export function PDFViewer({ url, className, onPageClick, overlay }: PDFViewerPro
           </Button>
         </div>
 
-        <div
-          ref={scrollRef}
-          className={`min-h-0 flex-1 overflow-auto bg-background outline-none select-none ${dragging ? "cursor-grabbing" : scale > 1 && !onPageClick ? "cursor-grab" : ""}`}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        >
-          <div className="flex min-h-full min-w-full w-max items-center justify-center" style={{ padding: PAD }}>
-            <canvas
-              ref={modalCanvasRef}
-              onClick={handleModalCanvasClick}
-              draggable={false}
-              className={`block shrink-0 rounded-sm bg-white shadow-lg ring-1 ring-foreground/10 ${onPageClick && !dragging ? "cursor-crosshair" : ""}`}
-              style={{ width: cssW, height: cssH }}
-            />
+        <div className="flex min-h-0 flex-1">
+          <div
+            ref={scrollRef}
+            className={`min-h-0 min-w-0 flex-1 overflow-auto bg-background outline-none select-none ${dragging ? "cursor-grabbing" : scale > 1 && !onAddPin ? "cursor-grab" : ""}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <div className="flex min-h-full min-w-full w-max items-center justify-center" style={{ padding: PAD }}>
+              <div
+                className={`relative shrink-0 ${onAddPin && !dragging ? "cursor-crosshair" : ""}`}
+                style={{ width: cssW, height: cssH }}
+                onClick={handlePageClick}
+              >
+                <canvas
+                  ref={modalCanvasRef}
+                  draggable={false}
+                  className="block size-full rounded-sm bg-white shadow-lg ring-1 ring-foreground/10"
+                />
+                {pagePins.map((pin) => (
+                  <PinMarker
+                    key={pin.id}
+                    pin={pin}
+                    number={numbers.get(pin.id) ?? ""}
+                    selected={pin.id === selectedId}
+                    onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
+                  />
+                ))}
+                {pending && (
+                  <>
+                    <PinMarker pin={{ ...pending, resolved: false }} number="+" selected />
+                    <PinPopover x={pending.x} y={pending.y}>
+                      <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
+                    </PinPopover>
+                  </>
+                )}
+                {selectedPin && !pending && (
+                  <PinPopover x={selectedPin.x} y={selectedPin.y}>
+                    <PinDetails
+                      pin={selectedPin}
+                      number={numbers.get(selectedPin.id) ?? 0}
+                      onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
+                    />
+                  </PinPopover>
+                )}
+              </div>
+            </div>
           </div>
+
+          <aside className="hidden w-72 shrink-0 flex-col border-l border-border md:flex">
+            <div className="border-b border-border px-4 py-3">
+              <p className="text-sm font-medium">Comments ({pins.filter((p) => !p.resolved).length})</p>
+              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">Click on the page to add one.</p>}
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />
+            </div>
+          </aside>
         </div>
       </Dialog>
     </>

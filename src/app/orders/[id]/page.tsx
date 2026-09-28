@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { STATUS_MAP } from "@/components/dashboard/types"
+import { PinList, PinMarker } from "@/components/orders/pins"
+import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { isPdfUrl } from "@/lib/utils"
 
 export default function OrderPage() {
   const router = useRouter()
@@ -29,6 +32,16 @@ export default function OrderPage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [copied, setCopied] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
+
+  // Client comments from the portal, updated live.
+  const { pins, setResolved } = usePins(order ? orderId : null)
+  const numbers = usePinNumbers(pins)
+  const isPdf = isPdfUrl(order?.file_url)
+
+  function handleSelectPin(pin: Pin) {
+    if (isPdf) setFocusPin({ id: pin.id, nonce: Date.now() })
+  }
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -224,11 +237,21 @@ export default function OrderPage() {
                 <CardContent>
                   {order.file_url ? (
                     <div className="flex flex-col gap-4">
-                      {order.file_url.endsWith(".pdf") ? (
-                        <PDFViewer url={order.file_url} />
+                      {isPdf ? (
+                        <PDFViewer
+                          url={order.file_url}
+                          pins={pins}
+                          onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                          focusPin={focusPin}
+                        />
                       ) : (
                         <div className="w-full rounded-lg border border-border/50 overflow-hidden bg-black/20 flex items-center justify-center">
-                          <img src={order.file_url} alt={order.title} className="max-w-full max-h-[500px] object-contain" />
+                          <div className="relative">
+                            <img src={order.file_url} alt={order.title} className="block max-w-full max-h-[500px] object-contain" />
+                            {pins.filter((p) => !p.resolved).map((pin) => (
+                              <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
+                            ))}
+                          </div>
                         </div>
                       )}
                       <div className="flex items-center gap-3">
@@ -269,6 +292,24 @@ export default function OrderPage() {
                   <p className="text-sm text-destructive mt-2">{uploadError}</p>
                 )}
                 <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileUpload} className="hidden" />
+                </CardContent>
+              </Card>
+
+              {/* Client comments */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Client comments ({pins.filter((p) => !p.resolved).length})</CardTitle>
+                  <CardDescription>
+                    Comments left in the client portal appear here instantly.{isPdf && " Click one to open it on the file."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PinList
+                    pins={pins}
+                    numbers={numbers}
+                    onSelect={isPdf ? handleSelectPin : undefined}
+                    emptyText="No comments from the client yet."
+                  />
                 </CardContent>
               </Card>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,19 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import type { Order } from "@/components/dashboard/types"
-
-type Pin = {
-  id: string
-  order_id: string
-  x: number
-  y: number
-  page: number
-  title: string
-  description: string | null
-  author_name: string
-  resolved: boolean
-  created_at: string
-}
+import { PinList, PinMarker } from "@/components/orders/pins"
+import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { isPdfUrl } from "@/lib/utils"
 
 export default function PortalPage() {
   const params = useParams()
@@ -36,8 +26,12 @@ export default function PortalPage() {
   const [authError, setAuthError] = useState("")
 
   const [order, setOrder] = useState<Order | null>(null)
-  const [pins, setPins] = useState<Pin[]>([])
   const [loading, setLoading] = useState(false)
+
+  const { pins, addPin, setResolved } = usePins(phase === "view" ? orderId : null)
+  const numbers = usePinNumbers(pins)
+  const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
+  const isPdf = isPdfUrl(order?.file_url)
 
   // Pin creation
   const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null)
@@ -73,20 +67,11 @@ export default function PortalPage() {
     }
 
     setOrder(ord)
-    await loadPins()
     setPhase("view")
     setLoading(false)
   }
 
-  const loadPins = useCallback(async () => {
-    const { data } = await supabase
-      .from("order_pins").select("*")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: true })
-    if (data) setPins(data as Pin[])
-  }, [orderId])
-
-  // Realtime subscriptions
+  // Realtime order updates (pins are synced by usePins)
   useEffect(() => {
     if (phase !== "view") return
 
@@ -97,18 +82,10 @@ export default function PortalPage() {
       )
       .subscribe()
 
-    const pinsSub = supabase
-      .channel(`pins-${orderId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_pins", filter: `order_id=eq.${orderId}` },
-        () => { loadPins() }
-      )
-      .subscribe()
-
     return () => {
       supabase.removeChannel(orderSub)
-      supabase.removeChannel(pinsSub)
     }
-  }, [phase, orderId, loadPins])
+  }, [phase, orderId])
 
   function handleFileClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!fileContainerRef.current) return
@@ -125,26 +102,27 @@ export default function PortalPage() {
     if (!pendingPin || !pinTitle.trim()) return
     setSavingPin(true)
 
-    await supabase.from("order_pins").insert({
-      order_id: orderId,
-      x: pendingPin.x,
-      y: pendingPin.y,
-      page: 1,
-      title: pinTitle.trim(),
-      description: pinDesc.trim() || null,
-      author_name: clientName,
-    })
-
-    setPendingPin(null)
-    setPinTitle("")
-    setPinDesc("")
+    try {
+      await addPin({
+        x: pendingPin.x,
+        y: pendingPin.y,
+        page: 1,
+        title: pinTitle.trim(),
+        description: pinDesc.trim() || null,
+      }, clientName)
+      setPendingPin(null)
+      setPinTitle("")
+      setPinDesc("")
+    } catch (e) {
+      console.error("Pin save error:", e)
+    }
     setSavingPin(false)
-    await loadPins()
   }
 
-  async function handleResolvePin(pinId: string) {
-    await supabase.from("order_pins").update({ resolved: true }).eq("id", pinId)
-    await loadPins()
+  function handleSelectPin(pin: Pin) {
+    setPendingPin(null)
+    if (isPdf) setFocusPin({ id: pin.id, nonce: Date.now() })
+    else setSelectedPinId(pin.id === selectedPinId ? null : pin.id)
   }
 
   async function handleAction(newStatus: string) {
@@ -264,39 +242,18 @@ export default function PortalPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">File</CardTitle>
-                  <p className="text-xs text-muted-foreground">Click on the file to leave a comment.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isPdf ? "Open the file and click anywhere on a page to leave a comment." : "Click on the file to leave a comment."}
+                  </p>
                 </CardHeader>
                 <CardContent>
-                  {order.file_url.endsWith(".pdf") ? (
+                  {isPdf ? (
                     <PDFViewer
                       url={order.file_url}
-                      onPageClick={(x, y, pg) => { setPendingPin({ x, y }); setPinTitle(""); setPinDesc(""); setSelectedPinId(null) }}
-                      overlay={
-                        <>
-                          {pins.filter((p) => !p.resolved).map((pin, i) => (
-                            <button
-                              key={pin.id}
-                              onClick={(e) => { e.stopPropagation(); setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                              className={`absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center text-[10px] font-bold transition-transform hover:scale-110 z-10 ${
-                                pin.id === selectedPinId
-                                  ? "bg-[#4e99a3] text-white ring-2 ring-[#4e99a3]/40"
-                                  : "bg-[#4e99a3]/90 text-white"
-                              }`}
-                              style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                            >
-                              {i + 1}
-                            </button>
-                          ))}
-                          {pendingPin && (
-                            <div
-                              className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#c09a5a] text-white flex items-center justify-center text-[10px] font-bold animate-pulse z-10"
-                              style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%` }}
-                            >
-                              +
-                            </div>
-                          )}
-                        </>
-                      }
+                      pins={pins}
+                      onAddPin={(pin) => addPin(pin, clientName)}
+                      onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                      focusPin={focusPin}
                     />
                   ) : (
                     <div
@@ -309,19 +266,14 @@ export default function PortalPage() {
                         alt={order.title}
                         className="w-full object-contain pointer-events-none"
                       />
-                      {pins.filter((p) => !p.resolved).map((pin, i) => (
-                        <button
+                      {pins.filter((p) => !p.resolved).map((pin) => (
+                        <PinMarker
                           key={pin.id}
-                          onClick={(e) => { e.stopPropagation(); setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                          className={`absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center text-[10px] font-bold transition-transform hover:scale-110 ${
-                            pin.id === selectedPinId
-                              ? "bg-[#4e99a3] text-white ring-2 ring-[#4e99a3]/40"
-                              : "bg-[#4e99a3]/90 text-white"
-                          }`}
-                          style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                        >
-                          {i + 1}
-                        </button>
+                          pin={pin}
+                          number={numbers.get(pin.id) ?? ""}
+                          selected={pin.id === selectedPinId}
+                          onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
+                        />
                       ))}
                       {pendingPin && (
                         <div
@@ -361,7 +313,7 @@ export default function PortalPage() {
                   )}
 
                   {/* Selected pin detail */}
-                  {selectedPin && !pendingPin && (
+                  {selectedPin && !pendingPin && !isPdf && (
                     <div className="mt-4 rounded-lg border border-border/40 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -376,7 +328,7 @@ export default function PortalPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onPress={() => handleResolvePin(selectedPin.id)}
+                          onPress={() => setResolved(selectedPin.id, true)}
                           className="shrink-0 text-xs"
                         >
                           Resolve
@@ -434,51 +386,14 @@ export default function PortalPage() {
           <div className="p-4 border-b border-border/40">
             <h2 className="text-sm font-medium text-foreground">Comments ({pins.filter((p) => !p.resolved).length})</h2>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
-            {pins.filter((p) => !p.resolved).length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-6">No comments yet.<br />Click on the file to add one.</p>
-            )}
-            {pins.filter((p) => !p.resolved).map((pin, i) => (
-              <button
-                key={pin.id}
-                onClick={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                  pin.id === selectedPinId ? "bg-white/[.06]" : "hover:bg-white/[.03]"
-                }`}
-              >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#4e99a3]/90 text-[10px] font-bold text-white mt-0.5">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground truncate">{pin.title}</p>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                    {pin.author_name} &middot; {new Date(pin.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </button>
-            ))}
-
-            {/* Resolved */}
-            {pins.filter((p) => p.resolved).length > 0 && (
-              <>
-                <div className="border-t border-border/40 mt-2 pt-3">
-                  <p className="text-[11px] text-muted-foreground/50 px-1 mb-1">Resolved</p>
-                </div>
-                {pins.filter((p) => p.resolved).map((pin) => (
-                  <div key={pin.id} className="flex items-start gap-2.5 rounded-lg px-3 py-2 opacity-40">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] text-muted-foreground mt-0.5">
-                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 8.5l3 3 7-7" />
-                      </svg>
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground line-through truncate">{pin.title}</p>
-                      <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{pin.author_name}</p>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+          <div className="flex-1 overflow-y-auto p-3">
+            <PinList
+              pins={pins}
+              numbers={numbers}
+              selectedId={isPdf ? null : selectedPinId}
+              onSelect={handleSelectPin}
+              emptyText="No comments yet. Click on the file to add one."
+            />
           </div>
         </aside>
       </div>
