@@ -17,6 +17,10 @@ type PDFViewerProps = {
   /** When set, clicking a page in the viewer lets the user add a comment there. */
   onAddPin?: (pin: NewPin) => Promise<void>
   onToggleResolved?: (pin: Pin) => void
+  /** Drag-to-move and delete, for pins where `canEdit` returns true (all pins if omitted). */
+  onMovePin?: (pin: Pin, x: number, y: number) => void
+  onDeletePin?: (pin: Pin) => Promise<void>
+  canEdit?: (pin: Pin) => boolean
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
 }
@@ -41,7 +45,17 @@ function isCancelled(e: unknown) {
   return (e as { name?: string } | null)?.name === "RenderingCancelledException"
 }
 
-export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolved, focusPin }: PDFViewerProps) {
+export function PDFViewer({
+  url,
+  className,
+  pins = [],
+  onAddPin,
+  onToggleResolved,
+  onMovePin,
+  onDeletePin,
+  canEdit = () => true,
+  focusPin,
+}: PDFViewerProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null)
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -49,6 +63,8 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
   const anchorRef = useRef<{ left: number; top: number } | null>(null)
   const dragRef = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null)
   const draggedRef = useRef(false)
+  // A press that started on a marker or comment card must not end up adding a new pin.
+  const pressOnPinUiRef = useRef(false)
 
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null)
   const [page, setPage] = useState(1)
@@ -268,7 +284,8 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
     const el = scrollRef.current
     if (!el || e.button !== 0) return
     // Don't start panning from the comment form or markers.
-    if ((e.target as HTMLElement).closest("[data-pin-ui]")) return
+    pressOnPinUiRef.current = !!(e.target as HTMLElement).closest("[data-pin-ui]")
+    if (pressOnPinUiRef.current) return
     dragRef.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop, moved: false }
     draggedRef.current = false
   }
@@ -298,7 +315,10 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
 
   function handlePageClick(e: React.MouseEvent<HTMLDivElement>) {
     if (draggedRef.current) { draggedRef.current = false; return }
-    if ((e.target as HTMLElement).closest("[data-pin-ui]")) return
+    if (pressOnPinUiRef.current || (e.target as HTMLElement).closest("[data-pin-ui]")) {
+      pressOnPinUiRef.current = false
+      return
+    }
     // First click outside an open comment just closes it.
     if (selectedId) { setSelectedId(null); return }
     if (!onAddPin) return
@@ -442,6 +462,7 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
                     number={numbers.get(pin.id) ?? ""}
                     selected={pin.id === selectedId}
                     onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
+                    onMove={onMovePin && canEdit(pin) ? (x, y) => onMovePin(pin, x, y) : undefined}
                   />
                 ))}
                 {pending && (
@@ -455,9 +476,11 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
                 {selectedPin && !pending && (
                   <PinPopover x={selectedPin.x} y={selectedPin.y}>
                     <PinDetails
+                      key={selectedPin.id}
                       pin={selectedPin}
                       number={numbers.get(selectedPin.id) ?? 0}
                       onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
+                      onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
                     />
                   </PinPopover>
                 )}
@@ -468,7 +491,7 @@ export function PDFViewer({ url, className, pins = [], onAddPin, onToggleResolve
           <aside className="hidden w-72 shrink-0 flex-col border-l border-border md:flex">
             <div className="border-b border-border px-4 py-3">
               <p className="text-sm font-medium">Comments ({pins.filter((p) => !p.resolved).length})</p>
-              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">Click on the page to add one.</p>}
+              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">Click on the page to add one, drag a pin to move it.</p>}
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />

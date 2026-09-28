@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { CheckIcon, RotateCcwIcon } from "lucide-react"
+import { useRef, useState } from "react"
+import { CheckIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,34 +15,91 @@ function formatDate(dateStr: string) {
   })
 }
 
-/** Round numbered marker, positioned in % of the page so it lands on the same spot at any zoom. */
+/**
+ * Round numbered marker, positioned in % of the page so it lands on the same spot at any zoom.
+ * With `onMove` it can be dragged; the new position is reported in % of its parent (the page).
+ */
 export function PinMarker({
   pin,
   number,
   selected,
   onSelect,
+  onMove,
   small,
 }: {
   pin: Pick<Pin, "x" | "y" | "resolved">
   number: number | string
   selected?: boolean
   onSelect?: () => void
+  onMove?: (x: number, y: number) => void
   small?: boolean
 }) {
+  const dragRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null)
+  const justDraggedRef = useRef(false)
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
+
+  function positionFromEvent(e: React.PointerEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.parentElement!.getBoundingClientRect()
+    const clamp = (v: number) => Math.min(Math.max(v, 0), 100)
+    return {
+      x: clamp(((e.clientX - rect.left) / rect.width) * 100),
+      y: clamp(((e.clientY - rect.top) / rect.height) * 100),
+    }
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!onMove || e.button !== 0) return
+    e.stopPropagation()
+    // Capture right away so fast drags that leave the marker keep reporting to it.
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = { startX: e.clientX, startY: e.clientY, moved: false }
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    const d = dragRef.current
+    if (!d) return
+    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > 3) d.moved = true
+    if (d.moved) setDragPos(positionFromEvent(e))
+  }
+
+  function onPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+    const d = dragRef.current
+    dragRef.current = null
+    if (!d?.moved) return
+    const pos = positionFromEvent(e)
+    justDraggedRef.current = true
+    setDragPos(null)
+    onMove?.(pos.x, pos.y)
+  }
+
+  const x = dragPos?.x ?? pin.x
+  const y = dragPos?.y ?? pin.y
+
   return (
     <button
       type="button"
       data-pin-ui
-      onClick={(e) => { e.stopPropagation(); onSelect?.() }}
+      onClick={(e) => {
+        e.stopPropagation()
+        if (justDraggedRef.current) { justDraggedRef.current = false; return }
+        onSelect?.()
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={() => { dragRef.current = null; setDragPos(null) }}
       tabIndex={onSelect ? 0 : -1}
+      title={onMove ? "Drag to move" : undefined}
       className={cn(
-        "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-semibold text-white shadow-md ring-2 ring-white transition-transform",
+        "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full font-semibold text-white shadow-md ring-2 ring-white transition-transform",
         small ? "size-5 text-[9px]" : "size-7 text-[11px]",
-        onSelect ? "cursor-pointer hover:scale-110" : "pointer-events-none",
+        onSelect || onMove ? "cursor-pointer hover:scale-110" : "pointer-events-none",
+        onMove && "cursor-grab",
+        dragPos && "scale-125 cursor-grabbing",
         pin.resolved ? "bg-muted-foreground/70" : "bg-accent",
         selected && "scale-110 ring-accent/50 ring-4"
       )}
-      style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+      style={{ left: `${x}%`, top: `${y}%` }}
     >
       {pin.resolved ? <CheckIcon className="size-3" /> : number}
     </button>
@@ -137,11 +194,30 @@ export function PinDetails({
   pin,
   number,
   onToggleResolved,
+  onDelete,
 }: {
   pin: Pin
   number: number
   onToggleResolved?: () => void
+  onDelete?: () => Promise<void> | void
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    if (!confirmDelete) { setConfirmDelete(true); return }
+    setDeleting(true)
+    setError(null)
+    try {
+      await onDelete?.()
+    } catch (e) {
+      setError((e as Error)?.message || "Failed to delete")
+      setDeleting(false)
+      setConfirmDelete(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-start gap-2">
@@ -158,11 +234,26 @@ export function PinDetails({
           </p>
         </div>
       </div>
-      {onToggleResolved && (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onPress={onToggleResolved}>
-            {pin.resolved ? <><RotateCcwIcon /> Reopen</> : <><CheckIcon /> Resolve</>}
-          </Button>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {(onToggleResolved || onDelete) && (
+        <div className="flex items-center justify-end gap-2">
+          {onDelete && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onPress={handleDelete}
+              isDisabled={deleting}
+              className="mr-auto"
+            >
+              <Trash2Icon />
+              {deleting ? "Deleting..." : confirmDelete ? "Confirm delete" : "Delete"}
+            </Button>
+          )}
+          {onToggleResolved && (
+            <Button variant="outline" size="sm" onPress={onToggleResolved}>
+              {pin.resolved ? <><RotateCcwIcon /> Reopen</> : <><CheckIcon /> Resolve</>}
+            </Button>
+          )}
         </div>
       )}
     </div>

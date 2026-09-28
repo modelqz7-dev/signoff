@@ -49,13 +49,19 @@ export function usePins(orderId: string | null) {
         "postgres_changes",
         { event: "*", schema: "public", table: "order_pins", filter: `order_id=eq.${orderId}` },
         (payload) => {
-          if (payload.eventType === "DELETE") {
-            const id = (payload.old as Partial<Pin>).id
-            setPins((prev) => prev.filter((p) => p.id !== id))
-            return
-          }
+          if (payload.eventType === "DELETE") return
           const row = payload.new as Pin
           setPins((prev) => sortPins([...prev.filter((p) => p.id !== row.id), row]))
+        }
+      )
+      // Postgres can't filter DELETE events by column, so listen to all deletes on the table;
+      // they carry only the row id, and ids we don't have are ignored.
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "order_pins" },
+        (payload) => {
+          const id = (payload.old as Partial<Pin>).id
+          if (id) setPins((prev) => prev.filter((p) => p.id !== id))
         }
       )
       .subscribe((status) => {
@@ -86,7 +92,26 @@ export function usePins(orderId: string | null) {
     }
   }, [load])
 
-  return { pins, addPin, setResolved, reload: load }
+  const movePin = useCallback(async (id: string, x: number, y: number) => {
+    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, x, y } : p)))
+    const { error } = await supabase.from("order_pins").update({ x, y }).eq("id", id)
+    if (error) {
+      console.error("Pin move error:", error)
+      load()
+    }
+  }, [load])
+
+  const deletePin = useCallback(async (id: string) => {
+    const { data, error } = await supabase.from("order_pins").delete().eq("id", id).select("id")
+    // With RLS, a forbidden delete returns no error but also no rows.
+    if (error || !data?.length) {
+      load()
+      throw error ?? new Error("Not allowed to delete this comment")
+    }
+    setPins((prev) => prev.filter((p) => p.id !== id))
+  }, [load])
+
+  return { pins, addPin, setResolved, movePin, deletePin, reload: load }
 }
 
 /** Stable pin numbers (by creation order) so the client and the shop see the same "#3". */

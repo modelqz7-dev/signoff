@@ -35,7 +35,7 @@ export default function OrderPage() {
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
 
   // Client comments from the portal, updated live.
-  const { pins, setResolved } = usePins(order ? orderId : null)
+  const { pins, setResolved, movePin, deletePin } = usePins(order ? orderId : null)
   const numbers = usePinNumbers(pins)
   const isPdf = isPdfUrl(order?.file_url)
 
@@ -242,6 +242,8 @@ export default function OrderPage() {
                           url={order.file_url}
                           pins={pins}
                           onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                          onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
+                          onDeletePin={(pin) => deletePin(pin.id)}
                           focusPin={focusPin}
                         />
                       ) : (
