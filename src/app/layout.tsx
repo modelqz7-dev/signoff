@@ -10,8 +10,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Signoff",
-  description: "Client approval portal",
+  title: "Nodly — client approvals for designs",
+  description: "Share a design, collect pinned comments and get your client's approval in one link.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
