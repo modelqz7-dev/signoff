@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
 import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
 
@@ -89,6 +89,7 @@ export function PDFViewer({
 
   const numbers = usePinNumbers(pins)
   const { t } = useT()
+  const narrow = useNarrowScreen()
   const pagePins = pins.filter((p) => p.page === page)
   const selectedPin = pagePins.find((p) => p.id === selectedId) || null
 
@@ -417,6 +418,17 @@ export function PDFViewer({
     openModal(focusPin.id)
   }
 
+  const composer = <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
+  const details = selectedPin && (
+    <PinDetails
+      key={selectedPin.id}
+      pin={selectedPin}
+      number={numbers.get(selectedPin.id) ?? 0}
+      onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
+      onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
+    />
+  )
+
   if (error) {
     return (
       <div className={`flex items-center justify-center py-12 ${className || ""}`}>
@@ -533,24 +545,12 @@ export function PDFViewer({
                     onMove={onMovePin && canEdit(pin) ? (x, y) => onMovePin(pin, x, y) : undefined}
                   />
                 ))}
-                {pending && (
-                  <>
-                    <PinMarker pin={{ ...pending, resolved: false }} pending />
-                    <PinPopover x={pending.x} y={pending.y}>
-                      <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
-                    </PinPopover>
-                  </>
+                {pending && <PinMarker pin={{ ...pending, resolved: false }} pending />}
+                {pending && !narrow && (
+                  <PinPopover x={pending.x} y={pending.y}>{composer}</PinPopover>
                 )}
-                {selectedPin && !pending && (
-                  <PinPopover x={selectedPin.x} y={selectedPin.y}>
-                    <PinDetails
-                      key={selectedPin.id}
-                      pin={selectedPin}
-                      number={numbers.get(selectedPin.id) ?? 0}
-                      onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
-                      onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
-                    />
-                  </PinPopover>
+                {selectedPin && !pending && !narrow && (
+                  <PinPopover x={selectedPin.x} y={selectedPin.y}>{details}</PinPopover>
                 )}
               </div>
             </div>
@@ -566,7 +566,27 @@ export function PDFViewer({
             </div>
           </aside>
         </div>
+
+        {/* Phones: the comment card sits under the page, so it never covers the pins. */}
+        {narrow && (pending || selectedPin) && (
+          <div data-pin-ui className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200">
+            {pending ? composer : details}
+          </div>
+        )}
       </Dialog>
     </>
   )
+}
+
+const NARROW = "(max-width: 639px)"
+
+function subscribeNarrow(onChange: () => void) {
+  const mq = window.matchMedia(NARROW)
+  mq.addEventListener("change", onChange)
+  return () => mq.removeEventListener("change", onChange)
+}
+
+/** True on phone-sized screens, where comment cards dock under the page instead of floating. */
+function useNarrowScreen() {
+  return useSyncExternalStore(subscribeNarrow, () => window.matchMedia(NARROW).matches, () => false)
 }
