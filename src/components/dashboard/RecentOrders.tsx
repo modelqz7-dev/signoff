@@ -27,7 +27,7 @@ function getInitials(name: string): string {
 // Deterministic color from string
 function initialsColor(name: string): string {
   const colors = [
-    "#4e99a3",
+    "#8a8783",
     "#c09a5a",
     "#5a9c6a",
     "#9a6ab0",
