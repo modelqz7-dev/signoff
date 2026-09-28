@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { CheckIcon } from "lucide-react"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -10,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/types"
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
+import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
+import { PLANS, planById } from "@/lib/plans"
 
 export type PanelId =
   | "profile" | "billing" | "notifications" | "security" | "appearance"
@@ -116,26 +120,47 @@ function Message({ status }: { status: { ok: boolean; text: string } | null }) {
 function ProfilePanel() {
   const router = useRouter()
   const { email, shop, setShop, loading } = useAccount()
+  const profile = useProfile()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
   const value = name ?? shop?.name ?? ""
+  const plan = planById(shop?.plan)
+  const initials = (shop?.name || email).split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
 
-  async function save(e: React.FormEvent) {
+  async function run(task: () => Promise<void>, okText?: string) {
+    setStatus(null)
+    try {
+      await task()
+      if (okText) setStatus({ ok: true, text: okText })
+    } catch (e) {
+      setStatus({ ok: false, text: (e as Error)?.message || "Something went wrong" })
+    }
+  }
+
+  async function saveName(e: React.FormEvent) {
     e.preventDefault()
     if (!shop || !value.trim()) return
     setSaving(true)
-    setStatus(null)
-    const { data, error } = await supabase
-      .from("shops").update({ name: value.trim() }).eq("id", shop.id).select().maybeSingle()
-    if (error || !data) {
-      setStatus({ ok: false, text: error?.message || "Couldn't save the name" })
-    } else {
+    await run(async () => {
+      const { data, error } = await supabase
+        .from("shops").update({ name: value.trim() }).eq("id", shop.id).select().maybeSingle()
+      if (error || !data) throw error ?? new Error("Couldn't save the name")
       setShop(data as Shop)
       setName(null)
-      setStatus({ ok: true, text: "Saved. Reload to see it in the header." })
-    }
+    }, "Saved. Reload to see it in the header.")
     setSaving(false)
+  }
+
+  async function onAvatarPicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !shop) return
+    setUploading(true)
+    await run(() => uploadAvatar(file, shop.id))
+    setUploading(false)
   }
 
   async function signOut() {
@@ -143,11 +168,37 @@ function ProfilePanel() {
     router.replace("/login")
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading...</p>
+  if (loading || !profile) return <p className="text-muted-foreground">Loading...</p>
 
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={save} className="flex flex-col gap-2">
+      <div className="flex items-center gap-3">
+        <Avatar className="size-14">
+          <AvatarImage src={profile.avatarUrl} alt="" />
+          <AvatarFallback className="text-sm">{initials || "S"}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{shop?.name || "Your workshop"}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile.activity || "Add your activity below"}</p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || uploading}>
+            {uploading ? "Uploading..." : "Change photo"}
+          </Button>
+          {profile.avatarUrl && (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground hover:text-foreground"
+              onClick={() => run(() => updateProfile({ avatar_url: "" }))}
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPicked} />
+      </div>
+
+      <form onSubmit={saveName} className="flex flex-col gap-2">
         <Label htmlFor="panel-shop-name">Workshop name</Label>
         <div className="flex gap-2">
           <Input
@@ -160,10 +211,45 @@ function ProfilePanel() {
             {saving ? "Saving..." : "Save"}
           </Button>
         </div>
-        <Message status={status} />
       </form>
+
+      <div className="flex flex-col gap-2">
+        <Label>What do you do?</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {ACTIVITIES.map((a) => {
+            const active = profile.activity === a
+            return (
+              <button
+                key={a}
+                type="button"
+                aria-pressed={active}
+                onClick={() => run(() => updateProfile({ activity: active ? "" : a }))}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  active
+                    ? "border-accent bg-accent/15 text-foreground"
+                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {a}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <Message status={status} />
+
       <div className="divide-y divide-border border-y border-border">
         <Row label="Email">{email || "—"}</Row>
+        <Row label="Plan">
+          <span className="flex items-center justify-end gap-2">
+            {plan.name}
+            <button type="button" className="text-xs text-accent hover:underline" onClick={() => openPanel("billing")}>
+              Change
+            </button>
+          </span>
+        </Row>
         <Row label="Member since">{shop ? new Date(shop.created_at).toLocaleDateString() : "—"}</Row>
       </div>
       <Button variant="outline" onPress={signOut}>Sign out</Button>
@@ -172,16 +258,69 @@ function ProfilePanel() {
 }
 
 function BillingPanel() {
-  const { shop, loading } = useAccount()
-  const plan = shop?.plan ? shop.plan.charAt(0).toUpperCase() + shop.plan.slice(1) : "Free"
+  const { shop, setShop, loading } = useAccount()
+  const [switching, setSwitching] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const current = planById(shop?.plan)
+
+  async function choose(id: string) {
+    if (!shop) return
+    setSwitching(id)
+    setError(null)
+    const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", shop.id).select().maybeSingle()
+    if (error || !data) setError(error?.message || "Couldn't change the plan")
+    else {
+      setShop(data as Shop)
+      // The pressed "Choose" button disappears; keep focus inside the dialog so Esc still works.
+      requestAnimationFrame(() => document.getElementById(`plan-${id}`)?.focus())
+    }
+    setSwitching(null)
+  }
+
+  if (loading) return <p className="text-muted-foreground">Loading...</p>
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="divide-y divide-border border-y border-border">
-        <Row label="Current plan">{loading ? "..." : plan}</Row>
-        <Row label="Orders">Unlimited</Row>
-        <Row label="Next payment">—</Row>
+      <div className="flex flex-col gap-2">
+        {PLANS.map((plan) => {
+          const isCurrent = plan.id === current.id
+          return (
+            <div
+              key={plan.id}
+              id={`plan-${plan.id}`}
+              tabIndex={-1}
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-3 transition-colors outline-none",
+                isCurrent ? "border-accent bg-accent/10" : "border-border"
+              )}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <p className="font-medium">{plan.name}</p>
+                  <p className="text-xs text-muted-foreground">{plan.price}</p>
+                </div>
+                <ul className="mt-1 flex flex-col gap-0.5">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CheckIcon className="size-3 shrink-0 text-accent" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {isCurrent ? (
+                <span className="rounded-md bg-accent/20 px-2 py-0.5 text-xs text-foreground">Current</span>
+              ) : (
+                <Button size="sm" variant="outline" onPress={() => choose(plan.id)} isDisabled={!shop || !!switching}>
+                  {switching === plan.id ? "Switching..." : "Choose"}
+                </Button>
+              )}
+            </div>
+          )
+        })}
       </div>
-      <Note>Signoff is free during early access. Paid plans will be announced before any charge.</Note>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <Note>No charges during early access: you can switch plans freely. Billing will be announced before any payment.</Note>
     </div>
   )
 }
