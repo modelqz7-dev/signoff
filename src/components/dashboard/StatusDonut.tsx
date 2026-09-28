@@ -19,10 +19,10 @@ const STATUS_KEYS: OrderStatus[] = ["await", "changes", "approved", "prod"]
 
 // Resolved colors for SVG (can't use CSS vars in stroke-dasharray calc, but can in stroke)
 const DONUT_COLORS: Record<OrderStatus, string> = {
-  await: "#4e99a3",
-  changes: "#c09a5a",
-  approved: "#5a9c6a",
-  prod: "#8a8987",
+  await: "var(--status-await)",
+  changes: "var(--status-changes)",
+  approved: "var(--status-approved)",
+  prod: "var(--status-prod)",
 }
 
 export function StatusDonut({ orders }: StatusDonutProps) {
@@ -85,7 +85,7 @@ export function StatusDonut({ orders }: StatusDonutProps) {
               cy="50"
               r={radius}
               fill="none"
-              stroke="var(--border)"
+              style={{ stroke: "var(--border)" }}
               strokeWidth={strokeWidth}
             />
             {/* Segments */}
@@ -96,7 +96,7 @@ export function StatusDonut({ orders }: StatusDonutProps) {
                 cy="50"
                 r={radius}
                 fill="none"
-                stroke={seg.color}
+                style={{ stroke: seg.color }}
                 strokeWidth={strokeWidth}
                 strokeDasharray={seg.dasharray}
                 strokeLinecap="butt"

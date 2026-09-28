@@ -36,9 +36,9 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
         <div className="flex flex-1 items-center justify-center">
           <button
             onClick={() => setNewModalOpen(true)}
-            className="flex flex-col items-center gap-2 text-muted-foreground transition-colors hover:text-[#4e99a3]"
+            className="flex flex-col items-center gap-2 text-muted-foreground transition-colors hover:text-accent"
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-border/60 transition-colors hover:border-[#4e99a3]/50">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-border/60 transition-colors hover:border-accent/50">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6" strokeLinecap="round">
                 <line x1="8" y1="3" x2="8" y2="13" />
                 <line x1="3" y1="8" x2="13" y2="8" />
@@ -58,7 +58,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
                   <Link
                     key={order.id}
                     href={`/orders/${order.id}`}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/[.04]"
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-hover"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{order.title}</p>
@@ -77,7 +77,7 @@ export function QuickOrderCard({ orders, shopId, onOrderCreated, onOrderUpdated 
               {hasMore && (
                 <button
                   onClick={() => setListModalOpen(true)}
-                  className="text-xs text-[#4e99a3] hover:text-foreground transition-colors text-center py-1"
+                  className="text-xs text-accent hover:text-foreground transition-colors text-center py-1"
                 >
                   {t("See more ({n})", { n: orders.length - 3 })}
                 </button>

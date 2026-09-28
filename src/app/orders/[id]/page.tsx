@@ -252,7 +252,7 @@ export default function OrderPage() {
                           focusPin={focusPin}
                         />
                       ) : (
-                        <div className="w-full rounded-lg border border-border/50 overflow-hidden bg-black/20 flex items-center justify-center">
+                        <div className="w-full rounded-lg border border-border/50 overflow-hidden bg-muted/60 flex items-center justify-center">
                           <div className="relative">
                             <img src={order.file_url} alt={order.title} className="block max-w-full max-h-[500px] object-contain" />
                             {pins.filter((p) => !p.resolved).map((pin) => (
@@ -266,7 +266,7 @@ export default function OrderPage() {
                           href={order.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-[#4e99a3] hover:text-foreground transition-colors flex items-center gap-1"
+                          className="text-xs text-accent hover:text-foreground transition-colors flex items-center gap-1"
                         >
                           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M8 2v8M5 7l3 3 3-3" />
@@ -285,7 +285,7 @@ export default function OrderPage() {
                   ) : (
                     <button
                       onClick={() => fileRef.current?.click()}
-                      className="w-full flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/60 py-8 text-muted-foreground transition-colors hover:bg-white/[.03] hover:text-foreground hover:border-[#4e99a3]/40"
+                      className="w-full flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/60 py-8 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground hover:border-accent/40"
                     >
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" className="h-8 w-8 opacity-50" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M8 10V2M5 5l3-3 3 3" />
@@ -346,7 +346,7 @@ export default function OrderPage() {
                         className="w-full mt-1"
                       >
                         {copied ? (
-                          <span className="flex items-center gap-1.5 text-[#5a9c6a]">
+                          <span className="flex items-center gap-1.5 text-[var(--status-approved)]">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M3 8.5l3 3 7-7" />
                             </svg>
