@@ -19,6 +19,8 @@ import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { BrandMark, MadeWithNodly, usePortalBrand } from "@/components/portal/PortalBrand"
+import { ActionBar, ApproveDialog, ApprovedBanner, ChangesDialog, DoneDialog, ReviewSteps } from "@/components/portal/ReviewFlow"
+import { Sheet } from "@/components/ui/sheet"
 
 export default function PortalPage() {
   const params = useParams()
@@ -53,6 +55,10 @@ export default function PortalPage() {
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
 
   const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<"approved" | "changes" | null>(null)
+  const [done, setDone] = useState<"approved" | "changes" | null>(null)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const fileContainerRef = useRef<HTMLDivElement>(null)
 
   async function handleAuth(e: React.FormEvent) {
@@ -137,19 +143,29 @@ export default function PortalPage() {
     else setSelectedPinId(pin.id === selectedPinId ? null : pin.id)
   }
 
-  async function handleAction(newStatus: string) {
+  async function handleAction(newStatus: "approved" | "changes") {
     if (!order) return
     setActionLoading(true)
+    setActionError(null)
 
     // Record who approved (retention.sql adds approved_by; skip it until then).
     const patch: Record<string, string> = { status: newStatus }
     if (newStatus === "approved" && order.approved_at !== undefined) patch.approved_by = clientName
-    await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update(patch)
       .eq("id", order.id)
+      .select()
 
     setActionLoading(false)
+    setConfirm(null)
+    // With RLS a refused update returns no rows instead of an error.
+    if (error || !data?.length) {
+      setActionError(t("Couldn't save your decision. Please try again."))
+      return
+    }
+    setOrder(data[0] as Order)
+    setDone(newStatus)
   }
 
   function formatDate(dateStr: string | null): string {
@@ -213,13 +229,14 @@ export default function PortalPage() {
   if (!order) return null
   const status = STATUS_MAP[order.status] || STATUS_MAP.await
   const selectedPin = pins.find((p) => p.id === selectedPinId) || null
+  const openCount = pins.filter((p) => !p.resolved).length
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
-      <header className="flex items-center justify-between border-b border-border/40 px-6 py-3">
+      <header className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <BrandMark brand={brand} className="border-r border-border/40 pr-3" />
+          <BrandMark brand={brand} className="hidden border-r border-border/40 pr-3 sm:flex" />
           <h1 className="truncate text-sm font-medium text-foreground">{order.title}</h1>
           <Badge
             variant="secondary"
@@ -230,7 +247,7 @@ export default function PortalPage() {
           </Badge>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden text-xs text-muted-foreground sm:inline">
             {t("Viewing as")} <span className="text-foreground font-medium">{clientName}</span>
           </span>
           <div className="flex items-center gap-1">
@@ -242,8 +259,13 @@ export default function PortalPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main — file viewer */}
-        <div className="flex-1 overflow-y-auto p-6 flex justify-center">
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-28 sm:px-6 sm:pt-6 flex justify-center">
           <div className="w-full max-w-4xl flex flex-col gap-6">
+            {order.status === "approved" || order.status === "prod" ? (
+              <ApprovedBanner order={order} />
+            ) : (
+              <ReviewSteps status={order.status} />
+            )}
 
             {/* Order info */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -370,34 +392,7 @@ export default function PortalPage() {
               </Card>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3 justify-center pb-8">
-              <Button
-                variant="outline"
-                onPress={() => handleAction("changes")}
-                isDisabled={actionLoading || order.status === "changes"}
-                className="px-6"
-              >
-                <span className="flex items-center gap-2">
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 1.5l3.5 3.5L5 14.5H1.5V11z" />
-                  </svg>
-                  {t("Request Changes")}
-                </span>
-              </Button>
-              <Button
-                onPress={() => handleAction("approved")}
-                isDisabled={actionLoading || order.status === "approved"}
-                className="px-6 bg-[var(--status-approved)] hover:opacity-90 text-white"
-              >
-                <span className="flex items-center gap-2">
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 8.5l3 3 7-7" />
-                  </svg>
-                  {t("Approve")}
-                </span>
-              </Button>
-            </div>
+            <MadeWithNodly brand={brand} inline />
 
           </div>
         </div>
@@ -405,7 +400,7 @@ export default function PortalPage() {
         {/* Right sidebar — pins list */}
         <aside className="hidden w-[280px] shrink-0 border-l border-border/40 lg:flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-border/40">
-            <h2 className="text-sm font-medium text-foreground">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</h2>
+            <h2 className="text-sm font-medium text-foreground">{t("Comments ({n})", { n: openCount })}</h2>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             <PinList
@@ -418,7 +413,56 @@ export default function PortalPage() {
           </div>
         </aside>
       </div>
-      <MadeWithNodly brand={brand} />
+
+      <ActionBar
+        status={order.status}
+        commentCount={openCount}
+        busy={actionLoading}
+        onComments={() => setCommentsOpen(true)}
+        onChanges={() => setConfirm("changes")}
+        onApprove={() => setConfirm("approved")}
+      >
+        {actionError && <span className="text-xs text-destructive">{actionError}</span>}
+      </ActionBar>
+
+      {actionError && (
+        <p className="fixed inset-x-4 bottom-20 z-30 rounded-lg bg-destructive/10 px-3 py-2 text-center text-xs text-destructive sm:hidden">
+          {actionError}
+        </p>
+      )}
+
+      <ApproveDialog
+        open={confirm === "approved"}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        title={order.title}
+        version={order.version ?? 1}
+        openComments={openCount}
+        busy={actionLoading}
+        onConfirm={() => handleAction("approved")}
+      />
+      <ChangesDialog
+        open={confirm === "changes"}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        openComments={openCount}
+        busy={actionLoading}
+        onConfirm={() => handleAction("changes")}
+      />
+      <DoneDialog kind={done} shopName={brand?.shopName ?? ""} onClose={() => setDone(null)} />
+
+      <Sheet
+        isOpen={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        title={t("Comments ({n})", { n: openCount })}
+        className="lg:hidden"
+      >
+        <PinList
+          pins={pins}
+          numbers={numbers}
+          selectedId={isPdf ? null : selectedPinId}
+          onSelect={(pin) => { setCommentsOpen(false); handleSelectPin(pin) }}
+          emptyText="No comments yet. Click on the file to add one."
+        />
+      </Sheet>
     </div>
   )
 }

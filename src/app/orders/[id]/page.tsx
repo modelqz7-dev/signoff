@@ -163,6 +163,75 @@ export default function OrderPage() {
   }
 
   const status = STATUS_MAP[order.status]
+  // Link and password for the client; in the right column on wide screens, above the details otherwise.
+  const portalCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">{t("Client Portal")}</CardTitle>
+        <CardDescription>{t("Share this link with your client to view and approve.")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">{t("Portal Link")}</Label>
+            <Input
+              readOnly
+              value={getPortalUrl()}
+              className="text-xs font-mono"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handleCopyLink}
+              className="w-full mt-1"
+            >
+              {copied ? (
+                <span className="flex items-center gap-1.5 text-[var(--status-approved)]">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 8.5l3 3 7-7" />
+                  </svg>
+                  {t("Copied")}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="5" width="9" height="9" rx="1.5" />
+                    <path d="M5 11H3.5A1.5 1.5 0 0 1 2 9.5v-7A1.5 1.5 0 0 1 3.5 1h7A1.5 1.5 0 0 1 12 2.5V5" />
+                  </svg>
+                  {t("Copy Link")}
+                </span>
+              )}
+            </Button>
+          </div>
+
+          <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
+            <Label className="text-xs">{t("Access Password")}</Label>
+            <Input
+              type="text"
+              placeholder={t("Set a password")}
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              className="text-sm"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handleSavePassword}
+              isDisabled={savingPassword || password === (order.password || "")}
+              className="w-full mt-1"
+            >
+              {savingPassword ? t("Saving...") : t("Save Password")}
+            </Button>
+            <p className="text-[11px] text-muted-foreground/60 mt-1">
+              {order.password
+                ? t("Password is set. Client needs this to access.")
+                : t("No password. Anyone with the link can view.")}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="flex min-h-screen">
@@ -220,6 +289,8 @@ export default function OrderPage() {
                   <DeleteOrderButton order={order} onDeleted={() => router.replace("/orders")} />
                 </div>
               </div>
+
+              <div className="lg:hidden">{portalCard}</div>
 
               {/* Info grid */}
               <Card>
@@ -370,72 +441,7 @@ export default function OrderPage() {
 
             {/* Right sidebar — Client Portal */}
             <aside className="hidden w-[300px] shrink-0 lg:flex flex-col gap-5 sticky top-0 self-start">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">{t("Client Portal")}</CardTitle>
-                  <CardDescription>{t("Share this link with your client to view and approve.")}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <Label className="text-xs">{t("Portal Link")}</Label>
-                      <Input
-                        readOnly
-                        value={getPortalUrl()}
-                        className="text-xs font-mono"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onPress={handleCopyLink}
-                        className="w-full mt-1"
-                      >
-                        {copied ? (
-                          <span className="flex items-center gap-1.5 text-[var(--status-approved)]">
-                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 8.5l3 3 7-7" />
-                            </svg>
-                            {t("Copied")}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5">
-                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="h-3.5 w-3.5" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="5" y="5" width="9" height="9" rx="1.5" />
-                              <path d="M5 11H3.5A1.5 1.5 0 0 1 2 9.5v-7A1.5 1.5 0 0 1 3.5 1h7A1.5 1.5 0 0 1 12 2.5V5" />
-                            </svg>
-                            {t("Copy Link")}
-                          </span>
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
-                      <Label className="text-xs">{t("Access Password")}</Label>
-                      <Input
-                        type="text"
-                        placeholder={t("Set a password")}
-                        value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                        className="text-sm"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onPress={handleSavePassword}
-                        isDisabled={savingPassword || password === (order.password || "")}
-                        className="w-full mt-1"
-                      >
-                        {savingPassword ? t("Saving...") : t("Save Password")}
-                      </Button>
-                      <p className="text-[11px] text-muted-foreground/60 mt-1">
-                        {order.password
-                          ? t("Password is set. Client needs this to access.")
-                          : t("No password. Anyone with the link can view.")}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {portalCard}
             </aside>
 
           </div>
