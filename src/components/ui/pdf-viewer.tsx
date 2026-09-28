@@ -2,11 +2,11 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
-import { ChevronLeftIcon, ChevronRightIcon, MessageSquareIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
-import { PinComposer, PinDetails, PinList, PinMarker, PinPopover } from "@/components/orders/pins"
+import { PinComposer, PinDetails, PinList, PinMarker, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
 import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 
@@ -393,7 +393,7 @@ export function PDFViewer({
         )}
         {pins.some((p) => !p.resolved) && (
           <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded">
-            <MessageSquareIcon className="size-3" />
+            <PinOutlineIcon className="size-3" />
             {pins.filter((p) => !p.resolved).length}
           </div>
         )}

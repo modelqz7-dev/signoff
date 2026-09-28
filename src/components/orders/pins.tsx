@@ -32,6 +32,48 @@ function PinShape({ fill }: { fill: string }) {
 }
 
 /**
+ * The same pin as a static inline symbol for lists, feeds and cards, so comments look
+ * identical everywhere: number inside, a check when resolved, or any short label.
+ */
+export function PinGlyph({
+  label,
+  resolved,
+  size = "md",
+  className,
+}: {
+  label?: React.ReactNode
+  resolved?: boolean
+  size?: "sm" | "md"
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "relative inline-block shrink-0 font-semibold text-white",
+        size === "sm" ? "h-[18px] w-[14px] text-[8px]" : "h-[23px] w-[18px] text-[9px]",
+        className
+      )}
+    >
+      <PinShape fill={resolved ? "var(--status-prod)" : "var(--accent)"} />
+      <span className="absolute inset-x-0 top-0 flex h-[80%] items-center justify-center leading-none">
+        {resolved ? <CheckIcon className={size === "sm" ? "size-2" : "size-2.5"} strokeWidth={3} /> : label}
+      </span>
+    </span>
+  )
+}
+
+/** Outline pin in the current text color, sized like a lucide icon (for counters and tiles). */
+export function PinOutlineIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true" className={cn("size-4", className)}>
+      <path d="M12 22s-7-6.7-7-12.5a7 7 0 0 1 14 0C19 15.3 12 22 12 22z" />
+      <circle cx="12" cy="9.5" r="2.2" />
+    </svg>
+  )
+}
+
+/**
  * Numbered comment pin, positioned in % of the page so it lands on the same spot at any zoom.
  * The pin's tip marks the spot. With `onMove` it can be dragged; the new position is reported
  * in % of its parent (the page). `pending` shows a pencil for a comment being written.
@@ -278,9 +320,7 @@ export function PinDetails({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-accent-foreground">
-          {number}
-        </span>
+        <PinGlyph label={number} resolved={pin.resolved} className="-mt-0.5" />
         <div className="min-w-0 flex-1">
           <p className={cn("font-medium break-words", pin.resolved && "text-muted-foreground line-through")}>{pin.title}</p>
           {pin.description && (
@@ -348,14 +388,7 @@ export function PinList({
           pin.resolved && "opacity-50"
         )}
       >
-        <span
-          className={cn(
-            "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
-            pin.resolved ? "bg-muted text-muted-foreground" : "bg-accent text-accent-foreground"
-          )}
-        >
-          {pin.resolved ? <CheckIcon className="size-3" /> : numbers.get(pin.id)}
-        </span>
+        <PinGlyph label={numbers.get(pin.id)} resolved={pin.resolved} className="-mt-0.5" />
         <div className="min-w-0 flex-1">
           <p className={cn("truncate text-xs font-medium", pin.resolved && "line-through")}>{pin.title}</p>
           {pin.description && !pin.resolved && (

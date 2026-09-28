@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import Link from "next/link"
-import { CheckIcon } from "lucide-react"
+import { PinGlyph } from "@/components/orders/pins"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn, timeAgo } from "@/lib/utils"
 import { useNow } from "@/lib/use-now"
@@ -44,9 +44,7 @@ export function ClientActivity({ orders, pins }: { orders: Order[]; pins: Pin[] 
             href={`/orders/${pin.order_id}`}
             className={cn("flex items-start gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/60", pin.resolved && "opacity-50")}
           >
-            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-              {pin.resolved ? <CheckIcon className="size-3" /> : (pin.author_name[0] || "?").toUpperCase()}
-            </span>
+            <PinGlyph label={(pin.author_name[0] || "?").toUpperCase()} resolved={pin.resolved} className="mt-0.5" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">{pin.author_name}</span> {t("on")}{" "}

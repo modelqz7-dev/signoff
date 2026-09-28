@@ -1,7 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import { CheckCircle2Icon, ClockIcon, MessageSquareIcon, PencilLineIcon, type LucideIcon } from "lucide-react"
+import { CheckCircle2Icon, ClockIcon, PencilLineIcon } from "lucide-react"
+import { PinOutlineIcon } from "@/components/orders/pins"
 import { Card } from "@/components/ui/card"
 import { useNow } from "@/lib/use-now"
 import { useT } from "@/lib/i18n"
@@ -78,7 +79,7 @@ export function KpiRow({ orders, pins }: { orders: Order[]; pins: Pin[] }) {
         sub={t("{n} approved in total", { n: stats.approvedTotal })}
       />
       <Tile
-        icon={MessageSquareIcon}
+        icon={PinOutlineIcon}
         color="var(--accent)"
         tint="color-mix(in oklab, var(--accent) 14%, transparent)"
         label={t("Open comments")}
@@ -101,7 +102,7 @@ function Tile({
   share,
   sub,
 }: {
-  icon: LucideIcon
+  icon: React.ComponentType<{ className?: string }>
   color: string
   tint: string
   label: string
