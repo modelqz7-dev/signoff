@@ -55,7 +55,7 @@ export function PinGlyph({
         className
       )}
     >
-      <PinShape fill={resolved ? "var(--status-prod)" : "var(--accent)"} />
+      <PinShape fill={resolved ? "var(--pin-resolved)" : "var(--pin)"} />
       <span className="absolute inset-x-0 top-0 flex h-[80%] items-center justify-center leading-none">
         {resolved ? <CheckIcon className={size === "sm" ? "size-2" : "size-2.5"} strokeWidth={3} /> : label}
       </span>
@@ -145,7 +145,7 @@ export function PinMarker({
 
   const x = dragPos?.x ?? pin.x
   const y = dragPos?.y ?? pin.y
-  const fill = pending ? "var(--status-changes)" : pin.resolved ? "var(--status-prod)" : "var(--accent)"
+  const fill = pending ? "var(--status-changes)" : pin.resolved ? "var(--pin-resolved)" : "var(--pin)"
 
   return (
     <button

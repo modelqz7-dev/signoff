@@ -58,7 +58,7 @@ export function GettingStarted({ orders, shop, onNewOrder }: { orders: Order[]; 
               <span
                 className={cn(
                   "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
-                  step.done ? "bg-accent text-white" : "bg-muted text-muted-foreground"
+                  step.done ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
                 )}
               >
                 {step.done ? <CheckIcon className="size-3" /> : i + 1}

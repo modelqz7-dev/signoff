@@ -202,7 +202,7 @@ function HeroMock({ t }: { t: T }) {
               <div className="absolute inset-[8%] flex flex-col gap-[6%]">
                 <div className="h-[14%] w-1/2 rounded-sm bg-[#1f1e1d]/80" />
                 <div className="flex h-[46%] gap-[5%]">
-                  <div className="flex-[1.3] rounded-sm bg-[#4e99a3]/25 ring-1 ring-[#4e99a3]/40" />
+                  <div className="flex-[1.3] rounded-sm bg-accent/25 ring-1 ring-accent/40" />
                   <div className="flex flex-1 flex-col gap-[10%]">
                     <div className="h-[18%] rounded-sm bg-[#1f1e1d]/15" />
                     <div className="h-[18%] w-4/5 rounded-sm bg-[#1f1e1d]/15" />
@@ -230,7 +230,7 @@ function HeroMock({ t }: { t: T }) {
             <p className="px-1.5 pb-1 text-[11px] font-medium text-muted-foreground">{t("Comments ({n})", { n: 3 })}</p>
             {[t("Swap the photo"), t("Fix the phone number"), t("Make the logo 20% bigger")].map((c, i) => (
               <div key={c} className={cn("flex gap-2 rounded-md px-1.5 py-1.5", i === 2 && "bg-muted")}>
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[8px] font-semibold text-white">{i + 1}</span>
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[8px] font-semibold text-accent-foreground">{i + 1}</span>
                 <span className="truncate text-[11px]">{c}</span>
               </div>
             ))}

@@ -656,7 +656,7 @@ function ThemePreview({ theme }: { theme: Theme }) {
         <div className="flex flex-1 gap-1.5">
           <div className="flex-1 rounded-sm" style={{ backgroundColor: c.card }} />
           <div className="flex-1 rounded-sm" style={{ backgroundColor: c.card }}>
-            <div className="m-1 h-1.5 w-1/2 rounded-sm bg-[#4e99a3]" />
+            <div className="m-1 h-1.5 w-1/2 rounded-sm bg-[#8a8783]" />
           </div>
         </div>
       </div>

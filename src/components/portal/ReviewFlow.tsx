@@ -20,7 +20,7 @@ export function ReviewSteps({ status }: { status: Order["status"] }) {
           <span
             className={cn(
               "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
-              i <= current ? "bg-accent text-white" : "bg-background text-muted-foreground ring-1 ring-border"
+              i <= current ? "bg-accent text-accent-foreground" : "bg-background text-muted-foreground ring-1 ring-border"
             )}
           >
             {i + 1}
