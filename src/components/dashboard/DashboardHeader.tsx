@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 
@@ -90,12 +91,16 @@ export function DashboardHeader({
           </svg>
         </Button>
 
-        <button className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatarUrl} alt={shopName} />
             <AvatarFallback>{initials || "S"}</AvatarFallback>
           </Avatar>
-        </button>
+        </Link>
       </div>
     </header>
   )

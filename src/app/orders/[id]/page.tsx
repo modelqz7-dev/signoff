@@ -14,6 +14,7 @@ import { PDFViewer } from "@/components/ui/pdf-viewer"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinList, PinMarker } from "@/components/orders/pins"
+import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { isPdfUrl } from "@/lib/utils"
 
@@ -190,13 +191,16 @@ export default function OrderPage() {
                     {order.code}
                   </p>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className="border-0 text-xs px-2.5 py-1"
-                  style={{ backgroundColor: status.bg, color: status.color }}
-                >
-                  {status.label}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant="secondary"
+                    className="border-0 text-xs px-2.5 py-1"
+                    style={{ backgroundColor: status.bg, color: status.color }}
+                  >
+                    {status.label}
+                  </Badge>
+                  <DeleteOrderButton order={order} onDeleted={() => router.replace("/orders")} />
+                </div>
               </div>
 
               {/* Info grid */}
