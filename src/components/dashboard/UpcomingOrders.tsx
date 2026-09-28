@@ -20,9 +20,11 @@ function formatDate(dateStr: string): string {
 }
 
 export function UpcomingOrders({ orders }: UpcomingOrdersProps) {
+  // Pending orders by nearest deadline; ones without a deadline go last.
   const pending = useMemo(() => {
     return orders
       .filter((o) => o.status === "await" || o.status === "changes")
+      .sort((a, b) => (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999"))
       .slice(0, 5)
   }, [orders])
 
@@ -49,7 +51,7 @@ export function UpcomingOrders({ orders }: UpcomingOrdersProps) {
                 </p>
               </div>
               <span className="text-[10px] text-muted-foreground shrink-0">
-                {formatDate(order.created_at)}
+                {order.deadline ? `Due ${formatDate(order.deadline + "T00:00:00")}` : "No deadline"}
               </span>
             </div>
           )

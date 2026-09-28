@@ -6,12 +6,15 @@ import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { OrderActivityChart } from "@/components/dashboard/OrderActivityChart"
-import { StatsCards } from "@/components/dashboard/StatsCards"
+import { KpiRow } from "@/components/dashboard/KpiRow"
+import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
+import { ClientActivity } from "@/components/dashboard/ClientActivity"
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget"
 import { UpcomingOrders } from "@/components/dashboard/UpcomingOrders"
 import { StatusDonut } from "@/components/dashboard/StatusDonut"
 import { QuickOrderCard } from "@/components/dashboard/QuickOrderCard"
 import type { Shop, Order } from "@/components/dashboard/types"
+import { useShopPins } from "@/lib/pins"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -19,6 +22,7 @@ export default function Dashboard() {
   const [shop, setShop] = useState<Shop | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const pins = useShopPins(orders.map((o) => o.id))
 
   useEffect(() => {
     async function init() {
@@ -60,6 +64,29 @@ export default function Dashboard() {
     init()
   }, [router])
 
+  // Status changes made by clients in the portal show up without a reload.
+  const shopId = shop?.id
+  useEffect(() => {
+    if (!shopId) return
+    const channel = supabase
+      .channel(`dashboard-orders-${shopId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `shop_id=eq.${shopId}` },
+        (payload) => {
+          if (payload.eventType === "DELETE") return
+          const row = payload.new as Order
+          setOrders((prev) =>
+            prev.some((o) => o.id === row.id)
+              ? prev.map((o) => (o.id === row.id ? row : o))
+              : [row, ...prev]
+          )
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [shopId])
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -85,16 +112,23 @@ export default function Dashboard() {
         <div className="flex flex-1 gap-5 overflow-y-auto p-6">
           {/* Center content */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <OrderActivityChart orders={orders} />
+            <KpiRow orders={orders} pins={pins} />
+
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <OrderActivityChart orders={orders} />
+              </div>
               <QuickOrderCard
                 orders={orders}
                 shopId={shop?.id || ""}
                 onOrderCreated={(order) => setOrders((prev) => [order, ...prev])}
                 onOrderUpdated={(updated) => setOrders((prev) => prev.map((o) => o.id === updated.id ? updated : o))}
               />
-              <StatsCards orders={orders} variant="times" />
-              <StatsCards orders={orders} variant="month" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <NeedsAttention orders={orders} pins={pins} />
+              <ClientActivity orders={orders} pins={pins} />
             </div>
           </div>
 
