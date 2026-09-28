@@ -21,7 +21,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   return (
     <>
     <aside
-      className="flex h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-[#1e1d1c] transition-all duration-200 overflow-y-auto"
+      className="sticky top-0 self-start flex h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-[#1e1d1c] transition-all duration-200 overflow-y-auto"
       style={{
         marginLeft: open ? 0 : -220,
         opacity: open ? 1 : 0,
