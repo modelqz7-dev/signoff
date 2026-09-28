@@ -7,13 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Order } from "@/components/dashboard/types"
 import { STATUS_MAP } from "@/components/dashboard/types"
+import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 
 type OrderDetailProps = {
   order: Order
   onUpdated?: (order: Order) => void
+  onDeleted?: (order: Order) => void
 }
 
-export function OrderDetail({ order, onUpdated }: OrderDetailProps) {
+export function OrderDetail({ order, onUpdated, onDeleted }: OrderDetailProps) {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const status = STATUS_MAP[order.status]
@@ -66,13 +68,16 @@ export function OrderDetail({ order, onUpdated }: OrderDetailProps) {
             {order.client_email && <span> &middot; {order.client_email}</span>}
           </p>
         </div>
-        <Badge
-          variant="secondary"
-          className="border-0 text-xs px-2.5 py-1"
-          style={{ backgroundColor: status.bg, color: status.color }}
-        >
-          {status.label}
-        </Badge>
+        <div className="flex items-center gap-1">
+          <Badge
+            variant="secondary"
+            className="border-0 text-xs px-2.5 py-1"
+            style={{ backgroundColor: status.bg, color: status.color }}
+          >
+            {status.label}
+          </Badge>
+          {onDeleted && <DeleteOrderButton order={order} onDeleted={() => onDeleted(order)} />}
+        </div>
       </div>
 
       {/* Info grid */}

@@ -52,6 +52,11 @@ export default function OrdersPage() {
     setOrders((prev) => prev.map((o) => o.id === updated.id ? updated : o))
   }
 
+  function handleOrderDeleted(deleted: Order) {
+    setOrders((prev) => prev.filter((o) => o.id !== deleted.id))
+    setSelectedId(null)
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -159,7 +164,7 @@ export default function OrdersPage() {
                     {/* Expanded detail */}
                     {isActive && (
                       <div className="mt-1 rounded-lg border border-border/30 bg-[#1e1d1c]">
-                        <OrderDetail order={order} onUpdated={handleOrderUpdated} />
+                        <OrderDetail order={order} onUpdated={handleOrderUpdated} onDeleted={handleOrderDeleted} />
                       </div>
                     )}
                   </div>
