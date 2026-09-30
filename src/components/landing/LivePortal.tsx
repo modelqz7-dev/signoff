@@ -96,9 +96,9 @@ export function LivePortal({ t }: { t: T }) {
   const status = approved ? STATUS_MAP.approved : STATUS_MAP.await
   const toast = step === 9 ? t("Oak & Dot Workshop got 3 comments") : approved && !still ? t("Approved by Anna K. · certificate saved") : null
 
-  // The characters lean out from behind the window when it's their turn.
-  const clientOut = step >= 1 && step <= 8
-  const makerOut = step === 9 || approved
+  // The characters hold on to the window the whole time and lean in a little on their turn.
+  const clientTurn = step >= 1 && step <= 8
+  const makerTurn = step === 9 || approved
 
   return (
     <div className="relative">
@@ -110,7 +110,7 @@ export function LivePortal({ t }: { t: T }) {
       aria-hidden="true"
       draggable={false}
       className="pointer-events-none absolute top-[38%] -left-[92px] z-0 hidden w-[150px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
-      style={{ transform: clientOut ? "translateX(-18px) rotate(-6deg)" : "translateX(96px) rotate(0deg)", maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
+      style={{ transform: clientTurn ? "translateX(-18px) rotate(-6deg)" : "translateX(-6px) rotate(-2deg)", maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
     />
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
@@ -119,13 +119,13 @@ export function LivePortal({ t }: { t: T }) {
       aria-hidden="true"
       draggable={false}
       className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
-      style={{ transform: makerOut ? "translateY(-10px) rotate(4deg)" : "translateY(96px)" }}
+      style={{ transform: makerTurn ? "translateY(-12px) rotate(4deg)" : "translateY(0) rotate(0deg)" }}
     />
     {/* their hands grip the window's edge, drawn over it */}
-    <Grip side="left" out={clientOut} className="top-[calc(38%+58px)] -left-[15px]" />
-    <Grip side="left" out={clientOut} className="top-[calc(38%+104px)] -left-[15px]" delay={60} />
-    <Grip side="top" out={makerOut} className="-top-[15px] right-[calc(12%+84px)]" />
-    <Grip side="top" out={makerOut} className="-top-[15px] right-[calc(12%+18px)]" delay={60} />
+    <Grip side="left" className="top-[calc(38%+58px)] -left-[15px]" />
+    <Grip side="left" className="top-[calc(38%+104px)] -left-[15px]" />
+    <Grip side="top" className="-top-[15px] right-[calc(12%+84px)]" />
+    <Grip side="top" className="-top-[15px] right-[calc(12%+18px)]" />
     <div
       ref={rootRef}
       className="relative z-10 overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10 select-none"
@@ -276,15 +276,13 @@ export function LivePortal({ t }: { t: T }) {
 }
 
 /** A cartoon hand whose fingers curl over the window's top or left edge. */
-function Grip({ side, out, delay = 0, className }: { side: "top" | "left"; out: boolean; delay?: number; className?: string }) {
+function Grip({ side, className }: { side: "top" | "left"; className?: string }) {
   const top = side === "top"
-  const hidden = top ? "translateY(-10px)" : "translateX(-10px)"
   return (
     <svg
       viewBox={top ? "0 0 38 30" : "0 0 30 38"}
       aria-hidden="true"
-      className={cn("pointer-events-none absolute z-20 hidden transition-[opacity,transform] duration-500 ease-[cubic-bezier(.16,1,.3,1)] lg:block", top ? "h-[30px] w-[38px]" : "h-[38px] w-[30px]", className)}
-      style={{ opacity: out ? 1 : 0, transform: out ? "none" : hidden, transitionDelay: out ? `${delay + 120}ms` : "0ms" }}
+      className={cn("pointer-events-none absolute z-20 hidden lg:block", top ? "h-[30px] w-[38px]" : "h-[38px] w-[30px]", className)}
     >
       <g transform={top ? undefined : "translate(0 38) rotate(-90)"} fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round">
         <path d="M4 17C4 7 10 2 19 2s15 5 15 15Z" />
