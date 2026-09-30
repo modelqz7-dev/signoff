@@ -34,16 +34,17 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
         <h1 className={cn(HEADLINE, "mt-5 max-w-5xl text-[40px] leading-[1.02] sm:text-6xl lg:text-[68px]")}>
           <span className="block">{t("Where workshops and clients")}</span>
           <span className="mt-1 flex flex-wrap items-center justify-center gap-x-[0.25em]">
+            <span>{t("approve every")}</span>
             <RotatingWord
+              hashtag
               words={[
-                { text: t("review"), color: "#3b82f6" },
-                { text: t("mark up"), color: "#e0913a" },
-                { text: t("revise"), color: "#8b5cf6" },
-                { text: t("approve"), color: "#3f9d5c" },
-                { text: t("build"), color: "#d4a72c" },
+                { text: t("kitchen"), color: "#e0913a" },
+                { text: t("wardrobe"), color: "#8b5cf6" },
+                { text: t("bathroom"), color: "#3b82f6" },
+                { text: t("hallway"), color: "#3f9d5c" },
+                { text: t("home office"), color: "#d4a72c" },
               ]}
             />
-            <span>{t("together.")}</span>
           </span>
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
@@ -55,8 +56,11 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
           <ApproveKey onPress={press} label={approved ? t("Undo approval") : t("Approve the design")} />
           {approved && (
             <div key={stampKey} className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="animate-[stamp_.45s_cubic-bezier(.2,.9,.3,1)_both] rounded-lg border-[5px] border-double border-[var(--status-approved)] bg-background/40 px-5 py-1.5 text-[var(--status-approved)] backdrop-blur-[1px]">
-                <p className="font-[family-name:var(--font-brand)] text-3xl font-bold tracking-[0.2em] sm:text-4xl">{t("APPROVED")}</p>
+              <div
+                className="animate-[stamp_.45s_cubic-bezier(.2,.9,.3,1)_both] rounded-full px-[0.45em] pb-[0.06em] text-5xl leading-[1.15] text-[var(--status-approved)] shadow-sm sm:text-6xl"
+                style={{ backgroundColor: "color-mix(in oklab, var(--status-approved) 16%, var(--background))" }}
+              >
+                <p className={cn(HEADLINE, "text-inherit")}>{t("Approved")}</p>
               </div>
             </div>
           )}
