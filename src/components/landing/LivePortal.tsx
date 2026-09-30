@@ -46,7 +46,7 @@ const FINAL = 20
 const FADE = 23
 
 // The app is laid out at a fixed size, then scaled to the window.
-const WIDE = { w: 1200, h: 720 }
+const WIDE = { w: 1200, h: 740 }
 const NARROW = { w: 760, h: 960 }
 
 type Point = { x: number; y: number }
@@ -267,17 +267,6 @@ export function LivePortal({ t }: { t: T }) {
     </>
   )
 
-  const sticker = status === "approved" && (
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div
-        className={cn("rounded-full px-[0.5em] pb-[0.06em] text-4xl leading-[1.2] text-white shadow-[0_10px_30px_-8px_rgba(0,0,0,.45)] ring-2 ring-white/70", !still && "animate-[sticker_.5s_cubic-bezier(.2,.9,.3,1.2)_both]")}
-        style={{ backgroundColor: "var(--status-approved)", transform: still ? "rotate(7deg)" : undefined }}
-      >
-        <p className="font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em]">{t("Approved")}</p>
-      </div>
-    </div>
-  )
-
   // ── the workshop's order page ──
   const portalCard = (
     <Card>
@@ -412,7 +401,6 @@ export function LivePortal({ t }: { t: T }) {
                   <CardContent>
                     <div className="relative overflow-hidden rounded-lg border border-border/50 bg-muted/60">
                       {kitchen}
-                      {sticker}
                     </div>
                   </CardContent>
                 </Card>
@@ -496,7 +484,6 @@ export function LivePortal({ t }: { t: T }) {
                       </div>
                     ))}
                     {draft && <PinMarker pin={{ ...draft, resolved: false }} pending />}
-                    {sticker}
                   </div>
 
                   {/* New pin form */}
@@ -558,7 +545,7 @@ export function LivePortal({ t }: { t: T }) {
         )}
 
         {/* action bar */}
-        <div className={cn("absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/90 backdrop-blur", wide && "right-[280px]")}>
+        <div className={cn("absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95", wide && "right-[280px]")}>
           <div className="mx-auto flex max-w-4xl items-center gap-2 px-6 py-3">
             {!wide && (
               <Button variant="outline" size="sm"><MessageSquareIcon />{openCount}</Button>
@@ -676,7 +663,8 @@ export function LivePortal({ t }: { t: T }) {
   )
 
   return (
-    <div ref={rootRef} className="lg:mt-14">
+    // Wider than the text column around it, so the app reads at close to its real size.
+    <div ref={rootRef} className="relative left-1/2 w-[min(1360px,calc(100vw-2rem))] -translate-x-1/2 lg:mt-14">
       <div className="relative">
         {/* Anna, the client, and the workshop's maker peek over the window's top edge */}
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative character art */}
@@ -716,8 +704,8 @@ export function LivePortal({ t }: { t: T }) {
               {auto && cursor && !still && (
                 <div
                   aria-hidden="true"
-                  className={cn("pointer-events-none absolute z-50 transition-[left,top,opacity] duration-700 ease-[cubic-bezier(.45,0,.2,1)]", step === FADE && "opacity-0")}
-                  style={{ left: cursor.x, top: cursor.y }}
+                  className={cn("pointer-events-none absolute top-0 left-0 z-50 transition-[transform,opacity] duration-[850ms] ease-[cubic-bezier(.65,0,.35,1)] will-change-transform", step === FADE && "opacity-0")}
+                  style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)` }}
                 >
                   {clickStep && <span className="absolute top-0 left-0 size-12 animate-[ripple_.5s_ease-out_both] rounded-full bg-foreground/35" />}
                   <MousePointer2Icon className={cn("size-6 -translate-x-[3px] -translate-y-[2px] text-white drop-shadow", shopCursor ? "fill-[#e0913a]" : "fill-[#5b8def]")} strokeWidth={1.5} />
