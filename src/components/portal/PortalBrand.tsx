@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { LogoMark } from "@/components/Logo"
 import { AtSignIcon, GlobeIcon, PhoneIcon, SendIcon } from "lucide-react"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -123,6 +124,7 @@ export function NodlyMark({ brand, full, className }: { brand: PortalBrand | nul
       title={t("Client portal by Nodly")}
       className={cn("flex w-fit shrink-0 items-baseline gap-1.5 text-foreground transition-opacity hover:opacity-80", className)}
     >
+      <LogoMark className="size-5 self-center" />
       <span className="font-[family-name:var(--font-brand)] text-sm font-bold tracking-tight">Nodly</span>
       {/* Phones keep the room for the order title: just the name there. */}
       <span className={cn("text-[11px] text-muted-foreground", !full && "hidden sm:inline")}>{t("Client portal")}</span>

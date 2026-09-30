@@ -28,12 +28,12 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import { PinMarker } from "@/components/orders/pins"
 import { PLANS } from "@/lib/plans"
 import { BillingCycleToggle, PlanPrice } from "@/components/plans/PlanBits"
 import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { DeskHero } from "@/components/landing/DeskHero"
 import { useNow } from "@/lib/use-now"
 
 /** next/link styled like the shadcn Button, for calls to action. */
@@ -81,7 +81,7 @@ export function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <Header t={t} signedIn={signedIn} />
       <main>
-        <Hero t={t} signedIn={signedIn} />
+        <DeskHero t={t} signedIn={signedIn} />
         <HowItWorks t={t} />
         <ForWhom t={t} />
         <Features t={t} />
@@ -135,127 +135,6 @@ function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
 }
 
 // ── Hero ────────────────────────────────────────────────
-
-function Hero({ t, signedIn }: { t: T; signedIn: boolean }) {
-  return (
-    <section className="relative overflow-hidden">
-      {/* soft accent glow */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[820px] -translate-x-1/2 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 45%, transparent), transparent)" }}
-      />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-24">
-        <div className="flex flex-col items-start gap-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-accent" />
-            {t("Client approvals for designers and workshops")}
-          </span>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight text-foreground sm:text-5xl">
-            {t("Get your client's “yes” on every design")}
-          </h1>
-          <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-            {t("Share a PDF or image in one link. Clients pin comments right on the file, you see them live, and the order moves to approved in one click.")}
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <CtaLink href={signedIn ? "/dashboard" : "/signup"}>
-              {signedIn ? t("Open dashboard") : t("Start free")}
-              <ArrowRightIcon className="size-4" />
-            </CtaLink>
-            <CtaLink href="#how" variant="outline">{t("See how it works")}</CtaLink>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("Free during early access · No card required")}</p>
-        </div>
-        <HeroMock t={t} />
-      </div>
-    </section>
-  )
-}
-
-/** A static, stylized preview of the approval portal: a design page with pins and a comment. */
-function HeroMock({ t }: { t: T }) {
-  const pins = [
-    { x: 24, y: 30, n: 1 },
-    { x: 70, y: 22, n: 2 },
-    { x: 74, y: 72, n: 3, active: true },
-  ]
-  return (
-    <div className="relative">
-      <Card className="gap-0 overflow-hidden py-0 shadow-2xl">
-        {/* window bar */}
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-medium">{t("Kitchen cabinets")}</span>
-            <span className="text-xs text-muted-foreground">ORD-24</span>
-          </div>
-          <span
-            className="animate-in fade-in zoom-in-95 rounded-md px-2 py-0.5 text-[11px] duration-700"
-            style={{ backgroundColor: STATUS_MAP.approved.bg, color: STATUS_MAP.approved.color }}
-          >
-            {t(STATUS_MAP.approved.label)}
-          </span>
-        </div>
-        <div className="grid grid-cols-[1fr_150px] sm:grid-cols-[1fr_180px]">
-          {/* design page */}
-          <div className="bg-muted/50 p-4 sm:p-5">
-            <div className="relative aspect-[4/3] rounded-md bg-white shadow-sm ring-1 ring-black/5">
-              <div className="absolute inset-[8%] flex flex-col gap-[6%]">
-                <div className="h-[14%] w-1/2 rounded-sm bg-[#1f1e1d]/80" />
-                <div className="flex h-[46%] gap-[5%]">
-                  <div className="flex-[1.3] rounded-sm bg-accent/25 ring-1 ring-accent/40" />
-                  <div className="flex flex-1 flex-col gap-[10%]">
-                    <div className="h-[18%] rounded-sm bg-[#1f1e1d]/15" />
-                    <div className="h-[18%] w-4/5 rounded-sm bg-[#1f1e1d]/15" />
-                    <div className="h-[18%] w-3/5 rounded-sm bg-[#1f1e1d]/15" />
-                  </div>
-                </div>
-                <div className="flex h-[16%] gap-[4%]">
-                  <div className="flex-1 rounded-sm bg-[#c09a5a]/25" />
-                  <div className="flex-1 rounded-sm bg-[#1f1e1d]/10" />
-                  <div className="flex-1 rounded-sm bg-[#1f1e1d]/10" />
-                </div>
-              </div>
-              {pins.map((p) => (
-                <PinMarker key={p.n} pin={{ x: p.x, y: p.y, resolved: false }} number={p.n} selected={p.active} />
-              ))}
-              {/* comment card to the left of pin 3, kept inside the page */}
-              <div className="absolute top-[72%] left-[74%] w-[58%] -translate-x-[calc(100%+14px)] -translate-y-[85%] rounded-lg bg-popover p-2 text-popover-foreground shadow-xl ring-1 ring-foreground/10 sm:p-2.5">
-                <p className="text-[11px] font-medium">{t("Make the logo 20% bigger")}</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">Anna · {t("2 min ago")}</p>
-              </div>
-            </div>
-          </div>
-          {/* comments list */}
-          <div className="flex flex-col gap-1 border-l border-border p-2.5">
-            <p className="px-1.5 pb-1 text-[11px] font-medium text-muted-foreground">{t("Comments ({n})", { n: 3 })}</p>
-            {[t("Swap the photo"), t("Fix the phone number"), t("Make the logo 20% bigger")].map((c, i) => (
-              <div key={c} className={cn("flex gap-2 rounded-md px-1.5 py-1.5", i === 2 && "bg-muted")}>
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[8px] font-semibold text-accent-foreground">{i + 1}</span>
-                <span className="truncate text-[11px]">{c}</span>
-              </div>
-            ))}
-            <div className="mt-auto flex flex-col gap-1.5 pt-2">
-              <span className="flex h-7 items-center justify-center gap-1 rounded-md text-[11px] font-medium text-white" style={{ backgroundColor: STATUS_MAP.approved.color }}>
-                <CheckIcon className="size-3" /> {t("Approve")}
-              </span>
-              <span className="flex h-7 items-center justify-center rounded-md border border-border text-[11px] text-muted-foreground">
-                {t("Request Changes")}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Card>
-      {/* floating live toast */}
-      <div className="absolute -bottom-5 left-4 flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs shadow-lg sm:-left-6">
-        <span className="relative flex size-2">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-chart-4 opacity-60" />
-          <span className="relative inline-flex size-2 rounded-full bg-chart-4" />
-        </span>
-        {t("Anna approved the design")}
-      </div>
-    </div>
-  )
-}
 
 // ── How it works ────────────────────────────────────────
 
