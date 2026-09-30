@@ -97,16 +97,15 @@ export function LivePortal({ t }: { t: T }) {
   const toast = step === 9 ? t("Oak & Dot Workshop got 3 comments") : approved && !still ? t("Approved by Anna K. · certificate saved") : null
 
   return (
-    <div className="relative">
-    {/* Anna, the client, peeking from the left edge; the workshop's maker from the top */}
+    <div className="relative lg:mt-14">
+    {/* Anna, the client, and the workshop's maker peek over the window's top edge */}
     {/* eslint-disable-next-line @next/next/no-img-element -- decorative character art */}
     <img
       src="/landing/characters/client-flipped.svg"
       alt=""
       aria-hidden="true"
       draggable={false}
-      className="pointer-events-none absolute top-[38%] -left-[88px] z-0 hidden w-[150px] select-none lg:block"
-      style={{ maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
+      className="pointer-events-none absolute -top-[86px] left-[12%] z-0 hidden w-[130px] select-none lg:block"
     />
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
@@ -117,10 +116,10 @@ export function LivePortal({ t }: { t: T }) {
       className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] select-none lg:block"
     />
     {/* their hands grip the window's edge, drawn over it; both hold on the whole time */}
-    <Grip side="left" className="top-[calc(38%+22px)] -left-[15px]" />
-    <Grip side="left" className="top-[calc(38%+92px)] -left-[15px]" />
-    <Grip side="top" className="-top-[15px] right-[calc(12%+84px)]" />
-    <Grip side="top" className="-top-[15px] right-[calc(12%+18px)]" />
+    <Grip className="left-[calc(12%+18px)]" />
+    <Grip className="left-[calc(12%+84px)]" />
+    <Grip className="right-[calc(12%+84px)]" />
+    <Grip className="right-[calc(12%+18px)]" />
     <div
       ref={rootRef}
       className="relative z-10 overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10 select-none"
@@ -270,16 +269,11 @@ export function LivePortal({ t }: { t: T }) {
   )
 }
 
-/** A cartoon hand whose fingers curl over the window's top or left edge. */
-function Grip({ side, className }: { side: "top" | "left"; className?: string }) {
-  const top = side === "top"
+/** A cartoon hand whose fingers curl over the window's top edge. */
+function Grip({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox={top ? "0 0 38 30" : "0 0 30 38"}
-      aria-hidden="true"
-      className={cn("pointer-events-none absolute z-20 hidden lg:block", top ? "h-[30px] w-[38px]" : "h-[38px] w-[30px]", className)}
-    >
-      <g transform={top ? undefined : "translate(0 38) rotate(-90)"} fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round">
+    <svg viewBox="0 0 38 30" aria-hidden="true" className={cn("pointer-events-none absolute -top-[15px] z-20 hidden h-[30px] w-[38px] lg:block", className)}>
+      <g fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round">
         <path d="M4 17C4 7 10 2 19 2s15 5 15 15Z" />
         {[13, 16, 15, 12].map((h, i) => (
           <rect key={i} x={4 + i * 7.6} y={10} width={7} height={h} rx={3.5} />
