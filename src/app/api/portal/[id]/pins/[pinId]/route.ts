@@ -12,7 +12,7 @@ async function loadPin(request: Request, id: string, pinId: string) {
   return { ...ctx, pin }
 }
 
-/** Resolve / reopen any comment; move only your own. */
+/** Resolve, reopen or move any comment on the order: the portal belongs to the client. */
 export async function PATCH(request: Request, { params }: Params) {
   const { id, pinId } = await params
   const ctx = await loadPin(request, id, pinId)
@@ -22,7 +22,6 @@ export async function PATCH(request: Request, { params }: Params) {
   const patch: Record<string, unknown> = {}
   if (typeof body.resolved === "boolean") patch.resolved = body.resolved
   if (typeof body.x === "number" && typeof body.y === "number") {
-    if (ctx.pin.author_name !== ctx.name) return Response.json({ error: "forbidden" }, { status: 403 })
     patch.x = Math.min(100, Math.max(0, body.x))
     patch.y = Math.min(100, Math.max(0, body.y))
   }
@@ -33,12 +32,11 @@ export async function PATCH(request: Request, { params }: Params) {
   return Response.json({ pin: data })
 }
 
-/** Delete your own comment. */
+/** Delete a comment on the order. */
 export async function DELETE(request: Request, { params }: Params) {
   const { id, pinId } = await params
   const ctx = await loadPin(request, id, pinId)
   if (ctx instanceof Response) return ctx
-  if (ctx.pin.author_name !== ctx.name) return Response.json({ error: "forbidden" }, { status: 403 })
 
   const { error } = await ctx.db.from("order_pins").delete().eq("id", pinId)
   if (error) return Response.json({ error: "failed" }, { status: 500 })
