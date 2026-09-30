@@ -41,8 +41,8 @@ export default function PortalPage() {
   const pins = pinsOfVersion(portal.pins, order?.version)
   // The server puts the comment on the current version under the visitor's name.
   const addPin = (pin: NewPin) => portal.addPin(pin)
-  // No accounts in the portal: a client can move and delete only comments left under their name.
-  const canEdit = (pin: Pin) => pin.author_name === clientName
+  // The portal belongs to the client: they can move and delete any comment on their order.
+  const canEdit: (pin: Pin) => boolean = () => true
   const numbers = usePinNumbers(pins)
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
   const isPdf = isPdfUrl(order?.file_url)

@@ -163,10 +163,13 @@ export function PinMarker({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={() => { dragRef.current = null; setDragPos(null) }}
+      // A long press would otherwise open the phone's own menu or start selecting text,
+      // which cancels the drag.
+      onContextMenu={(e) => e.preventDefault()}
       tabIndex={onSelect ? 0 : -1}
       title={onMove ? t("Drag to move") : undefined}
       className={cn(
-        "absolute z-10 -translate-x-1/2 -translate-y-full touch-none origin-bottom font-semibold text-white outline-none transition-transform focus-visible:scale-110",
+        "absolute z-10 -translate-x-1/2 -translate-y-full touch-none origin-bottom select-none font-semibold text-white outline-none transition-transform [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] focus-visible:scale-110",
         small ? "h-[20px] w-[16px] text-[8px]" : "h-[28px] w-[22px] text-[10px]",
         onSelect || onMove ? "cursor-pointer hover:scale-110" : "pointer-events-none",
         onMove && "cursor-grab",
