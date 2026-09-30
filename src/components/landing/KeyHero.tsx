@@ -55,9 +55,10 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
         <div className="relative mt-8 w-[260px] sm:w-[340px]">
           <ApproveKey onPress={press} label={approved ? t("Undo approval") : t("Approve the design")} />
           {approved && (
-            <div key={stampKey} className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div key={stampKey} className="pointer-events-none absolute inset-0">
+              {/* a green "Approved" sticker slapped on the key's corner, same pill as the headline */}
               <div
-                className="animate-[stamp_.45s_cubic-bezier(.2,.9,.3,1)_both] rounded-full px-[0.45em] pb-[0.06em] text-5xl leading-[1.15] text-[var(--status-approved)] shadow-sm sm:text-6xl"
+                className="absolute top-[13%] -right-[2%] animate-[sticker_.5s_cubic-bezier(.2,.9,.3,1.2)_both] rounded-full px-[0.5em] pb-[0.06em] text-3xl leading-[1.2] text-[var(--status-approved)] shadow-[0_8px_24px_-8px_rgba(0,0,0,.35)] ring-1 ring-[var(--status-approved)]/20 sm:text-4xl"
                 style={{ backgroundColor: "color-mix(in oklab, var(--status-approved) 16%, var(--background))" }}
               >
                 <p className={cn(HEADLINE, "text-inherit")}>{t("Approved")}</p>

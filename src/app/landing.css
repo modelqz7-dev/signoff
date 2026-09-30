@@ -5,6 +5,13 @@
   100% { opacity: 1; transform: rotate(-9deg) scale(1); }
 }
 
+/* The "Approved" sticker landing on the key's corner (see KeyHero). */
+@keyframes sticker {
+  0% { opacity: 0; transform: rotate(-4deg) scale(.4) translateY(12px); }
+  60% { opacity: 1; transform: rotate(9deg) scale(1.06); }
+  100% { opacity: 1; transform: rotate(7deg) scale(1); }
+}
+
 /* The rotating word in the hero headline (see RotatingWord). */
 @keyframes word-in {
   from { transform: translateY(70%); opacity: 0; filter: blur(6px); }
