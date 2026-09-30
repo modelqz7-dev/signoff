@@ -53,6 +53,8 @@ export default function PortalPage() {
   const [pinDesc, setPinDesc] = useState("")
   const [savingPin, setSavingPin] = useState(false)
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
+  // Tap-to-move on images: the next tap on the file puts this pin there.
+  const [movingPinId, setMovingPinId] = useState<string | null>(null)
 
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -82,6 +84,12 @@ export default function PortalPage() {
     const rect = fileContainerRef.current.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
+    if (movingPinId) {
+      movePin(movingPinId, x, y)
+      setSelectedPinId(movingPinId)
+      setMovingPinId(null)
+      return
+    }
     setPendingPin({ x, y })
     setPinTitle("")
     setPinDesc("")
@@ -349,6 +357,13 @@ export default function PortalPage() {
                   )}
 
                   {/* Selected pin detail */}
+                  {movingPinId && !isPdf && (
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border/40 px-4 py-2.5 text-sm">
+                      <span>{t("Tap the spot where the pin should go.")}</span>
+                      <Button variant="ghost" size="sm" onPress={() => setMovingPinId(null)}>{t("Cancel")}</Button>
+                    </div>
+                  )}
+
                   {selectedPin && !pendingPin && !isPdf && (
                     <div className="mt-4 rounded-lg border border-border/40 p-4 text-sm">
                       <PinDetails
@@ -357,6 +372,7 @@ export default function PortalPage() {
                         number={numbers.get(selectedPin.id) ?? 0}
                         onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
                         onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
+                        onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
                       />
                     </div>
                   )}
