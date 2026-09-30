@@ -18,7 +18,7 @@ import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { BrandMark, MadeWithNodly, usePortalBrand } from "@/components/portal/PortalBrand"
+import { BrandMark, BrandStyle, MadeWithNodly, PortalContactCard, PortalWelcome, usePortalBrand } from "@/components/portal/PortalBrand"
 import { ActionBar, ApproveDialog, ApprovedBanner, ChangesDialog, DoneDialog, ReviewSteps } from "@/components/portal/ReviewFlow"
 import { Sheet } from "@/components/ui/sheet"
 
@@ -164,6 +164,7 @@ export default function PortalPage() {
   if (phase === "auth") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <BrandStyle brand={brand} />
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-2 flex items-center gap-1">
@@ -175,6 +176,7 @@ export default function PortalPage() {
             <p className="text-sm text-muted-foreground mt-1">
               {t("Enter your details to view this order.")}
             </p>
+            <PortalWelcome brand={brand} className="mt-3" />
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAuth} className="flex flex-col gap-4">
@@ -222,6 +224,7 @@ export default function PortalPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <BrandStyle brand={brand} />
       {/* Top bar */}
       <header className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
@@ -388,6 +391,8 @@ export default function PortalPage() {
                 </CardContent>
               </Card>
             )}
+
+            <PortalContactCard brand={brand} />
 
             <MadeWithNodly brand={brand} inline />
 

@@ -3,7 +3,7 @@ import type { Order, Shop } from "@/components/dashboard/types"
 export type PlanId = "free" | "go" | "pro"
 
 /** Paid features, checked with `can(shop, feature)`. */
-export type Feature = "versions" | "certificate" | "branding" | "reminders"
+export type Feature = "versions" | "certificate" | "branding" | "reminders" | "brandKit"
 
 export type Plan = {
   id: PlanId
@@ -54,10 +54,11 @@ export const PLANS: Plan[] = [
     name: "Pro",
     monthly: 19,
     activeOrders: null,
-    features: ["versions", "certificate", "branding", "reminders"],
+    features: ["versions", "certificate", "branding", "reminders", "brandKit"],
     highlights: [
       "Unlimited active orders",
       "Everything in Go",
+      "Portal in your brand colours, with your welcome message and contacts",
       "Priority support",
     ],
   },
