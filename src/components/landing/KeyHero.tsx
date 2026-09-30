@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 import { ApproveKey } from "@/components/landing/ApproveKey"
+import { RotatingWord } from "@/components/landing/RotatingWord"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { cn } from "@/lib/utils"
 import type { T } from "@/lib/i18n"
@@ -30,8 +31,20 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
           {t("For furniture makers and kitchen studios")}
         </p>
-        <h1 className={cn(HEADLINE, "mt-5 max-w-4xl text-[44px] leading-[0.98] sm:text-6xl lg:text-7xl")}>
-          {t("Your client's “yes”,")} <span className="block text-muted-foreground">{t("in one tap.")}</span>
+        <h1 className={cn(HEADLINE, "mt-5 max-w-5xl text-[40px] leading-[1.02] sm:text-6xl lg:text-[68px]")}>
+          <span className="block">{t("Where workshops and clients")}</span>
+          <span className="mt-1 flex flex-wrap items-center justify-center gap-x-[0.25em]">
+            <RotatingWord
+              words={[
+                { text: t("review"), color: "#3b82f6" },
+                { text: t("mark up"), color: "#e0913a" },
+                { text: t("revise"), color: "#8b5cf6" },
+                { text: t("approve"), color: "#3f9d5c" },
+                { text: t("build"), color: "#d4a72c" },
+              ]}
+            />
+            <span>{t("together.")}</span>
+          </span>
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
           {t("Send one link. The client marks changes right on the drawing and approves with a tap, and the approval stays on record.")}
