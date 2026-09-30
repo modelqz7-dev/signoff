@@ -4,3 +4,33 @@
   60% { opacity: 1; transform: rotate(-9deg) scale(0.95); filter: blur(0); }
   100% { opacity: 1; transform: rotate(-9deg) scale(1); }
 }
+
+/* The rotating word in the hero headline (see RotatingWord). */
+@keyframes word-in {
+  from { transform: translateY(70%); opacity: 0; filter: blur(6px); }
+  to { transform: none; opacity: 1; filter: blur(0); }
+}
+
+/* Live portal demo (see LivePortal). */
+@keyframes pin-drop {
+  0% { opacity: 0; transform: translateY(-14px) scale(0.6); }
+  60% { opacity: 1; transform: translateY(2px) scale(1.05); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes ripple {
+  from { opacity: 0.5; transform: translate(-50%, -50%) scale(0.2); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes scan-line {
+  from { top: 0%; opacity: 1; }
+  90% { opacity: 1; }
+  to { top: 100%; opacity: 0; }
+}

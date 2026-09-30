@@ -2,10 +2,11 @@
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { LivePortal } from "@/components/landing/LivePortal"
 import type { T } from "@/lib/i18n"
 
-// Real screenshots of Nodly (a demo workshop, captured from the app itself) instead of
-// illustrations. Files live in public/landing.
+// The product itself instead of illustrations: a live, self-playing client portal, then real
+// screenshots of Nodly (a demo workshop, captured from the app). Images live in public/landing.
 
 const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em] text-foreground"
 
@@ -55,9 +56,7 @@ export function ProductShowcase({ t }: { t: T }) {
             <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("They point at the drawing. You get exact changes.")}</h2>
             <Points items={[t("Opens from one link, no account"), t("Pins land on the exact spot, on any page"), t("Approve or ask for changes in one tap")]} />
           </div>
-          <Window url="nodly.app/portal/kitchen-modern">
-            <Image src="/landing/portal-desktop.webp" alt={t("The client portal: a kitchen drawing with three pinned comments")} width={2880} height={2120} className="h-auto w-full" sizes="(min-width: 1152px) 1152px, 100vw" />
-          </Window>
+          <LivePortal t={t} />
         </div>
       </section>
 
