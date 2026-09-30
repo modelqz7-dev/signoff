@@ -18,7 +18,7 @@ import { isPdfUrl } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { BrandMark, BrandStyle, MadeWithNodly, PortalContactCard, PortalWelcome, usePortalBrand } from "@/components/portal/PortalBrand"
+import { BrandMark, BrandStyle, MadeWithNodly, NodlyMark, PortalContactCard, PortalWelcome, usePortalBrand } from "@/components/portal/PortalBrand"
 import { ActionBar, ApproveDialog, ApprovedBanner, ChangesDialog, DoneDialog, ReviewSteps } from "@/components/portal/ReviewFlow"
 import { Sheet } from "@/components/ui/sheet"
 
@@ -171,6 +171,7 @@ export default function PortalPage() {
               <LanguageSwitcher />
               <ThemeToggle />
             </div>
+            <NodlyMark brand={brand} full className="mx-auto mb-2" />
             {brand?.shopName && <BrandMark brand={brand} className="mx-auto mb-1 justify-center" />}
             <CardTitle className="text-base">{t("Order Portal")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
@@ -211,7 +212,6 @@ export default function PortalPage() {
             </form>
           </CardContent>
         </Card>
-        <MadeWithNodly brand={brand} />
       </div>
     )
   }
@@ -228,6 +228,7 @@ export default function PortalPage() {
       {/* Top bar */}
       <header className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
+          <NodlyMark brand={brand} className="border-r border-border/40 pr-3" />
           <BrandMark brand={brand} className="hidden border-r border-border/40 pr-3 sm:flex" />
           <h1 className="truncate text-sm font-medium text-foreground">{order.title}</h1>
           <Badge
@@ -394,8 +395,6 @@ export default function PortalPage() {
 
             <PortalContactCard brand={brand} />
 
-            <MadeWithNodly brand={brand} inline />
-
           </div>
         </div>
 
@@ -449,7 +448,7 @@ export default function PortalPage() {
         busy={actionLoading}
         onConfirm={() => handleAction("changes")}
       />
-      <DoneDialog kind={done} shopName={brand?.shopName ?? ""} onClose={() => setDone(null)} />
+      <DoneDialog kind={done} shopName={brand?.shopName ?? ""} onClose={() => setDone(null)} footer={<MadeWithNodly brand={brand} />} />
 
       <Sheet
         isOpen={commentsOpen}

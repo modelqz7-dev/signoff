@@ -109,19 +109,43 @@ export function BrandMark({ brand, className }: { brand: PortalBrand | null; cla
   )
 }
 
-/** "Made with Nodly" link in the corner of portals on the Free plan. */
-export function MadeWithNodly({ brand, inline }: { brand: PortalBrand | null; inline?: boolean }) {
+/**
+ * Nodly's own mark on Free-plan portals, where the client always sees it: at the top of the
+ * sign-in card and at the start of the portal's header. Paid plans replace it with the
+ * workshop's logo.
+ */
+export function NodlyMark({ brand, full, className }: { brand: PortalBrand | null; full?: boolean; className?: string }) {
   const { t } = useT()
   if (!brand?.badge) return null
   return (
     <Link
       href="/?ref=portal"
       target="_blank"
-      className={cn(inline ? "mx-auto" : "fixed right-4 bottom-4 z-40", "flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm ring-1 ring-foreground/10 transition-colors hover:text-foreground")}
+      title={t("Client portal by Nodly")}
+      className={cn("flex w-fit shrink-0 items-center gap-2 text-foreground transition-opacity hover:opacity-80", className)}
     >
-      {t("Made with")}
+      <LogoMark className="size-5" />
+      {/* Phones keep the room for the order title: just the mark there. */}
+      <span className={cn("text-[15px] font-medium tracking-tight", !full && "hidden sm:inline")}>Nodly</span>
+      <span className="hidden text-[11px] text-muted-foreground sm:inline">{t("Client portal")}</span>
+    </Link>
+  )
+}
+
+/** Shown to the client after their decision on Free-plan portals: a portal like this, for their own business. */
+export function MadeWithNodly({ brand, className }: { brand: PortalBrand | null; className?: string }) {
+  const { t } = useT()
+  if (!brand?.badge) return null
+  return (
+    <Link
+      href="/?ref=portal-done"
+      target="_blank"
+      className={cn("flex w-full items-center justify-center gap-1.5 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground", className)}
+    >
       <LogoMark className="size-3.5" />
-      <span className="font-medium text-foreground">Nodly</span>
+      <span>
+        {t("Made with")} <span className="font-medium text-foreground">Nodly</span> · {t("Get a portal like this for your business")}
+      </span>
     </Link>
   )
 }
