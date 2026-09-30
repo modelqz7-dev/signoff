@@ -96,10 +96,34 @@ export function LivePortal({ t }: { t: T }) {
   const status = approved ? STATUS_MAP.approved : STATUS_MAP.await
   const toast = step === 9 ? t("Oak & Dot Workshop got 3 comments") : approved && !still ? t("Approved by Anna K. · certificate saved") : null
 
+  // The characters lean out from behind the window when it's their turn.
+  const clientOut = step >= 1 && step <= 8
+  const makerOut = step === 9 || approved
+
   return (
+    <div className="relative">
+    {/* Anna, the client, peeking from the left edge; the workshop's maker from the top */}
+    {/* eslint-disable-next-line @next/next/no-img-element -- decorative character art */}
+    <img
+      src="/landing/characters/client-flipped.svg"
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className="pointer-events-none absolute top-[38%] -left-[92px] z-0 hidden w-[150px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
+      style={{ transform: clientOut ? "translateX(-18px) rotate(-6deg)" : "translateX(22px) rotate(0deg)", maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
+    />
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      src="/landing/characters/maker-flipped.svg"
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
+      style={{ transform: makerOut ? "translateY(-10px) rotate(4deg)" : "translateY(96px)" }}
+    />
     <div
       ref={rootRef}
-      className="relative overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10 select-none"
+      className="relative z-10 overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10 select-none"
       aria-label={t("A demo of the client portal: comments are pinned on a kitchen drawing, version 2 is uploaded and the client approves it")}
       role="img"
     >
@@ -226,7 +250,11 @@ export function LivePortal({ t }: { t: T }) {
             <span className="absolute top-0 left-0 size-10 animate-[ripple_.5s_ease-out_both] rounded-full bg-foreground/40" />
           )}
           <MousePointer2Icon className="size-5 -translate-x-[3px] -translate-y-[2px] fill-[#5b8def] text-white drop-shadow" strokeWidth={1.5} />
-          <span className="ml-3 inline-block rounded-md bg-[#5b8def] px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-white shadow">Anna K.</span>
+          <span className="ml-3 inline-flex items-center gap-1 rounded-md bg-[#5b8def] py-0.5 pr-1.5 pl-0.5 text-[11px] font-medium whitespace-nowrap text-white shadow">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/landing/characters/client.svg" alt="" className="size-4 rounded-full bg-white" />
+            Anna K.
+          </span>
         </div>
       )}
 
@@ -237,6 +265,7 @@ export function LivePortal({ t }: { t: T }) {
           {toast}
         </div>
       )}
+    </div>
     </div>
   )
 }
