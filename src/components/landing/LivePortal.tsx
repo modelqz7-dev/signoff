@@ -415,8 +415,12 @@ export function LivePortal({ t }: { t: T }) {
 
                 {approved && (
                   <div key={auto ? step : "you"} className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div className={cn("rounded-lg border-[5px] border-double border-[var(--status-approved)] bg-white/75 px-4 py-1 text-[var(--status-approved)] backdrop-blur-[1px]", !still && "animate-[stamp_.45s_cubic-bezier(.2,.9,.3,1)_both]")} style={still ? { transform: "rotate(-9deg)" } : undefined}>
-                      <p className="font-[family-name:var(--font-brand)] text-2xl font-bold tracking-[0.2em] sm:text-3xl">{t("APPROVED")}</p>
+                    {/* a green "Approved" sticker, like the one on the hero key but solid so it reads on the photo */}
+                    <div
+                      className={cn("rounded-full px-[0.5em] pb-[0.06em] text-3xl leading-[1.2] text-white shadow-[0_10px_30px_-8px_rgba(0,0,0,.45)] ring-2 ring-white/70 sm:text-4xl", !still && "animate-[sticker_.5s_cubic-bezier(.2,.9,.3,1.2)_both]")}
+                      style={{ backgroundColor: "var(--status-approved)", transform: still ? "rotate(7deg)" : undefined }}
+                    >
+                      <p className="font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em]">{t("Approved")}</p>
                     </div>
                   </div>
                 )}
