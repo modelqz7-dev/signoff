@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { DeskHero } from "@/components/landing/DeskHero"
-import { BeforeAfter, Closing, HowItWorks, PricingTickets, Questions, Specification, WorkshopFooter } from "@/components/landing/WorkshopSections"
+import { BeforeAfter, Closing, HowItWorks, Pricing, Questions, Specification, WorkshopFooter } from "@/components/landing/WorkshopSections"
 
 /** next/link styled like the shadcn Button, for calls to action. */
 function CtaLink({ href, children, variant = "primary", className }: {
@@ -51,7 +51,7 @@ export function Landing() {
         <HowItWorks t={t} />
         <BeforeAfter t={t} />
         <Specification t={t} />
-        <PricingTickets t={t} />
+        <Pricing t={t} />
         <Questions t={t} />
         <Closing t={t} signedIn={signedIn} />
       </main>
