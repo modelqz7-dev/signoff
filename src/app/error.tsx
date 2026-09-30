@@ -13,7 +13,7 @@ export default function Error({ error, retry }: { error: Error & { digest?: stri
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <LogoMark className="size-8" />
+      <LogoMark className="size-12" />
       <div className="flex flex-col gap-1">
         <h1 className="text-base font-medium text-foreground">{t("Something went wrong")}</h1>
         <p className="max-w-sm text-sm text-muted-foreground">

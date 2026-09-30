@@ -101,7 +101,7 @@ export default function CertificatePage() {
             )}
           </div>
           <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-            <LogoMark className="size-4" />
+            <LogoMark surface="light" className="size-5" />
             {t("Verified by Nodly")}
           </span>
         </header>

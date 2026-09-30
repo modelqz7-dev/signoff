@@ -123,7 +123,7 @@ export function NodlyMark({ brand, full, className }: { brand: PortalBrand | nul
       title={t("Client portal by Nodly")}
       className={cn("flex w-fit shrink-0 items-baseline gap-1.5 text-foreground transition-opacity hover:opacity-80", className)}
     >
-      <span className="text-sm font-semibold tracking-tight">Nodly</span>
+      <span className="font-[family-name:var(--font-brand)] text-sm font-bold tracking-tight">Nodly</span>
       {/* Phones keep the room for the order title: just the name there. */}
       <span className={cn("text-[11px] text-muted-foreground", !full && "hidden sm:inline")}>{t("Client portal")}</span>
     </Link>
