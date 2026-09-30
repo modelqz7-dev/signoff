@@ -32,7 +32,7 @@ export const PLANS: Plan[] = [
       "Up to 3 active orders",
       "Client portal with pinned comments",
       "Telegram and email notifications",
-      "“Made with Nodly” badge in the portal",
+      "Nodly logo in the portal header",
     ],
   },
   {
@@ -45,7 +45,7 @@ export const PLANS: Plan[] = [
       "Up to 25 active orders",
       "Version history with comments per version",
       "Approval certificate (PDF)",
-      "Your logo in the portal, no Nodly badge",
+      "Your logo in the portal instead of Nodly's",
       "Automatic reminders to clients",
     ],
   },

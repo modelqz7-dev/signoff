@@ -187,7 +187,13 @@ export function ChangesDialog({ open, onOpenChange, openComments, busy, onConfir
 }
 
 /** Thank-you screen after a decision. */
-export function DoneDialog({ kind, shopName, onClose }: { kind: "approved" | "changes" | null; shopName: string; onClose: () => void }) {
+export function DoneDialog({ kind, shopName, onClose, footer }: {
+  kind: "approved" | "changes" | null
+  shopName: string
+  onClose: () => void
+  /** Extra line under the button (the Nodly link on Free-plan portals). */
+  footer?: React.ReactNode
+}) {
   const { t } = useT()
   if (!kind) return null
   const approved = kind === "approved"
@@ -211,6 +217,7 @@ export function DoneDialog({ kind, shopName, onClose }: { kind: "approved" | "ch
             : t("The workshop has your comments. Open this same link later to see the new version.")}
         </DialogDescription>
         <Button className="mt-2 w-full" onPress={onClose}>{t("Done")}</Button>
+        {footer}
       </div>
     </Dialog>
   )
