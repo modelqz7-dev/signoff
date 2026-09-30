@@ -582,7 +582,7 @@ export function LivePortal({ t }: { t: T }) {
 
         {/* confirmation dialogs, as in the portal */}
         {shownDialog && (
-          <div className="absolute inset-0 z-40 animate-in bg-black/10 backdrop-blur-xs duration-150 fade-in-0">
+          <div className="absolute inset-0 z-40 animate-in bg-black/20 duration-150 fade-in-0">
             <div className="absolute top-1/2 left-1/2 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 animate-in gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-150 fade-in-0 zoom-in-95">
               {shownDialog === "approve" ? (
                 <>
@@ -712,8 +712,8 @@ export function LivePortal({ t }: { t: T }) {
                   <span
                     className={cn(
                       "absolute inline-flex w-max items-center gap-1 rounded-md py-0.5 pr-2 pl-0.5 text-[13px] font-medium whitespace-nowrap text-white shadow",
-                      cursor.x > size.w - 150 ? "right-3" : "left-4",
-                      cursor.y > size.h - 60 ? "bottom-9" : "top-5",
+                      // always above and to the left of the pointer, so it never has to jump sides at an edge
+                      "right-3 bottom-full mb-0.5",
                       shopCursor ? "bg-[#e0913a]" : "bg-[#5b8def]"
                     )}
                   >
