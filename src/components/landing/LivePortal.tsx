@@ -96,10 +96,6 @@ export function LivePortal({ t }: { t: T }) {
   const status = approved ? STATUS_MAP.approved : STATUS_MAP.await
   const toast = step === 9 ? t("Oak & Dot Workshop got 3 comments") : approved && !still ? t("Approved by Anna K. · certificate saved") : null
 
-  // The characters hold on to the window the whole time and lean in a little on their turn.
-  const clientTurn = step >= 1 && step <= 8
-  const makerTurn = step === 9 || approved
-
   return (
     <div className="relative">
     {/* Anna, the client, peeking from the left edge; the workshop's maker from the top */}
@@ -109,8 +105,8 @@ export function LivePortal({ t }: { t: T }) {
       alt=""
       aria-hidden="true"
       draggable={false}
-      className="pointer-events-none absolute top-[38%] -left-[92px] z-0 hidden w-[150px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
-      style={{ transform: clientTurn ? "translateX(-18px) rotate(-6deg)" : "translateX(-6px) rotate(-2deg)", maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
+      className="pointer-events-none absolute top-[38%] -left-[88px] z-0 hidden w-[150px] select-none lg:block"
+      style={{ maskImage: "linear-gradient(to bottom, black 62%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent)" }}
     />
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
@@ -118,12 +114,11 @@ export function LivePortal({ t }: { t: T }) {
       alt=""
       aria-hidden="true"
       draggable={false}
-      className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] select-none lg:block"
-      style={{ transform: makerTurn ? "translateY(-12px) rotate(4deg)" : "translateY(0) rotate(0deg)" }}
+      className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] select-none lg:block"
     />
-    {/* their hands grip the window's edge, drawn over it */}
-    <Grip side="left" className="top-[calc(38%+58px)] -left-[15px]" />
-    <Grip side="left" className="top-[calc(38%+104px)] -left-[15px]" />
+    {/* their hands grip the window's edge, drawn over it; both hold on the whole time */}
+    <Grip side="left" className="top-[calc(38%+22px)] -left-[15px]" />
+    <Grip side="left" className="top-[calc(38%+92px)] -left-[15px]" />
     <Grip side="top" className="-top-[15px] right-[calc(12%+84px)]" />
     <Grip side="top" className="-top-[15px] right-[calc(12%+18px)]" />
     <div
