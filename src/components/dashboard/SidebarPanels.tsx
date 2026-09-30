@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/types"
 import { supabase } from "@/lib/supabase"
@@ -18,6 +19,7 @@ import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
 import { uploadPublicAsset, useFileUrl } from "@/lib/files"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
+import { BRAND_PRESETS, brandPalette, cleanContacts, normalizeHex, type PortalContacts, type PortalTheme } from "@/lib/brand"
 import { openPanel, type PanelId } from "@/lib/panels"
 import { notifyPlanChanged, usePlanUsage } from "@/lib/use-plan"
 import { BillingCycleToggle, PlanPrice, UpgradeChip, UsageMeter } from "@/components/plans/PlanBits"
@@ -241,6 +243,8 @@ function ProfilePanel() {
       </div>
 
       <PortalLogo shop={shop} onSaved={setShop} />
+
+      <BrandKit shop={shop} onSaved={setShop} />
 
       <Message status={status} />
 
@@ -859,6 +863,219 @@ function StatusPanel() {
       <Note>
         {allOk ? t("All systems operational.") : anyDown ? t("Some services are unavailable right now.") : t("Checking...")}
       </Note>
+    </div>
+  )
+}
+
+const WELCOME_MAX = 500
+const CONTACT_FIELDS: { key: keyof PortalContacts; label: string; placeholder: string }[] = [
+  { key: "phone", label: "Phone", placeholder: "+1 555 010 2030" },
+  { key: "telegram", label: "Telegram", placeholder: "@workshop" },
+  { key: "instagram", label: "Instagram", placeholder: "@workshop" },
+  { key: "website", label: "Website", placeholder: "workshop.com" },
+]
+
+/** Pro brand kit: the portal's colour, the theme clients see first, a welcome message and contacts. */
+function BrandKit({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) => void }) {
+  const { t } = useT()
+  const allowed = can(shop, "brandKit")
+  const [color, setColor] = useState<string | null>(null)
+  const [theme, setThemeChoice] = useState<PortalTheme | "" | null>(null)
+  const [welcome, setWelcome] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<PortalContacts | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
+
+  // Edits live in local state until saved; untouched fields show what's stored.
+  const colorValue = color ?? shop?.brand_color ?? ""
+  const themeValue = theme ?? shop?.portal_theme ?? ""
+  const welcomeValue = welcome ?? shop?.portal_welcome ?? ""
+  const contactsValue = contacts ?? cleanContacts(shop?.portal_contacts)
+  const hex = normalizeHex(colorValue)
+  const palette = brandPalette(hex)
+  const colorInvalid = colorValue.trim() !== "" && !hex
+
+  async function save() {
+    if (!shop || colorInvalid) return
+    setSaving(true)
+    setStatus(null)
+    const patch = {
+      brand_color: hex,
+      portal_theme: themeValue || null,
+      portal_welcome: welcomeValue.trim().slice(0, WELCOME_MAX) || null,
+      portal_contacts: cleanContacts(contactsValue),
+    }
+    const { data, error } = await supabase.from("shops").update(patch).eq("id", shop.id).select().maybeSingle()
+    setSaving(false)
+    if (error || !data) {
+      const missing = /brand_color|portal_|column/i.test(error?.message ?? "")
+      setStatus({ ok: false, text: missing ? t("Run supabase/branding.sql in Supabase first, then save again.") : error?.message || t("Something went wrong") })
+      return
+    }
+    onSaved(data as Shop)
+    setColor(null); setThemeChoice(null); setWelcome(null); setContacts(null)
+    setStatus({ ok: true, text: t("Brand kit saved. Clients see it the next time they open the portal.") })
+  }
+
+  const themes: { id: PortalTheme | ""; label: string }[] = [
+    { id: "", label: t("Client's choice") },
+    { id: "light", label: t("Light") },
+    { id: "dark", label: t("Dark") },
+  ]
+
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-border/60 p-4">
+      <div className="flex flex-col gap-1">
+        <Label className="flex items-center gap-2">
+          {t("Portal brand kit")}
+          {!allowed && <UpgradeChip feature="brandKit" />}
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          {t("Make the client portal look like your own: your colour, a welcome message and how to reach you.")}
+        </p>
+      </div>
+
+      <fieldset disabled={!allowed || !shop} className="flex flex-col gap-4 disabled:opacity-60">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-foreground">{t("Brand colour")}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {BRAND_PRESETS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-label={c}
+                aria-pressed={hex === c}
+                onClick={() => setColor(c)}
+                className={cn(
+                  "size-6 rounded-full ring-offset-2 ring-offset-background transition-transform hover:scale-110",
+                  hex === c ? "ring-2 ring-foreground" : "ring-1 ring-foreground/15"
+                )}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() => setColor("")}
+              className={cn("ml-1 rounded-full px-2 py-0.5 text-[11px] transition-colors", !hex ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
+            >
+              {t("Default")}
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-lg ring-1 ring-foreground/15" style={{ backgroundColor: hex ?? "transparent" }}>
+              <input
+                type="color"
+                aria-label={t("Pick any colour")}
+                value={hex ?? "#1f1e1d"}
+                onChange={(e) => setColor(e.target.value)}
+                className="absolute inset-0 size-full cursor-pointer opacity-0"
+              />
+            </label>
+            <Input
+              value={colorValue}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setColor(e.target.value)}
+              placeholder="#1e5b3a"
+              className="h-8 w-32 font-mono text-xs"
+              aria-invalid={colorInvalid}
+              aria-label={t("Colour code")}
+            />
+            {colorInvalid && <span className="text-xs text-destructive">{t("Use a code like #1e5b3a")}</span>}
+          </div>
+          {palette?.adjusted && (
+            <p className="text-xs text-muted-foreground">{t("We slightly adjusted this colour where needed so text and buttons stay readable.")}</p>
+          )}
+        </div>
+
+        <BrandPreview shopName={shop?.name ?? ""} palette={palette} />
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-foreground">{t("Portal theme for clients")}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {themes.map((o) => (
+              <button
+                key={o.id || "auto"}
+                type="button"
+                aria-pressed={themeValue === o.id}
+                onClick={() => setThemeChoice(o.id)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  themeValue === o.id ? "border-accent bg-accent/15 text-foreground" : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">{t("The theme the portal opens in. Clients can still switch it.")}</p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="portal-welcome" className="text-xs">{t("Welcome message")}</Label>
+          <Textarea
+            id="portal-welcome"
+            rows={3}
+            maxLength={WELCOME_MAX}
+            value={welcomeValue}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWelcome(e.target.value)}
+            placeholder={t("Hi! Here is your project. Tap anywhere on the drawing to leave a comment.")}
+            className="text-sm"
+          />
+          <p className="text-right text-[11px] text-muted-foreground">{welcomeValue.length}/{WELCOME_MAX}</p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-foreground">{t("Contacts shown to clients")}</span>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {CONTACT_FIELDS.map((f) => (
+              <Input
+                key={f.key}
+                aria-label={t(f.label)}
+                value={contactsValue[f.key] ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContacts({ ...contactsValue, [f.key]: e.target.value })}
+                placeholder={`${t(f.label)}: ${f.placeholder}`}
+                className="h-8 text-sm"
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button size="sm" onPress={save} isDisabled={!allowed || !shop || saving || colorInvalid}>
+            {saving ? t("Saving...") : t("Save brand kit")}
+          </Button>
+          <Message status={status} />
+        </div>
+      </fieldset>
+    </div>
+  )
+}
+
+/** A tiny portal mock-up in both themes, painted with the chosen palette. */
+function BrandPreview({ shopName, palette }: { shopName: string; palette: ReturnType<typeof brandPalette> }) {
+  const { t } = useT()
+  const sides = [
+    { key: "light", bg: "#f6f5f3", card: "#ffffff", fg: "#1f1e1d", muted: "#8a8783", vars: palette?.light, fallback: { btn: "#1f1e1d", btnFg: "#ffffff", pin: "#2b2926" } },
+    { key: "dark", bg: "#171615", card: "#201f1e", fg: "#d6d5d4", muted: "#7c7a77", vars: palette?.dark, fallback: { btn: "#ffffff", btnFg: "#171615", pin: "#2b2926" } },
+  ]
+  return (
+    <div className="grid grid-cols-2 gap-2" aria-label={t("Preview")}>
+      {sides.map((s) => {
+        const btn = s.vars?.["--primary"] ?? s.fallback.btn
+        const btnFg = s.vars?.["--primary-foreground"] ?? s.fallback.btnFg
+        const pin = s.vars?.["--pin"] ?? s.fallback.pin
+        return (
+          <div key={s.key} className="flex flex-col gap-2 rounded-lg p-2.5 ring-1 ring-foreground/10" style={{ backgroundColor: s.bg, color: s.fg }}>
+            <span className="truncate text-[11px] font-medium">{shopName || "Workshop"}</span>
+            <div className="relative h-12 rounded-md" style={{ backgroundColor: s.card }}>
+              <span className="absolute top-2 left-4 flex h-[18px] w-[14px] items-start justify-center rounded-t-full rounded-b-[40%] pt-0.5 text-[8px] font-semibold text-white" style={{ backgroundColor: pin }}>1</span>
+              <span className="absolute right-2 bottom-2 left-10 h-1 rounded-full" style={{ backgroundColor: s.muted, opacity: 0.35 }} />
+            </div>
+            <span className="rounded-md py-1 text-center text-[11px] font-medium" style={{ backgroundColor: btn, color: btnFg }}>
+              {t("View Order")}
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }
