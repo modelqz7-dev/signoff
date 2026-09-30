@@ -9,8 +9,9 @@ import { ThemeToggle } from "@/components/ThemeToggle"
 import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
-import { DeskHero } from "@/components/landing/DeskHero"
-import { BeforeAfter, Closing, HowItWorks, Pricing, Questions, Specification, WorkshopFooter } from "@/components/landing/WorkshopSections"
+import { KeyHero } from "@/components/landing/KeyHero"
+import { ProductShowcase } from "@/components/landing/ProductShowcase"
+import { Closing, Pricing, Questions, WorkshopFooter } from "@/components/landing/WorkshopSections"
 
 /** next/link styled like the shadcn Button, for calls to action. */
 function CtaLink({ href, children, variant = "primary", className }: {
@@ -47,10 +48,8 @@ export function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <Header t={t} signedIn={signedIn} />
       <main>
-        <DeskHero t={t} signedIn={signedIn} />
-        <HowItWorks t={t} />
-        <BeforeAfter t={t} />
-        <Specification t={t} />
+        <KeyHero t={t} signedIn={signedIn} />
+        <ProductShowcase t={t} />
         <Pricing t={t} />
         <Questions t={t} />
         <Closing t={t} signedIn={signedIn} />
@@ -64,9 +63,7 @@ export function Landing() {
 
 function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
   const links = [
-    ["#how", t("How it works")],
-    ["#for", t("Before / after")],
-    ["#features", t("Specification")],
+    ["#product", t("How it works")],
     ["#pricing", t("Pricing")],
     ["#faq", t("FAQ")],
   ]

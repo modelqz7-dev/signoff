@@ -1,0 +1,6 @@
+/* The APPROVED stamp landing on the key (see KeyHero). */
+@keyframes stamp {
+  0% { opacity: 0; transform: rotate(-9deg) scale(1.9); filter: blur(4px); }
+  60% { opacity: 1; transform: rotate(-9deg) scale(0.95); filter: blur(0); }
+  100% { opacity: 1; transform: rotate(-9deg) scale(1); }
+}
