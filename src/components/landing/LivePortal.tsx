@@ -15,11 +15,11 @@ import type { T } from "@/lib/i18n"
  * with reduced motion it simply shows the approved result.
  */
 
-// Pin tips on the drawing, in % of the image.
+// Pin tips on the kitchen render, in % of the image.
 const PINS = [
-  { x: 28.5, y: 33, key: "Matte black handles, please" },
-  { x: 62, y: 55, key: "Darker countertop" },
-  { x: 79, y: 23, key: "+20 cm on this cabinet?" },
+  { x: 17.2, y: 32.6, key: "Matte black handles, please" },
+  { x: 59.7, y: 58, key: "Darker countertop" },
+  { x: 81.1, y: 18.5, key: "+20 cm on this cabinet?" },
 ]
 
 // How long each step lasts (ms). See the step comments in the component.
