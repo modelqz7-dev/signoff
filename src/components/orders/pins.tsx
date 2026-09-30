@@ -1,7 +1,7 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
-import { CheckIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { CheckIcon, MoveIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,7 +96,9 @@ export function PinMarker({
   pending?: boolean
 }) {
   const dragRef = useRef<{ startX: number; startY: number; dx: number; dy: number; moved: boolean } | null>(null)
-  const justDraggedRef = useRef(false)
+  // When a drag ended; the click a mouse fires right after it must not open the comment.
+  // (Touch drags fire no click, so a plain flag would swallow the next real tap.)
+  const draggedAtRef = useRef(0)
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
   const { t } = useT()
 
@@ -138,7 +140,7 @@ export function PinMarker({
     if (!d?.moved) { dragRef.current = null; return }
     const pos = positionFromEvent(e)
     dragRef.current = null
-    justDraggedRef.current = true
+    draggedAtRef.current = Date.now()
     setDragPos(null)
     onMove?.(pos.x, pos.y)
   }
@@ -154,7 +156,7 @@ export function PinMarker({
       aria-label={pending ? t("New comment") : typeof number === "number" ? t("Comment {n}", { n: number }) : undefined}
       onClick={(e) => {
         e.stopPropagation()
-        if (justDraggedRef.current) { justDraggedRef.current = false; return }
+        if (Date.now() - draggedAtRef.current < 400) return
         onSelect?.()
       }}
       onPointerDown={onPointerDown}
@@ -174,6 +176,8 @@ export function PinMarker({
       )}
       style={{ left: `${x}%`, top: `${y}%` }}
     >
+      {/* A finger-sized grab area around the small marker. */}
+      {(onSelect || onMove) && <span className="absolute -inset-3" aria-hidden="true" />}
       {selected && (
         <span className="absolute top-[4%] left-1/2 aspect-square w-[160%] -translate-x-1/2 -translate-y-[18%] rounded-full bg-accent/25" aria-hidden="true" />
       )}
@@ -327,11 +331,14 @@ export function PinDetails({
   number,
   onToggleResolved,
   onDelete,
+  onStartMove,
 }: {
   pin: Pin
   number: number
   onToggleResolved?: () => void
   onDelete?: () => Promise<void> | void
+  /** Tap-to-move: the next tap on the page puts the pin there (easier than dragging on phones). */
+  onStartMove?: () => void
 }) {
   const { t, locale } = useT()
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -366,7 +373,7 @@ export function PinDetails({
         </div>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {(onToggleResolved || onDelete) && (
+      {(onToggleResolved || onDelete || onStartMove) && (
         <div className="flex items-center justify-end gap-2">
           {onDelete && (
             <Button
@@ -378,6 +385,12 @@ export function PinDetails({
             >
               <Trash2Icon />
               {deleting ? t("Deleting...") : confirmDelete ? t("Confirm delete") : t("Delete")}
+            </Button>
+          )}
+          {onStartMove && (
+            <Button variant="outline" size="sm" onPress={onStartMove}>
+              <MoveIcon />
+              {t("Move")}
             </Button>
           )}
           {onToggleResolved && (

@@ -85,6 +85,8 @@ export function PDFViewer({
   const [dragging, setDragging] = useState(false)
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Tap-to-move: the pin waiting for its new spot.
+  const [movingId, setMovingId] = useState<string | null>(null)
   const scrollToPinRef = useRef<string | null>(null)
 
   const numbers = usePinNumbers(pins)
@@ -253,6 +255,7 @@ export function PDFViewer({
   function goToPage(p: number) {
     setPage(Math.min(Math.max(p, 1), totalPages))
     setPending(null)
+    setMovingId(null)
     scrollRef.current?.scrollTo({ left: 0, top: 0 })
   }
 
@@ -384,14 +387,19 @@ export function PDFViewer({
       pressOnPinUiRef.current = false
       return
     }
+    const rect = e.currentTarget.getBoundingClientRect()
+    const at = { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 }
+    const moving = pins.find((p) => p.id === movingId)
+    if (moving) {
+      onMovePin?.(moving, at.x, at.y)
+      setMovingId(null)
+      setSelectedId(moving.id)
+      return
+    }
     // First click outside an open comment just closes it.
     if (selectedId) { setSelectedId(null); return }
     if (!onAddPin) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    setPending({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    })
+    setPending(at)
   }
 
   async function savePending(title: string, description: string) {
@@ -408,6 +416,7 @@ export function PDFViewer({
     setPageSize(null)
     setPending(null)
     setSelectedId(pin?.id ?? null)
+    setMovingId(null)
     setOpen(true)
   }
 
@@ -426,6 +435,7 @@ export function PDFViewer({
       number={numbers.get(selectedPin.id) ?? 0}
       onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
       onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
+      onStartMove={onMovePin && canEdit(selectedPin) ? () => { setMovingId(selectedPin.id); setSelectedId(null); setPending(null) } : undefined}
     />
   )
 
@@ -540,7 +550,7 @@ export function PDFViewer({
                     key={pin.id}
                     pin={pin}
                     number={numbers.get(pin.id) ?? ""}
-                    selected={pin.id === selectedId}
+                    selected={pin.id === selectedId || pin.id === movingId}
                     onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
                     onMove={onMovePin && canEdit(pin) ? (x, y) => onMovePin(pin, x, y) : undefined}
                   />
@@ -566,6 +576,13 @@ export function PDFViewer({
             </div>
           </aside>
         </div>
+
+        {movingId && (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-3 py-2.5 text-sm">
+            <span>{t("Tap the spot where the pin should go.")}</span>
+            <Button variant="ghost" size="sm" onPress={() => setMovingId(null)}>{t("Cancel")}</Button>
+          </div>
+        )}
 
         {/* Phones: the comment card sits under the page, so it never covers the pins. */}
         {narrow && (pending || selectedPin) && (
