@@ -11,7 +11,7 @@ const inter = Inter({
   weight: ["300", "400", "500"],
 })
 
-// The "Nodly" wordmark next to the logo key (Manrope Bold, SIL Open Font License).
+// Brand headlines and the "Nodly" wordmark: Manrope Bold, latin + cyrillic (SIL Open Font License).
 const brand = localFont({
   src: "./fonts/manrope-700.woff2",
   variable: "--font-brand",
