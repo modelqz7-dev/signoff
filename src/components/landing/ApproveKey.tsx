@@ -61,7 +61,7 @@ export function ApproveKey({ onPress, label, className }: { onPress: () => void;
         type="button"
         aria-label={label}
         onClick={press}
-        className="absolute inset-[14%] z-10 cursor-pointer rounded-[22%] outline-none focus-visible:ring-4 focus-visible:ring-ring/60"
+        className="absolute inset-[14%] z-10 cursor-pointer rounded-[22%] outline-none"
       />
       <canvas ref={canvasRef} aria-hidden="true" className={cn("pointer-events-none absolute inset-0 size-full transition-opacity duration-500", live ? "opacity-100" : "opacity-0")} />
       {!live && (
@@ -95,9 +95,9 @@ async function createKey(canvas: HTMLCanvasElement, box: HTMLElement, onBottomOu
   const scene = new THREE.Scene()
   const pmrem = new THREE.PMREMGenerator(renderer)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-  const camera = new THREE.PerspectiveCamera(9, 1, 1, 80)
+  const camera = new THREE.PerspectiveCamera(7.2, 1, 1, 80)
   camera.position.set(0, 0, 30)
-  const sun = new THREE.DirectionalLight(0xffffff, 1.5)
+  const sun = new THREE.DirectionalLight(0xffffff, 1.2)
   sun.position.set(-3, 5, 10)
   scene.add(sun)
 
@@ -116,7 +116,7 @@ async function createKey(canvas: HTMLCanvasElement, box: HTMLElement, onBottomOu
   const sweep = { value: -9 }
 
   // White key, dark top face (by surface direction), plus a diagonal shine band.
-  const capMat = new THREE.MeshStandardMaterial({ roughness: 0.5, envMapIntensity: 0.45 })
+  const capMat = new THREE.MeshStandardMaterial({ roughness: 0.72, envMapIntensity: 0.3 })
   capMat.onBeforeCompile = (sh) => {
     sh.uniforms.keyMatrix = keyInv
     sh.uniforms.uSweep = sweep
@@ -124,7 +124,7 @@ async function createKey(canvas: HTMLCanvasElement, box: HTMLElement, onBottomOu
       .replace("#include <beginnormal_vertex>", "#include <beginnormal_vertex>\n vLocalN = objectNormal;")
       .replace("#include <project_vertex>", "#include <project_vertex>\n vKeyPos = (keyMatrix * modelMatrix * vec4(transformed, 1.0)).xyz;")
     sh.fragmentShader = "uniform float uSweep;\nvarying vec3 vKeyPos;\nvarying vec3 vLocalN;\n" + sh.fragmentShader
-      .replace("#include <color_fragment>", "#include <color_fragment>\n diffuseColor.rgb = mix(vec3(0.94, 0.93, 0.91), vec3(0.105, 0.1, 0.098), smoothstep(0.845, 0.865, normalize(vLocalN).z));")
+      .replace("#include <color_fragment>", "#include <color_fragment>\n diffuseColor.rgb = mix(vec3(0.94, 0.93, 0.91), vec3(0.045, 0.043, 0.042), smoothstep(0.845, 0.865, normalize(vLocalN).z));")
       .replace("#include <dithering_fragment>", "#include <dithering_fragment>\n float d = (vKeyPos.x - vKeyPos.y * 0.62) - uSweep;\n gl_FragColor.rgb += (exp(-d * d / 0.03) + 0.3 * exp(-d * d / 0.5)) * 0.55;")
   }
   const cap = new THREE.Mesh(capGeo, capMat)

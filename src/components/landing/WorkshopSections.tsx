@@ -6,17 +6,14 @@ import { ArrowRightIcon, CheckIcon, PlusIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
-import { STATUS_MAP } from "@/components/dashboard/types"
-import { PinGlyph } from "@/components/orders/pins"
 import { PLANS } from "@/lib/plans"
 import { BillingCycleToggle, PlanPrice } from "@/components/plans/PlanBits"
 import { cn } from "@/lib/utils"
 import { useNow } from "@/lib/use-now"
 import type { T } from "@/lib/i18n"
 
-// The sections under the desk hero, in the dashboard's own language: the brand wordmark font
-// for headlines, hairline rules, monochrome, and real Nodly UI (order card, pins, status badges)
-// instead of illustrations or icon tiles.
+// Pricing, questions, closing and footer, in the dashboard's own language: the brand wordmark
+// font for headlines, hairline rules, monochrome.
 
 const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em] text-foreground"
 
@@ -46,170 +43,6 @@ function Chip({ children, tone = "muted" }: { children: React.ReactNode; tone?: 
     >
       {children}
     </span>
-  )
-}
-
-// ── 01 · How it works ───────────────────────────────────
-
-export function HowItWorks({ t }: { t: T }) {
-  const steps = [
-    { title: t("Create an order"), text: t("Add the client, price and deadline in a few seconds."), aside: t("takes a minute") },
-    { title: t("Upload the drawing"), text: t("PDF with any number of pages, or an image."), aside: t("any size, any page count") },
-    { title: t("Send one link"), text: t("Protect it with a password. The client doesn't need an account."), aside: t("no sign-up for them") },
-    { title: t("Get the “yes”"), text: t("Comments arrive live; the client approves or asks for changes."), aside: t("with name and time on record") },
-  ]
-  return (
-    <section id="how" className="scroll-mt-16 py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="01" label={t("How it works")} title={t("The whole job, in four moves.")} note={t("no training, no manuals")} />
-        <ol className="grid border-t border-border sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s, i) => (
-            <li key={s.title} className="flex flex-col gap-3 border-b border-border py-8 sm:px-6 sm:first:pl-0 lg:border-b-0 lg:border-l lg:first:border-l-0">
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
-              <h3 className={cn(HEADLINE, "text-xl")}>{s.title}</h3>
-              <p className="text-sm text-muted-foreground">{s.text}</p>
-              <Chip>{s.aside}</Chip>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
-
-// ── 02 · Before / after ─────────────────────────────────
-
-export function BeforeAfter({ t }: { t: T }) {
-  const chat: { time: string; text: string; mine?: boolean }[] = [
-    { time: "12:04", text: t("Can the handles be different?") },
-    { time: "12:31", text: t("Which ones? The black ones?"), mine: true },
-    { time: "14:10", text: t("🎤 Voice message · 0:47") },
-    { time: "19:02", text: t("I sent you a photo yesterday") },
-    { time: "21:15", text: t("Make the right one taller, like we said") },
-  ]
-  const pins = [t("Matte black handles, please"), t("Darker countertop"), t("+20 cm on this cabinet?")]
-  const approved = STATUS_MAP.approved
-  const trades = [t("Kitchens"), t("Wardrobes"), t("Built-ins"), t("Joinery"), t("Shopfitting"), t("Interior studios")]
-
-  return (
-    <section id="for" className="scroll-mt-16 border-t border-border py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="02" label={t("Before / after")} title={t("Same kitchen. Two ways to agree on it.")} />
-
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
-          {/* before: a messenger thread */}
-          <div className="flex flex-col gap-4">
-            <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">{t("Before — the chat")}</p>
-            <Card className="gap-2.5 px-5 py-5">
-              {chat.map((m, i) => (
-                <div key={i} className={cn("flex max-w-[85%] flex-col gap-0.5", m.mine && "items-end self-end")}>
-                  <span
-                    className={cn(
-                      "rounded-2xl px-3.5 py-2 text-sm text-muted-foreground line-through decoration-destructive/60",
-                      m.mine ? "rounded-br-md bg-muted/60" : "rounded-bl-md bg-muted"
-                    )}
-                  >
-                    {m.text}
-                  </span>
-                  <span className="px-1 text-[10px] tabular-nums text-muted-foreground/70">{m.time}</span>
-                </div>
-              ))}
-              <div className="mt-1 flex max-w-[85%] flex-col gap-0.5">
-                <span className="px-1 text-[10px] text-muted-foreground/70">{t("3 days later")}</span>
-                <span className="rounded-2xl rounded-bl-md bg-destructive/10 px-3.5 py-2 text-sm font-medium text-destructive">
-                  {t("I never approved this.")}
-                </span>
-              </div>
-            </Card>
-            <div className="flex flex-wrap gap-2">
-              <Chip tone="danger">{t("47 messages")}</Chip>
-              <Chip tone="danger">{t("3 voice notes")}</Chip>
-              <Chip tone="danger">{t("1 kitchen rebuilt")}</Chip>
-            </div>
-          </div>
-
-          {/* after: the order as it looks in Nodly */}
-          <div className="flex flex-col gap-4">
-            <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">{t("After — Nodly")}</p>
-            <Card className="gap-0 py-0">
-              <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-                <div className="flex min-w-0 items-baseline gap-2">
-                  <span className="truncate text-sm font-medium">{t("Kitchen “Modern”, rev. 2")}</span>
-                  <span className="text-xs text-muted-foreground">ORD-24</span>
-                </div>
-                <span className="shrink-0 rounded-md px-2 py-0.5 text-[11px]" style={{ backgroundColor: approved.bg, color: approved.color }}>
-                  {t(approved.label)}
-                </span>
-              </div>
-              <ul className="flex flex-col px-3 py-3">
-                {pins.map((p) => (
-                  <li key={p} className="flex items-center gap-3 rounded-lg px-2 py-2">
-                    <PinGlyph resolved />
-                    <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground line-through decoration-muted-foreground/40">{p}</span>
-                    <span className="text-[11px] text-muted-foreground">{t("resolved")}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex items-center gap-2 border-t border-border px-5 py-3.5 text-sm">
-                <span className="flex size-5 items-center justify-center rounded-full text-white" style={{ backgroundColor: approved.color }}>
-                  <CheckIcon className="size-3" />
-                </span>
-                <span className="font-medium">{t("Approved by Anna K.")}</span>
-                <span className="ml-auto text-xs tabular-nums text-muted-foreground">{t("Oct 12, 12:40")}</span>
-              </div>
-            </Card>
-            <div className="flex flex-wrap gap-2">
-              <Chip>{t("1 link")}</Chip>
-              <Chip>{t("3 pins")}</Chip>
-              <Chip>{t("1 decision, on record")}</Chip>
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-16 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span className="text-xs font-medium tracking-[0.14em] uppercase">{t("Built for")}</span>
-          {trades.map((tr, i) => (
-            <span key={tr} className="flex items-center gap-4">
-              {i > 0 && <span aria-hidden="true" className="size-1 rounded-full bg-border" />}
-              <span className="text-foreground">{tr}</span>
-            </span>
-          ))}
-        </p>
-      </div>
-    </section>
-  )
-}
-
-// ── 03 · Specification ──────────────────────────────────
-
-export function Specification({ t }: { t: T }) {
-  const rows: [string, string][] = [
-    [t("Comments"), t("pinned to the exact spot, on any page")],
-    [t("Files"), t("PDF of any length, PNG, JPG")],
-    [t("Client access"), t("one link, optional password, no account")],
-    [t("Decision"), t("approve or request changes, with name and time")],
-    [t("Versions"), t("every revision kept, comments stay with theirs")],
-    [t("Certificate"), t("a PDF approval record for your files")],
-    [t("Updates"), t("live, no reload")],
-    [t("Reminders"), t("automatic nudges to slow clients")],
-    [t("Branding"), t("your logo and colours in the portal")],
-    [t("Languages"), t("English, Russian")],
-  ]
-  return (
-    <section id="features" className="scroll-mt-16 border-t border-border py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="03" label={t("Specification")} title={t("What’s in the box.")} note={t("and nothing you won’t use")} />
-        <dl className="grid gap-x-14 md:grid-cols-2">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex items-baseline gap-3 border-b border-border py-3.5 text-sm">
-              <dt className="shrink-0 font-medium text-foreground">{k}</dt>
-              <span aria-hidden="true" className="min-w-6 flex-1 translate-y-[-3px] border-b border-dotted border-muted-foreground/30" />
-              <dd className="text-right text-muted-foreground">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
   )
 }
 
