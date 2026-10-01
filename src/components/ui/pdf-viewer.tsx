@@ -117,7 +117,9 @@ export function PDFViewer({
     return () => { cancelled = true }
   }, [url])
 
-  // Preview: first page rendered at the card's real pixel width so it stays sharp on HiDPI screens.
+  // Preview: the whole first page, fitted to the card's width and at most ~60% of the screen's
+  // height (a tall page would otherwise push everything below far down), rendered at the
+  // real pixel size so it stays sharp on HiDPI screens. The full viewer is one click away.
   useEffect(() => {
     const canvas = previewCanvasRef.current
     if (!pdf || !canvas) return
@@ -128,8 +130,11 @@ export function PDFViewer({
         const pageObj = await pdf!.getPage(1)
         if (cancelled || !canvas) return
         const base = pageObj.getViewport({ scale: 1 })
-        const cssWidth = canvas.parentElement?.clientWidth || base.width
-        const s = capScale((cssWidth / base.width) * (window.devicePixelRatio || 1), base.width, base.height)
+        const boxWidth = canvas.closest("[data-pdf-preview]")?.clientWidth || base.width
+        const maxHeight = Math.min(window.innerHeight * 0.6, 640)
+        const fit = Math.min(boxWidth / base.width, maxHeight / base.height)
+        canvas.style.width = `${Math.round(base.width * fit)}px`
+        const s = capScale(fit * (window.devicePixelRatio || 1), base.width, base.height)
         const viewport = pageObj.getViewport({ scale: s })
         canvas.width = Math.round(viewport.width)
         canvas.height = Math.round(viewport.height)
@@ -458,13 +463,19 @@ export function PDFViewer({
   return (
     <>
       <div
-        className={`relative rounded-lg border border-border overflow-hidden bg-white cursor-pointer group ${className || ""}`}
+        data-pdf-preview
+        className={`relative rounded-lg border border-border overflow-hidden bg-muted/40 cursor-pointer group ${className || ""}`}
         onClick={() => openModal()}
       >
-        <canvas ref={previewCanvasRef} className="w-full block" />
-        {pins.filter((p) => p.page === 1 && !p.resolved).map((pin) => (
-          <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
-        ))}
+        <div className="flex justify-center">
+          {/* sized to the page, so pins (in % of the page) land in the right place */}
+          <div className="relative">
+            <canvas ref={previewCanvasRef} className="block h-auto max-w-full bg-white" />
+            {pins.filter((p) => p.page === 1 && !p.resolved).map((pin) => (
+              <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
+            ))}
+          </div>
+        </div>
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
           <div className="rounded-full bg-black/60 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
             <ZoomInIcon className="size-6 text-white" />
