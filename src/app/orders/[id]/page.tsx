@@ -467,7 +467,6 @@ export default function OrderPage() {
                       <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
                       <Row label={t("Deadline")} value={deadline.text} color={deadline.late ? "var(--destructive)" : undefined} />
                       <Row label={t("Status")} value={t(status.label)} color={status.color} />
-                      {order.stage && <Row label={t("Stage")} value={order.stage} />}
                       <Row label={t("Created")} value={formatDate(order.created_at)} />
                       {order.approved_at && (
                         <Row label={t("Approved")} value={`${formatDate(order.approved_at)}${order.approved_by ? ` · ${order.approved_by}` : ""}`} />
