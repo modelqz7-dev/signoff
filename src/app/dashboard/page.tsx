@@ -9,6 +9,7 @@ import { ClientActivity } from "@/components/dashboard/ClientActivity"
 import { GettingStarted } from "@/components/dashboard/GettingStarted"
 import { ComingUp, Greeting, StatsStrip, useToday, WaitingOnClients, YourMove } from "@/components/dashboard/Today"
 import { NewOrderModal } from "@/components/dashboard/NewOrderModal"
+import { CalendarDialog, StatsDialog } from "@/components/dashboard/Insights"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
@@ -21,6 +22,8 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [newOrderOpen, setNewOrderOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
   const { t } = useT()
   const pins = useShopPins(orders.map((o) => o.id))
   const today = useToday(orders, pins)
@@ -109,7 +112,13 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-            <Greeting name={shop?.name || ""} today={today} onNewOrder={() => setNewOrderOpen(true)} />
+            <Greeting
+              name={shop?.name || ""}
+              today={today}
+              onNewOrder={() => setNewOrderOpen(true)}
+              onCalendar={() => setCalendarOpen(true)}
+              onStats={() => setStatsOpen(true)}
+            />
 
             <GettingStarted orders={orders} shop={shop} onNewOrder={() => setNewOrderOpen(true)} />
 
@@ -129,6 +138,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <CalendarDialog orders={orders} open={calendarOpen} onOpenChange={setCalendarOpen} />
+      <StatsDialog orders={orders} open={statsOpen} onOpenChange={setStatsOpen} />
 
       <NewOrderModal
         shopId={shop?.id || ""}

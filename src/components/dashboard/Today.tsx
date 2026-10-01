@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { CheckCircle2Icon, CheckIcon, ChevronRightIcon, CopyIcon, PlusIcon } from "lucide-react"
+import { BarChart3Icon, CalendarDaysIcon, CheckCircle2Icon, CheckIcon, ChevronRightIcon, CopyIcon, PlusIcon } from "lucide-react"
 import { PinOutlineIcon } from "@/components/orders/pins"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNow } from "@/lib/use-now"
@@ -99,7 +99,13 @@ export function useToday(orders: Order[], pins: Pin[]) {
 }
 
 /** "Good morning, Oak & Dot" and one line saying what the day holds. */
-export function Greeting({ name, today, onNewOrder }: { name: string; today: ReturnType<typeof useToday>; onNewOrder: () => void }) {
+export function Greeting({ name, today, onNewOrder, onCalendar, onStats }: {
+  name: string
+  today: ReturnType<typeof useToday>
+  onNewOrder: () => void
+  onCalendar: () => void
+  onStats: () => void
+}) {
   const { t, locale } = useT()
   const hour = new Date(today.now).getHours()
   const hello = hour < 5 ? t("Good evening") : hour < 12 ? t("Good morning") : hour < 18 ? t("Good afternoon") : t("Good evening")
@@ -121,14 +127,30 @@ export function Greeting({ name, today, onNewOrder }: { name: string; today: Ret
           {parts.length ? parts.join(" · ") : t("All caught up. Nothing is waiting on you today.")}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onNewOrder}
-        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-      >
-        <PlusIcon className="size-4" />
-        {t("New Order")}
-      </button>
+      <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
+        {[
+          { label: t("Calendar"), icon: CalendarDaysIcon, onClick: onCalendar },
+          { label: t("Statistics"), icon: BarChart3Icon, onClick: onStats },
+        ].map(({ label, icon: Icon, onClick }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={onClick}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-card px-3.5 text-sm font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-hover"
+          >
+            <Icon className="size-4 text-muted-foreground" />
+            {label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={onNewOrder}
+          className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium whitespace-nowrap text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <PlusIcon className="size-4" />
+          {t("New Order")}
+        </button>
+      </div>
     </div>
   )
 }
