@@ -5,7 +5,6 @@ import Link from "next/link"
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
-import { ThemeToggle } from "@/components/ThemeToggle"
 import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -80,7 +79,6 @@ function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
         </nav>
         <div className="flex items-center gap-2">
           <LanguageSwitcher className="hidden sm:flex" />
-          <ThemeToggle />
           {signedIn ? (
             <CtaLink href="/dashboard" className="h-8 px-3">{t("Open dashboard")}</CtaLink>
           ) : (
