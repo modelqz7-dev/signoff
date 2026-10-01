@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { LivePortal } from "@/components/landing/LivePortal"
+import { AppTabs } from "@/components/landing/AppTabs"
 import type { T } from "@/lib/i18n"
 
 // The product itself instead of illustrations: a live, self-playing client portal, then real
@@ -12,22 +13,10 @@ const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.03
 
 function Label({ no, children }: { no: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-4 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
+    <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
       <span className="tabular-nums">{no}</span>
-      <span className="h-px flex-1 bg-border" />
+      <span aria-hidden="true">·</span>
       <span>{children}</span>
-    </div>
-  )
-}
-
-/** A quiet browser window around a screenshot. */
-function Window({ url, children, className }: { url: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-foreground/10", className)}>
-      <div className="flex items-center border-b border-border px-4 py-2">
-        <span className="mx-auto rounded-md bg-muted px-3 py-0.5 text-[11px] text-muted-foreground">{url}</span>
-      </div>
-      {children}
     </div>
   )
 }
@@ -49,7 +38,7 @@ export function ProductShowcase({ t }: { t: T }) {
   return (
     <>
       {/* 01 · the client's side */}
-      <section id="product" className="scroll-mt-16 border-t border-border py-24">
+      <section id="product" className="scroll-mt-16 py-24">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
           <Label no="01">{t("The client's side")}</Label>
           <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
@@ -61,30 +50,19 @@ export function ProductShowcase({ t }: { t: T }) {
       </section>
 
       {/* 02 · the workshop's side + phone */}
-      <section className="border-t border-border py-24">
+      <section className="py-24">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
           <Label no="02">{t("Your side")}</Label>
           <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
             <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Every order, and who you're waiting on.")}</h2>
             <Points items={[t("Comments arrive live, no reload"), t("Overdue and changed orders float to the top"), t("Telegram and email when a client acts")]} />
           </div>
-          <div className="grid items-end gap-8 lg:grid-cols-[1fr_260px]">
-            <Window url="nodly.app/dashboard">
-              <Image src="/landing/dashboard.webp" alt={t("The workshop dashboard with orders, activity and client comments")} width={2880} height={1800} className="h-auto w-full" sizes="(min-width: 1152px) 860px, 100vw" />
-            </Window>
-            {/* the same portal on the client's phone */}
-            <figure className="mx-auto flex w-[240px] flex-col items-center gap-3 lg:w-full">
-              <div className="overflow-hidden rounded-[2rem] bg-card p-2 shadow-2xl ring-1 ring-foreground/10">
-                <Image src="/landing/portal-phone.webp" alt={t("The client portal on a phone")} width={780} height={1688} className="h-auto w-full rounded-[1.6rem]" sizes="260px" />
-              </div>
-              <figcaption className="text-xs text-muted-foreground">{t("On the client's phone")}</figcaption>
-            </figure>
-          </div>
+          <AppTabs t={t} />
         </div>
       </section>
 
       {/* 03 · the record */}
-      <section className="border-t border-border py-24">
+      <section className="py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="flex flex-col gap-6">
             <Label no="03">{t("On record")}</Label>

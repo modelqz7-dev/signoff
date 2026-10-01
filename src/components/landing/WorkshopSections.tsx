@@ -20,9 +20,9 @@ const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.03
 function SectionHeading({ no, label, title, note }: { no: string; label: string; title: React.ReactNode; note?: string }) {
   return (
     <div className="mb-12 flex flex-col gap-6">
-      <div className="flex items-center gap-4 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
+      <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
         <span className="tabular-nums">{no}</span>
-        <span className="h-px flex-1 bg-border" />
+        <span aria-hidden="true">·</span>
         <span>{label}</span>
       </div>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
@@ -51,7 +51,7 @@ function Chip({ children, tone = "muted" }: { children: React.ReactNode; tone?: 
 export function Pricing({ t }: { t: T }) {
   const [yearly, setYearly] = useState(false)
   return (
-    <section id="pricing" className="scroll-mt-16 border-t border-border py-24">
+    <section id="pricing" className="scroll-mt-16 py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading no="04" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("14 days of Studio free, no card")} />
         <div className="mb-8">
@@ -96,6 +96,7 @@ export function Pricing({ t }: { t: T }) {
 // ── 05 · Questions ──────────────────────────────────────
 
 export function Questions({ t }: { t: T }) {
+  const [open, setOpen] = useState<number | null>(0)
   const items = [
     [t("Do my clients need an account?"), t("No. They open the link, enter their name and, if you set one, the password.")],
     [t("Which files can I upload?"), t("PDF files with any number of pages, and PNG or JPG images.")],
@@ -104,19 +105,42 @@ export function Questions({ t }: { t: T }) {
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
   return (
-    <section id="faq" className="scroll-mt-16 border-t border-border py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="05" label={t("FAQ")} title={t("Questions shops ask.")} />
-        <div className="border-t border-border">
-          {items.map(([q, a]) => (
-            <details key={q} className="group border-b border-border">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
-                <span className="text-base font-medium text-foreground sm:text-lg">{q}</span>
-                <PlusIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-45" />
-              </summary>
-              <p className="max-w-2xl pb-5 text-sm text-muted-foreground sm:text-base">{a}</p>
-            </details>
-          ))}
+    <section id="faq" className="scroll-mt-16 py-24">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
+            <span className="tabular-nums">05</span>
+            <span aria-hidden="true">·</span>
+            <span>{t("FAQ")}</span>
+          </div>
+          <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Questions shops ask.")}</h2>
+        </div>
+        <div className="flex flex-col gap-3">
+          {items.map(([q, a], i) => {
+            const isOpen = open === i
+            return (
+              <div key={q} className={cn("rounded-xl bg-card ring-1 transition-colors", isOpen ? "ring-foreground/15" : "ring-foreground/5 hover:ring-foreground/10")}>
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-${i}`}
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="flex w-full cursor-pointer items-center justify-between gap-6 px-5 py-4 text-left"
+                >
+                  <span className="text-base font-medium text-foreground">{q}</span>
+                  <span className={cn("grid size-7 shrink-0 place-items-center rounded-full transition-colors", isOpen ? "bg-foreground text-background" : "bg-muted text-muted-foreground")}>
+                    <PlusIcon aria-hidden="true" className={cn("size-4 transition-transform duration-300", isOpen && "rotate-45")} />
+                  </span>
+                </button>
+                {/* the answer slides open */}
+                <div id={`faq-${i}`} role="region" className={cn("grid transition-[grid-template-rows] duration-300 ease-out", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                  <div className="overflow-hidden">
+                    <p className="max-w-2xl px-5 pb-5 text-sm text-muted-foreground sm:text-base">{a}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -127,7 +151,7 @@ export function Questions({ t }: { t: T }) {
 
 export function Closing({ t, signedIn }: { t: T; signedIn: boolean }) {
   return (
-    <section className="border-t border-border py-28">
+    <section className="py-28">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between">
         <h2 className={cn(HEADLINE, "max-w-3xl text-5xl leading-[0.98] sm:text-6xl")}>
           {t("Your next approval is")} <span className="text-muted-foreground">{t("one link away.")}</span>
@@ -150,7 +174,7 @@ export function Closing({ t, signedIn }: { t: T; signedIn: boolean }) {
 export function WorkshopFooter({ t }: { t: T }) {
   const year = new Date(useNow(3_600_000)).getFullYear()
   return (
-    <footer className="border-t border-border py-8">
+    <footer className="py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 px-4 sm:flex-row sm:items-center sm:px-6">
         <Logo />
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
