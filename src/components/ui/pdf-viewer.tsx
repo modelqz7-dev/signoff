@@ -2,16 +2,19 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
-import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, ZoomInIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
 import { PinComposer, PinDetails, PinList, PinMarker, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
 import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
+import { fileNameFromUrl } from "@/lib/versions"
 
 type PDFViewerProps = {
   url: string
+  /** Shown on the file tile; taken from the URL when omitted. */
+  fileName?: string
   className?: string
   /** Comments to show on the pages, positioned in % of the page. */
   pins?: Pin[]
@@ -48,6 +51,7 @@ function isCancelled(e: unknown) {
 
 export function PDFViewer({
   url,
+  fileName,
   className,
   pins = [],
   onAddPin,
@@ -57,7 +61,6 @@ export function PDFViewer({
   canEdit = () => true,
   focusPin,
 }: PDFViewerProps) {
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null)
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const scaleRef = useRef(1)
@@ -116,40 +119,6 @@ export function PDFViewer({
     load()
     return () => { cancelled = true }
   }, [url])
-
-  // Preview: the whole first page, fitted to the card's width and at most ~60% of the screen's
-  // height (a tall page would otherwise push everything below far down), rendered at the
-  // real pixel size so it stays sharp on HiDPI screens. The full viewer is one click away.
-  useEffect(() => {
-    const canvas = previewCanvasRef.current
-    if (!pdf || !canvas) return
-    let cancelled = false
-    let task: RenderTask | null = null
-    async function render() {
-      try {
-        const pageObj = await pdf!.getPage(1)
-        if (cancelled || !canvas) return
-        const base = pageObj.getViewport({ scale: 1 })
-        const boxWidth = canvas.closest("[data-pdf-preview]")?.clientWidth || base.width
-        const maxHeight = Math.min(window.innerHeight * 0.6, 640)
-        const fit = Math.min(boxWidth / base.width, maxHeight / base.height)
-        canvas.style.width = `${Math.round(base.width * fit)}px`
-        const s = capScale(fit * (window.devicePixelRatio || 1), base.width, base.height)
-        const viewport = pageObj.getViewport({ scale: s })
-        canvas.width = Math.round(viewport.width)
-        canvas.height = Math.round(viewport.height)
-        task = pageObj.render({ canvasContext: canvas.getContext("2d")!, viewport })
-        await task.promise
-      } catch (e) {
-        if (!isCancelled(e) && !cancelled) console.error("PDF preview error:", e)
-      }
-    }
-    render()
-    return () => {
-      cancelled = true
-      task?.cancel()
-    }
-  }, [pdf])
 
   // Page size in PDF units, used to fit the whole page into the viewing area.
   useEffect(() => {
@@ -452,47 +421,35 @@ export function PDFViewer({
     )
   }
 
-  if (!totalPages) {
-    return (
-      <div className={`flex items-center justify-center py-12 ${className || ""}`}>
-        <p className="text-sm text-muted-foreground">{t("Loading PDF...")}</p>
-      </div>
-    )
-  }
-
   return (
     <>
-      <div
-        data-pdf-preview
-        className={`relative rounded-lg border border-border overflow-hidden bg-muted/40 cursor-pointer group ${className || ""}`}
+      {/* A file tile instead of a page preview: a tall drawing at full width pushed everything
+          below far down. The whole file opens full screen, with zoom and comments. */}
+      <button
+        type="button"
         onClick={() => openModal()}
+        disabled={!totalPages}
+        className={`group flex w-full items-center gap-3 rounded-lg border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-hover disabled:cursor-default ${className || ""}`}
       >
-        <div className="flex justify-center">
-          {/* sized to the page, so pins (in % of the page) land in the right place */}
-          <div className="relative">
-            <canvas ref={previewCanvasRef} className="block h-auto max-w-full bg-white" />
-            {pins.filter((p) => p.page === 1 && !p.resolved).map((pin) => (
-              <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
-            ))}
-          </div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
-          <div className="rounded-full bg-black/60 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-            <ZoomInIcon className="size-6 text-white" />
-          </div>
-        </div>
-        {totalPages > 1 && (
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded">
-            {t("{n} pages", { n: totalPages })}
-          </div>
-        )}
-        {pins.some((p) => !p.resolved) && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded">
-            <PinOutlineIcon className="size-3" />
-            {pins.filter((p) => !p.resolved).length}
-          </div>
-        )}
-      </div>
+        <PdfFileIcon className="h-12 w-10 shrink-0" />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-sm font-medium text-foreground">{fileName || fileNameFromUrl(url) || "PDF"}</span>
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            {totalPages ? (totalPages === 1 ? t("1 page") : t("{n} pages", { n: totalPages })) : t("Loading PDF...")}
+            {pins.filter((p) => !p.resolved).length > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <PinOutlineIcon className="size-3" />
+                {pins.filter((p) => !p.resolved).length}
+              </span>
+            )}
+          </span>
+        </span>
+        <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-card px-3 text-xs font-medium text-foreground ring-1 ring-foreground/10 transition-colors group-hover:bg-background">
+          <Maximize2Icon className="size-3.5" />
+          <span className="hidden sm:inline">{t("Open full screen")}</span>
+          <span className="sm:hidden">{t("Open")}</span>
+        </span>
+      </button>
 
       <Dialog
         isOpen={open}
@@ -617,4 +574,16 @@ function subscribeNarrow(onChange: () => void) {
 /** True on phone-sized screens, where comment cards dock under the page instead of floating. */
 function useNarrowScreen() {
   return useSyncExternalStore(subscribeNarrow, () => window.matchMedia(NARROW).matches, () => false)
+}
+
+/** A sheet with a folded corner and a red PDF label. */
+function PdfFileIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 48" className={className} aria-hidden="true">
+      <path d="M6 1h20l11 11v31a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4Z" className="fill-card stroke-foreground/20" strokeWidth="1.5" />
+      <path d="M26 1v8a3 3 0 0 0 3 3h8" className="fill-none stroke-foreground/20" strokeWidth="1.5" />
+      <rect x="0" y="26" width="28" height="13" rx="3" fill="#e5484d" />
+      <text x="14" y="35.5" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="system-ui, sans-serif">PDF</text>
+    </svg>
+  )
 }
