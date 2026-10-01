@@ -14,6 +14,13 @@ import { STATUS_MAP, type Order, type OrderStatus } from "./types"
 
 const DAY = 1000 * 60 * 60 * 24
 const STATUSES: OrderStatus[] = ["await", "changes", "approved", "prod"]
+// One ink in four strengths instead of status colours: calm, like a drawing.
+const SHADE: Record<OrderStatus, string> = {
+  await: "color-mix(in oklab, var(--foreground) 85%, transparent)",
+  changes: "color-mix(in oklab, var(--foreground) 55%, transparent)",
+  approved: "color-mix(in oklab, var(--foreground) 32%, transparent)",
+  prod: "color-mix(in oklab, var(--foreground) 14%, transparent)",
+}
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
@@ -40,7 +47,6 @@ export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]
   const daysInMonth = new Date(shown.y, shown.m + 1, 0).getDate()
   const cells = Array.from({ length: Math.ceil((lead + daysInMonth) / 7) * 7 }, (_, i) => new Date(shown.y, shown.m, i - lead + 1))
   const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 7 + weekStart + i).toLocaleDateString(locale, { weekday: "short" }))
-  const title = first.toLocaleDateString(locale, { month: "long", year: "numeric" })
   const dayOrders = byDay.get(selected) ?? []
   const selectedDate = new Date(selected + "T00:00:00")
 
@@ -49,35 +55,41 @@ export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]
     setMonth({ y: d.getFullYear(), m: d.getMonth() })
   }
 
+  const monthName = first.toLocaleDateString(locale, { month: "long" })
+
   return (
     <Dialog isOpen={open} onOpenChange={onOpenChange} className="sm:max-w-md">
-      <DialogHeader>
+      <DialogHeader className="sr-only">
         <DialogTitle>{t("Calendar")}</DialogTitle>
         <DialogDescription>{t("Order deadlines by day.")}</DialogDescription>
       </DialogHeader>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-foreground first-letter:uppercase" suppressHydrationWarning>{title}</p>
-        <div className="flex items-center gap-1">
-          <button type="button" onClick={() => { setMonth(null); setPicked(null) }} className="h-8 rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+      {/* month name set large, like the title page of a catalogue */}
+      <div className="flex min-w-0 items-end justify-between gap-2 pr-7">
+        <p className="flex min-w-0 items-baseline gap-2" suppressHydrationWarning>
+          <span className="font-[family-name:var(--font-brand)] truncate text-2xl leading-none font-bold tracking-[-0.04em] text-foreground first-letter:uppercase sm:text-3xl">{monthName}</span>
+          <span className="text-sm text-muted-foreground tabular-nums">{shown.y}</span>
+        </p>
+        <div className="flex shrink-0 items-center">
+          <button type="button" onClick={() => go(-1)} aria-label={t("Previous month")} className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+            <ChevronLeftIcon className="size-4" strokeWidth={1.5} />
+          </button>
+          <button type="button" onClick={() => { setMonth(null); setPicked(null) }} className="h-8 rounded-full px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:bg-hover hover:text-foreground">
             {t("Today")}
           </button>
-          <button type="button" onClick={() => go(-1)} aria-label={t("Previous month")} className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
-            <ChevronLeftIcon className="size-4" />
-          </button>
-          <button type="button" onClick={() => go(1)} aria-label={t("Next month")} className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
-            <ChevronRightIcon className="size-4" />
+          <button type="button" onClick={() => go(1)} aria-label={t("Next month")} className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+            <ChevronRightIcon className="size-4" strokeWidth={1.5} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <div className="grid grid-cols-7 border-t border-foreground/15 pt-3 text-center">
         {weekdays.map((w) => (
-          <span key={w} className="pb-1 text-[11px] font-medium text-muted-foreground first-letter:uppercase" suppressHydrationWarning>{w}</span>
+          <span key={w} className="pb-2 text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase" suppressHydrationWarning>{w.replace(".", "").slice(0, 2)}</span>
         ))}
         {cells.map((d) => {
           const key = dayKey(d)
-          const inMonth = d.getMonth() === shown.m
+          if (d.getMonth() !== shown.m) return <span key={key} />
           const due = byDay.get(key) ?? []
           const isToday = key === todayKey
           const isPicked = key === selected
@@ -88,41 +100,44 @@ export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]
               onClick={() => setPicked(key)}
               aria-pressed={isPicked}
               aria-label={`${d.toLocaleDateString(locale, { day: "numeric", month: "long" })}${due.length ? `, ${t("{n} deadlines", { n: due.length })}` : ""}`}
-              className={cn(
-                "flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-sm tabular-nums transition-colors",
-                isPicked ? "bg-primary text-primary-foreground" : "hover:bg-hover",
-                !isPicked && isToday && "ring-1 ring-foreground/30",
-                !inMonth && !isPicked && "text-muted-foreground/50"
-              )}
+              className="group flex h-11 flex-col items-center justify-center gap-1"
             >
-              {d.getDate()}
-              <span className="flex h-1.5 items-center gap-0.5">
-                {due.slice(0, 3).map((o) => (
-                  <span key={o.id} className="size-1.5 rounded-full" style={{ backgroundColor: isPicked ? "currentColor" : STATUS_MAP[o.status].color }} />
-                ))}
+              <span
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full text-sm tabular-nums transition-colors",
+                  isPicked ? "bg-foreground font-medium text-background"
+                    : isToday ? "font-medium text-foreground ring-1 ring-foreground/40"
+                    : due.length ? "text-foreground group-hover:bg-hover"
+                    : "text-muted-foreground/70 group-hover:bg-hover"
+                )}
+              >
+                {d.getDate()}
               </span>
+              {/* a short rule under a day with deadlines, longer with more */}
+              <span className={cn("h-px rounded-full bg-foreground/60 transition-opacity", due.length ? "opacity-100" : "opacity-0")} style={{ width: `${Math.min(due.length, 3) * 5}px` }} />
             </button>
           )
         })}
       </div>
 
-      <div className="flex flex-col gap-1 border-t border-border/60 pt-3">
-        <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase" suppressHydrationWarning>
+      <div className="flex flex-col border-t border-foreground/15 pt-3">
+        <p className="pb-1 text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase" suppressHydrationWarning>
           {selectedDate.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
         </p>
         {dayOrders.length === 0 ? (
-          <p className="py-2 text-xs text-muted-foreground">{t("No deadlines on this day.")}</p>
+          <p className="py-2 text-sm text-muted-foreground">{t("No deadlines on this day.")}</p>
         ) : (
-          dayOrders.map((o) => (
-            <Link key={o.id} href={`/orders/${o.id}`} className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/60">
-              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: STATUS_MAP[o.status].color }} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-foreground">{o.title}</span>
-                <span className="block truncate text-xs text-muted-foreground">{o.client_name || "—"} · {o.code}</span>
-              </span>
-              <span className="shrink-0 text-xs text-muted-foreground">{t(STATUS_MAP[o.status].label)}</span>
-            </Link>
-          ))
+          <div className="flex flex-col divide-y divide-border/60">
+            {dayOrders.map((o) => (
+              <Link key={o.id} href={`/orders/${o.id}`} className="-mx-2 flex items-baseline gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/60">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-foreground">{o.title}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{o.client_name || "—"} · {o.code}</span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">{t(STATUS_MAP[o.status].label)}</span>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </Dialog>
@@ -205,8 +220,8 @@ export function StatsDialog({ orders, open, onOpenChange }: { orders: Order[]; o
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-foreground/25" />{t("New orders")}</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm" style={{ backgroundColor: STATUS_MAP.approved.color }} />{t("Approved orders")}</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-foreground/20" />{t("New orders")}</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-foreground/80" />{t("Approved orders")}</span>
           </div>
           <div role="radiogroup" aria-label={t("Show")} className="flex rounded-lg bg-muted p-0.5">
             {(["orders", "value"] as const).map((m) => (
@@ -227,12 +242,12 @@ export function StatsDialog({ orders, open, onOpenChange }: { orders: Order[]; o
           {series.map((s, i) => (
             <div key={i} className="flex h-full flex-col justify-end gap-1.5">
               <div className="flex flex-1 items-end justify-center gap-1">
-                {[{ v: s.a, color: undefined }, { v: s.b, color: STATUS_MAP.approved.color }].map((bar, j) => (
+                {[{ v: s.a, tone: "bg-foreground/20" }, { v: s.b, tone: "bg-foreground/80" }].map((bar, j) => (
                   <div key={j} className="flex h-full w-full max-w-6 flex-col items-center justify-end gap-1">
                     <span className="text-[10px] text-muted-foreground tabular-nums" suppressHydrationWarning>{bar.v ? fmt(bar.v) : ""}</span>
                     <div
-                      className={cn("w-full rounded-t-[4px]", !bar.color && "bg-foreground/25")}
-                      style={{ height: `${(bar.v / max) * 100}%`, minHeight: bar.v ? 3 : 0, backgroundColor: bar.color }}
+                      className={cn("w-full rounded-t-[3px]", bar.tone)}
+                      style={{ height: `${(bar.v / max) * 100}%`, minHeight: bar.v ? 3 : 0 }}
                     />
                   </div>
                 ))}
@@ -246,15 +261,15 @@ export function StatsDialog({ orders, open, onOpenChange }: { orders: Order[]; o
       {/* where the orders are now */}
       <div className="flex flex-col gap-2.5">
         <p className="text-xs font-medium text-foreground">{t("Orders by status")}</p>
-        <div className="flex h-2.5 overflow-hidden rounded-full bg-muted">
+        <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-muted">
           {data.total > 0 && STATUSES.map((s) => (
-            <div key={s} style={{ width: `${(data.counts[s] / data.total) * 100}%`, backgroundColor: STATUS_MAP[s].color }} />
+            <div key={s} style={{ width: `${(data.counts[s] / data.total) * 100}%`, backgroundColor: SHADE[s] }} />
           ))}
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
           {STATUSES.map((s) => (
             <span key={s} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="size-2 rounded-full" style={{ backgroundColor: STATUS_MAP[s].color }} />
+              <span className="size-2 rounded-full" style={{ backgroundColor: SHADE[s] }} />
               {t(STATUS_MAP[s].label)}
               <span className="ml-auto font-medium text-foreground tabular-nums sm:ml-0">{data.counts[s]}</span>
             </span>
