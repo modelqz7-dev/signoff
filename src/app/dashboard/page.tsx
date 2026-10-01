@@ -5,15 +5,9 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { OrderActivityChart } from "@/components/dashboard/OrderActivityChart"
-import { KpiRow } from "@/components/dashboard/KpiRow"
-import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
 import { ClientActivity } from "@/components/dashboard/ClientActivity"
-import { CalendarWidget } from "@/components/dashboard/CalendarWidget"
-import { UpcomingOrders } from "@/components/dashboard/UpcomingOrders"
-import { StatusDonut } from "@/components/dashboard/StatusDonut"
-import { QuickOrderCard } from "@/components/dashboard/QuickOrderCard"
 import { GettingStarted } from "@/components/dashboard/GettingStarted"
+import { ComingUp, Greeting, StatsStrip, useToday, WaitingOnClients, YourMove } from "@/components/dashboard/Today"
 import { NewOrderModal } from "@/components/dashboard/NewOrderModal"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
@@ -29,6 +23,7 @@ export default function Dashboard() {
   const [newOrderOpen, setNewOrderOpen] = useState(false)
   const { t } = useT()
   const pins = useShopPins(orders.map((o) => o.id))
+  const today = useToday(orders, pins)
 
   useEffect(() => {
     async function init() {
@@ -106,42 +101,32 @@ export default function Dashboard() {
       <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           shopName={shop?.name || ""}
+          title={t("Dashboard")}
           avatarUrl=""
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex flex-1 gap-5 overflow-y-auto p-4 sm:p-6">
-          {/* Center content */}
-          <div className="flex-1 min-w-0 flex flex-col gap-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+            <Greeting name={shop?.name || ""} today={today} onNewOrder={() => setNewOrderOpen(true)} />
+
             <GettingStarted orders={orders} shop={shop} onNewOrder={() => setNewOrderOpen(true)} />
 
-            <KpiRow orders={orders} pins={pins} />
-
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <OrderActivityChart orders={orders} />
+            {/* what needs me, who I'm waiting on, what's due */}
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
+              <div className="flex min-w-0 flex-col gap-5">
+                <YourMove today={today} />
+                <WaitingOnClients today={today} />
               </div>
-              <QuickOrderCard
-                orders={orders}
-                shopId={shop?.id || ""}
-                onOrderCreated={(order) => setOrders((prev) => [order, ...prev])}
-                onOrderUpdated={(updated) => setOrders((prev) => prev.map((o) => o.id === updated.id ? updated : o))}
-              />
+              <div className="flex min-w-0 flex-col gap-5">
+                <ComingUp today={today} />
+                <ClientActivity orders={orders} pins={pins} />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <NeedsAttention orders={orders} pins={pins} />
-              <ClientActivity orders={orders} pins={pins} />
-            </div>
+            <StatsStrip today={today} />
           </div>
-
-          {/* Right sidebar */}
-          <aside className="hidden w-[300px] shrink-0 flex-col gap-5 xl:flex sticky top-0 self-start max-h-[calc(100vh-88px)] overflow-y-auto">
-            <CalendarWidget orders={orders} />
-            <UpcomingOrders orders={orders} />
-            <StatusDonut orders={orders} />
-          </aside>
         </div>
       </div>
 

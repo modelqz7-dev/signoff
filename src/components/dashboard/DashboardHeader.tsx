@@ -10,6 +10,8 @@ import { useFileUrl } from "@/lib/files"
 
 type DashboardHeaderProps = {
   shopName: string
+  /** Replaces "Welcome back, {shop}" (the dashboard greets you in the page itself). */
+  title?: string
   avatarUrl: string
   sidebarOpen: boolean
   onToggleSidebar: () => void
@@ -17,6 +19,7 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({
   shopName,
+  title,
   avatarUrl,
   sidebarOpen,
   onToggleSidebar,
@@ -39,8 +42,14 @@ export function DashboardHeader({
           <MenuIcon className="text-muted-foreground" />
         </Button>
         <h1 className="truncate text-sm font-light tracking-wide text-foreground sm:text-base">
-          <span className="hidden sm:inline">{t("Welcome back,")} </span>
-          <span className="font-medium">{shopName}</span>
+          {title ? (
+            <span className="font-medium">{title}</span>
+          ) : (
+            <>
+              <span className="hidden sm:inline">{t("Welcome back,")} </span>
+              <span className="font-medium">{shopName}</span>
+            </>
+          )}
         </h1>
       </div>
 

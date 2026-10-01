@@ -14,6 +14,8 @@ export type Profile = {
 /** What the workshop does. Nodly is built for the first two today; the rest are coming soon. */
 export const ACTIVITIES = ["Furniture maker", "Kitchen studio"] as const
 export const COMING_SOON_ACTIVITIES = ["Interior designer", "Windows and doors", "Signage and print", "Other"] as const
+/** Older choices still stored in some profiles; kept so they keep their translations. */
+export const LEGACY_ACTIVITIES = ["Designer", "Freelancer", "Print shop", "Manufacturer", "Studio"] as const
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 
