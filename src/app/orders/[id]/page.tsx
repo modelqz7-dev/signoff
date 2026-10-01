@@ -371,6 +371,7 @@ export default function OrderPage() {
                           <PDFViewer
                             key={fileKey(storedUrl)}
                             url={fileUrl}
+                            fileName={fileNameFromUrl(storedUrl)}
                             pins={pins}
                             onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
                             focusPin={focusPin}
@@ -398,7 +399,8 @@ export default function OrderPage() {
                             </svg>
                             {t("Download")}
                           </a>
-                          <span className="min-w-0 truncate text-xs text-muted-foreground">{fileNameFromUrl(storedUrl)}</span>
+                          {/* a PDF's name is already on its tile */}
+                          {!isPdf && <span className="min-w-0 truncate text-xs text-muted-foreground">{fileNameFromUrl(storedUrl)}</span>}
                           <button
                             onClick={() => fileRef.current?.click()}
                             disabled={uploading}
