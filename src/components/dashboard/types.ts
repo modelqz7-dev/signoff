@@ -48,9 +48,7 @@ export type Shop = {
   // Plans (see supabase/plans.sql)
   trial_ends_at?: string | null
   logo_url?: string | null
-  // Brand kit, Pro (see supabase/branding.sql)
-  brand_color?: string | null
-  portal_theme?: "dark" | "light" | null
+  // Welcome message and contacts, Studio (see supabase/branding.sql)
   portal_welcome?: string | null
   portal_contacts?: { phone?: string; telegram?: string; instagram?: string; website?: string } | null
 }
