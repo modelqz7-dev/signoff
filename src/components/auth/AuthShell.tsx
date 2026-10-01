@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 /** Shared frame for sign-in, sign-up and password screens. */
 export function AuthShell({
@@ -28,10 +27,7 @@ export function AuthShell({
             <Link href="/" aria-label="Nodly">
               <Logo />
             </Link>
-            <div className="flex items-center gap-1">
-              <LanguageSwitcher />
-              <ThemeToggle />
-            </div>
+            <LanguageSwitcher />
           </div>
           <CardTitle className="text-base">{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
