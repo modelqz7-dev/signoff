@@ -74,7 +74,11 @@ export function LivePortal({ t }: { t: T }) {
   const [running, setRunning] = useState(false)
   const [still, setStill] = useState(false)
   const [typed, setTyped] = useState(0)
-  const [cursor, setCursor] = useState<Point | null>(null)
+  // The cursor is moved frame by frame (see below), not through React state.
+  const cursorRef = useRef<HTMLDivElement>(null)
+  const basePos = useRef<Point | null>(null)
+  const path = useRef<{ from: Point; c1: Point; c2: Point; to: Point; t0: number; ms: number } | null>(null)
+  const cursorScene = useRef<string | null>(null)
   const [fit, setFit] = useState<{ scale: number; narrow: boolean } | null>(null)
 
   // The visitor's own go at the portal.
@@ -151,15 +155,23 @@ export function LivePortal({ t }: { t: T }) {
     return (el.getBoundingClientRect().top - main.getBoundingClientRect().top) / scale + main.scrollTop
   }
 
-  // Where the cursor goes on each step, measured from the live layout.
+  // Where the cursor goes on each step, measured from the live layout. It travels there on a
+  // gentle arc, speeding up and slowing down like a hand, and arrives just before the click.
   useLayoutEffect(() => {
     if (!auto || !fit) return
+    const rest = { x: size.w * 0.8, y: size.h * 0.72 }
+    // A new person takes the mouse: their cursor starts at rest and fades in.
+    const scene = sceneOf(step)
+    if (cursorScene.current !== scene || !basePos.current) {
+      cursorScene.current = scene
+      basePos.current = rest
+      path.current = null
+    }
     // Clicking and typing keep the cursor where it is, even while the page scrolls under it.
     if ([2, 6, 7, 9, 11, 13, 16, 18, 20, 21].includes(step)) return
-    const rest = { x: size.w * 0.8, y: size.h * 0.72 }
     const pin = (i: number) => at(fileRef.current, PINS[i].x / 100, PINS[i].y / 100)
-    const target: Point | null =
-      step === 1 ? at(copyRef.current)
+    const target: Point =
+      (step === 1 ? at(copyRef.current)
       : step === 5 ? pin(0)
       : step === 8 ? at(addRef.current)
       : step === 10 ? pin(1)
@@ -168,10 +180,53 @@ export function LivePortal({ t }: { t: T }) {
       : step === 15 ? at(approveRef.current)
       : step === 17 ? at(checkRef.current)
       : step === 19 ? at(confirmRef.current)
-      : null
-    setCursor(target ?? rest)
+      : null) ?? rest
+    const from = basePos.current
+    const dx = target.x - from.x, dy = target.y - from.y
+    const dist = Math.hypot(dx, dy)
+    if (dist < 2) return
+    // bend the path a little to one side, alternating, as a wrist does
+    const bend = Math.min(dist * 0.14, 70) * (step % 2 ? 1 : -1)
+    const nx = -dy / dist, ny = dx / dist
+    path.current = {
+      from,
+      c1: { x: from.x + dx * 0.3 + nx * bend, y: from.y + dy * 0.3 + ny * bend },
+      c2: { x: from.x + dx * 0.78 + nx * bend * 0.45, y: from.y + dy * 0.78 + ny * bend * 0.45 },
+      to: target,
+      t0: performance.now(),
+      ms: Math.max(Math.min(STEPS[step] - 60, 1150), 420),
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-measure per step only
   }, [step, auto, fit])
+
+  // One animation loop draws the cursor: along the current path, and with a slight drift of
+  // the hand while it waits, so it never freezes.
+  useEffect(() => {
+    if (!auto || still || !running) return
+    let frame = 0
+    const draw = (now: number) => {
+      frame = requestAnimationFrame(draw)
+      const p = path.current
+      if (p) {
+        const k = Math.min((now - p.t0) / p.ms, 1)
+        // a soft ease in and out: no sudden dash in the middle of a long move
+        const e = (1 - Math.cos(Math.PI * k)) / 2
+        const u = 1 - e
+        basePos.current = {
+          x: u * u * u * p.from.x + 3 * u * u * e * p.c1.x + 3 * u * e * e * p.c2.x + e * e * e * p.to.x,
+          y: u * u * u * p.from.y + 3 * u * u * e * p.c1.y + 3 * u * e * e * p.c2.y + e * e * e * p.to.y,
+        }
+        if (k >= 1) path.current = null
+      }
+      const b = basePos.current, el = cursorRef.current
+      if (!b || !el) return
+      const driftX = Math.sin(now / 820) * 1.6 + Math.sin(now / 310) * 0.4
+      const driftY = Math.cos(now / 1040) * 1.3 + Math.sin(now / 450) * 0.4
+      el.style.transform = `translate3d(${b.x + driftX}px, ${b.y + driftY}px, 0)`
+    }
+    frame = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(frame)
+  }, [auto, still, running])
 
   // The portal scrolls like a real page: down to the file, to the comment form, and back.
   useEffect(() => {
@@ -701,11 +756,13 @@ export function LivePortal({ t }: { t: T }) {
               </div>
 
               {/* the cursor: the workshop on the order page, Anna in the portal */}
-              {auto && cursor && !still && (
+              {auto && fit && !still && (
                 <div
+                  key={`cursor-${scene}`}
+                  ref={cursorRef}
                   aria-hidden="true"
-                  className={cn("pointer-events-none absolute top-0 left-0 z-50 transition-[transform,opacity] duration-[850ms] ease-[cubic-bezier(.65,0,.35,1)] will-change-transform", step === FADE && "opacity-0")}
-                  style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)` }}
+                  className={cn("pointer-events-none absolute top-0 left-0 z-50 animate-in transition-opacity duration-500 fade-in-0 will-change-transform", step === FADE && "opacity-0")}
+                  style={{ transform: `translate3d(${size.w * 0.8}px, ${size.h * 0.72}px, 0)` }}
                 >
                   {clickStep && <span className="absolute top-0 left-0 size-12 animate-[ripple_.5s_ease-out_both] rounded-full bg-foreground/35" />}
                   <MousePointer2Icon className={cn("size-6 -translate-x-[3px] -translate-y-[2px] text-white drop-shadow", shopCursor ? "fill-[#e0913a]" : "fill-[#5b8def]")} strokeWidth={1.5} />
