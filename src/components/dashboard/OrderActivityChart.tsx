@@ -109,12 +109,12 @@ export function OrderActivityChart({ orders }: OrderActivityChartProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:gap-4">
         <div className="flex flex-col gap-1">
           <CardTitle>{t("Order Activity")}</CardTitle>
           <CardDescription>{t("New orders this week vs last week")}</CardDescription>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-3 text-xs whitespace-nowrap text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="size-2 rounded-[2px]" style={{ backgroundColor: "var(--chart-1)" }} />
             {t("This week")}
