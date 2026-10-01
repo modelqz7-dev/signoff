@@ -154,6 +154,13 @@
     color-scheme: light;
     @apply font-sans;
   }
+  /* iOS Safari zooms the page into any field whose text is under 16px, so on phones fields
+     stay at 16px (the scaled-down product demo on the landing page excepted). */
+  @media (max-width: 767px) {
+    :where(input, textarea, select):not([data-demo] *) {
+      font-size: 16px !important;
+    }
+  }
   html.dark {
     color-scheme: dark;
   }

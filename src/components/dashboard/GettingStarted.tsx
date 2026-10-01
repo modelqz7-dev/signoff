@@ -42,7 +42,7 @@ export function GettingStarted({ orders, shop, onNewOrder }: { orders: Order[]; 
             type="button"
             aria-label={t("Hide")}
             onClick={() => { dismissOnboarding(); setDismissed(true) }}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+            className="-m-1.5 rounded-md p-2.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground sm:m-0 sm:p-1"
           >
             <XIcon className="size-4" />
           </button>

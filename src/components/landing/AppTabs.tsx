@@ -41,7 +41,8 @@ export function AppTabs({ t }: { t: T }) {
 
   return (
     <div ref={rootRef} className="flex flex-col gap-5" onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}>
-      <div role="tablist" aria-label={t("Your side")} className="flex flex-wrap gap-2">
+      {/* one row; on phones it scrolls sideways instead of wrapping */}
+      <div role="tablist" aria-label={t("Your side")} className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
         {TABS.map((item, i) => {
           const active = i === index
           const Icon = item.icon
@@ -55,7 +56,7 @@ export function AppTabs({ t }: { t: T }) {
               aria-controls="app-tab-panel"
               onClick={() => { setIndex(i); setAuto(false) }}
               className={cn(
-                "relative flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-full px-4 text-sm font-medium transition-colors",
+                "relative flex h-10 shrink-0 cursor-pointer items-center gap-2 overflow-hidden rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors",
                 active ? "bg-card text-foreground ring-1 ring-foreground/15" : "text-muted-foreground hover:bg-hover hover:text-foreground"
               )}
             >
@@ -76,7 +77,20 @@ export function AppTabs({ t }: { t: T }) {
         })}
       </div>
 
-      <div id="app-tab-panel" role="tabpanel" aria-labelledby={`app-tab-${tab.id}`} className="overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-foreground/10">
+      <div id="app-tab-panel" role="tabpanel" aria-labelledby={`app-tab-${tab.id}`}>
+      {/* phones: the app as it looks on a phone, in a phone frame */}
+      <div className="mx-auto w-[min(76vw,300px)] overflow-hidden rounded-[2.2rem] bg-card p-2 shadow-2xl ring-1 ring-foreground/10 sm:hidden">
+        <div className="relative aspect-[390/844] overflow-hidden rounded-[1.8rem] bg-background">
+          {TABS.map((item, i) => (
+            <div key={item.id} aria-hidden={i !== index} className={cn("absolute inset-0 transition-opacity duration-500", i === index ? "opacity-100" : "opacity-0")}>
+              <Shot id={item.id === "phone" ? "phone" : `${item.id}-mobile`} alt={t(item.alt)} width={780} height={1688} className="size-full object-cover object-top" sizes="300px" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* larger screens: the desktop app in a browser window */}
+      <div className="hidden overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-foreground/10 sm:block">
         <div className="flex items-center border-b border-border px-4 py-2">
           <span className="mx-auto rounded-md bg-muted px-3 py-0.5 text-[11px] text-muted-foreground">{tab.url}</span>
         </div>
@@ -100,6 +114,7 @@ export function AppTabs({ t }: { t: T }) {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   )

@@ -68,7 +68,7 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
         </div>
 
         {/* order status under the key */}
-        <div className="mt-2 flex items-center gap-2 text-sm">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm">
           <span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: status.bg, color: status.color }}>
             {t(status.label)}
           </span>

@@ -47,7 +47,7 @@ const FADE = 23
 
 // The app is laid out at a fixed size, then scaled to the window.
 const WIDE = { w: 1200, h: 740 }
-const NARROW = { w: 760, h: 960 }
+const NARROW = { w: 440, h: 820 }
 
 type Point = { x: number; y: number }
 type Mine = Point & { title: string; description: string }
@@ -393,7 +393,7 @@ export function LivePortal({ t }: { t: T }) {
         </aside>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b px-6">
+        <header className={cn("flex h-16 shrink-0 items-center justify-between gap-3 border-b", wide ? "px-6" : "px-4")}>
           <h1 className="truncate text-base font-light tracking-wide text-foreground">
             {t("Welcome back,")} <span className="font-medium">Oak &amp; Dot Workshop</span>
           </h1>
@@ -407,7 +407,7 @@ export function LivePortal({ t }: { t: T }) {
             <Avatar className="h-8 w-8"><AvatarFallback>O&amp;</AvatarFallback></Avatar>
           </div>
         </header>
-        <div className="min-h-0 flex-1 overflow-hidden p-6">
+        <div className={cn("min-h-0 flex-1 overflow-hidden", wide ? "p-6" : "p-4")}>
           <div className="flex gap-6">
             <div className="flex min-w-0 flex-1 justify-center">
               <div className="flex w-full max-w-2xl flex-col gap-6">
@@ -433,7 +433,7 @@ export function LivePortal({ t }: { t: T }) {
                 <Card>
                   <CardHeader><CardTitle className="text-sm">{t("Details")}</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+                    <div className={cn("grid gap-x-6 gap-y-4", wide ? "grid-cols-3" : "grid-cols-2")}>
                       <Info label={t("Client")} value="Anna Kovalenko" />
                       <Info label={t("Email")} value="anna@kovalenko.studio" />
                       <Info label={t("Contact")} value="—" />
@@ -471,9 +471,9 @@ export function LivePortal({ t }: { t: T }) {
   // ── the client portal ──
   const portal = (
     <div className="flex h-full flex-col bg-background">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/40 px-6 py-3">
+      <header className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-border/40 py-3", wide ? "px-6" : "px-4")}>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="truncate border-r border-border/40 pr-3 text-sm font-medium text-foreground">Oak &amp; Dot Workshop</span>
+          {wide && <span className="truncate border-r border-border/40 pr-3 text-sm font-medium text-foreground">Oak &amp; Dot Workshop</span>}
           <h1 className="truncate text-sm font-medium text-foreground">{t("Kitchen “Modern”")}</h1>
           <Badge variant="secondary" className="border-0 px-2 py-0.5 text-[11px]" style={{ backgroundColor: statusInfo.bg, color: statusInfo.color }}>
             {t(statusInfo.label)}
@@ -496,14 +496,14 @@ export function LivePortal({ t }: { t: T }) {
       </header>
 
       <div className="relative flex min-h-0 flex-1">
-        <div ref={mainRef} className={cn("flex min-w-0 flex-1 justify-center px-6 pt-6 pb-28", auto ? "overflow-hidden" : "overflow-y-auto")}>
+        <div ref={mainRef} className={cn("flex min-w-0 flex-1 justify-center pt-6 pb-28", wide ? "px-6" : "px-4", auto ? "overflow-hidden" : "overflow-y-auto")}>
           <div className="flex h-fit w-full max-w-4xl flex-col gap-6">
             {status === "approved" ? (
               <ApprovedBanner order={{ approved_at: new Date().toISOString(), approved_by: "Anna Kovalenko" }} />
             ) : (
               <ReviewSteps status={status} />
             )}
-            <div className="grid grid-cols-4 gap-4">
+            <div className={cn("grid gap-4", wide ? "grid-cols-4" : "grid-cols-2")}>
               <Info label={t("Client")} value="Anna Kovalenko" />
               <Info label={t("Price")} value="$8,400" />
               <Info label={t("Deadline")} value={date(2026, 9, 5)} />
@@ -601,7 +601,7 @@ export function LivePortal({ t }: { t: T }) {
 
         {/* action bar */}
         <div className={cn("absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95", wide && "right-[280px]")}>
-          <div className="mx-auto flex max-w-4xl items-center gap-2 px-6 py-3">
+          <div className={cn("mx-auto flex max-w-4xl items-center gap-2 py-3", wide ? "px-6" : "px-4")}>
             {!wide && (
               <Button variant="outline" size="sm"><MessageSquareIcon />{openCount}</Button>
             )}
@@ -638,7 +638,7 @@ export function LivePortal({ t }: { t: T }) {
         {/* confirmation dialogs, as in the portal */}
         {shownDialog && (
           <div className="absolute inset-0 z-40 animate-in bg-black/20 duration-150 fade-in-0">
-            <div className="absolute top-1/2 left-1/2 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 animate-in gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-150 fade-in-0 zoom-in-95">
+            <div className="absolute top-1/2 left-1/2 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 animate-in gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-150 fade-in-0 zoom-in-95">
               {shownDialog === "approve" ? (
                 <>
                   <div className="flex flex-col gap-2">
@@ -747,6 +747,7 @@ export function LivePortal({ t }: { t: T }) {
           <div ref={fitRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${size.w} / ${size.h}` }}>
             <div
               ref={appRef}
+              data-demo
               inert={auto}
               className={cn("absolute top-0 left-0 origin-top-left select-none", !fit && "opacity-0")}
               style={{ width: size.w, height: size.h, transform: `scale(${scale})` }}
