@@ -50,7 +50,7 @@ export default function CertificatePage() {
   if (!can(shop, "certificate")) {
     return (
       <Centered>
-        <p className="text-sm text-foreground">{t("Approval certificates are available on Go and Pro.")}</p>
+        <p className="text-sm text-foreground">{t("Approval certificates are available on Maker and Studio.")}</p>
         <UpgradeChip feature="certificate" />
         <Link href={`/orders/${order.id}`} className="text-xs text-muted-foreground hover:text-foreground">{t("Back to order")}</Link>
       </Centered>

@@ -24,7 +24,7 @@ export const TRIAL_DAYS = 14
 export const PLANS: Plan[] = [
   {
     id: "free",
-    name: "Free",
+    name: "Start",
     monthly: 0,
     activeOrders: 3,
     features: [],
@@ -37,8 +37,8 @@ export const PLANS: Plan[] = [
   },
   {
     id: "go",
-    name: "Go",
-    monthly: 9,
+    name: "Maker",
+    monthly: 19,
     activeOrders: 25,
     features: ["versions", "certificate", "branding", "reminders"],
     highlights: [
@@ -51,13 +51,13 @@ export const PLANS: Plan[] = [
   },
   {
     id: "pro",
-    name: "Pro",
-    monthly: 19,
+    name: "Studio",
+    monthly: 39,
     activeOrders: null,
     features: ["versions", "certificate", "branding", "reminders", "brandKit"],
     highlights: [
       "Unlimited active orders",
-      "Everything in Go",
+      "Everything in Maker",
       "Portal in your brand colours, with your welcome message and contacts",
       "Priority support",
     ],

@@ -140,7 +140,7 @@ function PlanCard({ onOpen }: { onOpen: () => void }) {
     <div className="mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10">
       <div className="flex items-baseline justify-between gap-2 text-xs whitespace-nowrap">
         <span className="truncate font-medium text-foreground">
-          {onTrial ? t("{plan} trial", { plan: usage.plan.name }) : t("{plan} plan", { plan: usage.plan.name })}
+          {onTrial ? t("{plan} trial", { plan: t(usage.plan.name) }) : t("{plan} plan", { plan: t(usage.plan.name) })}
         </span>
         {onTrial && (
           <span className="text-[11px] text-muted-foreground">{t("{n}d left", { n: usage.trialDays })}</span>

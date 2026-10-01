@@ -252,7 +252,7 @@ function ProfilePanel() {
         <Row label={t("Email")}>{email || "—"}</Row>
         <Row label={t("Plan")}>
           <span className="flex items-center justify-end gap-2">
-            {trialDays > 0 ? t("{plan} trial", { plan: plan.name }) : plan.name}
+            {trialDays > 0 ? t("{plan} trial", { plan: t(plan.name) }) : t(plan.name)}
             <button type="button" className="text-xs text-accent hover:underline" onClick={() => openPanel("billing")}>
               {t("Change")}
             </button>
@@ -270,7 +270,7 @@ function ProfilePanel() {
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024
 
-/** The workshop's logo shown to clients at the top of the portal (Go and Pro). */
+/** The workshop's logo shown to clients at the top of the portal (Maker and Studio). */
 function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) => void }) {
   const { t } = useT()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -371,10 +371,10 @@ function BillingPanel() {
       {usage.trialDays > 0 && usage.chosen.id === "free" && (
         <div className="rounded-lg bg-accent/10 px-3 py-2 text-xs ring-1 ring-accent/30">
           <p className="font-medium text-foreground">
-            {t("Pro trial: {n} days left", { n: usage.trialDays })}
+            {t("Studio trial: {n} days left", { n: usage.trialDays })}
           </p>
           <p className="mt-0.5 text-muted-foreground">
-            {t("Everything in Pro is unlocked until {date}. Then you move to Free unless you choose a plan.", { date: trialEnds })}
+            {t("Everything in Studio is unlocked until {date}. Then you move to Start unless you choose a plan.", { date: trialEnds })}
           </p>
         </div>
       )}
@@ -400,7 +400,7 @@ function BillingPanel() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
-                  <p className="font-medium">{plan.name}</p>
+                  <p className="font-medium">{t(plan.name)}</p>
                   <PlanPrice plan={plan} yearly={yearly} className="text-xs text-muted-foreground" />
                 </div>
                 <ul className="mt-1 flex flex-col gap-0.5">

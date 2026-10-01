@@ -77,7 +77,7 @@ export function UsageMeter({ used, limit, className }: { used: number; limit: nu
   )
 }
 
-/** Small "Go" chip for features the current plan doesn't include; opens Billing. */
+/** Small "Maker" chip for features the current plan doesn't include; opens Billing. */
 export function UpgradeChip({ feature, className }: { feature: Feature; className?: string }) {
   const { t } = useT()
   const plan = planFor(feature)
@@ -85,14 +85,14 @@ export function UpgradeChip({ feature, className }: { feature: Feature; classNam
     <button
       type="button"
       onClick={() => openPanel("billing")}
-      title={t("Available on {plan}", { plan: plan.name })}
+      title={t("Available on {plan}", { plan: t(plan.name) })}
       className={cn(
         "inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent transition-colors hover:bg-accent/25",
         className
       )}
     >
       <SparklesIcon className="size-3" />
-      {plan.name}
+      {t(plan.name)}
     </button>
   )
 }

@@ -257,7 +257,7 @@ function PlanLimitDialog({ plan, used, onOpenChange }: {
         <DialogTitle>{t("You've reached your plan limit")}</DialogTitle>
         <DialogDescription>
           {t("The {plan} plan includes up to {n} active orders. Approved orders don't count, so finishing one frees a slot.", {
-            plan: plan.name,
+            plan: t(plan.name),
             n: plan.activeOrders ?? used,
           })}
         </DialogDescription>
@@ -270,7 +270,7 @@ function PlanLimitDialog({ plan, used, onOpenChange }: {
           <p className="font-medium text-foreground">
             {next.activeOrders === null
               ? t("{plan}: unlimited active orders", { plan: next.name })
-              : t("{plan}: up to {n} active orders", { plan: next.name, n: next.activeOrders })}
+              : t("{plan}: up to {n} active orders", { plan: t(next.name), n: next.activeOrders })}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">{next.highlights.slice(1, 4).map((h) => t(h)).join(" · ")}</p>
         </div>

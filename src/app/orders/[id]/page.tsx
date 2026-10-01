@@ -502,7 +502,7 @@ function VersionPicker({ current, shown, locked, onPick }: {
             key={v}
             type="button"
             aria-pressed={v === shown}
-            title={isLocked ? t("Version history is available on Go and Pro") : undefined}
+            title={isLocked ? t("Version history is available on Maker and Studio") : undefined}
             onClick={() => (isLocked ? openPanel("billing") : onPick(v))}
             className={cn(
               "flex items-center gap-1 rounded-md px-2 py-0.5 text-xs transition-colors",
