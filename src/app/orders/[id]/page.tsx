@@ -183,16 +183,16 @@ export default function OrderPage() {
   const status = STATUS_MAP[order.status]
   // Link and password for the client: at the top of the right column (after the file on phones).
   const portalCard = (
-    <Card>
+    <Card size="sm">
       <CardHeader>
-        <CardTitle className="text-sm">{t("Client Portal")}</CardTitle>
-        <CardDescription>{t("Share this link with your client to view and approve.")}</CardDescription>
+        <CardTitle>{t("Client Portal")}</CardTitle>
+        <CardDescription className="text-xs">{t("Share this link with your client to view and approve.")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs">{t("Portal Link")}</Label>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <Input
+              aria-label={t("Portal Link")}
               readOnly
               value={getPortalUrl()}
               className="text-xs font-mono"
@@ -202,7 +202,7 @@ export default function OrderPage() {
               variant="outline"
               size="sm"
               onPress={handleCopyLink}
-              className="mt-1 flex-1"
+              className="flex-1"
             >
               {copied ? (
                 <span className="flex items-center gap-1.5 text-[var(--status-approved)]">
@@ -225,36 +225,38 @@ export default function OrderPage() {
             </div>
           </div>
 
-          <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 border-t border-border/40 pt-3">
             <Label className="text-xs">{t("Access Password")}</Label>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              placeholder={passwordSet ? t("New password") : t("Set a password")}
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              className="text-sm"
-            />
-            <div className="mt-1 flex gap-2">
+            <div className="flex gap-2">
+              <Input
+                type="password"
+                autoComplete="new-password"
+                placeholder={passwordSet ? t("New password") : t("Set a password")}
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                className="min-w-0 flex-1 text-sm"
+              />
               <Button
                 variant="outline"
                 size="sm"
                 onPress={() => savePassword(password.trim())}
                 isDisabled={savingPassword || !password.trim()}
-                className="flex-1"
+                className="h-auto shrink-0"
               >
-                {savingPassword ? t("Saving...") : passwordSet ? t("Change password") : t("Save Password")}
+                {savingPassword ? t("Saving...") : t("Save")}
               </Button>
-              {passwordSet && (
-                <Button variant="ghost" size="sm" onPress={() => savePassword("")} isDisabled={savingPassword}>
-                  {t("Remove")}
-                </Button>
-              )}
             </div>
-            <p className={`mt-1 text-[11px] ${passwordError ? "text-destructive" : "text-muted-foreground/60"}`}>
-              {passwordError ?? (passwordSet
-                ? t("Password is set. Client needs this to access.")
-                : t("No password. Anyone with the link can view."))}
+            <p className={`flex items-center gap-2 text-[11px] ${passwordError ? "text-destructive" : "text-muted-foreground/70"}`}>
+              <span className="min-w-0 flex-1">
+                {passwordError ?? (passwordSet
+                  ? t("Password is set. Client needs this to access.")
+                  : t("No password. Anyone with the link can view."))}
+              </span>
+              {passwordSet && (
+                <button type="button" onClick={() => savePassword("")} disabled={savingPassword} className="shrink-0 font-medium text-foreground/80 hover:text-foreground disabled:opacity-50">
+                  {t("Remove")}
+                </button>
+              )}
             </p>
           </div>
         </div>
@@ -452,15 +454,15 @@ export default function OrderPage() {
               </div>
 
               {/* the link for the client, then the order's facts */}
-              <aside className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-0">
+              <aside className="flex min-w-0 flex-col gap-4">
                 {portalCard}
 
-                <Card>
+                <Card size="sm">
                   <CardHeader>
-                    <CardTitle className="text-sm">{t("Details")}</CardTitle>
+                    <CardTitle>{t("Details")}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <dl className="flex flex-col divide-y divide-border/50 text-sm">
+                    <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
                       <Row label={t("Client")} value={order.client_name || "—"} />
                       {order.client_email && <Row label={t("Email")} value={order.client_email} />}
                       {order.client_contact && <Row label={t("Contact")} value={order.client_contact} />}
@@ -476,7 +478,7 @@ export default function OrderPage() {
                 </Card>
 
                 {order.notes && (
-                  <Card>
+                  <Card size="sm">
                     <CardHeader>
                       <CardTitle className="text-sm">{t("Notes")}</CardTitle>
                     </CardHeader>
@@ -496,7 +498,7 @@ export default function OrderPage() {
 
 function Row({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2 first:pt-0 last:pb-0">
+    <div className="flex items-baseline justify-between gap-4 py-1.5 first:pt-0 last:pb-0">
       <dt className="shrink-0 text-xs text-muted-foreground">{label}</dt>
       <dd className="min-w-0 truncate text-right font-medium text-foreground" style={color ? { color } : undefined} title={value} suppressHydrationWarning>{value}</dd>
     </div>
