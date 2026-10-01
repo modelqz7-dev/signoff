@@ -37,7 +37,7 @@ export function PortalQrButton({ url, fileName }: { url: string; fileName: strin
 
   return (
     <>
-      <Button variant="outline" size="sm" onPress={() => setOpen(true)} aria-label={t("QR code")} className="mt-1 shrink-0">
+      <Button variant="outline" size="sm" onPress={() => setOpen(true)} aria-label={t("QR code")} className="shrink-0">
         <QrCodeIcon />
         QR
       </Button>
