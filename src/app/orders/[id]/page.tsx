@@ -16,6 +16,7 @@ import { PDFViewer } from "@/components/ui/pdf-viewer"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinList, PinMarker } from "@/components/orders/pins"
+import { PortalQrButton } from "@/components/orders/PortalQr"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { fileNameFromUrl, uploadNewVersion, useOrderVersions } from "@/lib/versions"
@@ -192,11 +193,12 @@ export default function OrderPage() {
               value={getPortalUrl()}
               className="text-xs font-mono"
             />
+            <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onPress={handleCopyLink}
-              className="w-full mt-1"
+              className="mt-1 flex-1"
             >
               {copied ? (
                 <span className="flex items-center gap-1.5 text-[var(--status-approved)]">
@@ -215,6 +217,8 @@ export default function OrderPage() {
                 </span>
               )}
             </Button>
+            <PortalQrButton url={getPortalUrl()} fileName={order.code} />
+            </div>
           </div>
 
           <div className="border-t border-border/40 pt-4 flex flex-col gap-1.5">
