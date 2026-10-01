@@ -332,7 +332,7 @@ export function LivePortal({ t }: { t: T }) {
             <NavItem icon={NAV_ICONS.contact} label={t("Contact Us")} />
           </nav>
           <div className="mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10">
-            <span className="text-xs font-medium text-foreground">{t("{plan} plan", { plan: "Pro" })}</span>
+            <span className="text-xs font-medium text-foreground">{t("{plan} plan", { plan: t("Studio") })}</span>
             <UsageMeter used={3} limit={null} />
           </div>
         </aside>

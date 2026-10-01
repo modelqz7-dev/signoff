@@ -53,7 +53,7 @@ export function Pricing({ t }: { t: T }) {
   return (
     <section id="pricing" className="scroll-mt-16 border-t border-border py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="04" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("14 days of Pro free, no card")} />
+        <SectionHeading no="04" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("14 days of Studio free, no card")} />
         <div className="mb-8">
           <BillingCycleToggle yearly={yearly} onChange={setYearly} />
         </div>
@@ -63,7 +63,7 @@ export function Pricing({ t }: { t: T }) {
             return (
               <Card key={plan.id} className={cn("gap-5 px-6", featured && "ring-2 ring-foreground/70")}>
                 <div className="flex items-center justify-between">
-                  <p className={cn(HEADLINE, "text-lg")}>{plan.name}</p>
+                  <p className={cn(HEADLINE, "text-lg")}>{t(plan.name)}</p>
                   {featured && <Chip>{t("Recommended")}</Chip>}
                 </div>
                 <PlanPrice plan={plan} yearly={yearly} className={cn(HEADLINE, "text-5xl")} />
@@ -100,7 +100,7 @@ export function Questions({ t }: { t: T }) {
     [t("Do my clients need an account?"), t("No. They open the link, enter their name and, if you set one, the password.")],
     [t("Which files can I upload?"), t("PDF files with any number of pages, and PNG or JPG images.")],
     [t("Can a client see my other orders?"), t("No. Each link opens exactly one order.")],
-    [t("How much does it cost?"), t("There is a free plan with up to 3 active orders, and Go and Pro for more. New accounts get 14 days of Pro for free. No charges during early access.")],
+    [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Maker and Studio for more. New accounts get 14 days of Studio for free. No charges during early access.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
   return (
