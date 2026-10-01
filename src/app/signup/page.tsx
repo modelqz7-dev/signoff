@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { AuthField, AuthMessage, AuthShell } from "@/components/auth/AuthShell"
 import { useT } from "@/lib/i18n"
+import { siteOrigin } from "@/lib/site"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function SignupPage() {
       options: {
         // The workshop name is picked up by the sign-up trigger (or getOrCreateShop).
         data: { shop_name: shopName.trim() },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${siteOrigin()}/dashboard`,
       },
     })
 

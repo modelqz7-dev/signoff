@@ -30,6 +30,7 @@ import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
+import { siteOrigin } from "@/lib/site"
 
 export default function OrderPage() {
   const router = useRouter()
@@ -138,8 +139,8 @@ export default function OrderPage() {
   }
 
   function getPortalUrl() {
-    if (typeof window === "undefined") return ""
-    return `${window.location.origin}/portal/${order?.id}`
+    const origin = siteOrigin()
+    return origin ? `${origin}/portal/${order?.id}` : ""
   }
 
   async function handleCopyLink() {

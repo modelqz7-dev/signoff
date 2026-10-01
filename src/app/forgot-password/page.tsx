@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { AuthField, AuthMessage, AuthShell } from "@/components/auth/AuthShell"
 import { useT } from "@/lib/i18n"
+import { siteOrigin } from "@/lib/site"
 
 export default function ForgotPasswordPage() {
   const { t } = useT()
@@ -19,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError(null)
     setLoading(true)
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${siteOrigin()}/reset-password`,
     })
     setLoading(false)
     if (resetError) setError(resetError.message)
