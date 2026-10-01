@@ -6,16 +6,13 @@ import { LogoMark } from "@/components/Logo"
 import { AtSignIcon, GlobeIcon, PhoneIcon, SendIcon } from "lucide-react"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
-import { THEME_STORAGE_KEY } from "@/lib/theme-script"
-import { brandCss, brandPalette, contactHref, type PortalContacts, type PortalTheme } from "@/lib/brand"
+import { contactHref, type PortalContacts } from "@/lib/brand"
 
 export type PortalBrand = {
   shopName: string
   logoUrl: string | null
   badge: boolean
-  /** Brand kit (Pro); empty on other plans. */
-  color?: string | null
-  theme?: PortalTheme | null
+  /** Welcome message and contacts (Studio); empty on other plans. */
   welcome?: string
   contacts?: PortalContacts
 }
@@ -32,23 +29,6 @@ export function usePortalBrand(orderId: string) {
     return () => { cancelled = true }
   }, [orderId])
   return brand
-}
-
-/**
- * Puts the workshop's colour on the portal (buttons, focus rings, pins) and, when the
- * client hasn't picked a theme themselves, opens the portal in the workshop's theme.
- */
-export function BrandStyle({ brand }: { brand: PortalBrand | null }) {
-  const palette = brandPalette(brand?.color)
-  const theme = brand?.theme
-  useEffect(() => {
-    if (!theme) return
-    let saved: string | null = null
-    try { saved = localStorage.getItem(THEME_STORAGE_KEY) } catch {}
-    if (!saved) document.documentElement.classList.toggle("dark", theme === "dark")
-  }, [theme])
-  if (!palette) return null
-  return <style>{brandCss(palette)}</style>
 }
 
 /** The workshop's greeting on the portal's sign-in screen. */

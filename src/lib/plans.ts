@@ -58,7 +58,7 @@ export const PLANS: Plan[] = [
     highlights: [
       "Unlimited active orders",
       "Everything in Maker",
-      "Portal in your brand colours, with your welcome message and contacts",
+      "Your welcome message and contacts in the portal",
       "Priority support",
     ],
   },

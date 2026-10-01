@@ -1,8 +1,8 @@
 -- Nodly: brand kit for the client portal (Pro).
 -- Run once in Supabase → SQL Editor → New query. Safe to run again.
 --
--- Adds the workshop's portal settings: brand colour, the theme clients see first,
--- a welcome message and contact links. The site works without these columns
+-- Adds the workshop's portal settings: a welcome message and contact links.
+-- (brand_color and portal_theme are no longer used by the app; they stay harmless.) The site works without these columns
 -- (the portal simply uses Nodly's colours), but saving the brand kit needs them.
 
 alter table public.shops add column if not exists brand_color text;          -- '#1e5b3a'
