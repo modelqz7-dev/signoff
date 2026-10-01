@@ -11,7 +11,9 @@ export type Profile = {
   activity: string
 }
 
-export const ACTIVITIES = ["Designer", "Freelancer", "Print shop", "Studio", "Manufacturer", "Other"] as const
+/** What the workshop does. Nodly is built for the first two today; the rest are coming soon. */
+export const ACTIVITIES = ["Furniture maker", "Kitchen studio"] as const
+export const COMING_SOON_ACTIVITIES = ["Interior designer", "Windows and doors", "Signage and print", "Other"] as const
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 

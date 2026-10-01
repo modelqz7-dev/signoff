@@ -14,7 +14,7 @@ import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
+import { ACTIVITIES, COMING_SOON_ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
 import { uploadPublicAsset, useFileUrl } from "@/lib/files"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
@@ -125,6 +125,7 @@ function ProfilePanel() {
   const avatarSrc = useFileUrl(profile?.avatarUrl) || ""
   const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState<string | null>(null)
+  const [soonFor, setSoonFor] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
@@ -220,27 +221,45 @@ function ProfilePanel() {
       <div className="flex flex-col gap-2">
         <Label>{t("What do you do?")}</Label>
         <div className="flex flex-wrap gap-1.5">
-          {ACTIVITIES.map((a) => {
+          {[...ACTIVITIES, ...COMING_SOON_ACTIVITIES].map((a) => {
             const active = profile.activity === a
+            const soon = (COMING_SOON_ACTIVITIES as readonly string[]).includes(a)
             return (
               <button
                 key={a}
                 type="button"
                 aria-pressed={active}
-                onClick={() => run(() => updateProfile({ activity: active ? "" : a }))}
+                onClick={() => {
+                  // Still saved, so we know which trade to tailor Nodly to next.
+                  run(() => updateProfile({ activity: active ? "" : a }))
+                  if (soon && !active) setSoonFor(a)
+                }}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
                   active
                     ? "border-accent bg-accent/15 text-foreground"
                     : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 {t(a)}
+                {soon && <span className="rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground">{t("Soon")}</span>}
               </button>
             )
           })}
         </div>
       </div>
+
+      {/* Picking a trade Nodly isn't tailored to yet */}
+      <Dialog isOpen={!!soonFor} onOpenChange={(v) => !v && setSoonFor(null)} className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("Coming soon")}</DialogTitle>
+          <DialogDescription>
+            {t("Nodly is built for furniture makers and kitchen studios right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
+          </DialogDescription>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{t("Until then, everything works for you as it is: upload a design, send the link, get comments and approval.")}</p>
+        <Button onPress={() => setSoonFor(null)}>{t("Got it")}</Button>
+      </Dialog>
 
       <PortalLogo shop={shop} onSaved={setShop} />
 
