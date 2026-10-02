@@ -3,11 +3,11 @@
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { LivePortal } from "@/components/landing/LivePortal"
-import { AppTabs } from "@/components/landing/AppTabs"
+import { BeforeAfter } from "@/components/landing/BeforeAfter"
 import type { T } from "@/lib/i18n"
 
-// The product itself instead of illustrations: a live, self-playing client portal, then real
-// screenshots of Nodly (a demo workshop, captured from the app). Images live in public/landing.
+// The product itself instead of illustrations: a live, self-playing client portal, a before /
+// after of the client's changes, and the approval certificate. Images live in public/landing.
 
 const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em] text-foreground"
 
@@ -49,15 +49,15 @@ export function ProductShowcase({ t }: { t: T }) {
         </div>
       </section>
 
-      {/* 02 · the workshop's side + phone */}
+      {/* 02 · changes the client can check */}
       <section className="py-24">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
-          <Label no="02">{t("Your side")}</Label>
+          <Label no="02">{t("Changes")}</Label>
           <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Every order, and who you're waiting on.")}</h2>
-            <Points items={[t("Comments arrive live, no reload"), t("Overdue and changed orders float to the top"), t("Telegram and email when a client acts")]} />
+            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("“We fixed it.” Now the client can see it.")}</h2>
+            <Points items={[t("Each comment answered: fixed, or why it stays"), t("Before and after on the very spot"), t("Reopen in one tap if it isn't right")]} />
           </div>
-          <AppTabs t={t} />
+          <BeforeAfter t={t} />
         </div>
       </section>
 
