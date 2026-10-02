@@ -22,27 +22,26 @@ Without this, mail comes from `noreply@mail.app.supabase.io` and is rate-limited
 
 ## 2. Templates
 
-The HTML files are built by `build.py` (one centred layout); edit it and run
-`python3 supabase/email-templates/build.py` to regenerate them.
+Every email is in Russian and English: Supabase shows Russian to accounts whose `lang` is "ru"
+(the app saves it at sign-up and whenever the language is switched) and English to everyone
+else. The files are built by `build.py`; edit it and run
+`python3 supabase/email-templates/build.py` to regenerate them and `subjects.txt`.
 
-Supabase → Authentication → Emails → Templates. For each one, paste the subject and the
-whole HTML file:
+Supabase → Authentication → Emails. For each one, paste the line from `subjects.txt` into
+Subject and the whole HTML file into Body:
 
-| Supabase template   | File                     | Subject                           |
-|---------------------|--------------------------|-----------------------------------|
-| Confirm sign up     | `confirm-signup.html`    | Подтвердите почту в Nodly         |
-| Reset password      | `reset-password.html`    | Сброс пароля в Nodly              |
-| Magic link          | `magic-link.html`        | Вход в Nodly                      |
-| Change email address| `change-email.html`      | Подтвердите новую почту в Nodly   |
-| Reauthentication    | `reauthentication.html`  | Код подтверждения Nodly           |
-| Invite user         | `invite.html`            | Вас пригласили в Nodly            |
+| Supabase template                 | File                      |
+|-----------------------------------|---------------------------|
+| Confirm sign up                   | `confirm-signup.html`     |
+| Invite user                       | `invite.html`             |
+| Magic link or OTP                 | `magic-link.html`         |
+| Change email address              | `change-email.html`       |
+| Reset password                    | `reset-password.html`     |
+| Reauthentication                  | `reauthentication.html`   |
+| Security → Password changed (on)  | `password-changed.html`   |
+| Security → Email address changed (on) | `email-changed.html`  |
 
-Security notices (turn these two on, leave the rest off):
-
-| Supabase notice        | File                    | Subject                 |
-|------------------------|-------------------------|-------------------------|
-| Password changed       | `password-changed.html` | Пароль в Nodly изменён  |
-| Email address changed  | `email-changed.html`    | Почта в Nodly изменена  |
+Leave the other security notices off.
 
 ## 3. Password changes need the emailed code
 

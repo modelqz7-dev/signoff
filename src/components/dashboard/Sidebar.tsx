@@ -7,6 +7,7 @@ import { OPEN_NAV_EVENT } from "@/lib/panels"
 import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
+import { useSyncAccountLang } from "@/lib/account-lang"
 import { usePlanUsage } from "@/lib/use-plan"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
@@ -18,6 +19,8 @@ type SidebarProps = {
 
 export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   const [panel, setPanel] = useState<PanelId | null>(null)
+  // The sidebar is on every signed-in page: a good place to keep the account's language current.
+  useSyncAccountLang()
   // Phones and tablets: the sidebar slides in as a drawer from the header's menu button.
   const [drawer, setDrawer] = useState(false)
 
