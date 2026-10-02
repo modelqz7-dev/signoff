@@ -299,8 +299,8 @@ export default function OrderPage() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
 
             {/* Header */}
             <div className="flex flex-col gap-3">
@@ -358,7 +358,7 @@ export default function OrderPage() {
               onSeeComments={() => commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
             />
 
-            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
               {/* the design and what the client said about it */}
               <div className="flex min-w-0 flex-col gap-5">
                 {/* File / PDF */}

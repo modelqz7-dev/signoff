@@ -57,13 +57,13 @@ export function GettingStarted({ orders, shop, onNewOrder }: { orders: Order[]; 
             <>
               <span
                 className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
+                  "flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-medium",
                   step.done ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
                 )}
               >
                 {step.done ? <CheckIcon className="size-3" /> : i + 1}
               </span>
-              <span className={cn("text-xs", step.done ? "text-muted-foreground line-through" : "text-foreground")}>{step.label}</span>
+              <span className={cn("text-sm", step.done ? "text-muted-foreground line-through" : "text-foreground")}>{step.label}</span>
             </>
           )
           const cls = "flex items-start gap-2 rounded-lg p-2 text-left transition-colors"

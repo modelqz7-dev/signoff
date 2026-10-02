@@ -68,7 +68,7 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
   const approved = status === "approved" || status === "prod"
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/75">
-      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8">
         <Button variant="outline" size="sm" className="lg:hidden" onPress={onComments}>
           <CommentsIcon />
           <span className="hidden min-[400px]:inline">{t("Comments")}</span>

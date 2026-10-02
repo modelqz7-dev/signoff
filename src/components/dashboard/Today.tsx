@@ -119,11 +119,11 @@ export function Greeting({ name, today, onNewOrder, onCalendar, onStats }: {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex min-w-0 flex-col gap-1.5">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground first-letter:uppercase" suppressHydrationWarning>{date}</p>
-        <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-3xl" suppressHydrationWarning>
+        <p className="text-sm font-medium tracking-wide text-muted-foreground first-letter:uppercase" suppressHydrationWarning>{date}</p>
+        <h1 className="font-[family-name:var(--font-brand)] text-3xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-4xl" suppressHydrationWarning>
           {hello}{name ? `, ${name}` : ""}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {parts.length ? parts.join(" · ") : t("All caught up. Nothing is waiting on you today.")}
         </p>
       </div>
@@ -136,7 +136,7 @@ export function Greeting({ name, today, onNewOrder, onCalendar, onStats }: {
             key={label}
             type="button"
             onClick={onClick}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-card px-3.5 text-sm font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-hover"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-card px-3.5 text-base font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-hover"
           >
             <Icon className="size-4 text-muted-foreground" />
             {label}
@@ -145,7 +145,7 @@ export function Greeting({ name, today, onNewOrder, onCalendar, onStats }: {
         <button
           type="button"
           onClick={onNewOrder}
-          className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium whitespace-nowrap text-primary-foreground transition-opacity hover:opacity-90"
+          className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium whitespace-nowrap text-primary-foreground transition-opacity hover:opacity-90"
         >
           <PlusIcon className="size-4" />
           {t("New Order")}
@@ -159,11 +159,11 @@ function Section({ title, description, count, children }: { title: string; descr
   return (
     <Card size="sm" className="gap-2 px-1">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-base">
           {title}
-          {!!count && <span className="rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground tabular-nums">{count}</span>}
+          {!!count && <span className="rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground tabular-nums">{count}</span>}
         </CardTitle>
-        <CardDescription className="text-xs">{description}</CardDescription>
+        <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-0.5 px-1.5">{children}</CardContent>
     </Card>
@@ -172,7 +172,7 @@ function Section({ title, description, count, children }: { title: string; descr
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 px-2 py-5 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 px-2 py-5 text-sm text-muted-foreground">
       <CheckCircle2Icon className="size-4 shrink-0 text-[var(--status-approved)]" />
       {children}
     </div>
@@ -185,8 +185,8 @@ function OrderRow({ order, children, action }: { order: Order; children?: React.
     <div className="group flex items-center gap-2 rounded-lg transition-colors hover:bg-muted/60">
       <Link href={`/orders/${order.id}`} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5 px-2 py-2.5">
         <div className="min-w-0 flex-1 basis-40">
-          <p className="truncate text-sm font-medium text-foreground">{order.title}</p>
-          <p className="truncate text-xs text-muted-foreground">{order.client_name || "—"} · {order.code}</p>
+          <p className="truncate text-base font-medium text-foreground">{order.title}</p>
+          <p className="truncate text-sm text-muted-foreground">{order.client_name || "—"} · {order.code}</p>
         </div>
         {children && <div className="flex shrink-0 flex-wrap items-center gap-1.5">{children}</div>}
       </Link>
@@ -207,7 +207,7 @@ function Chip({ tone, children }: { tone: "danger" | "changes" | "neutral" | "ap
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium whitespace-nowrap",
         tone === "danger" && "bg-destructive/12 text-destructive",
         tone === "neutral" && "bg-muted text-foreground"
       )}
@@ -237,7 +237,7 @@ export function YourMove({ today }: { today: ReturnType<typeof useToday> }) {
         </OrderRow>
       ))}
       {today.move.length > 5 && (
-        <button type="button" onClick={() => setAll((v) => !v)} className="mx-2 mt-1 self-start text-xs text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={() => setAll((v) => !v)} className="mx-2 mt-1 self-start text-sm text-muted-foreground hover:text-foreground">
           {all ? t("Show less") : t("Show all ({n})", { n: today.move.length })}
         </button>
       )}
@@ -279,13 +279,13 @@ export function WaitingOnClients({ today }: { today: ReturnType<typeof useToday>
             </button>
           }
         >
-          <span className={cn("text-xs whitespace-nowrap", days >= 3 ? "font-medium text-[var(--status-changes)]" : "text-muted-foreground")}>
+          <span className={cn("text-sm whitespace-nowrap", days >= 3 ? "font-medium text-[var(--status-changes)]" : "text-muted-foreground")}>
             {days === 0 ? t("Sent today") : t("Waiting {n}d", { n: days })}
           </span>
         </OrderRow>
       ))}
       {today.waiting.length > 5 && (
-        <button type="button" onClick={() => setAll((v) => !v)} className="mx-2 mt-1 self-start text-xs text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={() => setAll((v) => !v)} className="mx-2 mt-1 self-start text-sm text-muted-foreground hover:text-foreground">
           {all ? t("Show less") : t("Show all ({n})", { n: today.waiting.length })}
         </button>
       )}
@@ -313,7 +313,7 @@ export function ComingUp({ today }: { today: ReturnType<typeof useToday> }) {
       {groups.size === 0 && <Empty>{t("No deadlines in the next two weeks.")}</Empty>}
       {[...groups].map(([label, list]) => (
         <div key={label} className="flex flex-col">
-          <p className={cn("px-2 pt-2 pb-1 text-[11px] font-medium tracking-wide uppercase", label === t("Overdue") ? "text-destructive" : "text-muted-foreground")} suppressHydrationWarning>
+          <p className={cn("px-2 pt-2 pb-1 text-xs font-medium tracking-wide uppercase", label === t("Overdue") ? "text-destructive" : "text-muted-foreground")} suppressHydrationWarning>
             {label}
           </p>
           {list.map((o) => {
@@ -321,8 +321,8 @@ export function ComingUp({ today }: { today: ReturnType<typeof useToday> }) {
             return (
               <Link key={o.id} href={`/orders/${o.id}`} className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/60">
                 <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: status.color }} />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{o.title}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">{t(status.label)}</span>
+                <span className="min-w-0 flex-1 truncate text-base text-foreground">{o.title}</span>
+                <span className="shrink-0 text-sm text-muted-foreground">{t(status.label)}</span>
               </Link>
             )
           })}
@@ -346,8 +346,8 @@ export function StatsStrip({ today }: { today: ReturnType<typeof useToday> }) {
     <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 sm:grid-cols-4">
       {items.map((s, i) => (
         <div key={s.label} className={cn("flex flex-col gap-1 px-4 py-3.5", i % 2 === 1 && "border-l border-border/60", i >= 2 && "border-t border-border/60 sm:border-t-0", i === 2 && "sm:border-l")}>
-          <span className="text-[11px] text-muted-foreground">{s.label}</span>
-          <span className="font-[family-name:var(--font-brand)] text-xl font-bold tracking-[-0.02em] text-foreground tabular-nums" suppressHydrationWarning>{s.value}</span>
+          <span className="text-xs text-muted-foreground">{s.label}</span>
+          <span className="font-[family-name:var(--font-brand)] text-3xl font-bold tracking-[-0.02em] text-foreground tabular-nums" suppressHydrationWarning>{s.value}</span>
         </div>
       ))}
     </div>

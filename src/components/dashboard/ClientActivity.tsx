@@ -21,10 +21,10 @@ export function ClientActivity({ orders, pins }: { orders: Order[]; pins: Pin[] 
     <Card size="sm" className="px-1">
       <CardHeader className="flex flex-row items-start justify-between">
         <div className="flex flex-col gap-1">
-          <CardTitle className="text-sm">{t("Client activity")}</CardTitle>
-          <CardDescription className="text-xs">{t("Comments from the client portal")}</CardDescription>
+          <CardTitle className="text-base">{t("Client activity")}</CardTitle>
+          <CardDescription className="text-sm">{t("Comments from the client portal")}</CardDescription>
         </div>
-        <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="relative flex size-1.5">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-chart-4 opacity-60" />
             <span className="relative inline-flex size-1.5 rounded-full bg-chart-4" />
@@ -34,7 +34,7 @@ export function ClientActivity({ orders, pins }: { orders: Order[]; pins: Pin[] 
       </CardHeader>
       <CardContent className="flex flex-col gap-0.5 px-1.5">
         {recent.length === 0 && (
-          <p className="px-2 py-6 text-xs text-muted-foreground">
+          <p className="px-2 py-6 text-sm text-muted-foreground">
             {t("No comments yet. Share a portal link and client comments will show up here instantly.")}
           </p>
         )}
@@ -46,13 +46,13 @@ export function ClientActivity({ orders, pins }: { orders: Order[]; pins: Pin[] 
           >
             <PinGlyph resolved={pin.resolved} className="mt-0.5" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{pin.author_name}</span> {t("on")}{" "}
                 <span className="text-foreground">{titles.get(pin.order_id) ?? t("an order")}</span>
               </p>
-              <p className={cn("truncate text-xs text-foreground", pin.resolved && "line-through")}>{pin.title}</p>
+              <p className={cn("truncate text-sm text-foreground", pin.resolved && "line-through")}>{pin.title}</p>
             </div>
-            <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(pin.created_at, now, t)}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(pin.created_at, now, t)}</span>
           </Link>
         ))}
       </CardContent>
