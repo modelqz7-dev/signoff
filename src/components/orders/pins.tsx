@@ -9,12 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { Pin, PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
-
-function formatDate(dateStr: string, locale: string) {
-  return new Date(dateStr).toLocaleString(locale, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  })
-}
+import { ChatLine } from "@/components/orders/PinThread"
 
 /** Teardrop pin; the tip (bottom center) sits exactly on the commented spot. */
 function PinShape({ fill }: { fill: string }) {
@@ -354,7 +349,7 @@ export function PinDetails({
   /** "‹ 2 of 5 ›" to step through the comments without aiming at pins. */
   nav?: React.ReactNode
 }) {
-  const { t, locale } = useT()
+  const { t } = useT()
   const [menu, setMenu] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -376,12 +371,10 @@ export function PinDetails({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <PinGlyph label={number} resolved={pin.resolved} />
-        <span className="text-xs text-muted-foreground">
-          {pin.fix_status === "fixed" ? t("Fixed") : pin.resolved ? t("Resolved") : t("Comment {n}", { n: number })}
-        </span>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2.5">
+        <PinNumber n={number} done={pin.resolved && pin.fix_status !== "reopened"} />
+        <PinStatus pin={pin} />
         <span className="ml-auto flex items-center gap-1">
           {nav}
           {hasMenu && (
@@ -424,13 +417,12 @@ export function PinDetails({
       </div>
 
       {/* the comment itself, as the first message of the conversation */}
-      <div className="flex flex-col gap-0.5">
-        <p className="text-[11px] text-muted-foreground">
-          <span className="font-medium text-foreground">{pin.author_name}</span> · {formatDate(pin.created_at, locale)} · {t("page {n}", { n: pin.page })}
-        </p>
-        <p className="font-medium break-words text-foreground">{pin.title}</p>
-        {pin.description && <p className="text-sm whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>}
-      </div>
+      <ChatLine name={pin.author_name} date={pin.created_at} extra={<span>{t("page {n}", { n: pin.page })}</span>}>
+        <p className="text-[15px] leading-relaxed font-medium break-words text-foreground">{pin.title}</p>
+        {pin.description && pin.description.trim() !== pin.title.trim() && (
+          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>
+        )}
+      </ChatLine>
 
       {thread}
 
@@ -474,7 +466,25 @@ export function PinNav({ index, total, onPrev, onNext }: { index: number; total:
   )
 }
 
-/** Compact list of all comments; open ones first, resolved ones below. */
+/** Where a comment stands, in a few words: the same chip in the list and in the open comment. */
+export function PinStatus({ pin, className }: { pin: Pin; className?: string }) {
+  const { t } = useT()
+  const reopened = pin.fix_status === "reopened"
+  const done = pin.resolved && !reopened
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        reopened ? "bg-destructive/10 text-destructive" : done ? "bg-muted text-muted-foreground" : "bg-foreground/10 text-foreground",
+        className
+      )}
+    >
+      {done && <CheckIcon className="size-3" strokeWidth={3} />}
+      {reopened ? t("The client asks to redo it") : done ? t(pin.fix_status === "fixed" ? "Fixed" : "Done") : t("Waiting for a fix")}
+    </span>
+  )
+}
+
 /** The comment's number in a circle, the same number its pin carries on the file. */
 export function PinNumber({ n, done, className }: { n?: number; done?: boolean; className?: string }) {
   return (
@@ -522,18 +532,18 @@ export function PinRow({
   const detail = pin.description && pin.description.trim() !== pin.title.trim() ? pin.description : null
   const who = last ? (last.author_role === "workshop" ? t("Workshop") : last.author_name) : null
   return (
-    <div id={`pin-row-${pin.id}`} className={cn("scroll-mt-20 rounded-xl transition-colors", selected ? "bg-muted/70" : onClick && "hover:bg-muted/40")}>
+    <div id={`pin-row-${pin.id}`} className={cn("scroll-mt-20 rounded-xl transition-colors has-[>div>button:focus-visible]:ring-2 has-[>div>button:focus-visible]:ring-ring/50", selected ? "bg-muted/70" : onClick && "hover:bg-muted/40")}>
       <div className="flex items-start gap-3 px-3 py-3">
         {leading}
         <PinNumber n={number} done={done} className="mt-px" />
-        <button type="button" onClick={onClick} className={cn("flex min-w-0 flex-1 flex-col gap-1 text-left", !onClick && "cursor-default")}>
+        <button type="button" onClick={onClick} className={cn("flex min-w-0 flex-1 flex-col gap-1 text-left outline-none", !onClick && "cursor-default")}>
           <span className="flex items-baseline gap-2">
-            <span className={cn("min-w-0 flex-1 text-sm leading-snug", done ? "text-muted-foreground" : "font-medium text-foreground")}>{pin.title}</span>
+            <span className={cn("min-w-0 flex-1 text-[15px] leading-snug", done ? "text-muted-foreground" : "font-medium text-foreground")}>{pin.title}</span>
             <span className="shrink-0 text-[11px] text-muted-foreground/70 tabular-nums">{t("p. {n}", { n: pin.page })}</span>
           </span>
-          {detail && !done && <span className="line-clamp-2 text-xs text-muted-foreground">{detail}</span>}
+          {detail && !done && <span className="line-clamp-2 text-[13px] text-muted-foreground">{detail}</span>}
           {last && (
-            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 border-l-2 border-border pl-2 text-xs text-muted-foreground">
+            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 border-l-2 border-border pl-2 text-[13px] text-muted-foreground">
               {last.file_url && <PaperclipIcon className="size-3 shrink-0" />}
               <span className="truncate">
                 <span className="text-foreground/80">{who}</span>
@@ -542,11 +552,7 @@ export function PinRow({
               </span>
             </span>
           )}
-          {(done || reopened) && (
-            <span className={cn("inline-flex items-center gap-1 text-[11px] font-medium", reopened ? "text-destructive" : "text-muted-foreground")}>
-              {reopened ? t("The client asks to redo it") : <><CheckIcon className="size-3" strokeWidth={3} />{t(pin.fix_status === "fixed" ? "Fixed" : "Resolved")}</>}
-            </span>
-          )}
+          {(done || reopened) && <PinStatus pin={pin} className="mt-0.5" />}
         </button>
         {trailing}
       </div>
