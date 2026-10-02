@@ -22,6 +22,9 @@ Without this, mail comes from `noreply@mail.app.supabase.io` and is rate-limited
 
 ## 2. Templates
 
+The HTML files are built by `build.py` (one centred layout); edit it and run
+`python3 supabase/email-templates/build.py` to regenerate them.
+
 Supabase → Authentication → Emails → Templates. For each one, paste the subject and the
 whole HTML file:
 
