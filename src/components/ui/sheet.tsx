@@ -34,7 +34,7 @@ function Sheet({
       <Modal
         data-slot="sheet"
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none data-entering:animate-in data-entering:slide-in-from-bottom data-exiting:animate-out data-exiting:slide-out-to-bottom",
+          "fixed inset-x-0 top-[calc(var(--vvt,0px)+var(--vvh,100dvh))] z-50 flex max-h-[calc(var(--vvh,100dvh)*0.8)] -translate-y-full flex-col rounded-t-2xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none data-entering:animate-in data-entering:slide-in-from-bottom data-exiting:animate-out data-exiting:slide-out-to-bottom",
           className
         )}
       >

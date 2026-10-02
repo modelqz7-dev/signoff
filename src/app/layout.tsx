@@ -4,6 +4,7 @@ import localFont from "next/font/local"
 import "./globals.css"
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script"
 import { Analytics } from "@/components/Analytics"
+import { VisualViewport } from "@/components/VisualViewport"
 
 const inter = Inter({
   variable: "--font-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
+        <VisualViewport />
         {children}
         <Analytics />
       </body>
