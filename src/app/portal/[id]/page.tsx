@@ -206,15 +206,15 @@ export default function PortalPage() {
   const fileCard = order.file_url ? (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-lg">
           {t("Design")}
           {(order.version ?? 1) > 1 && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
               {t("version {n}", { n: order.version ?? 1 })}
             </span>
           )}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {isPdf ? t("Open the file and tap the spot that needs a change. Describe it below.") : t("Tap the spot that needs a change. Describe it below.")}
         </p>
       </CardHeader>
@@ -279,16 +279,16 @@ export default function PortalPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-6 pb-28 sm:px-6 sm:pt-8">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <main className="flex-1 px-4 pt-6 pb-28 sm:px-8 sm:pt-10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
           {/* the order, set like a title page */}
           <div className="flex flex-col gap-1.5">
-            <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
+            <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
               {order.code}
             </p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-3xl">{order.title}</h1>
-              <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">{t(status.label)}</span>
+              <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-4xl">{order.title}</h1>
+              <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-foreground">{t(status.label)}</span>
             </div>
           </div>
 
@@ -300,35 +300,35 @@ export default function PortalPage() {
 
           {/* the workshop wrote back: say so, instead of waiting for the client to find it */}
           {answered.length > 0 && order.status !== "approved" && order.status !== "prod" && (
-            <div className="flex flex-col gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-xl bg-card px-5 py-4 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-start gap-3">
-                <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-                  <CommentsIcon className="size-4" />
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                  <CommentsIcon className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-base font-medium text-foreground">
                     {answered.length === 1
                       ? t("{shop} answered your comment", { shop: brand?.shopName || t("The workshop") })
                       : t("{shop} answered {n} of your comments", { shop: brand?.shopName || t("The workshop"), n: answered.length })}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t("Open a pin to see the answer. If something isn't right, write back in it.")}</p>
+                  <p className="text-sm text-muted-foreground">{t("Open a pin to see the answer. If something isn't right, write back in it.")}</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline" onPress={() => handleSelectPin(answered[0])} className="shrink-0 self-start sm:self-auto">
+              <Button variant="outline" onPress={() => handleSelectPin(answered[0])} className="shrink-0 self-start sm:self-auto">
                 {t("See the answer")}
               </Button>
             </div>
           )}
 
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="flex min-w-0 flex-col gap-5">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="flex min-w-0 flex-col gap-6">
               {fileCard}
               {order.file_url && (
                 <Card id="comments" className="scroll-mt-20">
                   <CardHeader>
-                    <CardTitle className="text-sm">{t("Comments ({n})", { n: pins.filter((p) => p.title.trim()).length })}</CardTitle>
+                    <CardTitle className="text-lg">{t("Comments ({n})", { n: pins.filter((p) => p.title.trim()).length })}</CardTitle>
                   </CardHeader>
-                  <CardContent className="px-2">
+                  <CardContent>
                     <ClientPinList
                       pins={pins}
                       numbers={numbers}
@@ -346,13 +346,13 @@ export default function PortalPage() {
               )}
             </div>
 
-            <aside className="flex min-w-0 flex-col gap-4">
-              <Card size="sm">
+            <aside className="flex min-w-0 flex-col gap-6">
+              <Card>
                 <CardHeader>
-                  <CardTitle>{t("Details")}</CardTitle>
+                  <CardTitle className="text-lg">{t("Details")}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
+                  <dl className="flex flex-col divide-y divide-border/50 text-sm">
                     <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
                     <Row label={t("Deadline")} value={formatDate(order.deadline)} />
                   </dl>
@@ -360,12 +360,12 @@ export default function PortalPage() {
               </Card>
 
               {order.notes && (
-                <Card size="sm">
+                <Card>
                   <CardHeader>
-                    <CardTitle>{t("Notes")}</CardTitle>
+                    <CardTitle className="text-lg">{t("Notes")}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{order.notes}</p>
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-muted-foreground">{order.notes}</p>
                   </CardContent>
                 </Card>
               )}
@@ -417,8 +417,8 @@ export default function PortalPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-1.5 first:pt-0 last:pb-0">
-      <dt className="shrink-0 text-xs text-muted-foreground">{label}</dt>
+    <div className="flex items-baseline justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
+      <dt className="shrink-0 text-sm text-muted-foreground">{label}</dt>
       <dd className="min-w-0 truncate text-right font-medium text-foreground" title={value} suppressHydrationWarning>{value}</dd>
     </div>
   )

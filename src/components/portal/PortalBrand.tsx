@@ -46,10 +46,10 @@ export function PortalContactCard({ brand, className }: { brand: PortalBrand | n
   const links = entries.map(([kind, value]) => ({ kind, value, href: contactHref(kind, value) })).filter((l) => l.href)
   if (!links.length) return null
   return (
-    <div className={cn("flex flex-col gap-3 rounded-xl border border-border/60 p-4", className)}>
+    <div className={cn("flex flex-col gap-3 rounded-xl border border-border/60 p-5", className)}>
       <div>
-        <p className="text-sm font-medium text-foreground">{t("Questions about the design?")}</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-base font-medium text-foreground">{t("Questions about the design?")}</p>
+        <p className="text-sm text-muted-foreground">
           {brand?.shopName ? t("Contact {shop} directly:", { shop: brand.shopName }) : t("Contact the workshop directly:")}
         </p>
       </div>
@@ -62,9 +62,9 @@ export function PortalContactCard({ brand, className }: { brand: PortalBrand | n
               href={href!}
               target={kind === "phone" ? undefined : "_blank"}
               rel="noopener noreferrer"
-              className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent hover:text-accent"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm text-foreground transition-colors hover:border-accent hover:text-accent"
             >
-              <Icon className="size-3.5 shrink-0" />
+              <Icon className="size-4 shrink-0" />
               <span className="truncate">{value}</span>
             </a>
           )

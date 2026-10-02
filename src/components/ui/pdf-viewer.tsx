@@ -412,12 +412,12 @@ export function PDFViewer({
         type="button"
         onClick={() => openModal()}
         disabled={!totalPages}
-        className={`group flex w-full items-center gap-3 rounded-lg border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-hover disabled:cursor-default ${className || ""}`}
+        className={`group flex w-full items-center gap-4 rounded-xl border border-border bg-muted/40 p-4 text-left transition-colors hover:bg-hover disabled:cursor-default ${className || ""}`}
       >
-        <PdfFileIcon className="h-12 w-10 shrink-0" />
+        <PdfFileIcon className="h-14 w-12 shrink-0" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm font-medium text-foreground">{fileName || fileNameFromUrl(url) || "PDF"}</span>
-          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="truncate text-base font-medium text-foreground">{fileName || fileNameFromUrl(url) || "PDF"}</span>
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
             {totalPages ? (totalPages === 1 ? t("1 page") : t("{n} pages", { n: totalPages })) : t("Loading PDF...")}
             {pins.filter((p) => !p.resolved).length > 0 && (
               <span className="inline-flex items-center gap-1">
@@ -427,7 +427,7 @@ export function PDFViewer({
             )}
           </span>
         </span>
-        <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-card px-3 text-xs font-medium text-foreground ring-1 ring-foreground/10 transition-colors group-hover:bg-background">
+        <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-card px-3.5 text-sm font-medium text-foreground ring-1 ring-foreground/10 transition-colors group-hover:bg-background">
           <Maximize2Icon className="size-3.5" />
           <span className="hidden sm:inline">{t("Open full screen")}</span>
           <span className="sm:hidden">{t("Open")}</span>
