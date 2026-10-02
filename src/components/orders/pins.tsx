@@ -1,15 +1,13 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
-import { CheckIcon, FileTextIcon, MoveIcon, PaperclipIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { CheckIcon, MoveIcon, PaperclipIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { cn, isPdfUrl } from "@/lib/utils"
-import { useFileUrl } from "@/lib/files"
-import { AttachmentViewer } from "@/components/orders/AttachmentViewer"
-import type { Pin } from "@/lib/pins"
+import { cn } from "@/lib/utils"
+import type { Pin, PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 
 function formatDate(dateStr: string, locale: string) {
@@ -342,7 +340,7 @@ export function PinDetails({
   onToggleResolved,
   onDelete,
   onStartMove,
-  onReopen,
+  thread,
 }: {
   pin: Pin
   number: number
@@ -350,8 +348,8 @@ export function PinDetails({
   onDelete?: () => Promise<void> | void
   /** Tap-to-move: the next tap on the page puts the pin there (easier than dragging on phones). */
   onStartMove?: () => void
-  /** The client checking the workshop's answer: true "it isn't done", false "it's fine". */
-  onReopen?: (reopen: boolean) => void
+  /** The conversation inside the pin (messages and a reply box). */
+  thread?: React.ReactNode
 }) {
   const { t, locale } = useT()
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -385,16 +383,7 @@ export function PinDetails({
           </p>
         </div>
       </div>
-      <PinAnswer pin={pin} />
-      {onReopen && (pin.fix_status === "fixed" || pin.fix_status === "reopened") && (
-        <div className="flex justify-end">
-          {pin.fix_status === "fixed" ? (
-            <Button variant="ghost" size="sm" onPress={() => onReopen(true)}>{t("Not done?")}</Button>
-          ) : (
-            <Button variant="ghost" size="sm" onPress={() => onReopen(false)}><RotateCcwIcon />{t("It's fine")}</Button>
-          )}
-        </div>
-      )}
+      {thread}
       {error && <p className="text-xs text-destructive">{error}</p>}
       {confirmDelete ? (
         // Asking first, in place of the usual buttons.
@@ -427,8 +416,8 @@ export function PinDetails({
               {t("Move")}
             </Button>
           )}
-          {/* an answered comment is checked with "Not done?" instead */}
-          {onToggleResolved && !(onReopen && pin.fix_status && pin.fix_status !== "kept") && (
+          {/* once the workshop answers, the conversation decides: no separate resolve */}
+          {onToggleResolved && !(thread && pin.fix_status) && (
             <Button variant="outline" size="sm" onPress={onToggleResolved}>
               {pin.resolved ? <><RotateCcwIcon /> {t("Reopen")}</> : <><CheckIcon /> {t("Resolve")}</>}
             </Button>
@@ -446,12 +435,15 @@ export function PinList({
   selectedId,
   onSelect,
   emptyText = "No comments yet.",
+  lastMessages,
 }: {
   pins: Pin[]
   numbers: Map<string, number>
   selectedId?: string | null
   onSelect?: (pin: Pin) => void
   emptyText?: string
+  /** The latest message in each pin, shown as one line. */
+  lastMessages?: Map<string, PinMessage>
 }) {
   const { t } = useT()
   const open = pins.filter((p) => !p.resolved)
@@ -479,12 +471,19 @@ export function PinList({
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground/70">
             {pin.author_name} · {t("p. {n}", { n: pin.page })}
           </p>
-          {pin.fix_status && (
-            <p className={cn("mt-1 flex items-center gap-1 text-[11px] font-medium", pin.fix_status === "reopened" ? "text-destructive" : "text-foreground")}>
-              {pin.reply_file_url && <PaperclipIcon className="size-3" />}
-              {t(FIX_LABEL[pin.fix_status])}
-            </p>
-          )}
+          {(() => {
+            const last = lastMessages?.get(pin.id)
+            if (!last && !pin.fix_status) return null
+            return (
+              <p className={cn("mt-1 flex min-w-0 items-center gap-1 text-[11px]", pin.fix_status === "reopened" ? "text-destructive" : "text-foreground")}>
+                {pin.fix_status === "fixed" && <CheckIcon className="size-3 shrink-0" strokeWidth={3} />}
+                {last?.file_url && <PaperclipIcon className="size-3 shrink-0" />}
+                <span className="truncate">
+                  {last ? `${last.author_role === "workshop" ? t("Workshop") : last.author_name}: ${last.body || t("File")}` : t(FIX_LABEL[pin.fix_status!])}
+                </span>
+              </p>
+            )
+          })()}
         </div>
       </button>
     )
@@ -508,51 +507,3 @@ export function PinList({
 }
 
 const FIX_LABEL = { fixed: "Fixed", kept: "Not changed", reopened: "Reopened by the client" } as const
-
-/** The workshop's answer to a comment: fixed or not, a note and the attached file. */
-export function PinAnswer({ pin, className }: { pin: Pin; className?: string }) {
-  const { t } = useT()
-  // The portal gets links already signed by the server; the workshop signs its own.
-  const presigned = !!pin.reply_file_url?.includes("/object/sign/")
-  const signed = useFileUrl(presigned ? null : pin.reply_file_url)
-  const file = presigned ? pin.reply_file_url! : signed
-  const [viewing, setViewing] = useState(false)
-  if (!pin.fix_status && !pin.reply && !pin.reply_file_url) return null
-  const pdf = isPdfUrl(pin.reply_file_url)
-  return (
-    <div className={cn("flex flex-col gap-2 rounded-lg bg-muted/60 p-2.5", className)}>
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted-foreground">{t("The workshop's answer")}</span>
-        {pin.fix_status && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-              pin.fix_status === "fixed" ? "bg-foreground text-background" : pin.fix_status === "reopened" ? "bg-destructive/12 text-destructive" : "bg-background text-muted-foreground"
-            )}
-          >
-            {pin.fix_status === "fixed" && <CheckIcon className="size-3" strokeWidth={3} />}
-            {t(FIX_LABEL[pin.fix_status])}
-          </span>
-        )}
-      </div>
-      {pin.reply && <p className="text-sm whitespace-pre-wrap text-foreground">{pin.reply}</p>}
-      {pin.reply_file_url && (
-        file ? (
-          <button type="button" onClick={() => setViewing(true)} className="group block w-full overflow-hidden rounded-md text-left ring-1 ring-foreground/10">
-            {pdf ? (
-              <span className="flex items-center gap-2 bg-background px-3 py-2.5 text-sm text-foreground group-hover:bg-hover">
-                <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
-                {t("Open the file")}
-              </span>
-            ) : (
-              <img src={file} alt={t("The fix")} className="max-h-56 w-full bg-background object-contain transition-opacity group-hover:opacity-90" />
-            )}
-          </button>
-        ) : (
-          <span className="h-24 animate-pulse rounded-md bg-background" />
-        )
-      )}
-      {viewing && file && <AttachmentViewer url={file} onClose={() => setViewing(false)} />}
-    </div>
-  )
-}

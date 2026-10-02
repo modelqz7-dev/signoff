@@ -7,7 +7,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
 import { PinComposer, PinDetails, PinList, PinMarker, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
-import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { usePinNumbers, type NewPin, type Pin, type PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 import { fileNameFromUrl } from "@/lib/versions"
 
@@ -25,8 +25,10 @@ type PDFViewerProps = {
   onMovePin?: (pin: Pin, x: number, y: number) => void
   onDeletePin?: (pin: Pin) => Promise<void>
   canEdit?: (pin: Pin) => boolean
-  /** The client checking the workshop's answer on a comment (portal). */
-  onReopenPin?: (pin: Pin, reopen: boolean) => void
+  /** The conversation inside a pin, shown with its details. */
+  renderThread?: (pin: Pin) => React.ReactNode
+  /** The latest message in each pin, for the comment list. */
+  lastMessages?: Map<string, PinMessage>
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
   /** Just the full-screen viewer, already open, without the file tile (e.g. an attachment). */
@@ -65,7 +67,8 @@ export function PDFViewer({
   onMovePin,
   onDeletePin,
   canEdit = () => true,
-  onReopenPin,
+  renderThread,
+  lastMessages,
   focusPin,
   startOpen = false,
   onClose,
@@ -419,7 +422,7 @@ export function PDFViewer({
       onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
       onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
       onStartMove={onMovePin && canEdit(selectedPin) ? () => { setMovingId(selectedPin.id); setSelectedId(null); setPending(null) } : undefined}
-      onReopen={onReopenPin ? (reopen) => onReopenPin(selectedPin, reopen) : undefined}
+      thread={renderThread?.(selectedPin)}
     />
   )
 
@@ -550,7 +553,7 @@ export function PDFViewer({
               {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />
+              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} lastMessages={lastMessages} />
             </div>
           </aside>
         </div>
