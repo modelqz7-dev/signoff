@@ -11,8 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
-import { pinsAnsweredBy, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
-import { ClientChangesCard } from "@/components/orders/Revisions"
+import { pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { usePortal } from "@/lib/portal-client"
 import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
@@ -40,8 +39,6 @@ export default function PortalPage() {
 
   // The client always works on the latest version; comments on earlier versions stay with them.
   const pins = pinsOfVersion(portal.pins, order?.version)
-  // Their comments on the previous version, with the workshop's answers.
-  const answered = pinsAnsweredBy(portal.pins, order?.version)
   // The server puts the comment on the current version under the visitor's name.
   const addPin = (pin: NewPin) => portal.addPin(pin)
   // The portal belongs to the client: they can move and delete any comment on their order.
@@ -256,6 +253,7 @@ export default function PortalPage() {
               onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
               onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
               onDeletePin={(pin) => deletePin(pin.id)}
+              onReopenPin={(pin, reopen) => setFixStatus(pin.id, reopen ? "reopened" : "fixed")}
               canEdit={canEdit}
               focusPin={focusPin}
             />
@@ -270,7 +268,8 @@ export default function PortalPage() {
                 alt={order.title}
                 className="w-full object-contain pointer-events-none"
               />
-              {pins.filter((p) => !p.resolved).map((pin) => (
+              {/* answered comments stay on the design, with a check, so the client can open the answer */}
+              {pins.filter((p) => !p.resolved || p.fix_status).map((pin) => (
                 <PinMarker
                   key={pin.id}
                   pin={pin}
@@ -327,6 +326,7 @@ export default function PortalPage() {
                 onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
                 onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
                 onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
+                onReopen={(reopen) => setFixStatus(selectedPin.id, reopen ? "reopened" : "fixed")}
               />
             </div>
           )}
@@ -376,15 +376,6 @@ export default function PortalPage() {
 
           <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="flex min-w-0 flex-col gap-5">
-              {order.status !== "approved" && order.status !== "prod" && (
-                <ClientChangesCard
-                  version={order.version ?? 1}
-                  pins={answered}
-                  previousUrl={portal.previous?.file_url ?? null}
-                  currentUrl={order.file_url}
-                  onReopen={(pin, reopen) => setFixStatus(pin.id, reopen ? "reopened" : "fixed")}
-                />
-              )}
               {fileCard}
             </div>
 

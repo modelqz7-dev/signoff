@@ -5,7 +5,7 @@
 --   • portal logo and trial date on the workshop (fixes "Could not find the 'logo_url' column");
 --   • design versions, approval date and client reminders on orders;
 --   • the portal's welcome message and contacts;
---   • the workshop's answers to the client's comments on each new version.
+--   • the workshop's answers to the client's comments, with a file.
 -- security.sql is separate on purpose: it rewrites access rules, run it on its own.
 
 -- ════════════ supabase/plans.sql ════════════
@@ -177,8 +177,8 @@ notify pgrst, 'reload schema';
 -- Nodly: answers to the client's comments when a new version is uploaded.
 -- Run once in Supabase → SQL Editor → New query (after retention.sql). Safe to run again.
 --
--- For each comment on the previous version the workshop says whether it was fixed, with an
--- optional reply; the client sees this next to a before / after view and can reopen it.
+-- For each comment the workshop says whether it was fixed, with an optional note and file
+-- (a photo or render of the fix); the client opens it from the pin and can reopen it.
 
 alter table public.order_pins
   add column if not exists fix_status       text,  -- 'fixed' | 'kept' | 'reopened' | null (no answer yet)
@@ -197,4 +197,8 @@ begin
   end if;
 end $$;
 
+notify pgrst, 'reload schema';
+
+-- A file attached to the answer: a photo or render of the fix, opened from the pin.
+alter table public.order_pins add column if not exists reply_file_url text;
 notify pgrst, 'reload schema';
