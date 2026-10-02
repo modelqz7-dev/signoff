@@ -34,7 +34,7 @@ export default function PortalPage() {
 
   // Everything goes through the server: the database itself is closed to portal visitors.
   const portal = usePortal(orderId)
-  const { phase, order, viewer: clientName, setResolved, movePin, deletePin } = portal
+  const { phase, order, setResolved, movePin, deletePin } = portal
   const [loading, setLoading] = useState(false)
 
   // The client always works on the latest version; comments on earlier versions stay with them.
@@ -240,9 +240,7 @@ export default function PortalPage() {
           )}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          {isPdf
-            ? t("Click anywhere on a page to leave a comment.")
-            : t("Click on the file to leave a comment.")}
+          {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
         </p>
       </CardHeader>
       <CardContent>
@@ -257,7 +255,6 @@ export default function PortalPage() {
               onDeletePin={(pin) => deletePin(pin.id)}
               canEdit={canEdit}
               focusPin={focusPin}
-              inline
             />
           ) : (
             <div
@@ -348,9 +345,6 @@ export default function PortalPage() {
           <BrandMark brand={brand} className={brand?.badge ? "hidden border-l border-border/40 pl-3 sm:flex" : ""} />
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-muted-foreground md:inline">
-            {t("Viewing as")} <span className="font-medium text-foreground">{clientName}</span>
-          </span>
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
             <ThemeToggle />
@@ -377,16 +371,41 @@ export default function PortalPage() {
             <ReviewSteps status={order.status} commented={pins.length > 0} />
           )}
 
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="flex min-w-0 flex-col gap-5">{fileCard}</div>
 
-            <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20">
-              {/* the client's working list; on phones it opens from the bar at the bottom */}
+            <aside className="flex min-w-0 flex-col gap-4">
+              <Card size="sm">
+                <CardHeader>
+                  <CardTitle>{t("Details")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
+                    <Row label={t("Client")} value={order.client_name || "—"} />
+                    <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
+                    <Row label={t("Deadline")} value={formatDate(order.deadline)} />
+                    <Row label={t("Created")} value={formatDate(order.created_at)} />
+                  </dl>
+                </CardContent>
+              </Card>
+
+              {order.notes && (
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>{t("Notes")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{order.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* on phones the comments open from the bar at the bottom */}
               <Card size="sm" className="hidden lg:flex">
                 <CardHeader>
-                  <CardTitle>{t("Your comments ({n})", { n: openCount })}</CardTitle>
+                  <CardTitle>{t("Comments ({n})", { n: openCount })}</CardTitle>
                 </CardHeader>
-                <CardContent className="max-h-[45vh] overflow-y-auto px-1.5">
+                <CardContent className="px-1.5">
                   <PinList
                     pins={pins}
                     numbers={numbers}
@@ -394,18 +413,6 @@ export default function PortalPage() {
                     onSelect={handleSelectPin}
                     emptyText="No comments yet. Click on the file to add one."
                   />
-                </CardContent>
-              </Card>
-
-              <Card size="sm">
-                <CardContent>
-                  <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
-                    <Row label={t("Deadline")} value={formatDate(order.deadline)} />
-                    {order.value > 0 && <Row label={t("Price")} value={`$${order.value.toLocaleString()}`} />}
-                  </dl>
-                  {order.notes && (
-                    <p className="mt-3 border-t border-border/50 pt-3 text-sm whitespace-pre-wrap text-muted-foreground">{order.notes}</p>
-                  )}
                 </CardContent>
               </Card>
 
