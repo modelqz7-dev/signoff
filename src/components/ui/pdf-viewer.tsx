@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
-import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize2Icon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
@@ -27,6 +27,11 @@ type PDFViewerProps = {
   canEdit?: (pin: Pin) => boolean
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
+  /**
+   * Show the pages right in the page (the client portal) instead of a file tile that opens a
+   * dialog. A button expands the same viewer to fill the screen.
+   */
+  inline?: boolean
 }
 
 const MIN_SCALE = 0.5
@@ -60,6 +65,7 @@ export function PDFViewer({
   onDeletePin,
   canEdit = () => true,
   focusPin,
+  inline = false,
 }: PDFViewerProps) {
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -85,6 +91,16 @@ export function PDFViewer({
   const [renderScale, setRenderScale] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  // Inline viewer filling the screen.
+  const [expanded, setExpanded] = useState(false)
+  const inlineRef = useRef<HTMLDivElement>(null)
+  // The viewer is on screen: always when inline, otherwise while the dialog is open.
+  const shown = inline || open
+  // Inline and not expanded, the viewer sits in a scrolling page: wheel and fingers must keep
+  // scrolling the page, and the arrow keys belong to it.
+  const embedded = inline && !expanded
+  const embeddedRef = useRef(embedded)
+  useEffect(() => { embeddedRef.current = embedded }, [embedded])
   const [dragging, setDragging] = useState(false)
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -122,7 +138,7 @@ export function PDFViewer({
 
   // Page size in PDF units, used to fit the whole page into the viewing area.
   useEffect(() => {
-    if (!pdf || !open) return
+    if (!pdf || !shown) return
     let cancelled = false
     pdf.getPage(page).then((p) => {
       if (cancelled) return
@@ -130,16 +146,16 @@ export function PDFViewer({
       setPageSize({ w: v.width, h: v.height })
     })
     return () => { cancelled = true }
-  }, [pdf, page, open])
+  }, [pdf, page, shown])
 
   // Track the viewing area size so the page re-fits when the window is resized.
   useEffect(() => {
     const el = scrollRef.current
-    if (!open || !el) return
+    if (!shown || !el) return
     const ro = new ResizeObserver(() => setBox({ w: el.clientWidth, h: el.clientHeight }))
     ro.observe(el)
     return () => ro.disconnect()
-  }, [open])
+  }, [shown, totalPages])
 
   // Scale at which the whole page fits the viewing area ("100%").
   const fit = pageSize && box
@@ -155,7 +171,7 @@ export function PDFViewer({
   }, [scale])
 
   useEffect(() => {
-    if (!pdf || !open || !fit) return
+    if (!pdf || !shown || !fit) return
     let cancelled = false
     let task: RenderTask | null = null
     async function render() {
@@ -187,7 +203,7 @@ export function PDFViewer({
       cancelled = true
       task?.cancel()
     }
-  }, [pdf, page, renderScale, open, fit])
+  }, [pdf, page, renderScale, shown, fit])
 
   function zoomTo(next: number, cx?: number, cy?: number) {
     const el = scrollRef.current
@@ -252,8 +268,9 @@ export function PDFViewer({
 
   useEffect(() => {
     const el = scrollRef.current
-    if (!open || !el) return
+    if (!shown || !el) return
     function onWheel(e: WheelEvent) {
+      if (embeddedRef.current && !e.ctrlKey) return
       e.preventDefault()
       const rect = el!.getBoundingClientRect()
       const factor = Math.exp(-e.deltaY * 0.0015)
@@ -269,11 +286,12 @@ export function PDFViewer({
       el.removeEventListener("gesturestart", stopGesture)
       el.removeEventListener("gesturechange", stopGesture)
     }
-  }, [open])
+  }, [shown, totalPages])
 
   useEffect(() => {
-    if (!open) return
+    if (!shown || embedded) return
     function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && inline) { setExpanded(false); return }
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if ((e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable=true]")) return
       if (e.key === "ArrowLeft") { setPage((p) => Math.max(p - 1, 1)); setPending(null) }
@@ -286,7 +304,7 @@ export function PDFViewer({
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, totalPages])
+  }, [shown, embedded, inline, totalPages])
 
   function pinchDistance() {
     const [a, b] = [...pointersRef.current.values()]
@@ -296,6 +314,7 @@ export function PDFViewer({
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     const el = scrollRef.current
     if (!el || e.button !== 0) return
+    if (embedded && e.pointerType === "touch") return
     if (e.pointerType === "touch") {
       pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
       if (pointersRef.current.size === 2) {
@@ -391,7 +410,7 @@ export function PDFViewer({
     setPending(null)
     setSelectedId(pin?.id ?? null)
     setMovingId(null)
-    setOpen(true)
+    if (!inline) setOpen(true)
   }
 
   // Opening from an external list (e.g. the comments sidebar): react to each new request once.
@@ -400,6 +419,10 @@ export function PDFViewer({
     setHandledFocus(focusPin.nonce)
     openModal(focusPin.id)
   }
+  // Inline, a comment picked from the list brings the viewer into view.
+  useEffect(() => {
+    if (inline && handledFocus !== null) inlineRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+  }, [inline, handledFocus])
 
   const composer = <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
   const details = selectedPin && (
@@ -417,6 +440,135 @@ export function PDFViewer({
     return (
       <div className={`flex items-center justify-center py-12 ${className || ""}`}>
         <p className="text-sm text-destructive">{t(error)}</p>
+      </div>
+    )
+  }
+
+  const viewerBody = (
+    <>
+
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1.5">
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="icon-sm" aria-label={t("Previous page")} onPress={() => goToPage(page - 1)} isDisabled={page <= 1}>
+              <ChevronLeftIcon />
+            </Button>
+            <span className="min-w-14 text-center text-xs tabular-nums text-muted-foreground">
+              {page} / {totalPages}
+            </span>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Next page")} onPress={() => goToPage(page + 1)} isDisabled={page >= totalPages}>
+              <ChevronRightIcon />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom out")} onPress={() => zoomTo(scale / 1.25)} isDisabled={scale <= MIN_SCALE}>
+              <MinusIcon />
+            </Button>
+            <Button variant="ghost" size="sm" className="min-w-14 tabular-nums text-muted-foreground" aria-label={t("Fit page")} onPress={() => zoomTo(1)}>
+              {Math.round(scale * 100)}%
+            </Button>
+            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom in")} onPress={() => zoomTo(scale * 1.25)} isDisabled={scale >= MAX_SCALE}>
+              <PlusIcon />
+            </Button>
+          </div>
+
+          {inline ? (
+            <Button variant="ghost" size="sm" onPress={() => setExpanded(!expanded)} aria-label={expanded ? t("Exit full screen") : t("Full screen")}>
+              {expanded ? <Minimize2Icon /> : <Maximize2Icon />}
+              <span className="hidden sm:inline">{expanded ? t("Exit full screen") : t("Full screen")}</span>
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon-sm" aria-label={t("Close")} slot="close">
+              <XIcon />
+            </Button>
+          )}
+        </div>
+
+        <div className="flex min-h-0 flex-1">
+          <div
+            ref={scrollRef}
+            data-pin-bounds
+            // Panning and pinch-zoom are handled here, so the browser must not zoom the web page.
+            style={{ touchAction: embedded ? "pan-x pan-y" : "none" }}
+            className={`min-h-0 min-w-0 flex-1 overflow-auto bg-background outline-none select-none ${dragging ? "cursor-grabbing" : scale > 1 && !onAddPin ? "cursor-grab" : ""}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <div className="flex min-h-full min-w-full w-max items-center justify-center" style={{ padding: PAD }}>
+              <div
+                ref={pageRef}
+                className={`relative shrink-0 ${onAddPin && !dragging ? "cursor-crosshair" : ""}`}
+                style={{ width: cssW, height: cssH }}
+                onClick={handlePageClick}
+              >
+                <canvas
+                  ref={modalCanvasRef}
+                  draggable={false}
+                  className="block size-full rounded-sm bg-white shadow-lg ring-1 ring-foreground/10"
+                />
+                {pagePins.map((pin) => (
+                  <PinMarker
+                    key={pin.id}
+                    pin={pin}
+                    number={numbers.get(pin.id) ?? ""}
+                    selected={pin.id === selectedId || pin.id === movingId}
+                    onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
+                    onMove={onMovePin && canEdit(pin) ? (x, y) => { onMovePin(pin, x, y); setMovingId(null) } : undefined}
+                  />
+                ))}
+                {pending && <PinMarker pin={{ ...pending, resolved: false }} pending />}
+                {pending && !narrow && (
+                  <PinPopover x={pending.x} y={pending.y}>{composer}</PinPopover>
+                )}
+                {selectedPin && !pending && !narrow && (
+                  <PinPopover x={selectedPin.x} y={selectedPin.y}>{details}</PinPopover>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <aside className={`hidden w-72 shrink-0 flex-col border-l border-border ${embedded ? "" : "md:flex"}`}>
+            <div className="border-b border-border px-4 py-3">
+              <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
+              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />
+            </div>
+          </aside>
+        </div>
+
+        {movingId && (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-3 py-2.5 text-sm">
+            <span>{t("Tap the spot where the pin should go.")}</span>
+            <Button variant="ghost" size="sm" onPress={() => setMovingId(null)}>{t("Cancel")}</Button>
+          </div>
+        )}
+
+        {/* Phones: the comment card sits under the page, so it never covers the pins. */}
+        {narrow && (pending || selectedPin) && (
+          <div data-pin-ui className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200">
+            {pending ? composer : details}
+          </div>
+        )}
+    </>
+  )
+
+  if (inline) {
+    return (
+      <div
+        ref={inlineRef}
+        className={expanded
+          ? "fixed inset-0 z-50 flex flex-col bg-background"
+          : `flex h-[min(78vh,880px)] flex-col overflow-hidden rounded-lg border border-border bg-background max-sm:h-[72vh] ${className || ""}`}
+      >
+        {totalPages ? viewerBody : (
+          <div className="flex flex-1 items-center justify-center">
+            <p className="text-sm text-muted-foreground">{t("Loading PDF...")}</p>
+          </div>
+        )}
       </div>
     )
   }
@@ -458,106 +610,7 @@ export function PDFViewer({
         className="flex h-[94dvh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
         <DialogTitle className="sr-only">{t("Document preview")}</DialogTitle>
-
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1.5">
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon-sm" aria-label={t("Previous page")} onPress={() => goToPage(page - 1)} isDisabled={page <= 1}>
-              <ChevronLeftIcon />
-            </Button>
-            <span className="min-w-14 text-center text-xs tabular-nums text-muted-foreground">
-              {page} / {totalPages}
-            </span>
-            <Button variant="ghost" size="icon-sm" aria-label={t("Next page")} onPress={() => goToPage(page + 1)} isDisabled={page >= totalPages}>
-              <ChevronRightIcon />
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom out")} onPress={() => zoomTo(scale / 1.25)} isDisabled={scale <= MIN_SCALE}>
-              <MinusIcon />
-            </Button>
-            <Button variant="ghost" size="sm" className="min-w-14 tabular-nums text-muted-foreground" aria-label={t("Fit page")} onPress={() => zoomTo(1)}>
-              {Math.round(scale * 100)}%
-            </Button>
-            <Button variant="ghost" size="icon-sm" aria-label={t("Zoom in")} onPress={() => zoomTo(scale * 1.25)} isDisabled={scale >= MAX_SCALE}>
-              <PlusIcon />
-            </Button>
-          </div>
-
-          <Button variant="ghost" size="icon-sm" aria-label={t("Close")} slot="close">
-            <XIcon />
-          </Button>
-        </div>
-
-        <div className="flex min-h-0 flex-1">
-          <div
-            ref={scrollRef}
-            data-pin-bounds
-            // Panning and pinch-zoom are handled here, so the browser must not zoom the web page.
-            style={{ touchAction: "none" }}
-            className={`min-h-0 min-w-0 flex-1 overflow-auto bg-background outline-none select-none ${dragging ? "cursor-grabbing" : scale > 1 && !onAddPin ? "cursor-grab" : ""}`}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-          >
-            <div className="flex min-h-full min-w-full w-max items-center justify-center" style={{ padding: PAD }}>
-              <div
-                ref={pageRef}
-                className={`relative shrink-0 ${onAddPin && !dragging ? "cursor-crosshair" : ""}`}
-                style={{ width: cssW, height: cssH }}
-                onClick={handlePageClick}
-              >
-                <canvas
-                  ref={modalCanvasRef}
-                  draggable={false}
-                  className="block size-full rounded-sm bg-white shadow-lg ring-1 ring-foreground/10"
-                />
-                {pagePins.map((pin) => (
-                  <PinMarker
-                    key={pin.id}
-                    pin={pin}
-                    number={numbers.get(pin.id) ?? ""}
-                    selected={pin.id === selectedId || pin.id === movingId}
-                    onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
-                    onMove={onMovePin && canEdit(pin) ? (x, y) => { onMovePin(pin, x, y); setMovingId(null) } : undefined}
-                  />
-                ))}
-                {pending && <PinMarker pin={{ ...pending, resolved: false }} pending />}
-                {pending && !narrow && (
-                  <PinPopover x={pending.x} y={pending.y}>{composer}</PinPopover>
-                )}
-                {selectedPin && !pending && !narrow && (
-                  <PinPopover x={selectedPin.x} y={selectedPin.y}>{details}</PinPopover>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <aside className="hidden w-72 shrink-0 flex-col border-l border-border md:flex">
-            <div className="border-b border-border px-4 py-3">
-              <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
-              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
-            </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} />
-            </div>
-          </aside>
-        </div>
-
-        {movingId && (
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-3 py-2.5 text-sm">
-            <span>{t("Tap the spot where the pin should go.")}</span>
-            <Button variant="ghost" size="sm" onPress={() => setMovingId(null)}>{t("Cancel")}</Button>
-          </div>
-        )}
-
-        {/* Phones: the comment card sits under the page, so it never covers the pins. */}
-        {narrow && (pending || selectedPin) && (
-          <div data-pin-ui className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200">
-            {pending ? composer : details}
-          </div>
-        )}
+        {viewerBody}
       </Dialog>
     </>
   )
