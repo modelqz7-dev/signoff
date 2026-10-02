@@ -183,7 +183,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring">
+      <div className="flex flex-wrap items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring">
         {shop && (
           <>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = "" }} />
@@ -199,7 +199,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
             aria-pressed={markFixed}
             title={t("Mark as fixed")}
             className={cn(
-              "order-last mb-0.5 inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors",
+              "order-last mb-0.5 ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors",
               markFixed ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-hover"
             )}
           >
@@ -215,7 +215,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
           autoFocus={autoFocus}
           placeholder={placeholder}
           aria-label={placeholder}
-          className="max-h-40 min-h-8 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] outline-none [field-sizing:content] placeholder:text-muted-foreground"
+          className="max-h-40 min-h-8 min-w-0 flex-1 basis-48 resize-none bg-transparent px-1 py-1.5 text-[15px] outline-none [field-sizing:content] placeholder:text-muted-foreground"
         />
         <button
           type="button"
