@@ -19,7 +19,8 @@ import { PinList, PinMarker } from "@/components/orders/pins"
 import { PortalQrButton } from "@/components/orders/PortalQr"
 import { NextStep, OrderProgress, useDeadlineText } from "@/components/orders/OrderOverview"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
-import { pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { pinsAnsweredBy, pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { FixesDialog, MakerChangesCard, type FixAnswer } from "@/components/orders/Revisions"
 import { fileNameFromUrl, uploadNewVersion, useOrderVersions } from "@/lib/versions"
 import { can } from "@/lib/plans"
 import { openPanel } from "@/lib/panels"
@@ -53,7 +54,10 @@ export default function OrderPage() {
 
   // Client comments from the portal, updated live.
   // The shop only reviews comments here: moving and deleting pins is left to the client.
-  const { pins: allPins, setResolved } = usePins(order ? orderId : null)
+  const { pins: allPins, setResolved, reload: reloadPins } = usePins(order ? orderId : null)
+  // Comments on the previous version, answered with the current one.
+  const answered = pinsAnsweredBy(allPins, order?.version)
+  const [fixesOpen, setFixesOpen] = useState(false)
   // Earlier files of the order; null = the current file.
   const versions = useOrderVersions(order ? orderId : null, order?.version)
   const [viewVersion, setViewVersion] = useState<number | null>(null)
@@ -109,12 +113,34 @@ export default function OrderPage() {
     setUploading(true)
     setUploadError(null)
     try {
-      setOrder(await uploadNewVersion(order, file))
+      const updated = await uploadNewVersion(order, file)
+      setOrder(updated)
       setViewVersion(null)
+      // A new version answers the client's comments on the previous one: ask right away.
+      if (pinsAnsweredBy(allPins, updated.version).length) setFixesOpen(true)
     } catch (err) {
       setUploadError((err as Error)?.message || t("Couldn't upload the file"))
     }
     setUploading(false)
+  }
+
+  async function saveAnswers(answers: Record<string, FixAnswer>) {
+    if (!order) return
+    const results = await Promise.all(Object.entries(answers).map(([id, a]) =>
+      supabase.from("order_pins").update({
+        fix_status: a.status,
+        reply: a.reply.trim() || null,
+        answered_version: order.version ?? 1,
+        ...(a.status === "fixed" ? { resolved: true } : {}),
+      }).eq("id", id)
+    ))
+    await reloadPins()
+    const failed = results.find((r) => r.error)?.error
+    if (failed) {
+      throw new Error(/fix_status|reply|answered_version|column/i.test(failed.message)
+        ? t("Run supabase/update.sql in Supabase first, then try again.")
+        : failed.message)
+    }
   }
 
   // The password is hashed on the server and never comes back, so we only know whether one is set.
@@ -432,6 +458,10 @@ export default function OrderPage() {
                   </CardContent>
                 </Card>
 
+                {!oldVersion && (
+                  <MakerChangesCard version={order.version ?? 1} pins={answered} onEdit={() => setFixesOpen(true)} />
+                )}
+
                 {/* Client comments */}
                 <div ref={commentsRef} className="scroll-mt-4">
                 <Card>
@@ -492,6 +522,15 @@ export default function OrderPage() {
           </div>
         </div>
       </div>
+      {order && (
+        <FixesDialog
+          open={fixesOpen}
+          onOpenChange={setFixesOpen}
+          version={order.version ?? 1}
+          pins={answered}
+          onSave={saveAnswers}
+        />
+      )}
     </div>
   )
 }

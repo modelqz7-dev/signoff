@@ -17,13 +17,29 @@ export type Pin = {
   created_at: string
   /** File version the comment was left on (supabase/retention.sql); missing means 1. */
   version?: number
+  // The workshop's answer when it uploads the next version (supabase/revisions.sql).
+  fix_status?: FixStatus | null
+  reply?: string | null
+  answered_version?: number | null
 }
+
+/** fixed: done · kept: left as is on purpose · reopened: the client says it isn't done. */
+export type FixStatus = "fixed" | "kept" | "reopened"
 
 export type NewPin = Pick<Pin, "x" | "y" | "page" | "title" | "description"> & { version?: number }
 
 /** Comments left on one version of the file. */
 export function pinsOfVersion(pins: Pin[], version: number | undefined) {
   return pins.filter((p) => (p.version ?? 1) === (version ?? 1))
+}
+
+/**
+ * The comments a version answers: those left on the version before it. Shown to the client as
+ * "what changed in version N" and to the workshop when it uploads that version.
+ */
+export function pinsAnsweredBy(pins: Pin[], version: number | undefined) {
+  const v = version ?? 1
+  return v > 1 ? pins.filter((p) => (p.version ?? 1) === v - 1) : []
 }
 
 function sortPins(pins: Pin[]) {

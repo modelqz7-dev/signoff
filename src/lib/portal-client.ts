@@ -52,6 +52,8 @@ export function usePortal(orderId: string) {
   const [pins, setPins] = useState<Pin[]>([])
   const [viewer, setViewer] = useState("")
   const [hasPassword, setHasPassword] = useState(true)
+  // The version before the current one (its file), for "what changed".
+  const [previous, setPrevious] = useState<{ version: number; file_url: string | null } | null>(null)
   const phaseRef = useRef(phase)
   useEffect(() => { phaseRef.current = phase }, [phase])
   // Comment changes show up at once and are saved in the background. A refresh that started
@@ -69,6 +71,12 @@ export function usePortal(orderId: string) {
     const { res, body } = await api(`${base}/state`)
     if (res.ok && body) {
       setOrder((prev) => keepFileLink(prev, body.order))
+      // Keep the loaded link while it's the same file, like the current one.
+      setPrevious((prev) => {
+        const next = body.previous ?? null
+        if (prev?.file_url && next?.file_url && fileKey(prev.file_url) === fileKey(next.file_url)) return { ...next, file_url: prev.file_url }
+        return next
+      })
       if (editsRef.current.pending === 0 && editsRef.current.seq === seqAtStart) setPins(sortPins(body.pins))
       setViewer(body.viewer)
       setPhase("view")
@@ -142,6 +150,9 @@ export function usePortal(orderId: string) {
 
   const setResolved = useCallback((id: string, resolved: boolean) => patchPin(id, { resolved }), [patchPin])
   const movePin = useCallback((id: string, x: number, y: number) => patchPin(id, { x, y }), [patchPin])
+  /** The client's check of the workshop's answer: reopened, or fixed after all. */
+  const setFixStatus = useCallback((id: string, status: "fixed" | "reopened") =>
+    patchPin(id, { fix_status: status, resolved: status === "fixed" }), [patchPin])
 
   const deletePin = useCallback(async (id: string) => {
     let removed: Pin | undefined
@@ -166,5 +177,5 @@ export function usePortal(orderId: string) {
     return true
   }, [base])
 
-  return { phase, order, pins, viewer, hasPassword, enter, leave, addPin, setResolved, movePin, deletePin, decide }
+  return { phase, order, pins, previous, viewer, hasPassword, enter, leave, addPin, setResolved, movePin, setFixStatus, deletePin, decide }
 }
