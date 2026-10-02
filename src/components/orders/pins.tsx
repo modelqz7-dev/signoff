@@ -475,6 +475,112 @@ export function PinNav({ index, total, onPrev, onNext }: { index: number; total:
 }
 
 /** Compact list of all comments; open ones first, resolved ones below. */
+/** The comment's number in a circle, the same number its pin carries on the file. */
+export function PinNumber({ n, done, className }: { n?: number; done?: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums",
+        done ? "bg-muted text-muted-foreground" : "bg-foreground text-background",
+        className
+      )}
+    >
+      {n ?? ""}
+    </span>
+  )
+}
+
+/**
+ * One comment in a list, the same for the client and the workshop: number, what was asked,
+ * where, and the latest answer as a short quote. `leading` and `trailing` hold extra controls,
+ * `children` whatever opens under it.
+ */
+export function PinRow({
+  pin,
+  number,
+  last,
+  selected,
+  onClick,
+  leading,
+  trailing,
+  children,
+}: {
+  pin: Pin
+  number?: number
+  last?: PinMessage
+  selected?: boolean
+  onClick?: () => void
+  leading?: React.ReactNode
+  trailing?: React.ReactNode
+  children?: React.ReactNode
+}) {
+  const { t } = useT()
+  const reopened = pin.fix_status === "reopened"
+  const done = pin.resolved && !reopened
+  // Old comments carry the same words in both fields; say them once.
+  const detail = pin.description && pin.description.trim() !== pin.title.trim() ? pin.description : null
+  const who = last ? (last.author_role === "workshop" ? t("Workshop") : last.author_name) : null
+  return (
+    <div id={`pin-row-${pin.id}`} className={cn("scroll-mt-20 rounded-xl transition-colors", selected ? "bg-muted/70" : onClick && "hover:bg-muted/40")}>
+      <div className="flex items-start gap-3 px-3 py-3">
+        {leading}
+        <PinNumber n={number} done={done} className="mt-px" />
+        <button type="button" onClick={onClick} className={cn("flex min-w-0 flex-1 flex-col gap-1 text-left", !onClick && "cursor-default")}>
+          <span className="flex items-baseline gap-2">
+            <span className={cn("min-w-0 flex-1 text-sm leading-snug", done ? "text-muted-foreground" : "font-medium text-foreground")}>{pin.title}</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground/70 tabular-nums">{t("p. {n}", { n: pin.page })}</span>
+          </span>
+          {detail && !done && <span className="line-clamp-2 text-xs text-muted-foreground">{detail}</span>}
+          {last && (
+            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 border-l-2 border-border pl-2 text-xs text-muted-foreground">
+              {last.file_url && <PaperclipIcon className="size-3 shrink-0" />}
+              <span className="truncate">
+                <span className="text-foreground/80">{who}</span>
+                {" · "}
+                {last.body || t("sent a file")}
+              </span>
+            </span>
+          )}
+          {(done || reopened) && (
+            <span className={cn("inline-flex items-center gap-1 text-[11px] font-medium", reopened ? "text-destructive" : "text-muted-foreground")}>
+              {reopened ? t("The client asks to redo it") : <><CheckIcon className="size-3" strokeWidth={3} />{t(pin.fix_status === "fixed" ? "Fixed" : "Resolved")}</>}
+            </span>
+          )}
+        </button>
+        {trailing}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/** Open comments first; resolved ones fold under one line unless nothing else is left. */
+export function PinGroups({ pins, render }: { pins: Pin[]; render: (pin: Pin) => React.ReactNode }) {
+  const { t } = useT()
+  const open = pins.filter((p) => !p.resolved || p.fix_status === "reopened")
+  const done = pins.filter((p) => p.resolved && p.fix_status !== "reopened")
+  const [showDone, setShowDone] = useState(false)
+  const expanded = showDone || open.length === 0
+  return (
+    <div className="flex flex-col">
+      {open.map(render)}
+      {done.length > 0 && open.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowDone((v) => !v)}
+          className="mt-1 flex items-center gap-1.5 border-t border-border px-3 pt-3 pb-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <CheckIcon className="size-3" strokeWidth={3} />
+          {t("Resolved: {n}", { n: done.length })}
+          <ChevronRightIcon className={cn("size-3.5 transition-transform", expanded && "rotate-90")} />
+        </button>
+      )}
+      {expanded && done.map(render)}
+    </div>
+  )
+}
+
 export function PinList({
   pins,
   numbers,
@@ -492,64 +598,23 @@ export function PinList({
   lastMessages?: Map<string, PinMessage>
 }) {
   const { t } = useT()
-  const open = pins.filter((p) => !p.resolved)
-  const resolved = pins.filter((p) => p.resolved)
-
-  function item(pin: Pin) {
-    return (
-      <button
-        key={pin.id}
-        type="button"
-        onClick={() => onSelect?.(pin)}
-        className={cn(
-          "flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
-          onSelect && "hover:bg-muted/60",
-          pin.id === selectedId && "bg-muted",
-          pin.resolved && "opacity-50"
-        )}
-      >
-        <PinGlyph label={numbers.get(pin.id)} resolved={pin.resolved} className="-mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <p className={cn("truncate text-xs font-medium", pin.resolved && "text-muted-foreground")}>{pin.title}</p>
-          {pin.description && !pin.resolved && (
-            <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{pin.description}</p>
-          )}
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground/70">
-            {pin.author_name} · {t("p. {n}", { n: pin.page })}
-          </p>
-          {(() => {
-            const last = lastMessages?.get(pin.id)
-            if (!last && !pin.fix_status) return null
-            return (
-              <p className={cn("mt-1 flex min-w-0 items-center gap-1 text-[11px]", pin.fix_status === "reopened" ? "text-destructive" : "text-foreground")}>
-                {pin.fix_status === "fixed" && <CheckIcon className="size-3 shrink-0" strokeWidth={3} />}
-                {last?.file_url && <PaperclipIcon className="size-3 shrink-0" />}
-                <span className="truncate">
-                  {last ? `${last.author_role === "workshop" ? t("Workshop") : last.author_name}: ${last.body || t("File")}` : t(FIX_LABEL[pin.fix_status!])}
-                </span>
-              </p>
-            )
-          })()}
-        </div>
-      </button>
-    )
-  }
-
   if (pins.length === 0) {
     return <p className="py-6 text-center text-xs text-muted-foreground">{t(emptyText)}</p>
   }
-
   return (
-    <div className="flex flex-col gap-1">
-      {open.map(item)}
-      {resolved.length > 0 && (
-        <>
-          <p className="mt-2 border-t border-border px-1 pt-3 text-[11px] text-muted-foreground/60">{t("Resolved")}</p>
-          {resolved.map(item)}
-        </>
+    <PinGroups
+      pins={pins}
+      render={(pin) => (
+        <PinRow
+          key={pin.id}
+          pin={pin}
+          number={numbers.get(pin.id)}
+          last={lastMessages?.get(pin.id)}
+          selected={pin.id === selectedId}
+          onClick={onSelect ? () => onSelect(pin) : undefined}
+        />
       )}
-    </div>
+    />
   )
 }
 
-const FIX_LABEL = { fixed: "Fixed", kept: "Not changed", reopened: "Reopened by the client" } as const

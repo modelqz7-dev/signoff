@@ -464,9 +464,9 @@ export default function OrderPage() {
                 <div ref={commentsRef} className="scroll-mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</CardTitle>
+                    <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.length })}</CardTitle>
                     <CardDescription>
-                      {t("Answer right in each comment. The client sees it on the pin.")}
+                      {t("Tap a comment to answer. The client sees your answer on the pin.")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
