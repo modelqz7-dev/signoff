@@ -54,12 +54,22 @@ export function usePortal(orderId: string) {
   const [hasPassword, setHasPassword] = useState(true)
   const phaseRef = useRef(phase)
   useEffect(() => { phaseRef.current = phase }, [phase])
+  // Comment changes show up at once and are saved in the background. A refresh that started
+  // before a change was saved would bring the old comments back (a moved pin jumping back),
+  // so pins from a refresh are only taken when no change happened while it was on its way.
+  const editsRef = useRef({ pending: 0, seq: 0 })
+  const track = useCallback(async <T,>(work: () => Promise<T>) => {
+    editsRef.current.pending++
+    editsRef.current.seq++
+    try { return await work() } finally { editsRef.current.pending--; editsRef.current.seq++ }
+  }, [])
 
   const load = useCallback(async () => {
+    const seqAtStart = editsRef.current.seq
     const { res, body } = await api(`${base}/state`)
     if (res.ok && body) {
       setOrder((prev) => keepFileLink(prev, body.order))
-      setPins(sortPins(body.pins))
+      if (editsRef.current.pending === 0 && editsRef.current.seq === seqAtStart) setPins(sortPins(body.pins))
       setViewer(body.viewer)
       setPhase("view")
     } else if (res.status === 401) {
@@ -104,28 +114,49 @@ export function usePortal(orderId: string) {
   }, [base])
 
   const addPin = useCallback(async (pin: NewPin) => {
-    const { res, body } = await api(`${base}/pins`, { method: "POST", body: JSON.stringify(pin) })
-    if (!res.ok || !body?.pin) throw new Error(body?.error || "Couldn't save the comment")
-    setPins((prev) => sortPins([...prev.filter((p) => p.id !== body.pin.id), body.pin]))
-  }, [base])
+    // Shown right away under a temporary id, swapped for the saved one when it's back.
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const temp: Pin = {
+      id: tempId, order_id: orderId, x: pin.x, y: pin.y, page: pin.page, title: pin.title,
+      description: pin.description, author_name: viewer, resolved: false,
+      created_at: new Date().toISOString(), version: pin.version,
+    }
+    setPins((prev) => sortPins([...prev, temp]))
+    await track(async () => {
+      const { res, body } = await api(`${base}/pins`, { method: "POST", body: JSON.stringify(pin) })
+      if (!res.ok || !body?.pin) {
+        setPins((prev) => prev.filter((p) => p.id !== tempId))
+        throw new Error(body?.error || "Couldn't save the comment")
+      }
+      setPins((prev) => sortPins([...prev.filter((p) => p.id !== tempId && p.id !== body.pin.id), body.pin]))
+    })
+  }, [base, orderId, viewer, track])
 
   const patchPin = useCallback(async (id: string, patch: Partial<Pin>) => {
     setPins((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
-    const { res } = await api(`${base}/pins/${id}`, { method: "PATCH", body: JSON.stringify(patch) })
-    if (!res.ok) load()
-  }, [base, load])
+    await track(async () => {
+      const { res } = await api(`${base}/pins/${id}`, { method: "PATCH", body: JSON.stringify(patch) })
+      if (!res.ok) load()
+    })
+  }, [base, load, track])
 
   const setResolved = useCallback((id: string, resolved: boolean) => patchPin(id, { resolved }), [patchPin])
   const movePin = useCallback((id: string, x: number, y: number) => patchPin(id, { x, y }), [patchPin])
 
   const deletePin = useCallback(async (id: string) => {
-    const { res } = await api(`${base}/pins/${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      load()
-      throw new Error("Not allowed to delete this comment")
-    }
-    setPins((prev) => prev.filter((p) => p.id !== id))
-  }, [base, load])
+    let removed: Pin | undefined
+    setPins((prev) => {
+      removed = prev.find((p) => p.id === id)
+      return prev.filter((p) => p.id !== id)
+    })
+    await track(async () => {
+      const { res } = await api(`${base}/pins/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        if (removed) setPins((prev) => sortPins([...prev, removed!]))
+        throw new Error("Not allowed to delete this comment")
+      }
+    })
+  }, [base, track])
 
   /** Approve or ask for changes; returns false if it couldn't be saved. */
   const decide = useCallback(async (status: "approved" | "changes") => {
