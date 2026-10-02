@@ -52,6 +52,8 @@ export default function OrderPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const { t, locale } = useT()
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
+  // A pin clicked on an image: open its conversation in the comment list.
+  const [threadFocus, setThreadFocus] = useState<{ id: string; nonce: number } | null>(null)
 
   // Client comments from the portal, updated live.
   // The shop only reviews comments here: moving and deleting pins is left to the client.
@@ -346,6 +348,7 @@ export default function OrderPage() {
             <NextStep
               order={order}
               pins={allPins}
+              unanswered={pins.filter((p) => !p.resolved && threads.get(p.id)?.at(-1)?.author_role !== "workshop").length}
               copied={copied}
               uploading={uploading}
               certificateHref={can(shop, "certificate") ? `/orders/${order.id}/certificate` : null}
@@ -406,8 +409,9 @@ export default function OrderPage() {
                           <div className="w-full rounded-lg border border-border/50 overflow-hidden bg-muted/60 flex items-center justify-center">
                             <div className="relative">
                               <img src={fileUrl} alt={order.title} className="block max-w-full max-h-[500px] object-contain" />
-                              {pins.filter((p) => !p.resolved).map((pin) => (
-                                <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small />
+                              {/* a pin opens its conversation in the list below */}
+                              {pins.filter((p) => !p.resolved || p.fix_status).map((pin) => (
+                                <PinMarker key={pin.id} pin={pin} number={numbers.get(pin.id) ?? ""} small onSelect={() => setThreadFocus({ id: pin.id, nonce: Date.now() })} />
                               ))}
                             </div>
                           </div>
@@ -462,7 +466,7 @@ export default function OrderPage() {
                   <CardHeader>
                     <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</CardTitle>
                     <CardDescription>
-                      {t("Comments left in the client portal appear here instantly.")}{isPdf && " " + t("Click one to open it on the file.")}{" " + t("Answer them with a note or a file: the client sees it on the pin.")}
+                      {t("Answer right in each comment. The client sees it on the pin.")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -472,6 +476,7 @@ export default function OrderPage() {
                       onSelect={isPdf ? handleSelectPin : undefined}
                       messages={threads}
                       onSend={sendToPins}
+                      focus={threadFocus}
                       emptyText="No comments from the client yet."
                     />
                   </CardContent>
@@ -494,7 +499,6 @@ export default function OrderPage() {
                       {order.client_contact && <Row label={t("Contact")} value={order.client_contact} />}
                       <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
                       <Row label={t("Deadline")} value={deadline.text} color={deadline.late ? "var(--destructive)" : undefined} />
-                      <Row label={t("Status")} value={t(status.label)} color={status.color} />
                       <Row label={t("Created")} value={formatDate(order.created_at)} />
                       {order.approved_at && (
                         <Row label={t("Approved")} value={`${formatDate(order.approved_at)}${order.approved_by ? ` · ${order.approved_by}` : ""}`} />

@@ -71,6 +71,7 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
         <Button variant="outline" size="sm" className="lg:hidden" onPress={onComments}>
           <CommentsIcon />
+          <span className="hidden min-[400px]:inline">{t("Comments")}</span>
           {commentCount}
         </Button>
         <div className="hidden min-w-0 flex-1 sm:block">{children}</div>

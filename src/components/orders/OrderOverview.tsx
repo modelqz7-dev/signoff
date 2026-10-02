@@ -50,6 +50,8 @@ export function OrderProgress({ order, pins }: { order: Order; pins: Pin[] }) {
 type Props = {
   order: Order
   pins: Pin[]
+  /** Open comments the workshop hasn't written in yet. */
+  unanswered?: number
   copied: boolean
   uploading: boolean
   certificateHref: string | null
@@ -59,7 +61,7 @@ type Props = {
 }
 
 /** One sentence on what is going on with the order, and the button for the next step. */
-export function NextStep({ order, pins, copied, uploading, certificateHref, onCopyLink, onUpload, onSeeComments }: Props) {
+export function NextStep({ order, pins, unanswered, copied, uploading, certificateHref, onCopyLink, onUpload, onSeeComments }: Props) {
   const { t, locale } = useT()
   const now = useNow()
   const client = order.client_name || t("The client")
@@ -91,13 +93,18 @@ export function NextStep({ order, pins, copied, uploading, certificateHref, onCo
     tone = "changes"
     title = t("{client} asked for changes", { client })
     text = open
-      ? t("{n} comments to work through. When the fixes are ready, upload version {v}: the client sees it at the same link.", { n: open, v: nextVersion })
+      ? t("Answer the {n} comments right on the pins. If the design itself changed, upload version {v}: the client sees it at the same link.", { n: open, v: nextVersion })
       : t("When the fixes are ready, upload version {v}: the client sees it at the same link.", { v: nextVersion })
     action = button(<UploadIcon className="size-4" />, uploading ? t("Uploading...") : t("Upload version {v}", { v: nextVersion }), onUpload, uploading)
+  } else if (order.status === "await" && open > 0 && (unanswered ?? open) > 0) {
+    const n = unanswered ?? open
+    title = n === 1 ? t("{client} left a comment", { client }) : t("{client} left {n} comments", { client, n })
+    text = t("Answer right in each comment: what you changed, with a photo or render if it helps.")
+    action = button(<CommentsIcon className="size-4" />, t("Answer"), onSeeComments)
   } else if (order.status === "await" && open > 0) {
-    title = open === 1 ? t("{client} left a comment", { client }) : t("{client} left {n} comments", { client, n: open })
-    text = t("Look through them on the file. Fix what's needed and upload a new version, or wait for the client's decision.")
-    action = button(<CommentsIcon className="size-4" />, t("See comments"), onSeeComments)
+    title = t("You answered every comment")
+    text = t("{client} sees your answers on the pins. Now it's their move: approve or write back.", { client })
+    action = button(copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />, copied ? t("Copied") : t("Copy Link"), onCopyLink)
   } else if (order.status === "await") {
     const days = daysSince(order.status_changed_at ?? order.created_at, now)
     title = t("Waiting on {client}", { client })

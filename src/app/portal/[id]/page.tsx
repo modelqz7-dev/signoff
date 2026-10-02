@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
+import { CommentsIcon, PinDetails, PinList, PinMarker } from "@/components/orders/pins"
 import { messagesByPin, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { PinThread } from "@/components/orders/PinThread"
 import { usePortal } from "@/lib/portal-client"
@@ -42,6 +42,8 @@ export default function PortalPage() {
   const pins = pinsOfVersion(portal.pins, order?.version)
   const threads = messagesByPin(portal.messages)
   const lastMessages = new Map([...threads].map(([id, list]) => [id, list[list.length - 1]]))
+  // Pins where the workshop has the last word: the client should look at those.
+  const answered = pins.filter((p) => lastMessages.get(p.id)?.author_role === "workshop")
   // The client writes in a pin; the workshop's files and "fixed" come from the other side.
   const thread = (pin: Pin) => (
     <PinThread messages={threads.get(pin.id) ?? []} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => sendMessage(pin.id, m.body)} />
@@ -127,7 +129,11 @@ export default function PortalPage() {
   function handleSelectPin(pin: Pin) {
     setPendingPin(null)
     if (isPdf) setFocusPin({ id: pin.id, nonce: Date.now() })
-    else setSelectedPinId(pin.id === selectedPinId ? null : pin.id)
+    else {
+      setSelectedPinId(pin.id === selectedPinId ? null : pin.id)
+      // the comment opens under the design: bring it into view
+      requestAnimationFrame(() => document.getElementById("pin-details")?.scrollIntoView({ behavior: "smooth", block: "center" }))
+    }
   }
 
   async function handleAction(newStatus: "approved" | "changes") {
@@ -326,7 +332,7 @@ export default function PortalPage() {
           )}
 
           {selectedPin && !pendingPin && !isPdf && (
-            <div className="mt-4 rounded-lg border border-border/40 p-4 text-sm">
+            <div id="pin-details" className="mt-4 scroll-mt-20 rounded-lg border border-border/40 p-4 text-sm">
               <PinDetails
                 key={selectedPin.id}
                 pin={selectedPin}
@@ -382,6 +388,28 @@ export default function PortalPage() {
             <ReviewSteps status={order.status} commented={pins.length > 0} />
           )}
 
+          {/* the workshop wrote back: say so, instead of waiting for the client to find it */}
+          {answered.length > 0 && order.status !== "approved" && order.status !== "prod" && (
+            <div className="flex flex-col gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                  <CommentsIcon className="size-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {answered.length === 1
+                      ? t("{shop} answered your comment", { shop: brand?.shopName || t("The workshop") })
+                      : t("{shop} answered {n} of your comments", { shop: brand?.shopName || t("The workshop"), n: answered.length })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t("Open a pin to see the answer. If something isn't right, write back in it.")}</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" onPress={() => handleSelectPin(answered[0])} className="shrink-0 self-start sm:self-auto">
+                {t("See the answer")}
+              </Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="flex min-w-0 flex-col gap-5">
               {fileCard}
@@ -394,10 +422,8 @@ export default function PortalPage() {
                 </CardHeader>
                 <CardContent>
                   <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
-                    <Row label={t("Client")} value={order.client_name || "—"} />
                     <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
                     <Row label={t("Deadline")} value={formatDate(order.deadline)} />
-                    <Row label={t("Created")} value={formatDate(order.created_at)} />
                   </dl>
                 </CardContent>
               </Card>
