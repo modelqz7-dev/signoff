@@ -356,7 +356,7 @@ export const ru: Record<string, string> = {
   "Reset your password": "Сброс пароля",
   "Resolve": "Решено",
   "Resolved": "Решённые",
-  "Run supabase/branding.sql in Supabase first, then save again.": "Сначала выполните supabase/branding.sql в Supabase, затем сохраните ещё раз.",
+  "Run supabase/update.sql in Supabase first, then try again.": "Сначала выполните supabase/update.sql в Supabase (SQL Editor), затем попробуйте ещё раз.",
   "Russian and English": "Русский и английский",
   "Save": "Сохранить",
   "Save Password": "Сохранить пароль",
