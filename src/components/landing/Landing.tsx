@@ -23,7 +23,7 @@ function CtaLink({ href, children, variant = "primary", className }: {
     <Link
       href={href}
       className={cn(
-        "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring",
         variant === "primary"
           ? "bg-primary text-primary-foreground hover:bg-primary/85"
           : "border border-border bg-card text-foreground hover:bg-hover",

@@ -183,7 +183,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+      <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring">
         {shop && (
           <>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = "" }} />
