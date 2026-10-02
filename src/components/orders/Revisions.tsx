@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CheckIcon, MessageSquareReplyIcon, PaperclipIcon, ReplyIcon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -21,6 +21,7 @@ export function AnswerablePinList({
   onSelect,
   onSend,
   emptyText,
+  focus,
 }: {
   pins: Pin[]
   numbers: Map<string, number>
@@ -30,10 +31,21 @@ export function AnswerablePinList({
   /** Sends one message to the given pins. */
   onSend: (pins: Pin[], message: ThreadMessage) => Promise<void>
   emptyText: string
+  /** Open this pin's conversation and bring it into view (change `nonce` to repeat). */
+  focus?: { id: string; nonce: number } | null
 }) {
   const { t } = useT()
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [openId, setOpenId] = useState<string | null>(null)
+  const [handled, setHandled] = useState<number | null>(null)
+  if (focus && focus.nonce !== handled) {
+    setHandled(focus.nonce)
+    setOpenId(focus.id)
+  }
+  useEffect(() => {
+    if (handled === null || !openId) return
+    document.getElementById(`pin-row-${openId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [handled, openId])
   const [bulk, setBulk] = useState(false)
   const active = pins.filter((p) => !p.resolved || p.fix_status === "reopened")
   const done = pins.filter((p) => p.resolved && p.fix_status !== "reopened")
@@ -56,7 +68,7 @@ export function AnswerablePinList({
     const isOpen = openId === pin.id
     const isDone = pin.resolved && pin.fix_status !== "reopened"
     return (
-      <div key={pin.id} className={cn("flex items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors", (checked.has(pin.id) || isOpen) && "bg-muted/50")}>
+      <div key={pin.id} id={`pin-row-${pin.id}`} className={cn("flex scroll-mt-20 items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors", (checked.has(pin.id) || isOpen) && "bg-muted/50")}>
         <input
           type="checkbox"
           checked={checked.has(pin.id)}
