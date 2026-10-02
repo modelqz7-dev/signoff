@@ -463,7 +463,7 @@ export default function OrderPage() {
                   <CardHeader>
                     <CardTitle className="text-sm">{t("Client comments ({n})", { n: described.length })}</CardTitle>
                     <CardDescription>
-                      {t("Tap a comment to answer. The client sees your answer on the pin.")}
+                      {t("Pick a pin by its number to read and answer it. The client sees your answer in the same pin.")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

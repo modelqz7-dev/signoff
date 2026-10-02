@@ -1,20 +1,20 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { CheckIcon, MessageSquareReplyIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { CheckIcon, FileTextIcon, MessageSquareReplyIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PinGroups, PinNumber, PinOutlineIcon, PinRow, PinStatus } from "@/components/orders/pins"
+import { PinNumber, PinOutlineIcon, PinStatus } from "@/components/orders/pins"
 import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
 import type { Pin, PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-// The workshop's list of the client's comments. Each one is a conversation that opens right
-// under it; several can be ticked and answered with one message (e.g. one render showing two
-// fixes), which lands in each of them.
+// The workshop's side of the comments: the same switch of pins by number as the client has,
+// with the picked comment and its conversation below. Several pins can be ticked and answered
+// with one message (e.g. one render showing two fixes), which lands in each of them.
 
 export function AnswerablePinList({
   pins,
@@ -29,30 +29,43 @@ export function AnswerablePinList({
   numbers: Map<string, number>
   /** Messages of each pin, oldest first. */
   messages: Map<string, PinMessage[]>
+  /** Show the pin on the file. */
   onSelect?: (pin: Pin) => void
   /** Sends one message to the given pins. */
   onSend: (pins: Pin[], message: ThreadMessage) => Promise<void>
   emptyText: string
-  /** Open this pin's conversation and bring it into view (change `nonce` to repeat). */
+  /** Switch to this pin and bring it into view (change `nonce` to repeat). */
   focus?: { id: string; nonce: number } | null
 }) {
-  const { t } = useT()
-  const [checked, setChecked] = useState<Set<string>>(new Set())
-  const [openId, setOpenId] = useState<string | null>(null)
+  const { t, locale } = useT()
+  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
+  const [chosenId, setChosenId] = useState<string | null>(null)
   const [handled, setHandled] = useState<number | null>(null)
   if (focus && focus.nonce !== handled) {
     setHandled(focus.nonce)
-    setOpenId(focus.id)
+    setChosenId(focus.id)
   }
   useEffect(() => {
-    if (handled === null || !openId) return
-    document.getElementById(`pin-row-${openId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
-  }, [handled, openId])
-  const [bulk, setBulk] = useState(false)
-  // Ticking several comments to answer them at once is a mode, so the rows stay plain.
+    if (handled === null) return
+    document.getElementById("pin-switch")?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [handled])
+  const [checked, setChecked] = useState<Set<string>>(new Set())
   const [selecting, setSelecting] = useState(false)
-  const selected = pins.filter((p) => checked.has(p.id))
-  const answerable = pins.filter((p) => !p.resolved || p.fix_status === "reopened").length
+  const [bulk, setBulk] = useState(false)
+  const selected = ordered.filter((p) => checked.has(p.id))
+  const open = ordered.filter((p) => !p.resolved || p.fix_status === "reopened")
+  // Where the client waits for the workshop: asked to redo, or the client spoke last.
+  const waiting = (p: Pin) => {
+    const thread = messages.get(p.id) ?? []
+    return p.fix_status === "reopened" || (!p.resolved && thread[thread.length - 1]?.author_role !== "workshop")
+  }
+  const chosen =
+    ordered.find((p) => p.id === chosenId) ??
+    ordered.find((p) => p.fix_status === "reopened") ??
+    ordered.find(waiting) ??
+    open[0] ??
+    ordered[0] ??
+    null
 
   function toggle(id: string) {
     setChecked((prev) => {
@@ -68,84 +81,69 @@ export function AnswerablePinList({
     setChecked(new Set())
   }
 
-  if (!pins.length) return <p className="py-6 text-center text-xs text-muted-foreground">{t(emptyText)}</p>
-
-  const row = (pin: Pin) => {
-    const thread = messages.get(pin.id) ?? []
-    const isOpen = openId === pin.id && !selecting
-    return (
-      <PinRow
-        key={pin.id}
-        pin={pin}
-        number={numbers.get(pin.id)}
-        last={isOpen ? undefined : thread[thread.length - 1]}
-        selected={checked.has(pin.id) || isOpen}
-        onClick={() => (selecting ? toggle(pin.id) : setOpenId(isOpen ? null : pin.id))}
-        leading={selecting && (
-          <input
-            type="checkbox"
-            checked={checked.has(pin.id)}
-            onChange={() => toggle(pin.id)}
-            aria-label={t("Select comment {n}", { n: numbers.get(pin.id) ?? "" })}
-            className="mt-1 size-4 shrink-0 accent-[var(--foreground)]"
-          />
-        )}
-        trailing={onSelect && !selecting && (
-          <button
-            type="button"
-            onClick={() => onSelect(pin)}
-            title={t("Show on the file")}
-            aria-label={t("Show on the file")}
-            className="-mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground"
-          >
-            <PinOutlineIcon />
-          </button>
-        )}
-      >
-        {/* the conversation opens under the comment, at the text's width (room to type on phones) */}
-        {isOpen && (
-          <div className="px-3 pb-3 sm:pl-12">
-            <PinThread
-              messages={thread}
-              role="workshop"
-              fixed={pin.fix_status === "fixed"}
-              autoFocus
-              onSend={(m) => onSend([pin], m)}
-            />
-          </div>
-        )}
-      </PinRow>
-    )
-  }
+  if (!chosen) return <p className="py-6 text-center text-sm text-muted-foreground">{t(emptyText)}</p>
 
   return (
-    <div className="flex flex-col gap-1">
-      {selecting ? (
-        <div className="sticky top-0 z-10 mb-1 flex items-center gap-2 rounded-lg bg-foreground px-3 py-2 text-background">
-          <span className="text-xs font-medium">{t("{n} selected", { n: selected.length })}</span>
-          <button type="button" onClick={stopSelecting} className="text-xs opacity-70 hover:opacity-100">
-            {t("Cancel")}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        <PinSwitch
+          pins={ordered}
+          numbers={numbers}
+          chosenId={chosen.id}
+          onChoose={setChosenId}
+          checked={selecting ? checked : undefined}
+          onToggle={selecting ? toggle : undefined}
+        />
+        {selecting ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-muted-foreground">
+              {selected.length ? t("{n} selected", { n: selected.length }) : t("Tick the pins to answer with one message.")}
+            </span>
+            <button type="button" onClick={stopSelecting} className="text-muted-foreground hover:text-foreground">{t("Cancel")}</button>
+            <Button size="sm" onPress={() => setBulk(true)} isDisabled={!selected.length} className="ml-auto">
+              <MessageSquareReplyIcon />{t("Answer all")}
+            </Button>
+          </div>
+        ) : open.length > 1 && (
+          <button type="button" onClick={() => setSelecting(true)} className="self-start text-sm text-muted-foreground hover:text-foreground">
+            {t("Answer several at once")}
           </button>
-          <button
-            type="button"
-            onClick={() => setBulk(true)}
-            disabled={!selected.length}
-            className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-md bg-background px-2.5 text-xs font-medium text-foreground disabled:opacity-40"
-          >
-            <MessageSquareReplyIcon className="size-3.5" />
-            {t("Answer all")}
-          </button>
+        )}
+      </div>
+
+      {!selecting && (
+        <div className="flex flex-col gap-5 rounded-xl bg-muted/40 p-5 ring-1 ring-foreground/5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-base font-medium text-foreground">{t("Pin {n}", { n: numbers.get(chosen.id) ?? "" })}</span>
+            <span className="text-sm text-muted-foreground">{t("p. {n}", { n: chosen.page })}</span>
+            <PinStatus pin={chosen} />
+            {onSelect && (
+              <button
+                type="button"
+                onClick={() => onSelect(chosen)}
+                className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <PinOutlineIcon className="size-4" />{t("Show on the file")}
+              </button>
+            )}
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+              {chosen.author_name} · {new Date(chosen.created_at).toLocaleDateString(locale, { day: "numeric", month: "short" })}
+            </p>
+            <p className="text-xl leading-snug font-medium break-words text-foreground">{chosen.title}</p>
+            {chosen.description && <p className="text-base leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{chosen.description}</p>}
+          </div>
+          {chosen.fix_status === "reopened" && <p className="text-sm font-medium text-destructive">{t("The client says it isn't done yet")}</p>}
+          <PinThread
+            key={chosen.id}
+            messages={messages.get(chosen.id) ?? []}
+            role="workshop"
+            fixed={chosen.fix_status === "fixed"}
+            onSend={(m) => onSend([chosen], m)}
+          />
         </div>
-      ) : answerable > 1 && (
-        <button
-          type="button"
-          onClick={() => { setSelecting(true); setOpenId(null) }}
-          className="self-end px-3 text-xs text-muted-foreground hover:text-foreground"
-        >
-          {t("Answer several at once")}
-        </button>
       )}
-      <PinGroups pins={pins} render={row} />
 
       {bulk && (
         <Dialog isOpen onOpenChange={(v) => !v && setBulk(false)} className="sm:max-w-md">
@@ -194,6 +192,7 @@ export function ClientPinList({
   onToggleResolved,
   onShow,
   onPick,
+  onOpenFile,
 }: {
   pins: Pin[]
   numbers: Map<string, number>
@@ -208,8 +207,9 @@ export function ClientPinList({
   onShow: (pin: Pin) => void
   /** The pin switched to, to highlight it on the file. */
   onPick?: (pin: Pin | null) => void
+  /** Open the file to put pins on it. */
+  onOpenFile: () => void
 }) {
-  const { t } = useT()
   const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
   const [chosenId, setChosenId] = useState<string | null>(null)
   const [handled, setHandled] = useState<number | null>(null)
@@ -231,48 +231,11 @@ export function ClientPinList({
     document.getElementById("pin-switch")?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [handled])
 
-  if (!chosen) {
-    return (
-      <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-        {t("Open the file and put pins where something should change. They will show up here by their numbers.")}
-      </p>
-    )
-  }
+  if (!chosen) return <FirstSteps onOpenFile={onOpenFile} />
 
   return (
     <div className="flex flex-col gap-4">
-      <div id="pin-switch" role="tablist" aria-label={t("Pins")} className="flex scroll-mt-20 flex-wrap gap-2">
-        {ordered.map((p) => {
-          const on = p.id === chosen.id
-          const bare = !p.title.trim()
-          const reopened = p.fix_status === "reopened"
-          const done = p.resolved && !reopened
-          return (
-            <button
-              key={p.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              title={p.title || t("No description yet")}
-              onClick={() => setChosenId(p.id)}
-              className={cn(
-                "relative flex size-11 items-center justify-center rounded-full text-base font-semibold tabular-nums transition-colors",
-                on
-                  ? "bg-foreground text-background"
-                  : bare
-                    ? "text-foreground outline-1 -outline-offset-1 outline-dashed outline-foreground/50 hover:bg-hover"
-                    : done
-                      ? "bg-muted text-muted-foreground hover:bg-hover"
-                      : "bg-muted text-foreground ring-1 ring-border hover:bg-hover"
-              )}
-            >
-              {numbers.get(p.id) ?? ""}
-              {done && !on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full bg-card p-0.5" strokeWidth={3} />}
-              {reopened && <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-card" />}
-            </button>
-          )
-        })}
-      </div>
+      <PinSwitch pins={ordered} numbers={numbers} chosenId={chosen.id} onChoose={setChosenId} />
 
       <PinPanel
         key={chosen.id}
@@ -439,5 +402,127 @@ function DeleteLink({ onDelete }: { onDelete: () => Promise<void> | void }) {
       <button type="button" onClick={() => onDelete()} className="font-medium text-destructive">{t("Delete")}</button>
       <button type="button" onClick={() => setAsking(false)} className="hover:text-foreground">{t("Cancel")}</button>
     </span>
+  )
+}
+
+/**
+ * Every pin by its number, as one row of round buttons: the same switch for the client and the
+ * workshop. Bare pins are dashed, resolved ones carry a check, a red dot means the client asked
+ * to redo it. With `checked`, the buttons tick several pins instead of switching.
+ */
+export function PinSwitch({ pins, numbers, chosenId, onChoose, checked, onToggle }: {
+  pins: Pin[]
+  numbers: Map<string, number>
+  chosenId: string | null
+  onChoose: (id: string) => void
+  checked?: Set<string>
+  onToggle?: (id: string) => void
+}) {
+  const { t } = useT()
+  const ticking = !!checked && !!onToggle
+  return (
+    <div id="pin-switch" role={ticking ? "group" : "tablist"} aria-label={t("Pins")} className="flex scroll-mt-20 flex-wrap gap-2">
+      {pins.map((p) => {
+        const on = ticking ? checked!.has(p.id) : p.id === chosenId
+        const bare = !p.title.trim()
+        const reopened = p.fix_status === "reopened"
+        const done = p.resolved && !reopened
+        return (
+          <button
+            key={p.id}
+            type="button"
+            role={ticking ? "checkbox" : "tab"}
+            aria-selected={ticking ? undefined : on}
+            aria-checked={ticking ? on : undefined}
+            title={p.title || t("No description yet")}
+            onClick={() => (ticking ? onToggle!(p.id) : onChoose(p.id))}
+            className={cn(
+              "relative flex size-11 items-center justify-center rounded-full text-base font-semibold tabular-nums transition-colors",
+              on
+                ? "bg-foreground text-background"
+                : bare
+                  ? "text-foreground outline-1 -outline-offset-1 outline-dashed outline-foreground/50 hover:bg-hover"
+                  : done
+                    ? "bg-muted text-muted-foreground hover:bg-hover"
+                    : "bg-muted text-foreground ring-1 ring-border hover:bg-hover"
+            )}
+          >
+            {numbers.get(p.id) ?? ""}
+            {ticking && on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full bg-foreground p-0.5 text-background ring-2 ring-card" strokeWidth={3} />}
+            {!ticking && done && !on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full bg-card p-0.5" strokeWidth={3} />}
+            {reopened && <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-card" />}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Before the first pin: how commenting works, in three small pictures drawn like the real
+ * thing (the file tile, a pin on a page, the switch of numbers).
+ */
+function FirstSteps({ onOpenFile }: { onOpenFile: () => void }) {
+  const { t } = useT()
+  const steps = [
+    {
+      title: t("Open the file"),
+      text: t("It opens full screen. Zoom in and look at every page."),
+      picture: (
+        <span className="flex w-full items-center gap-2.5 rounded-lg bg-card p-2.5 ring-1 ring-foreground/10">
+          <FileTextIcon className="size-6 shrink-0 text-muted-foreground" />
+          <span className="flex flex-1 flex-col gap-1.5">
+            <span className="h-1.5 w-3/4 rounded-full bg-foreground/25" />
+            <span className="h-1.5 w-1/2 rounded-full bg-foreground/10" />
+          </span>
+        </span>
+      ),
+    },
+    {
+      title: t("Tap where something is wrong"),
+      text: t("A pin with a number appears there. Put as many as you need."),
+      picture: (
+        <span className="relative block h-16 w-full rounded-lg bg-white ring-1 ring-foreground/10">
+          <span className="absolute top-3 left-3 h-1.5 w-1/3 rounded-full bg-black/15" />
+          <span className="absolute top-7 left-3 h-6 w-2/5 rounded-sm bg-black/8" />
+          <PinNumber n={1} className="absolute top-2 right-1/4 size-6 shadow-sm" />
+          <PinNumber n={2} className="absolute bottom-2 left-1/2 size-6 shadow-sm" />
+        </span>
+      ),
+    },
+    {
+      title: t("Pick the number here and write"),
+      text: t("A short title and what to change. The workshop answers in the same pin."),
+      picture: (
+        <span className="flex w-full flex-col gap-2 rounded-lg bg-card p-2.5 ring-1 ring-foreground/10">
+          <span className="flex gap-1.5">
+            <PinNumber n={1} className="size-6" />
+            <span className="flex size-6 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground ring-1 ring-border">2</span>
+          </span>
+          <span className="h-1.5 w-2/3 rounded-full bg-foreground/25" />
+        </span>
+      ),
+    },
+  ]
+  return (
+    <div className="flex flex-col gap-5">
+      <ol className="grid gap-3 sm:grid-cols-3">
+        {steps.map((step, i) => (
+          <li key={i} className="flex flex-col gap-3 rounded-xl bg-muted/40 p-4 ring-1 ring-foreground/5">
+            {step.picture}
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-foreground">
+                <span className="mr-1.5 text-muted-foreground tabular-nums">{i + 1}</span>
+                {step.title}
+              </p>
+              <p className="text-sm text-muted-foreground">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <Button onPress={onOpenFile} className="self-start">
+        <PinOutlineIcon />{t("Open the file and put a pin")}
+      </Button>
+    </div>
   )
 }
