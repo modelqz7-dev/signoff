@@ -37,6 +37,13 @@ whole HTML file:
 | Reauthentication    | `reauthentication.html`  | Код подтверждения Nodly           |
 | Invite user         | `invite.html`            | Вас пригласили в Nodly            |
 
+Security notices (turn these two on, leave the rest off):
+
+| Supabase notice        | File                    | Subject                 |
+|------------------------|-------------------------|-------------------------|
+| Password changed       | `password-changed.html` | Пароль в Nodly изменён  |
+| Email address changed  | `email-changed.html`    | Почта в Nodly изменена  |
+
 ## 3. Password changes need the emailed code
 
 The Security panel always asks for the code from the Reauthentication email before
