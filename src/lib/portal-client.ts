@@ -147,7 +147,10 @@ export function usePortal(orderId: string) {
   const setResolved = useCallback((id: string, resolved: boolean) => patchPin(id, { resolved }), [patchPin])
   const movePin = useCallback((id: string, x: number, y: number) => patchPin(id, { x, y }), [patchPin])
   /** What a pin is about, written in the list after it was put on the file. */
-  const describePin = useCallback((id: string, title: string) => patchPin(id, { title }), [patchPin])
+  const describePin = useCallback(
+    (id: string, title: string, description: string | null) => patchPin(id, { title, description }),
+    [patchPin]
+  )
   /** The client writes in a pin; a fixed pin opens again. Shown at once, saved in the background. */
   const sendMessage = useCallback(async (pinId: string, text: string) => {
     const tempId = `temp-${Date.now()}`

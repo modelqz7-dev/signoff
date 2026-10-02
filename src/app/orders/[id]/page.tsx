@@ -72,6 +72,8 @@ export default function OrderPage() {
   const fileUrl = useFileUrl(storedUrl)
   const pins = pinsOfVersion(allPins, shownVersion)
   const numbers = usePinNumbers(pins)
+  // Pins the client put on the file but hasn't written about yet stay out of the list.
+  const described = pins.filter((p) => p.title.trim())
   const isPdf = isPdfUrl(storedUrl)
   const canSeeHistory = can(shop, "versions")
 
@@ -459,14 +461,14 @@ export default function OrderPage() {
                 <div ref={commentsRef} className="scroll-mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.length })}</CardTitle>
+                    <CardTitle className="text-sm">{t("Client comments ({n})", { n: described.length })}</CardTitle>
                     <CardDescription>
                       {t("Tap a comment to answer. The client sees your answer on the pin.")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <AnswerablePinList
-                      pins={pins}
+                      pins={described}
                       numbers={numbers}
                       onSelect={isPdf ? handleSelectPin : undefined}
                       messages={threads}

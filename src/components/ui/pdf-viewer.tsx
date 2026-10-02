@@ -517,12 +517,12 @@ export function PDFViewer({
           <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-4 py-2.5 text-sm">
             <span className="min-w-0 text-muted-foreground">
               {untitled.length
-                ? t("Pins without a description: {n}. Describe them in the comment list.", { n: untitled.length })
+                ? t("Pins without a comment: {n}. Write it under the file.", { n: untitled.length })
                 : t("Tap the spot that needs a change to put a pin there.")}
             </span>
             {untitled.length > 0 && (
               <Button size="sm" onPress={() => showInList(untitled[0])} className="shrink-0">
-                {t("Describe")}
+                {t("Write a comment")}
               </Button>
             )}
           </div>

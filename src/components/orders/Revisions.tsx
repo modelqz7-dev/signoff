@@ -2,11 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import { CheckIcon, MessageSquareReplyIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { PinGroups, PinNumber, PinOutlineIcon, PinRow } from "@/components/orders/pins"
 import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
 import type { Pin, PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
 
 // The workshop's list of the client's comments. Each one is a conversation that opens right
 // under it; several can be ticked and answered with one message (e.g. one render showing two
@@ -175,8 +179,9 @@ export function AnswerablePinList({
 }
 
 /**
- * The client's list: a pin put on the file shows up here with a field for what to change;
- * a described one opens its conversation with the workshop.
+ * The client's comments: pins are put on the file first, then a comment is written here for
+ * one of them, picked by its number. Described comments open their conversation with the
+ * workshop.
  */
 export function ClientPinList({
   pins,
@@ -188,42 +193,47 @@ export function ClientPinList({
   onDelete,
   onToggleResolved,
   onShow,
+  onOpenFile,
+  onPick,
 }: {
   pins: Pin[]
   numbers: Map<string, number>
   messages: Map<string, PinMessage[]>
-  /** Open this comment and bring it into view (change `nonce` to repeat). */
+  /** Open this comment (or pick this pin for a new one) and bring it into view (change `nonce` to repeat). */
   focus?: { id: string; nonce: number } | null
-  onDescribe: (pin: Pin, text: string) => Promise<void> | void
+  onDescribe: (pin: Pin, title: string, description: string | null) => Promise<void> | void
   onSend: (pin: Pin, text: string) => Promise<void>
   onDelete: (pin: Pin) => Promise<void> | void
   onToggleResolved: (pin: Pin) => void
   /** Show the pin on the file. */
   onShow: (pin: Pin) => void
+  /** Open the file to put a pin on it. */
+  onOpenFile: () => void
+  /** The pin picked for a new comment, to highlight it on the file. */
+  onPick?: (pin: Pin | null) => void
 }) {
   const { t } = useT()
   const [openId, setOpenId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [handled, setHandled] = useState<number | null>(null)
+  const bare = pins.filter((p) => !p.title.trim()).sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
+  const described = pins.filter((p) => p.title.trim())
+  const focusIsBare = !!focus && bare.some((p) => p.id === focus.id)
   if (focus && focus.nonce !== handled) {
     setHandled(focus.nonce)
-    setOpenId(focus.id)
+    if (!focusIsBare) setOpenId(focus.id)
   }
   useEffect(() => {
-    if (handled === null || !openId) return
-    document.getElementById(`pin-row-${openId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
-  }, [handled, openId])
-
-  if (!pins.length) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">{t("No comments yet. Put a pin on the file where something should change.")}</p>
-  }
+    if (handled === null) return
+    const target = document.getElementById(focusIsBare ? "new-comment" : `pin-row-${openId}`)
+    target?.scrollIntoView({ behavior: "smooth", block: "center" })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when a new request comes in
+  }, [handled])
 
   const row = (pin: Pin) => {
     const thread = messages.get(pin.id) ?? []
-    const bare = !pin.title.trim()
-    const editing = bare || editingId === pin.id
+    const editing = editingId === pin.id
     const isOpen = editing || openId === pin.id
-    const saved = !pin.id.startsWith("temp-")
     return (
       <PinRow
         key={pin.id}
@@ -231,7 +241,7 @@ export function ClientPinList({
         number={numbers.get(pin.id)}
         last={isOpen ? undefined : thread[thread.length - 1]}
         selected={isOpen}
-        onClick={bare ? undefined : () => { setOpenId(isOpen ? null : pin.id); setEditingId(null) }}
+        onClick={() => { setOpenId(isOpen ? null : pin.id); setEditingId(null) }}
         trailing={(
           <button
             type="button"
@@ -249,10 +259,9 @@ export function ClientPinList({
             {editing ? (
               <DescribeField
                 initial={pin.title}
-                focusKey={focus?.id === pin.id ? `focus-${focus.nonce}` : !bare || pins.filter((p) => !p.title.trim()).at(-1)?.id === pin.id ? "mount" : undefined}
-                disabled={!saved}
-                onSave={async (text) => { await onDescribe(pin, text); setEditingId(null); setOpenId(pin.id) }}
-                onCancel={bare ? undefined : () => setEditingId(null)}
+                focusKey="mount"
+                onSave={async (text) => { await onDescribe(pin, text, pin.description ?? null); setEditingId(null) }}
+                onCancel={() => setEditingId(null)}
               />
             ) : (
               <PinThread messages={thread} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => onSend(pin, m.body)} />
@@ -263,13 +272,13 @@ export function ClientPinList({
                   <PencilIcon className="size-3" />{t("Edit text")}
                 </button>
               )}
-              {!bare && !pin.fix_status && (
+              {!pin.fix_status && (
                 <button type="button" onClick={() => onToggleResolved(pin)} className="inline-flex items-center gap-1 hover:text-foreground">
                   {pin.resolved ? <RotateCcwIcon className="size-3" /> : <CheckIcon className="size-3" />}
                   {pin.resolved ? t("Reopen") : t("Resolve")}
                 </button>
               )}
-              {saved && <DeleteLink onDelete={() => onDelete(pin)} />}
+              <DeleteLink onDelete={() => onDelete(pin)} />
             </div>
           </div>
         )}
@@ -277,7 +286,144 @@ export function ClientPinList({
     )
   }
 
-  return <PinGroups pins={pins} render={row} />
+  return (
+    <div className="flex flex-col gap-4">
+      <NewComment
+        bare={bare}
+        numbers={numbers}
+        focus={focusIsBare ? focus : null}
+        onSave={onDescribe}
+        onDelete={onDelete}
+        onOpenFile={onOpenFile}
+        onPick={onPick}
+      />
+      {described.length > 0 && <PinGroups pins={described} render={row} />}
+    </div>
+  )
+}
+
+/** "New comment": pick one of the pins put on the file by its number, then say what is wrong. */
+function NewComment({ bare, numbers, focus, onSave, onDelete, onOpenFile, onPick }: {
+  bare: Pin[]
+  numbers: Map<string, number>
+  focus: { id: string; nonce: number } | null
+  onSave: (pin: Pin, title: string, description: string | null) => Promise<void> | void
+  onDelete: (pin: Pin) => Promise<void> | void
+  onOpenFile: () => void
+  onPick?: (pin: Pin | null) => void
+}) {
+  const { t } = useT()
+  const [chosenId, setChosenId] = useState<string | null>(null)
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+  const [handled, setHandled] = useState<number | null>(null)
+  if (focus && focus.nonce !== handled) {
+    setHandled(focus.nonce)
+    setChosenId(focus.id)
+  }
+  // The pin asked for, else the one last put on the file.
+  const chosen = bare.find((p) => p.id === chosenId) ?? bare[bare.length - 1] ?? null
+  const chosenKey = chosen?.id ?? null
+  useEffect(() => { onPick?.(chosen) }, [chosenKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (handled === null) return
+    // After the viewer closes it hands focus back to its button; take it once that is done.
+    const timer = window.setTimeout(() => titleRef.current?.focus({ preventScroll: true }), 350)
+    return () => window.clearTimeout(timer)
+  }, [handled])
+
+  const saved = !!chosen && !chosen.id.startsWith("temp-")
+  const canSave = saved && !!title.trim() && !saving
+
+  async function save() {
+    if (!chosen || !canSave) return
+    setSaving(true)
+    setError(null)
+    try {
+      await onSave(chosen, title.trim(), description.trim() || null)
+      setTitle("")
+      setDescription("")
+      setChosenId(null)
+    } catch (e) {
+      setError((e as Error)?.message || t("Something went wrong"))
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div id="new-comment" className="flex scroll-mt-20 flex-col gap-3 rounded-xl bg-muted/40 p-3 ring-1 ring-foreground/5">
+      <p className="text-sm font-medium text-foreground">{t("New comment")}</p>
+      {bare.length === 0 ? (
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">{t("First put a pin on the file where something should change. It will show up here.")}</p>
+          <Button size="sm" variant="outline" onPress={onOpenFile} className="shrink-0">
+            <PinOutlineIcon />{t("Put a pin")}
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t("Pin")}</span>
+            <div role="radiogroup" aria-label={t("Pin")} className="flex flex-wrap gap-1.5">
+              {bare.map((p) => {
+                const on = p.id === chosen?.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setChosenId(p.id)}
+                    className={cn(
+                      "flex size-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors",
+                      on ? "bg-foreground text-background" : "bg-background text-foreground ring-1 ring-border hover:bg-hover"
+                    )}
+                  >
+                    {numbers.get(p.id) ?? ""}
+                  </button>
+                )
+              })}
+            </div>
+            <span className="text-xs text-muted-foreground">{chosen ? t("p. {n}", { n: chosen.page }) : ""}</span>
+            {chosen && saved && (
+              <button type="button" onClick={() => onDelete(chosen)} className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
+                <Trash2Icon className="size-3" />{t("Remove pin")}
+              </button>
+            )}
+          </div>
+          <Input
+            ref={titleRef}
+            value={title}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value.slice(0, 200))}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); save() } }}
+            placeholder={t("Title, e.g. Black handles")}
+            aria-label={t("Title")}
+            className="h-10 bg-background text-[15px]"
+          />
+          <Textarea
+            value={description}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value.slice(0, 2000))}
+            placeholder={t("What is wrong and how it should be (optional)")}
+            aria-label={t("Description")}
+            rows={2}
+            className="bg-background text-[15px]"
+          />
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onPress={onOpenFile}>
+              <PinOutlineIcon />{t("Put another pin")}
+            </Button>
+            <Button size="sm" onPress={save} isDisabled={!canSave}>
+              {saving ? t("Saving...") : t("Add comment")}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 function DescribeField({ initial, focusKey, disabled, onSave, onCancel }: {
