@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist"
 import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
-import { PinComposer, PinDetails, PinList, PinMarker, PinNav, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
-import { usePinNumbers, type NewPin, type Pin, type PinMessage } from "@/lib/pins"
+import { PinMarker, PinOutlineIcon } from "@/components/orders/pins"
+import { usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 import { fileNameFromUrl } from "@/lib/versions"
 
@@ -18,17 +18,16 @@ type PDFViewerProps = {
   className?: string
   /** Comments to show on the pages, positioned in % of the page. */
   pins?: Pin[]
-  /** When set, clicking a page in the viewer lets the user add a comment there. */
+  /**
+   * When set, a click on a page puts a numbered pin there right away; what it is about is
+   * written afterwards in the comment list, not in the viewer.
+   */
   onAddPin?: (pin: NewPin) => Promise<void>
-  onToggleResolved?: (pin: Pin) => void
-  /** Drag-to-move and delete, for pins where `canEdit` returns true (all pins if omitted). */
+  /** Drag-to-move, for pins where `canEdit` returns true (all pins if omitted). */
   onMovePin?: (pin: Pin, x: number, y: number) => void
-  onDeletePin?: (pin: Pin) => Promise<void>
   canEdit?: (pin: Pin) => boolean
-  /** The conversation inside a pin, shown with its details. */
-  renderThread?: (pin: Pin) => React.ReactNode
-  /** The latest message in each pin, for the comment list. */
-  lastMessages?: Map<string, PinMessage>
+  /** A pin was tapped: the viewer closes and the page shows that comment in its list. */
+  onPinClick?: (pin: Pin) => void
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
   /** Just the full-screen viewer, already open, without the file tile (e.g. an attachment). */
@@ -63,12 +62,9 @@ export function PDFViewer({
   className,
   pins = [],
   onAddPin,
-  onToggleResolved,
   onMovePin,
-  onDeletePin,
   canEdit = () => true,
-  renderThread,
-  lastMessages,
+  onPinClick,
   focusPin,
   startOpen = false,
   onClose,
@@ -98,18 +94,17 @@ export function PDFViewer({
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(startOpen)
   const [dragging, setDragging] = useState(false)
-  const [pending, setPending] = useState<{ x: number; y: number } | null>(null)
+  const [adding, setAdding] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // Tap-to-move: the pin waiting for its new spot.
-  const [movingId, setMovingId] = useState<string | null>(null)
-  const scrollToPinRef = useRef<string | null>(null)
+  // A pin to bring into view once its page is laid out.
+  const [scrollToPin, setScrollToPin] = useState<{ id: string } | null>(null)
+  const scrolledRef = useRef<{ id: string } | null>(null)
 
   const numbers = usePinNumbers(pins)
   const { t } = useT()
-  const narrow = useNarrowScreen()
-  const wide = useWideScreen()
   const pagePins = pins.filter((p) => p.page === page)
-  const selectedPin = pagePins.find((p) => p.id === selectedId) || null
+  // Pins put here that still need a few words, oldest first.
+  const untitled = pins.filter((p) => !p.title.trim()).sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
 
   useEffect(() => {
     let cancelled = false
@@ -241,27 +236,19 @@ export function PDFViewer({
 
   function goToPage(p: number) {
     setPage(Math.min(Math.max(p, 1), totalPages))
-    setPending(null)
-    setMovingId(null)
     scrollRef.current?.scrollTo({ left: 0, top: 0 })
-  }
-
-  function selectPin(pin: Pin) {
-    setPending(null)
-    setSelectedId(pin.id)
-    setPage(pin.page)
-    scrollToPinRef.current = pin.id
   }
 
   // Bring a pin picked from the list into view when zoomed in.
   useLayoutEffect(() => {
     const el = scrollRef.current
-    const pin = pins.find((p) => p.id === scrollToPinRef.current)
+    if (!scrollToPin || scrolledRef.current === scrollToPin) return
+    const pin = pins.find((p) => p.id === scrollToPin.id)
     if (!el || !pin || pin.page !== page || !cssW) return
     el.scrollLeft = PAD + (pin.x / 100) * cssW - el.clientWidth / 2
     el.scrollTop = PAD + (pin.y / 100) * cssH - el.clientHeight / 2
-    scrollToPinRef.current = null
-  }, [pins, page, cssW, cssH, selectedId])
+    scrolledRef.current = scrollToPin
+  }, [pins, page, cssW, cssH, scrollToPin])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -289,8 +276,8 @@ export function PDFViewer({
     function onKey(e: KeyboardEvent) {
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if ((e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable=true]")) return
-      if (e.key === "ArrowLeft") { setPage((p) => Math.max(p - 1, 1)); setPending(null) }
-      else if (e.key === "ArrowRight") { setPage((p) => Math.min(p + 1, totalPages)); setPending(null) }
+      if (e.key === "ArrowLeft") setPage((p) => Math.max(p - 1, 1))
+      else if (e.key === "ArrowRight") setPage((p) => Math.min(p + 1, totalPages))
       else if (e.key === "+" || e.key === "=") zoomTo(scaleRef.current * 1.25)
       else if (e.key === "-") zoomTo(scaleRef.current / 1.25)
       else if (e.key === "0") zoomTo(1)
@@ -374,25 +361,21 @@ export function PDFViewer({
       pressOnPinUiRef.current = false
       return
     }
+    if (!onAddPin || adding) return
     const rect = e.currentTarget.getBoundingClientRect()
     const at = { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 }
-    const moving = pins.find((p) => p.id === movingId)
-    if (moving) {
-      onMovePin?.(moving, at.x, at.y)
-      setMovingId(null)
-      setSelectedId(moving.id)
-      return
-    }
-    // First click outside an open comment just closes it.
-    if (selectedId) { setSelectedId(null); return }
-    if (!onAddPin) return
-    setPending(at)
+    setSelectedId(null)
+    setAdding(true)
+    onAddPin({ x: at.x, y: at.y, page, title: "", description: null })
+      .catch((err) => console.error("Pin save error:", err))
+      .finally(() => setAdding(false))
   }
 
-  async function savePending(title: string, description: string) {
-    if (!pending || !onAddPin) return
-    await onAddPin({ x: pending.x, y: pending.y, page, title, description: description || null })
-    setPending(null)
+  /** Close the viewer and show this comment in the page's list. */
+  function showInList(pin: Pin) {
+    setOpen(false)
+    onClose?.()
+    onPinClick?.(pin)
   }
 
   function openModal(pinId?: string) {
@@ -401,9 +384,8 @@ export function PDFViewer({
     setRenderScale(1)
     setPage(pin?.page ?? 1)
     setPageSize(null)
-    setPending(null)
     setSelectedId(pin?.id ?? null)
-    setMovingId(null)
+    setScrollToPin(pin ? { id: pin.id } : null)
     setOpen(true)
   }
 
@@ -413,24 +395,6 @@ export function PDFViewer({
     setHandledFocus(focusPin.nonce)
     openModal(focusPin.id)
   }
-
-  const composer = <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
-  // Step through the comments in their numbered order, page by page, without aiming at pins.
-  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
-  const at = selectedPin ? ordered.findIndex((p) => p.id === selectedPin.id) : -1
-  const step = (d: number) => { if (ordered.length) selectPin(ordered[(at + d + ordered.length) % ordered.length]) }
-  const details = selectedPin && (
-    <PinDetails
-      key={selectedPin.id}
-      pin={selectedPin}
-      number={numbers.get(selectedPin.id) ?? 0}
-      onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
-      onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
-      onStartMove={onMovePin && canEdit(selectedPin) ? () => { setMovingId(selectedPin.id); setSelectedId(null); setPending(null) } : undefined}
-      thread={renderThread?.(selectedPin)}
-      nav={<PinNav index={at} total={ordered.length} onPrev={() => step(-1)} onNext={() => step(1)} />}
-    />
-  )
 
   if (error) {
     return (
@@ -537,99 +501,35 @@ export function PDFViewer({
                     key={pin.id}
                     pin={pin}
                     number={numbers.get(pin.id) ?? ""}
-                    selected={pin.id === selectedId || pin.id === movingId}
-                    onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
-                    onMove={onMovePin && canEdit(pin) ? (x, y) => { onMovePin(pin, x, y); setMovingId(null) } : undefined}
+                    selected={pin.id === selectedId}
+                    onSelect={onPinClick ? () => showInList(pin) : undefined}
+                    onMove={onMovePin && canEdit(pin) ? (x, y) => onMovePin(pin, x, y) : undefined}
                   />
                 ))}
-                {pending && <PinMarker pin={{ ...pending, resolved: false }} pending />}
-                {pending && !narrow && (
-                  <PinPopover x={pending.x} y={pending.y}>{composer}</PinPopover>
-                )}
-                {/* on wide screens the comment opens in the side column, off the design */}
-                {selectedPin && !pending && !narrow && !wide && (
-                  <PinPopover x={selectedPin.x} y={selectedPin.y}>{details}</PinPopover>
-                )}
               </div>
             </div>
           </div>
 
-          <aside data-pin-ui className="hidden w-80 shrink-0 lg:w-96 flex-col border-l border-border md:flex">
-            {selectedPin && !pending ? (
-              <>
-                <div className="border-b border-border px-2 py-1.5">
-                  <Button variant="ghost" size="sm" onPress={() => setSelectedId(null)}>
-                    <ChevronLeftIcon />
-                    {t("All comments")}
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-5 text-sm">{details}</div>
-              </>
-            ) : (
-              <>
-                <div className="border-b border-border px-4 py-3">
-                  <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.length })}</p>
-                  {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
-                </div>
-                <div className="flex-1 overflow-y-auto p-2">
-                  <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} lastMessages={lastMessages} />
-                </div>
-              </>
-            )}
-          </aside>
         </div>
 
-        {movingId && (
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-3 py-2.5 text-sm">
-            <span>{t("Tap the spot where the pin should go.")}</span>
-            <Button variant="ghost" size="sm" onPress={() => setMovingId(null)}>{t("Cancel")}</Button>
-          </div>
-        )}
-
-        {/* Phones: the comment card sits under the page, so it never covers the pins. */}
-        {narrow && (pending || selectedPin) && (
-          // While typing it takes most of the window (the keyboard has already shrunk it) and
-          // keeps the field in sight, so the page gives way instead of the reply box.
-          <div
-            data-pin-ui
-            onFocus={(e) => {
-              const field = e.target
-              if (field.matches("textarea, input")) window.setTimeout(() => field.scrollIntoView({ block: "nearest" }), 300)
-            }}
-            className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200 has-[textarea:focus,input:focus]:max-h-[75%]"
-          >
-            {pending ? composer : details}
+        {/* Only the file and its pins live here; the words go in the comment list. */}
+        {onAddPin && (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-popover px-4 py-2.5 text-sm">
+            <span className="min-w-0 text-muted-foreground">
+              {untitled.length
+                ? t("Pins without a description: {n}. Describe them in the comment list.", { n: untitled.length })
+                : t("Tap the spot that needs a change to put a pin there.")}
+            </span>
+            {untitled.length > 0 && (
+              <Button size="sm" onPress={() => showInList(untitled[0])} className="shrink-0">
+                {t("Describe")}
+              </Button>
+            )}
           </div>
         )}
       </Dialog>
     </>
   )
-}
-
-const NARROW = "(max-width: 639px)"
-
-function subscribeNarrow(onChange: () => void) {
-  const mq = window.matchMedia(NARROW)
-  mq.addEventListener("change", onChange)
-  return () => mq.removeEventListener("change", onChange)
-}
-
-const WIDE = "(min-width: 768px)"
-
-function subscribeWide(onChange: () => void) {
-  const mq = window.matchMedia(WIDE)
-  mq.addEventListener("change", onChange)
-  return () => mq.removeEventListener("change", onChange)
-}
-
-/** True where the viewer has its side column, which then holds the open comment. */
-function useWideScreen() {
-  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false)
-}
-
-/** True on phone-sized screens, where comment cards dock under the page instead of floating. */
-function useNarrowScreen() {
-  return useSyncExternalStore(subscribeNarrow, () => window.matchMedia(NARROW).matches, () => false)
 }
 
 /** A sheet with a folded corner and a red PDF label. */
