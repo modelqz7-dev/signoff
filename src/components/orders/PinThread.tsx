@@ -14,7 +14,7 @@ import { cn, isPdfUrl } from "@/lib/utils"
 
 export type ThreadMessage = { body: string; file: File | null; fixed: boolean }
 
-const SHOWN = 2
+const SHOWN = 4
 
 export function PinThread({
   messages,
@@ -37,10 +37,10 @@ export function PinThread({
   const shown = messages.slice(hidden)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
       {hidden > 0 && (
-        <button type="button" onClick={() => setExpanded(true)} className="self-start text-xs text-muted-foreground hover:text-foreground">
-          {t("{n} earlier messages", { n: hidden })}
+        <button type="button" onClick={() => setExpanded(true)} className="self-start pl-10 text-xs text-muted-foreground hover:text-foreground">
+          {t("Show earlier messages ({n})", { n: hidden })}
         </button>
       )}
       {shown.map((m) => <Message key={m.id} message={m} />)}
@@ -49,25 +49,68 @@ export function PinThread({
   )
 }
 
-function Message({ message }: { message: PinMessage }) {
-  const { t, locale } = useT()
-  const shop = message.author_role === "workshop"
-  const when = new Date(message.created_at).toLocaleDateString(locale, { day: "numeric", month: "short" })
+/**
+ * One line of a conversation, like in a messenger: initial, name, time, then the text in a
+ * size that reads easily. The client's comment itself is shown the same way.
+ */
+export function ChatLine({
+  name,
+  shop,
+  date,
+  extra,
+  children,
+}: {
+  name: string
+  /** Written by the workshop (its initial is filled). */
+  shop?: boolean
+  date: string
+  /** Shown after the date, e.g. "✓ Fixed". */
+  extra?: React.ReactNode
+  children: React.ReactNode
+}) {
+  const { locale } = useT()
+  const when = new Date(date).toLocaleDateString(locale, { day: "numeric", month: "short" })
   return (
-    <div className={cn("flex flex-col gap-1 border-l-2 pl-2.5", shop ? "border-foreground/40" : "border-border")}>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-        <span className="font-medium text-foreground">{message.author_name || (shop ? t("Workshop") : t("Client"))}</span>
-        <span suppressHydrationWarning>{when}</span>
-        {message.marks_fixed && (
-          <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
-            <CheckIcon className="size-3" strokeWidth={3} />
-            {t("Fixed")}
-          </span>
+    <div className="flex gap-3">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase",
+          shop ? "bg-foreground text-background" : "bg-muted text-foreground ring-1 ring-foreground/10"
         )}
+      >
+        {name.trim().charAt(0) || "·"}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{name}</span>
+          <span suppressHydrationWarning>{when}</span>
+          {extra}
+        </div>
+        {children}
       </div>
-      {message.body && <p className="text-sm whitespace-pre-wrap text-foreground">{message.body}</p>}
-      {message.file_url && <Attachment url={message.file_url} />}
     </div>
+  )
+}
+
+function Message({ message }: { message: PinMessage }) {
+  const { t } = useT()
+  const shop = message.author_role === "workshop"
+  return (
+    <ChatLine
+      name={message.author_name || (shop ? t("Workshop") : t("Client"))}
+      shop={shop}
+      date={message.created_at}
+      extra={message.marks_fixed && (
+        <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
+          <CheckIcon className="size-3" strokeWidth={3} />
+          {t("Fixed")}
+        </span>
+      )}
+    >
+      {message.body && <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground">{message.body}</p>}
+      {message.file_url && <Attachment url={message.file_url} />}
+    </ChatLine>
   )
 }
 
@@ -79,7 +122,7 @@ function Attachment({ url }: { url: string }) {
   const file = presigned ? url : signed
   const [viewing, setViewing] = useState(false)
   // A small thumbnail: tapping opens it large, so a tall photo never pushes the reply box away.
-  if (!file) return <span className="size-16 animate-pulse rounded-md bg-muted" />
+  if (!file) return <span className="h-20 w-32 animate-pulse rounded-md bg-muted" />
   return (
     <>
       <button type="button" onClick={() => setViewing(true)} className="group w-fit overflow-hidden rounded-md text-left ring-1 ring-foreground/10">
@@ -90,7 +133,7 @@ function Attachment({ url }: { url: string }) {
           </span>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={file} alt={t("The fix")} className="block h-16 w-24 bg-background object-cover transition-opacity group-hover:opacity-85" />
+          <img src={file} alt={t("The fix")} className="block h-20 w-32 bg-background object-cover transition-opacity group-hover:opacity-85" />
         )}
       </button>
       {viewing && <AttachmentViewer url={file} onClose={() => setViewing(false)} />}
@@ -140,7 +183,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-end gap-1.5 rounded-lg border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+      <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
         {shop && (
           <>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = "" }} />
@@ -172,14 +215,14 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
           autoFocus={autoFocus}
           placeholder={placeholder}
           aria-label={placeholder}
-          className="max-h-32 min-h-7 flex-1 resize-none bg-transparent py-1 text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground"
+          className="max-h-40 min-h-8 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] outline-none [field-sizing:content] placeholder:text-muted-foreground"
         />
         <button
           type="button"
           onClick={send}
           disabled={!canSend}
           aria-label={t("Send")}
-          className="order-last mb-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-30"
+          className="order-last mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity disabled:opacity-30"
         >
           <ArrowUpIcon className="size-4" />
         </button>

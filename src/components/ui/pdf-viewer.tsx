@@ -554,7 +554,7 @@ export function PDFViewer({
             </div>
           </div>
 
-          <aside data-pin-ui className="hidden w-80 shrink-0 flex-col border-l border-border md:flex">
+          <aside data-pin-ui className="hidden w-80 shrink-0 lg:w-96 flex-col border-l border-border md:flex">
             {selectedPin && !pending ? (
               <>
                 <div className="border-b border-border px-2 py-1.5">
@@ -563,12 +563,12 @@ export function PDFViewer({
                     {t("All comments")}
                   </Button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 text-sm">{details}</div>
+                <div className="flex-1 overflow-y-auto p-5 text-sm">{details}</div>
               </>
             ) : (
               <>
                 <div className="border-b border-border px-4 py-3">
-                  <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
+                  <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.length })}</p>
                   {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
