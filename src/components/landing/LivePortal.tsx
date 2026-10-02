@@ -471,14 +471,8 @@ export function LivePortal({ t }: { t: T }) {
   // ── the client portal ──
   const portal = (
     <div className="flex h-full flex-col bg-background">
-      <header className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-border/40 py-3", wide ? "px-6" : "px-4")}>
-        <div className="flex min-w-0 items-center gap-3">
-          {wide && <span className="truncate border-r border-border/40 pr-3 text-sm font-medium text-foreground">Oak &amp; Dot Workshop</span>}
-          <h1 className="truncate text-sm font-medium text-foreground">{t("Kitchen “Modern”")}</h1>
-          <Badge variant="secondary" className="border-0 px-2 py-0.5 text-[11px]" style={{ backgroundColor: statusInfo.bg, color: statusInfo.color }}>
-            {t(statusInfo.label)}
-          </Badge>
-        </div>
+      <header className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-border/40 py-2.5", wide ? "px-6" : "px-4")}>
+        <span className="truncate text-sm font-medium text-foreground">Oak &amp; Dot Workshop</span>
         <div className="flex items-center gap-3">
           {wide && (
             <span className="text-xs text-muted-foreground">
@@ -497,25 +491,27 @@ export function LivePortal({ t }: { t: T }) {
 
       <div className="relative flex min-h-0 flex-1">
         <div ref={mainRef} className={cn("flex min-w-0 flex-1 justify-center pt-6 pb-28", wide ? "px-6" : "px-4", auto ? "overflow-hidden" : "overflow-y-auto")}>
-          <div className="flex h-fit w-full max-w-4xl flex-col gap-6">
+          <div className="flex h-fit w-full max-w-6xl flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">ORD-24</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 className={cn("font-[family-name:var(--font-brand)] leading-tight font-bold tracking-[-0.03em] text-foreground", wide ? "text-3xl" : "text-2xl")}>{t("Kitchen “Modern”")}</h1>
+                <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">{t(statusInfo.label)}</span>
+              </div>
+            </div>
             {status === "approved" ? (
               <ApprovedBanner order={{ approved_at: new Date().toISOString(), approved_by: "Anna Kovalenko" }} />
             ) : (
-              <ReviewSteps status={status} />
+              <ReviewSteps status={status} commented={pins.length > 0} />
             )}
-            <div className={cn("grid gap-4", wide ? "grid-cols-4" : "grid-cols-2")}>
-              <Info label={t("Client")} value="Anna Kovalenko" />
-              <Info label={t("Price")} value="$8,400" />
-              <Info label={t("Deadline")} value={date(2026, 9, 5)} />
-              <Info label={t("Created")} value={date(2026, 8, 21)} />
-            </div>
-            <div ref={fileCardRef}>
+            <div className={cn("grid items-start gap-5", wide && "grid-cols-[minmax(0,1fr)_300px]")}>
+            <div ref={fileCardRef} className="min-w-0">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sm">
-                    {t("File")}
+                    {t("Design")}
                     {version > 1 && (
-                      <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[11px] font-normal text-accent">{t("version {n}", { n: version })}</span>
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">{t("version {n}", { n: version })}</span>
                     )}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">{t("Click on the file to leave a comment.")}</p>
@@ -585,30 +581,47 @@ export function LivePortal({ t }: { t: T }) {
                 </CardContent>
               </Card>
             </div>
+            <div className="flex min-w-0 flex-col gap-4">
+              <Card size="sm">
+                <CardHeader>
+                  <CardTitle>{t("Details")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
+                    <Row label={t("Client")} value="Anna Kovalenko" />
+                    <Row label={t("Price")} value="$8,400" />
+                    <Row label={t("Deadline")} value={date(2026, 9, 5)} />
+                    <Row label={t("Created")} value={date(2026, 8, 21)} />
+                  </dl>
+                </CardContent>
+              </Card>
+              {wide && (
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>{t("Comments ({n})", { n: openCount })}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-1.5">
+                    <div ref={listRef}>
+                      <PinList pins={pins} numbers={numbers} emptyText="No comments yet. Click on the file to add one." />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            </div>
           </div>
         </div>
 
-        {wide && (
-          <aside className="flex w-[280px] shrink-0 flex-col border-l border-border/40">
-            <div className="border-b border-border/40 p-4">
-              <h2 className="text-sm font-medium text-foreground">{t("Comments ({n})", { n: openCount })}</h2>
-            </div>
-            <div ref={listRef} className="flex-1 overflow-hidden p-3">
-              <PinList pins={pins} numbers={numbers} emptyText="No comments yet. Click on the file to add one." />
-            </div>
-          </aside>
-        )}
-
         {/* action bar */}
-        <div className={cn("absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95", wide && "right-[280px]")}>
-          <div className={cn("mx-auto flex max-w-4xl items-center gap-2 py-3", wide ? "px-6" : "px-4")}>
+        <div className="absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95">
+          <div className={cn("mx-auto flex max-w-6xl items-center gap-2 py-3", wide ? "px-6" : "px-4")}>
             {!wide && (
               <Button variant="outline" size="sm"><MessageSquareIcon />{openCount}</Button>
             )}
             <div className="ml-auto flex items-center gap-2">
               {status === "approved" ? (
                 <>
-                  <span className="flex items-center gap-1.5 text-sm text-[var(--status-approved)]">
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
                     <CheckIcon className="size-4" />
                     {t("Approved")}
                   </span>
@@ -623,7 +636,7 @@ export function LivePortal({ t }: { t: T }) {
                   <span ref={approveRef} className="inline-flex">
                     <Button
                       onPress={() => { setChecked(false); setDialog("approve") }}
-                      className={cn("bg-[var(--status-approved)] text-white transition-transform hover:opacity-90", auto && step === 16 && "scale-95")}
+                      className={cn("transition-transform", auto && step === 16 && "scale-95")}
                     >
                       <CheckIcon />
                       {t("Approve")}
@@ -661,7 +674,7 @@ export function LivePortal({ t }: { t: T }) {
                         checked={shownChecked}
                         readOnly={auto}
                         onChange={(e) => setChecked(e.target.checked)}
-                        className="size-4 shrink-0 accent-[var(--status-approved)]"
+                        className="size-4 shrink-0 accent-[var(--foreground)]"
                       />
                     </span>
                     <span>{t("I've checked the design and confirm it")}</span>
@@ -677,7 +690,7 @@ export function LivePortal({ t }: { t: T }) {
                           setYouStatus("approved")
                           showNote(t("Approved by Anna K. · certificate saved"))
                         }}
-                        className={cn("bg-[var(--status-approved)] text-white hover:opacity-90", auto && step === 20 && "scale-95")}
+                        className={cn(auto && step === 20 && "scale-95")}
                       >
                         <CheckIcon />
                         {t("Approve")}
@@ -821,6 +834,16 @@ export function LivePortal({ t }: { t: T }) {
 
 function pinOf(i: number, p: Point, title: string, description: string | null, resolved: boolean): Pin {
   return { id: `demo-${i}`, order_id: "demo", x: p.x, y: p.y, page: 1, title, description, author_name: "Anna Kovalenko", resolved, created_at: "" }
+}
+
+/** A details row, as on the portal. */
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-1.5 first:pt-0 last:pb-0">
+      <dt className="shrink-0 text-xs text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium text-foreground" suppressHydrationWarning>{value}</dd>
+    </div>
+  )
 }
 
 function Info({ label, value, color }: { label: string; value: string; color?: string }) {
