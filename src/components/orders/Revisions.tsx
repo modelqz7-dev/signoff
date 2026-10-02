@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PinGroups, PinNumber, PinOutlineIcon, PinRow } from "@/components/orders/pins"
+import { PinGroups, PinNumber, PinOutlineIcon, PinRow, PinStatus } from "@/components/orders/pins"
 import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
 import type { Pin, PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
@@ -179,9 +179,9 @@ export function AnswerablePinList({
 }
 
 /**
- * The client's comments: pins are put on the file first, then a comment is written here for
- * one of them, picked by its number. Described comments open their conversation with the
- * workshop.
+ * The client's comments: pins are put on the file first. Here a switch lists every pin by its
+ * number; picking one shows it below, where the client writes its title and what to change,
+ * or reads and continues the conversation with the workshop.
  */
 export function ClientPinList({
   pins,
@@ -193,13 +193,12 @@ export function ClientPinList({
   onDelete,
   onToggleResolved,
   onShow,
-  onOpenFile,
   onPick,
 }: {
   pins: Pin[]
   numbers: Map<string, number>
   messages: Map<string, PinMessage[]>
-  /** Open this comment (or pick this pin for a new one) and bring it into view (change `nonce` to repeat). */
+  /** Switch to this pin and bring it into view (change `nonce` to repeat). */
   focus?: { id: string; nonce: number } | null
   onDescribe: (pin: Pin, title: string, description: string | null) => Promise<void> | void
   onSend: (pin: Pin, text: string) => Promise<void>
@@ -207,146 +206,187 @@ export function ClientPinList({
   onToggleResolved: (pin: Pin) => void
   /** Show the pin on the file. */
   onShow: (pin: Pin) => void
-  /** Open the file to put a pin on it. */
-  onOpenFile: () => void
-  /** The pin picked for a new comment, to highlight it on the file. */
+  /** The pin switched to, to highlight it on the file. */
   onPick?: (pin: Pin | null) => void
 }) {
   const { t } = useT()
-  const [openId, setOpenId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [handled, setHandled] = useState<number | null>(null)
-  const bare = pins.filter((p) => !p.title.trim()).sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
-  const described = pins.filter((p) => p.title.trim())
-  const focusIsBare = !!focus && bare.some((p) => p.id === focus.id)
-  if (focus && focus.nonce !== handled) {
-    setHandled(focus.nonce)
-    if (!focusIsBare) setOpenId(focus.id)
-  }
-  useEffect(() => {
-    if (handled === null) return
-    const target = document.getElementById(focusIsBare ? "new-comment" : `pin-row-${openId}`)
-    target?.scrollIntoView({ behavior: "smooth", block: "center" })
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when a new request comes in
-  }, [handled])
-
-  const row = (pin: Pin) => {
-    const thread = messages.get(pin.id) ?? []
-    const editing = editingId === pin.id
-    const isOpen = editing || openId === pin.id
-    return (
-      <PinRow
-        key={pin.id}
-        pin={pin}
-        number={numbers.get(pin.id)}
-        last={isOpen ? undefined : thread[thread.length - 1]}
-        selected={isOpen}
-        onClick={() => { setOpenId(isOpen ? null : pin.id); setEditingId(null) }}
-        trailing={(
-          <button
-            type="button"
-            onClick={() => onShow(pin)}
-            title={t("Show on the file")}
-            aria-label={t("Show on the file")}
-            className="-mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground"
-          >
-            <PinOutlineIcon />
-          </button>
-        )}
-      >
-        {isOpen && (
-          <div className="flex flex-col gap-3 px-3 pb-3 sm:pl-12">
-            {editing ? (
-              <DescribeField
-                initial={pin.title}
-                focusKey="mount"
-                onSave={async (text) => { await onDescribe(pin, text, pin.description ?? null); setEditingId(null) }}
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <PinThread messages={thread} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => onSend(pin, m.body)} />
-            )}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              {!editing && (
-                <button type="button" onClick={() => setEditingId(pin.id)} className="inline-flex items-center gap-1 hover:text-foreground">
-                  <PencilIcon className="size-3" />{t("Edit text")}
-                </button>
-              )}
-              {!pin.fix_status && (
-                <button type="button" onClick={() => onToggleResolved(pin)} className="inline-flex items-center gap-1 hover:text-foreground">
-                  {pin.resolved ? <RotateCcwIcon className="size-3" /> : <CheckIcon className="size-3" />}
-                  {pin.resolved ? t("Reopen") : t("Resolve")}
-                </button>
-              )}
-              <DeleteLink onDelete={() => onDelete(pin)} />
-            </div>
-          </div>
-        )}
-      </PinRow>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <NewComment
-        bare={bare}
-        numbers={numbers}
-        focus={focusIsBare ? focus : null}
-        onSave={onDescribe}
-        onDelete={onDelete}
-        onOpenFile={onOpenFile}
-        onPick={onPick}
-      />
-      {described.length > 0 && <PinGroups pins={described} render={row} />}
-    </div>
-  )
-}
-
-/** "New comment": pick one of the pins put on the file by its number, then say what is wrong. */
-function NewComment({ bare, numbers, focus, onSave, onDelete, onOpenFile, onPick }: {
-  bare: Pin[]
-  numbers: Map<string, number>
-  focus: { id: string; nonce: number } | null
-  onSave: (pin: Pin, title: string, description: string | null) => Promise<void> | void
-  onDelete: (pin: Pin) => Promise<void> | void
-  onOpenFile: () => void
-  onPick?: (pin: Pin | null) => void
-}) {
-  const { t } = useT()
+  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
   const [chosenId, setChosenId] = useState<string | null>(null)
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const titleRef = useRef<HTMLInputElement>(null)
   const [handled, setHandled] = useState<number | null>(null)
   if (focus && focus.nonce !== handled) {
     setHandled(focus.nonce)
     setChosenId(focus.id)
   }
-  // The pin asked for, else the one last put on the file.
-  const chosen = bare.find((p) => p.id === chosenId) ?? bare[bare.length - 1] ?? null
+  // The pin asked for; else the first one still without words; else the first still open.
+  const chosen =
+    ordered.find((p) => p.id === chosenId) ??
+    ordered.find((p) => !p.title.trim()) ??
+    ordered.find((p) => !p.resolved || p.fix_status === "reopened") ??
+    ordered[0] ??
+    null
   const chosenKey = chosen?.id ?? null
   useEffect(() => { onPick?.(chosen) }, [chosenKey]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (handled === null) return
+    document.getElementById("pin-switch")?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [handled])
+
+  if (!chosen) {
+    return (
+      <p className="px-1 py-6 text-center text-sm text-muted-foreground">
+        {t("Open the file and put pins where something should change. They will show up here by their numbers.")}
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div id="pin-switch" role="tablist" aria-label={t("Pins")} className="flex scroll-mt-20 flex-wrap gap-1.5">
+        {ordered.map((p) => {
+          const on = p.id === chosen.id
+          const bare = !p.title.trim()
+          const reopened = p.fix_status === "reopened"
+          const done = p.resolved && !reopened
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              title={p.title || t("No description yet")}
+              onClick={() => setChosenId(p.id)}
+              className={cn(
+                "relative flex size-9 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors",
+                on
+                  ? "bg-foreground text-background"
+                  : bare
+                    ? "text-foreground outline-1 -outline-offset-1 outline-dashed outline-foreground/50 hover:bg-hover"
+                    : done
+                      ? "bg-muted text-muted-foreground hover:bg-hover"
+                      : "bg-muted text-foreground ring-1 ring-border hover:bg-hover"
+              )}
+            >
+              {numbers.get(p.id) ?? ""}
+              {done && !on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full bg-card p-0.5" strokeWidth={3} />}
+              {reopened && <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-card" />}
+            </button>
+          )
+        })}
+      </div>
+
+      <PinPanel
+        key={chosen.id}
+        pin={chosen}
+        number={numbers.get(chosen.id)}
+        thread={messages.get(chosen.id) ?? []}
+        focusKey={focus?.id === chosen.id ? `focus-${focus.nonce}` : undefined}
+        onDescribe={onDescribe}
+        onSend={onSend}
+        onDelete={onDelete}
+        onToggleResolved={onToggleResolved}
+        onShow={onShow}
+      />
+    </div>
+  )
+}
+
+/** One pin, picked in the switch: its words (written here) and the conversation about it. */
+function PinPanel({ pin, number, thread, focusKey, onDescribe, onSend, onDelete, onToggleResolved, onShow }: {
+  pin: Pin
+  number?: number
+  thread: PinMessage[]
+  focusKey?: string
+  onDescribe: (pin: Pin, title: string, description: string | null) => Promise<void> | void
+  onSend: (pin: Pin, text: string) => Promise<void>
+  onDelete: (pin: Pin) => Promise<void> | void
+  onToggleResolved: (pin: Pin) => void
+  onShow: (pin: Pin) => void
+}) {
+  const { t } = useT()
+  const bare = !pin.title.trim()
+  const [editing, setEditing] = useState(false)
+  const writing = bare || editing
+  const saved = !pin.id.startsWith("temp-")
+
+  return (
+    <div className="flex flex-col gap-4 rounded-xl bg-muted/40 p-4 ring-1 ring-foreground/5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-foreground">{t("Pin {n}", { n: number ?? "" })}</span>
+        <span className="text-xs text-muted-foreground">{t("p. {n}", { n: pin.page })}</span>
+        {!bare && <PinStatus pin={pin} />}
+        <button
+          type="button"
+          onClick={() => onShow(pin)}
+          className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <PinOutlineIcon className="size-3.5" />{t("Show on the file")}
+        </button>
+      </div>
+
+      {writing ? (
+        <PinTextForm
+          pin={pin}
+          disabled={!saved}
+          focusKey={focusKey ?? (bare ? "mount" : "edit")}
+          onSave={async (title, description) => { await onDescribe(pin, title, description); setEditing(false) }}
+          onCancel={bare ? undefined : () => setEditing(false)}
+        />
+      ) : (
+        <>
+          <div className="flex flex-col gap-1">
+            <p className="text-[17px] leading-snug font-medium break-words text-foreground">{pin.title}</p>
+            {pin.description && <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>}
+          </div>
+          <PinThread messages={thread} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => onSend(pin, m.body)} />
+        </>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {!writing && (
+          <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 hover:text-foreground">
+            <PencilIcon className="size-3" />{t("Edit text")}
+          </button>
+        )}
+        {!bare && !pin.fix_status && (
+          <button type="button" onClick={() => onToggleResolved(pin)} className="inline-flex items-center gap-1 hover:text-foreground">
+            {pin.resolved ? <RotateCcwIcon className="size-3" /> : <CheckIcon className="size-3" />}
+            {pin.resolved ? t("Reopen") : t("Resolve")}
+          </button>
+        )}
+        {saved && <DeleteLink onDelete={() => onDelete(pin)} />}
+      </div>
+    </div>
+  )
+}
+
+/** The pin's title and what to change. */
+function PinTextForm({ pin, disabled, focusKey, onSave, onCancel }: {
+  pin: Pin
+  disabled?: boolean
+  /** Take the focus whenever this changes (and on mount). */
+  focusKey: string
+  onSave: (title: string, description: string | null) => Promise<void>
+  onCancel?: () => void
+}) {
+  const { t } = useT()
+  const [title, setTitle] = useState(pin.title)
+  const [description, setDescription] = useState(pin.description ?? "")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
     // After the viewer closes it hands focus back to its button; take it once that is done.
     const timer = window.setTimeout(() => titleRef.current?.focus({ preventScroll: true }), 350)
     return () => window.clearTimeout(timer)
-  }, [handled])
-
-  const saved = !!chosen && !chosen.id.startsWith("temp-")
-  const canSave = saved && !!title.trim() && !saving
+  }, [focusKey])
+  const canSave = !disabled && !!title.trim() && !saving
 
   async function save() {
-    if (!chosen || !canSave) return
+    if (!canSave) return
     setSaving(true)
     setError(null)
     try {
-      await onSave(chosen, title.trim(), description.trim() || null)
-      setTitle("")
-      setDescription("")
-      setChosenId(null)
+      await onSave(title.trim(), description.trim() || null)
     } catch (e) {
       setError((e as Error)?.message || t("Something went wrong"))
     }
@@ -354,124 +394,31 @@ function NewComment({ bare, numbers, focus, onSave, onDelete, onOpenFile, onPick
   }
 
   return (
-    <div id="new-comment" className="flex scroll-mt-20 flex-col gap-3 rounded-xl bg-muted/40 p-3 ring-1 ring-foreground/5">
-      <p className="text-sm font-medium text-foreground">{t("New comment")}</p>
-      {bare.length === 0 ? (
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">{t("First put a pin on the file where something should change. It will show up here.")}</p>
-          <Button size="sm" variant="outline" onPress={onOpenFile} className="shrink-0">
-            <PinOutlineIcon />{t("Put a pin")}
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t("Pin")}</span>
-            <div role="radiogroup" aria-label={t("Pin")} className="flex flex-wrap gap-1.5">
-              {bare.map((p) => {
-                const on = p.id === chosen?.id
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setChosenId(p.id)}
-                    className={cn(
-                      "flex size-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums transition-colors",
-                      on ? "bg-foreground text-background" : "bg-background text-foreground ring-1 ring-border hover:bg-hover"
-                    )}
-                  >
-                    {numbers.get(p.id) ?? ""}
-                  </button>
-                )
-              })}
-            </div>
-            <span className="text-xs text-muted-foreground">{chosen ? t("p. {n}", { n: chosen.page }) : ""}</span>
-            {chosen && saved && (
-              <button type="button" onClick={() => onDelete(chosen)} className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
-                <Trash2Icon className="size-3" />{t("Remove pin")}
-              </button>
-            )}
-          </div>
-          <Input
-            ref={titleRef}
-            value={title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value.slice(0, 200))}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); save() } }}
-            placeholder={t("Title, e.g. Black handles")}
-            aria-label={t("Title")}
-            className="h-10 bg-background text-[15px]"
-          />
-          <Textarea
-            value={description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value.slice(0, 2000))}
-            placeholder={t("What is wrong and how it should be (optional)")}
-            aria-label={t("Description")}
-            rows={2}
-            className="bg-background text-[15px]"
-          />
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" size="sm" onPress={onOpenFile}>
-              <PinOutlineIcon />{t("Put another pin")}
-            </Button>
-            <Button size="sm" onPress={save} isDisabled={!canSave}>
-              {saving ? t("Saving...") : t("Add comment")}
-            </Button>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-function DescribeField({ initial, focusKey, disabled, onSave, onCancel }: {
-  initial: string
-  /** Take the focus whenever this changes (and on mount when set). */
-  focusKey?: string
-  disabled?: boolean
-  onSave: (text: string) => Promise<void>
-  onCancel?: () => void
-}) {
-  const { t } = useT()
-  const [text, setText] = useState(initial)
-  const [saving, setSaving] = useState(false)
-  const ref = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => {
-    if (!focusKey) return
-    // After the viewer closes it hands focus back to its button; take it once that is done.
-    const timer = window.setTimeout(() => ref.current?.focus({ preventScroll: true }), 350)
-    return () => window.clearTimeout(timer)
-  }, [focusKey])
-  const canSave = !!text.trim() && !saving && !disabled
-
-  async function save() {
-    if (!canSave) return
-    setSaving(true)
-    try { await onSave(text.trim()) } finally { setSaving(false) }
-  }
-
-  return (
-    <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-      <textarea
-        ref={ref}
-        value={text}
-        onChange={(e) => setText(e.target.value.slice(0, 200))}
-        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save() } else if (e.key === "Escape") onCancel?.() }}
-        rows={1}
-        placeholder={t("What should change here?")}
-        aria-label={t("What should change here?")}
-        className="max-h-40 min-h-8 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] outline-none [field-sizing:content] placeholder:text-muted-foreground"
+    <div className="flex flex-col gap-2.5">
+      <Input
+        ref={titleRef}
+        value={title}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value.slice(0, 200))}
+        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); save() } }}
+        placeholder={t("Title, e.g. Black handles")}
+        aria-label={t("Title")}
+        className="h-10 bg-background text-[15px]"
       />
-      <button
-        type="button"
-        onClick={save}
-        disabled={!canSave}
-        className="mb-0.5 inline-flex h-8 shrink-0 items-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-opacity disabled:opacity-30"
-      >
-        {t("Save")}
-      </button>
+      <Textarea
+        value={description}
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value.slice(0, 2000))}
+        placeholder={t("Your question or what to change (optional)")}
+        aria-label={t("Description")}
+        rows={3}
+        className="bg-background text-[15px]"
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="flex justify-end gap-2">
+        {onCancel && <Button variant="ghost" size="sm" onPress={onCancel}>{t("Cancel")}</Button>}
+        <Button size="sm" onPress={save} isDisabled={!canSave}>
+          {saving ? t("Saving...") : t("Save")}
+        </Button>
+      </div>
     </div>
   )
 }
