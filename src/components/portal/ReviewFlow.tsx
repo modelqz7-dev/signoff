@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { CheckIcon, MessageSquareIcon, PencilIcon, PartyPopperIcon, SendIcon } from "lucide-react"
+import { CheckIcon, PencilIcon, PartyPopperIcon, SendIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { CommentsIcon } from "@/components/orders/pins"
 import { useT } from "@/lib/i18n"
 import type { Order } from "@/components/dashboard/types"
 
@@ -69,7 +70,7 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/75">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
         <Button variant="outline" size="sm" className="lg:hidden" onPress={onComments}>
-          <MessageSquareIcon />
+          <CommentsIcon />
           {commentCount}
         </Button>
         <div className="hidden min-w-0 flex-1 sm:block">{children}</div>

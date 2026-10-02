@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { AwardIcon, CheckIcon, ChevronDownIcon, MessageSquareIcon, MoonIcon, MousePointer2Icon, MousePointerClickIcon, PencilIcon, RotateCcwIcon, SendIcon, Trash2Icon } from "lucide-react"
+import { AwardIcon, CheckIcon, ChevronDownIcon, MoonIcon, MousePointer2Icon, MousePointerClickIcon, PencilIcon, RotateCcwIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { NAV_ICONS, NavItem, SectionLabel } from "@/components/dashboard/nav"
 import { STATUS_MAP, type OrderStatus } from "@/components/dashboard/types"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { ApprovedBanner, ReviewSteps } from "@/components/portal/ReviewFlow"
-import { PinList, PinMarker } from "@/components/orders/pins"
+import { PinList, PinMarker, CommentsIcon } from "@/components/orders/pins"
 import type { Pin } from "@/lib/pins"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -616,7 +616,7 @@ export function LivePortal({ t }: { t: T }) {
         <div className="absolute inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95">
           <div className={cn("mx-auto flex max-w-6xl items-center gap-2 py-3", wide ? "px-6" : "px-4")}>
             {!wide && (
-              <Button variant="outline" size="sm"><MessageSquareIcon />{openCount}</Button>
+              <Button variant="outline" size="sm"><CommentsIcon />{openCount}</Button>
             )}
             <div className="ml-auto flex items-center gap-2">
               {status === "approved" ? (

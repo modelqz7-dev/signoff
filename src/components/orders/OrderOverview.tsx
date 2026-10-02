@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { AwardIcon, CheckIcon, CopyIcon, MessageSquareIcon, UploadIcon } from "lucide-react"
+import { AwardIcon, CheckIcon, CopyIcon, UploadIcon } from "lucide-react"
 import { STATUS_MAP, type Order } from "@/components/dashboard/types"
 import { pinsOfVersion, type Pin } from "@/lib/pins"
 import { useNow } from "@/lib/use-now"
+import { CommentsIcon } from "@/components/orders/pins"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -96,7 +97,7 @@ export function NextStep({ order, pins, copied, uploading, certificateHref, onCo
   } else if (order.status === "await" && open > 0) {
     title = open === 1 ? t("{client} left a comment", { client }) : t("{client} left {n} comments", { client, n: open })
     text = t("Look through them on the file. Fix what's needed and upload a new version, or wait for the client's decision.")
-    action = button(<MessageSquareIcon className="size-4" />, t("See comments"), onSeeComments)
+    action = button(<CommentsIcon className="size-4" />, t("See comments"), onSeeComments)
   } else if (order.status === "await") {
     const days = daysSince(order.status_changed_at ?? order.created_at, now)
     title = t("Waiting on {client}", { client })
