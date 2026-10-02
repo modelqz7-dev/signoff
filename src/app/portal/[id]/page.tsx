@@ -34,7 +34,7 @@ export default function PortalPage() {
 
   // Everything goes through the server: the database itself is closed to portal visitors.
   const portal = usePortal(orderId)
-  const { phase, order, viewer: clientName, setResolved, movePin, deletePin } = portal
+  const { phase, order, setResolved, movePin, deletePin } = portal
   const [loading, setLoading] = useState(false)
 
   // The client always works on the latest version; comments on earlier versions stay with them.
@@ -345,9 +345,6 @@ export default function PortalPage() {
           <BrandMark brand={brand} className={brand?.badge ? "hidden border-l border-border/40 pl-3 sm:flex" : ""} />
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-muted-foreground md:inline">
-            {t("Viewing as")} <span className="font-medium text-foreground">{clientName}</span>
-          </span>
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
             <ThemeToggle />
