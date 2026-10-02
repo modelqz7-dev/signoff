@@ -110,8 +110,8 @@ export default function Dashboard() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <Greeting
               name={shop?.name || ""}
               today={today}
@@ -123,12 +123,12 @@ export default function Dashboard() {
             <GettingStarted orders={orders} shop={shop} onNewOrder={() => setNewOrderOpen(true)} />
 
             {/* what needs me, who I'm waiting on, what's due */}
-            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
-              <div className="flex min-w-0 flex-col gap-5">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
+              <div className="flex min-w-0 flex-col gap-6">
                 <YourMove today={today} />
                 <WaitingOnClients today={today} />
               </div>
-              <div className="flex min-w-0 flex-col gap-5">
+              <div className="flex min-w-0 flex-col gap-6">
                 <ComingUp today={today} />
                 <ClientActivity orders={orders} pins={pins} />
               </div>
