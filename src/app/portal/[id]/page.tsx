@@ -92,6 +92,12 @@ export default function PortalPage() {
     setListFocus((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 }))
   }
 
+  /** Open the file to put a pin on it: the PDF full screen, an image brought into view. */
+  function openFile() {
+    if (isPdf) { setFocusPin((f) => ({ id: "", nonce: (f?.nonce ?? 0) + 1 })); return }
+    fileContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+
   /** Show where a comment sits: the PDF opens on it, an image gets it highlighted. */
   function showOnFile(pin: Pin) {
     if (isPdf) { setFocusPin((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 })); return }
@@ -326,7 +332,7 @@ export default function PortalPage() {
               {order.file_url && (
                 <Card id="comments" className="scroll-mt-20">
                   <CardHeader>
-                    <CardTitle className="text-sm">{t("Comments ({n})", { n: pins.length })}</CardTitle>
+                    <CardTitle className="text-sm">{t("Comments ({n})", { n: pins.filter((p) => p.title.trim()).length })}</CardTitle>
                   </CardHeader>
                   <CardContent className="px-2">
                     <ClientPinList
@@ -334,11 +340,13 @@ export default function PortalPage() {
                       numbers={numbers}
                       messages={threads}
                       focus={listFocus}
-                      onDescribe={(pin, text) => describePin(pin.id, text)}
+                      onDescribe={(pin, title, description) => describePin(pin.id, title, description)}
                       onSend={(pin, text) => sendMessage(pin.id, text)}
                       onDelete={(pin) => deletePin(pin.id)}
                       onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
                       onShow={showOnFile}
+                      onOpenFile={openFile}
+                      onPick={(pin) => setSelectedPinId(pin?.id ?? null)}
                     />
                   </CardContent>
                 </Card>
