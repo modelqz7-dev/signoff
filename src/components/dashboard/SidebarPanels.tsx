@@ -581,51 +581,117 @@ function SecurityPanel() {
   const { t } = useT()
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
+  // A new password only takes effect with the code mailed to the account's address.
+  const [code, setCode] = useState("")
+  const [step, setStep] = useState<"password" | "code">("password")
+  const [email, setEmail] = useState("")
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
 
-  async function change(e: React.FormEvent) {
+  async function sendCode() {
+    const { data } = await supabase.auth.getUser()
+    setEmail(data.user?.email ?? "")
+    const { error } = await supabase.auth.reauthenticate()
+    if (error) { setStatus({ ok: false, text: error.message }); return false }
+    return true
+  }
+
+  async function requestCode(e: React.FormEvent) {
     e.preventDefault()
     setStatus(null)
     if (password.length < 8) return setStatus({ ok: false, text: t("Use at least 8 characters") })
     if (password !== confirm) return setStatus({ ok: false, text: t("Passwords don't match") })
     setSaving(true)
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) setStatus({ ok: false, text: error.message })
+    if (await sendCode()) { setCode(""); setStep("code") }
+    setSaving(false)
+  }
+
+  async function resend() {
+    setStatus(null)
+    setSaving(true)
+    if (await sendCode()) setStatus({ ok: true, text: t("A new code is on its way") })
+    setSaving(false)
+  }
+
+  async function change(e: React.FormEvent) {
+    e.preventDefault()
+    setStatus(null)
+    setSaving(true)
+    const { error } = await supabase.auth.updateUser({ password, nonce: code.trim() })
+    if (error) setStatus({ ok: false, text: /nonce|otp|token|expired|invalid/i.test(error.message) ? t("The code is wrong or has expired") : error.message })
     else {
       setPassword("")
       setConfirm("")
+      setCode("")
+      setStep("password")
       setStatus({ ok: true, text: t("Password updated") })
     }
     setSaving(false)
   }
 
+  function cancel() {
+    setStep("password")
+    setCode("")
+    setStatus(null)
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={change} className="flex flex-col gap-2">
-        <Label htmlFor="panel-new-password">{t("New password")}</Label>
-        <Input
-          id="panel-new-password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-        />
-        <Label htmlFor="panel-confirm-password" className="mt-1">{t("Confirm password")}</Label>
-        <Input
-          id="panel-confirm-password"
-          type="password"
-          autoComplete="new-password"
-          value={confirm}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirm(e.target.value)}
-        />
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <Message status={status} />
-          <Button type="submit" variant="outline" className="ml-auto" isDisabled={saving || !password || !confirm}>
-            {saving ? t("Updating...") : t("Change password")}
-          </Button>
-        </div>
-      </form>
+      {step === "password" ? (
+        <form onSubmit={requestCode} className="flex flex-col gap-2">
+          <Label htmlFor="panel-new-password">{t("New password")}</Label>
+          <Input
+            id="panel-new-password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+          />
+          <Label htmlFor="panel-confirm-password" className="mt-1">{t("Confirm password")}</Label>
+          <Input
+            id="panel-confirm-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirm(e.target.value)}
+          />
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <Message status={status} />
+            <Button type="submit" variant="outline" className="ml-auto" isDisabled={saving || !password || !confirm}>
+              {saving ? t("Sending code...") : t("Change password")}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={change} className="flex flex-col gap-2">
+          <p className="text-sm text-foreground">
+            {email ? t("We sent a 6-digit code to {email}.", { email }) : t("We sent a 6-digit code to your email.")}
+          </p>
+          <p className="text-sm text-muted-foreground">{t("Enter it to confirm the new password. Nobody can change it without access to your mail.")}</p>
+          <Label htmlFor="panel-password-code" className="mt-1">{t("Code from the email")}</Label>
+          <Input
+            id="panel-password-code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            value={code}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            className="tracking-[0.3em] tabular-nums"
+          />
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <Message status={status} />
+            <button type="button" onClick={resend} disabled={saving} className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50">
+              {t("Send again")}
+            </button>
+            <button type="button" onClick={cancel} className="text-sm text-muted-foreground hover:text-foreground">
+              {t("Cancel")}
+            </button>
+            <Button type="submit" className="ml-auto" isDisabled={saving || code.trim().length < 6}>
+              {saving ? t("Updating...") : t("Confirm")}
+            </Button>
+          </div>
+        </form>
+      )}
       <Note>{t("Client portal links are protected per order: set an access password on each order page before sharing the link.")}</Note>
     </div>
   )
