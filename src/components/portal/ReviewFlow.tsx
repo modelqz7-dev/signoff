@@ -9,45 +9,42 @@ import { useT } from "@/lib/i18n"
 import type { Order } from "@/components/dashboard/types"
 
 /** "Look → comment → decide" hint at the top of the portal while a decision is pending. */
-export function ReviewSteps({ status }: { status: Order["status"] }) {
+export function ReviewSteps({ status, commented }: { status: Order["status"]; commented: boolean }) {
   const { t } = useT()
-  const steps = [t("Look through the design"), t("Click on it to leave comments"), t("Approve it or ask for changes")]
-  const current = status === "changes" ? 2 : 1
+  // Look → comment → decide, drawn like the workshop's order progress: thin bars, short labels.
+  const steps = [
+    { label: t("Look through the design"), done: true },
+    { label: t("Click on it to leave comments"), done: commented || status === "changes" },
+    { label: t("Approve it or ask for changes"), done: status === "changes" },
+  ]
+  const current = steps.findIndex((s) => !s.done)
   return (
-    <ol className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-muted/50 px-4 py-3 text-xs">
-      {steps.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={cn(
-              "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
-              i <= current ? "bg-accent text-accent-foreground" : "bg-background text-muted-foreground ring-1 ring-border"
-            )}
-          >
-            {i + 1}
+    <ol className="grid grid-cols-3 gap-2" aria-label={t("Your review")}>
+      {steps.map((s, i) => (
+        <li key={s.label} className="flex min-w-0 flex-col gap-1.5" aria-current={i === current ? "step" : undefined}>
+          <span className={cn("h-1 rounded-full", s.done ? "bg-foreground/70" : i === current ? "bg-foreground/25" : "bg-muted")} />
+          <span className={cn("flex items-start gap-1.5 text-[11px] leading-tight sm:text-xs", s.done || i === current ? "text-foreground" : "text-muted-foreground")}>
+            <span className="shrink-0 tabular-nums text-muted-foreground">{i + 1}</span>
+            {s.label}
           </span>
-          <span className={i <= current ? "text-foreground" : "text-muted-foreground"}>{label}</span>
         </li>
       ))}
     </ol>
   )
 }
 
-/** Shown instead of the steps once the client has approved. */
 export function ApprovedBanner({ order }: { order: Pick<Order, "approved_at" | "approved_by"> }) {
   const { t, locale } = useT()
   const when = order.approved_at ? new Date(order.approved_at).toLocaleDateString(locale, { dateStyle: "long" }) : null
   return (
-    <div
-      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm"
-      style={{ backgroundColor: "var(--status-approved-bg)", color: "var(--status-approved)" }}
-    >
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--status-approved)] text-white">
+    <div className="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm text-foreground ring-1 ring-foreground/10">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
         <CheckIcon className="size-4" />
       </span>
       <div className="flex flex-col">
         <span className="font-medium">{t("This design is approved")}</span>
         {(when || order.approved_by) && (
-          <span className="text-xs opacity-80">
+          <span className="text-xs text-muted-foreground">
             {[when, order.approved_by].filter(Boolean).join(" · ")}
           </span>
         )}
@@ -69,8 +66,8 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
   const { t } = useT()
   const approved = status === "approved" || status === "prod"
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/75 lg:right-[280px]">
-      <div className="mx-auto flex max-w-4xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/75">
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
         <Button variant="outline" size="sm" className="lg:hidden" onPress={onComments}>
           <MessageSquareIcon />
           {commentCount}
@@ -79,7 +76,7 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
         <div className="ml-auto flex items-center gap-2">
           {approved ? (
             <>
-              <span className="hidden items-center gap-1.5 text-sm text-[var(--status-approved)] sm:flex">
+              <span className="hidden items-center gap-1.5 text-sm text-foreground sm:flex">
                 <CheckIcon className="size-4" />
                 {t("Approved")}
               </span>
@@ -95,7 +92,7 @@ export function ActionBar({ status, commentCount, busy, onComments, onChanges, o
                 <PencilIcon />
                 {status === "changes" ? t("Changes requested") : t("Request Changes")}
               </Button>
-              <Button onPress={onApprove} isDisabled={busy} className="bg-[var(--status-approved)] text-white hover:opacity-90">
+              <Button onPress={onApprove} isDisabled={busy}>
                 <CheckIcon />
                 {t("Approve")}
               </Button>
@@ -140,13 +137,13 @@ export function ApproveDialog({ open, onOpenChange, title, version, openComments
           type="checkbox"
           checked={checked}
           onChange={(e) => setChecked(e.target.checked)}
-          className="mt-0.5 size-4 shrink-0 accent-[var(--status-approved)]"
+          className="mt-0.5 size-4 shrink-0 accent-[var(--foreground)]"
         />
         <span>{t("I've checked the design and confirm it")}</span>
       </label>
       <DialogFooter>
         <DialogClose variant="outline">{t("Cancel")}</DialogClose>
-        <Button onPress={onConfirm} isDisabled={!checked || busy} className="bg-[var(--status-approved)] text-white hover:opacity-90">
+        <Button onPress={onConfirm} isDisabled={!checked || busy}>
           <CheckIcon />
           {busy ? t("Saving...") : t("Approve")}
         </Button>
@@ -200,12 +197,7 @@ export function DoneDialog({ kind, shopName, onClose, footer }: {
   return (
     <Dialog isOpen onOpenChange={(v) => !v && onClose()} className="sm:max-w-sm" showCloseButton={false}>
       <div className="flex flex-col items-center gap-3 py-2 text-center">
-        <span
-          className="flex size-14 items-center justify-center rounded-full"
-          style={approved
-            ? { backgroundColor: "var(--status-approved-bg)", color: "var(--status-approved)" }
-            : { backgroundColor: "var(--status-changes-bg)", color: "var(--status-changes)" }}
-        >
+        <span className="flex size-14 items-center justify-center rounded-full bg-muted text-foreground">
           {approved ? <PartyPopperIcon className="size-7" /> : <SendIcon className="size-6" />}
         </span>
         <DialogTitle className="text-lg">{approved ? t("Thank you! The design is approved") : t("Your request has been sent")}</DialogTitle>

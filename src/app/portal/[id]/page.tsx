@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -163,22 +163,26 @@ export default function PortalPage() {
   // ── Auth screen ──
   if (phase === "auth") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex items-center gap-1">
-              <LanguageSwitcher />
-              <ThemeToggle />
+      <div className="flex min-h-screen flex-col bg-background">
+        <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <NodlyMark brand={brand} />
+          <div className="ml-auto flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center px-4 pb-16">
+          <div className="flex w-full max-w-sm flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              {brand?.logoUrl
+                ? <BrandMark brand={brand} className="mb-2" />
+                : <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">{brand?.shopName || t("Order Portal")}</p>}
+              <h1 className="font-[family-name:var(--font-brand)] text-3xl leading-tight font-bold tracking-[-0.03em] text-foreground">
+                {t("Your design is ready")}
+              </h1>
+              <p className="text-sm text-muted-foreground">{t("Enter your name to view it, leave comments on the spot and approve.")}</p>
             </div>
-            <NodlyMark brand={brand} full className="mx-auto mb-2" />
-            {brand?.shopName && <BrandMark brand={brand} className="mx-auto mb-1 justify-center" />}
-            <CardTitle className="text-base">{t("Order Portal")}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t("Enter your details to view this order.")}
-            </p>
-            <PortalWelcome brand={brand} className="mt-3" />
-          </CardHeader>
-          <CardContent>
+            {brand?.welcome && <PortalWelcome brand={brand} className="border-l-2 border-foreground/30 bg-transparent px-3 py-0.5 text-muted-foreground" />}
             <form onSubmit={handleAuth} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="portal-name">{t("Your Name *")}</Label>
@@ -188,6 +192,7 @@ export default function PortalPage() {
                   value={nameInput}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNameInput(e.target.value)}
                   autoComplete="name"
+                  className="h-10"
                   required
                 />
               </div>
@@ -201,16 +206,18 @@ export default function PortalPage() {
                     value={password}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     autoComplete="current-password"
+                    className="h-10"
                   />
                 </div>
               )}
               {authError && <p className="text-sm text-destructive">{authError}</p>}
-              <Button type="submit" isDisabled={loading}>
+              <Button type="submit" size="lg" isDisabled={loading} className="h-10">
                 {loading ? t("Loading...") : t("View Order")}
+                {!loading && <ArrowRightIcon />}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </main>
       </div>
     )
   }
@@ -221,25 +228,125 @@ export default function PortalPage() {
   const selectedPin = pins.find((p) => p.id === selectedPinId) || null
   const openCount = pins.filter((p) => !p.resolved).length
 
+  const fileCard = order.file_url ? (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          {t("Design")}
+          {(order.version ?? 1) > 1 && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">
+              {t("version {n}", { n: order.version ?? 1 })}
+            </span>
+          )}
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
+        </p>
+      </CardHeader>
+      <CardContent>
+          {isPdf ? (
+            <PDFViewer
+              key={fileKey(order.file_url)}
+              url={order.file_url}
+              pins={pins}
+              onAddPin={addPin}
+              onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+              onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
+              onDeletePin={(pin) => deletePin(pin.id)}
+              canEdit={canEdit}
+              focusPin={focusPin}
+            />
+          ) : (
+            <div
+              ref={fileContainerRef}
+              className="relative w-full rounded-lg border border-border/50 overflow-hidden bg-muted/60 cursor-crosshair"
+              onClick={handleFileClick}
+            >
+              <img
+                src={order.file_url}
+                alt={order.title}
+                className="w-full object-contain pointer-events-none"
+              />
+              {pins.filter((p) => !p.resolved).map((pin) => (
+                <PinMarker
+                  key={pin.id}
+                  pin={pin}
+                  number={numbers.get(pin.id) ?? ""}
+                  selected={pin.id === selectedPinId}
+                  onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
+                  onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
+                />
+              ))}
+              {pendingPin && <PinMarker pin={{ ...pendingPin, resolved: false }} pending />}
+            </div>
+          )}
+
+          {/* New pin form */}
+          {pendingPin && (
+            <div className="mt-4 rounded-lg border border-border/40 p-4 flex flex-col gap-3">
+              <p className="text-xs font-medium text-foreground">{t("New comment")}</p>
+              <Input
+                placeholder={t("Title *")}
+                value={pinTitle}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPinTitle(e.target.value)}
+                className="text-sm"
+              />
+              <Textarea
+                placeholder={t("Description (optional)")}
+                value={pinDesc}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPinDesc(e.target.value)}
+                rows={2}
+                className="text-sm"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onPress={() => setPendingPin(null)}>{t("Cancel")}</Button>
+                <Button size="sm" onPress={handleSavePin} isDisabled={savingPin || !pinTitle.trim()}>
+                  {savingPin ? t("Saving...") : t("Add comment")}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Selected pin detail */}
+          {movingPinId && !isPdf && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border/40 px-4 py-2.5 text-sm">
+              <span>{t("Tap the spot where the pin should go.")}</span>
+              <Button variant="ghost" size="sm" onPress={() => setMovingPinId(null)}>{t("Cancel")}</Button>
+            </div>
+          )}
+
+          {selectedPin && !pendingPin && !isPdf && (
+            <div className="mt-4 rounded-lg border border-border/40 p-4 text-sm">
+              <PinDetails
+                key={selectedPin.id}
+                pin={selectedPin}
+                number={numbers.get(selectedPin.id) ?? 0}
+                onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
+                onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
+                onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
+              />
+            </div>
+          )}
+      </CardContent>
+    </Card>
+  ) : (
+    <Card>
+      <CardContent className="py-12 text-center">
+        <p className="text-sm text-muted-foreground">{t("No file uploaded yet.")}</p>
+      </CardContent>
+    </Card>
+  )
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar */}
-      <header className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3 sm:px-6">
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border/40 bg-background/90 px-4 py-2.5 backdrop-blur sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <NodlyMark brand={brand} className="border-r border-border/40 pr-3" />
-          <BrandMark brand={brand} className="hidden border-r border-border/40 pr-3 sm:flex" />
-          <h1 className="truncate text-sm font-medium text-foreground">{order.title}</h1>
-          <Badge
-            variant="secondary"
-            className="border-0 text-[11px] px-2 py-0.5"
-            style={{ backgroundColor: status.bg, color: status.color }}
-          >
-            {t(status.label)}
-          </Badge>
+          <NodlyMark brand={brand} />
+          <BrandMark brand={brand} className={brand?.badge ? "hidden border-l border-border/40 pl-3 sm:flex" : ""} />
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-muted-foreground sm:inline">
-            {t("Viewing as")} <span className="text-foreground font-medium">{clientName}</span>
+          <span className="hidden text-xs text-muted-foreground md:inline">
+            {t("Viewing as")} <span className="font-medium text-foreground">{clientName}</span>
           </span>
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
@@ -248,170 +355,75 @@ export default function PortalPage() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main — file viewer */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-28 sm:px-6 sm:pt-6 flex justify-center">
-          <div className="w-full max-w-4xl flex flex-col gap-6">
-            {order.status === "approved" || order.status === "prod" ? (
-              <ApprovedBanner order={order} />
-            ) : (
-              <ReviewSteps status={order.status} />
-            )}
-
-            {/* Order info */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <InfoBlock label={t("Client")} value={order.client_name || "—"} />
-              <InfoBlock label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
-              <InfoBlock label={t("Deadline")} value={formatDate(order.deadline)} />
-              <InfoBlock label={t("Created")} value={formatDate(order.created_at)} />
+      <main className="flex-1 px-4 pt-6 pb-28 sm:px-6 sm:pt-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+          {/* the order, set like a title page */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
+              {order.code}
+            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-3xl">{order.title}</h1>
+              <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">{t(status.label)}</span>
             </div>
+          </div>
 
-            {/* Notes */}
-            {order.notes && (
-              <Card>
+          {order.status === "approved" || order.status === "prod" ? (
+            <ApprovedBanner order={order} />
+          ) : (
+            <ReviewSteps status={order.status} commented={pins.length > 0} />
+          )}
+
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="flex min-w-0 flex-col gap-5">{fileCard}</div>
+
+            <aside className="flex min-w-0 flex-col gap-4">
+              <Card size="sm">
                 <CardHeader>
-                  <CardTitle className="text-sm">{t("Notes")}</CardTitle>
+                  <CardTitle>{t("Details")}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.notes}</p>
+                  <dl className="flex flex-col divide-y divide-border/50 text-[13px]">
+                    <Row label={t("Client")} value={order.client_name || "—"} />
+                    <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
+                    <Row label={t("Deadline")} value={formatDate(order.deadline)} />
+                    <Row label={t("Created")} value={formatDate(order.created_at)} />
+                  </dl>
                 </CardContent>
               </Card>
-            )}
 
-            {/* File viewer with pins */}
-            {order.file_url && (
-              <Card>
+              {order.notes && (
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>{t("Notes")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{order.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* on phones the comments open from the bar at the bottom */}
+              <Card size="sm" className="hidden lg:flex">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    {t("File")}
-                    {(order.version ?? 1) > 1 && (
-                      <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[11px] font-normal text-accent">
-                        {t("version {n}", { n: order.version ?? 1 })}
-                      </span>
-                    )}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
-                  </p>
+                  <CardTitle>{t("Comments ({n})", { n: openCount })}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {isPdf ? (
-                    <PDFViewer
-                      key={fileKey(order.file_url)}
-                      url={order.file_url}
-                      pins={pins}
-                      onAddPin={addPin}
-                      onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
-                      onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
-                      onDeletePin={(pin) => deletePin(pin.id)}
-                      canEdit={canEdit}
-                      focusPin={focusPin}
-                    />
-                  ) : (
-                    <div
-                      ref={fileContainerRef}
-                      className="relative w-full rounded-lg border border-border/50 overflow-hidden bg-muted/60 cursor-crosshair"
-                      onClick={handleFileClick}
-                    >
-                      <img
-                        src={order.file_url}
-                        alt={order.title}
-                        className="w-full object-contain pointer-events-none"
-                      />
-                      {pins.filter((p) => !p.resolved).map((pin) => (
-                        <PinMarker
-                          key={pin.id}
-                          pin={pin}
-                          number={numbers.get(pin.id) ?? ""}
-                          selected={pin.id === selectedPinId}
-                          onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                          onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
-                        />
-                      ))}
-                      {pendingPin && <PinMarker pin={{ ...pendingPin, resolved: false }} pending />}
-                    </div>
-                  )}
-
-                  {/* New pin form */}
-                  {pendingPin && (
-                    <div className="mt-4 rounded-lg border border-border/40 p-4 flex flex-col gap-3">
-                      <p className="text-xs font-medium text-foreground">{t("New comment")}</p>
-                      <Input
-                        placeholder={t("Title *")}
-                        value={pinTitle}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPinTitle(e.target.value)}
-                        className="text-sm"
-                      />
-                      <Textarea
-                        placeholder={t("Description (optional)")}
-                        value={pinDesc}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPinDesc(e.target.value)}
-                        rows={2}
-                        className="text-sm"
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onPress={() => setPendingPin(null)}>{t("Cancel")}</Button>
-                        <Button size="sm" onPress={handleSavePin} isDisabled={savingPin || !pinTitle.trim()}>
-                          {savingPin ? t("Saving...") : t("Add comment")}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selected pin detail */}
-                  {movingPinId && !isPdf && (
-                    <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border/40 px-4 py-2.5 text-sm">
-                      <span>{t("Tap the spot where the pin should go.")}</span>
-                      <Button variant="ghost" size="sm" onPress={() => setMovingPinId(null)}>{t("Cancel")}</Button>
-                    </div>
-                  )}
-
-                  {selectedPin && !pendingPin && !isPdf && (
-                    <div className="mt-4 rounded-lg border border-border/40 p-4 text-sm">
-                      <PinDetails
-                        key={selectedPin.id}
-                        pin={selectedPin}
-                        number={numbers.get(selectedPin.id) ?? 0}
-                        onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
-                        onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
-                        onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
-                      />
-                    </div>
-                  )}
+                <CardContent className="px-1.5">
+                  <PinList
+                    pins={pins}
+                    numbers={numbers}
+                    selectedId={isPdf ? null : selectedPinId}
+                    onSelect={handleSelectPin}
+                    emptyText="No comments yet. Click on the file to add one."
+                  />
                 </CardContent>
               </Card>
-            )}
 
-            {/* No file */}
-            {!order.file_url && (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-sm text-muted-foreground">{t("No file uploaded yet.")}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <PortalContactCard brand={brand} />
-
+              <PortalContactCard brand={brand} />
+            </aside>
           </div>
         </div>
-
-        {/* Right sidebar — pins list */}
-        <aside className="hidden w-[280px] shrink-0 border-l border-border/40 lg:flex flex-col overflow-y-auto">
-          <div className="p-4 border-b border-border/40">
-            <h2 className="text-sm font-medium text-foreground">{t("Comments ({n})", { n: openCount })}</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            <PinList
-              pins={pins}
-              numbers={numbers}
-              selectedId={isPdf ? null : selectedPinId}
-              onSelect={handleSelectPin}
-              emptyText="No comments yet. Click on the file to add one."
-            />
-          </div>
-        </aside>
-      </div>
+      </main>
 
       <ActionBar
         status={order.status}
@@ -466,11 +478,11 @@ export default function PortalPage() {
   )
 }
 
-function InfoBlock({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
+    <div className="flex items-baseline justify-between gap-4 py-1.5 first:pt-0 last:pb-0">
+      <dt className="shrink-0 text-xs text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium text-foreground" title={value} suppressHydrationWarning>{value}</dd>
     </div>
   )
 }
