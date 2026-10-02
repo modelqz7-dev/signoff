@@ -19,8 +19,9 @@ import { PinMarker } from "@/components/orders/pins"
 import { PortalQrButton } from "@/components/orders/PortalQr"
 import { NextStep, OrderProgress, useDeadlineText } from "@/components/orders/OrderOverview"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
-import { pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
-import { AnswerablePinList, type PinReply } from "@/components/orders/Revisions"
+import { messagesByPin, pinsOfVersion, usePinMessages, usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { AnswerablePinList } from "@/components/orders/Revisions"
+import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
 import { fileNameFromUrl, uploadNewVersion, uploadOrderFile, useOrderVersions } from "@/lib/versions"
 import { can } from "@/lib/plans"
 import { openPanel } from "@/lib/panels"
@@ -55,6 +56,10 @@ export default function OrderPage() {
   // Client comments from the portal, updated live.
   // The shop only reviews comments here: moving and deleting pins is left to the client.
   const { pins: allPins, setResolved, reload: reloadPins } = usePins(order ? orderId : null)
+  // The conversation inside each pin.
+  const { messages: allMessages, send: sendMessages } = usePinMessages(order ? orderId : null)
+  const threads = messagesByPin(allMessages)
+  const lastMessages = new Map([...threads].map(([id, list]) => [id, list[list.length - 1]]))
 
   // Earlier files of the order; null = the current file.
   const versions = useOrderVersions(order ? orderId : null, order?.version)
@@ -119,26 +124,17 @@ export default function OrderPage() {
     setUploading(false)
   }
 
-  /** One answer (status, note, optional file) for one or more of the client's comments. */
-  async function answerPins(targets: Pin[], answer: PinReply) {
+  /** A message from the workshop into one or more pins, with an optional file. */
+  async function sendToPins(targets: Pin[], message: ThreadMessage) {
     if (!order) return
-    const fileUrl = answer.file ? await uploadOrderFile(order.shop_id, answer.file) : undefined
-    const results = await Promise.all(targets.map((pin) =>
-      supabase.from("order_pins").update({
-        fix_status: answer.status,
-        reply: answer.reply || null,
-        ...(fileUrl ? { reply_file_url: fileUrl } : {}),
-        answered_version: order.version ?? 1,
-        resolved: answer.status === "fixed",
-      }).eq("id", pin.id)
-    ))
-    await reloadPins()
-    const failed = results.find((r) => r.error)?.error
-    if (failed) {
-      throw new Error(/fix_status|reply|answered_version|column/i.test(failed.message)
-        ? t("Run supabase/update.sql in Supabase first, then try again.")
-        : failed.message)
+    const fileUrl = message.file ? await uploadOrderFile(order.shop_id, message.file) : null
+    try {
+      await sendMessages(targets, { body: message.body, fileUrl, fixed: message.fixed }, shop?.name || "")
+    } catch (e) {
+      const text = (e as Error)?.message ?? ""
+      throw new Error(/pin_messages|relation|schema cache/i.test(text) ? t("Run supabase/update.sql in Supabase first, then try again.") : text)
     }
+    if (message.fixed) await reloadPins()
   }
 
   // The password is hashed on the server and never comes back, so we only know whether one is set.
@@ -396,6 +392,10 @@ export default function OrderPage() {
                         {isPdf ? (
                           <PDFViewer
                             key={fileKey(storedUrl)}
+                            renderThread={(pin) => (
+                              <PinThread messages={threads.get(pin.id) ?? []} role="workshop" fixed={pin.fix_status === "fixed"} onSend={(m) => sendToPins([pin], m)} />
+                            )}
+                            lastMessages={lastMessages}
                             url={fileUrl}
                             fileName={fileNameFromUrl(storedUrl)}
                             pins={pins}
@@ -470,7 +470,8 @@ export default function OrderPage() {
                       pins={pins}
                       numbers={numbers}
                       onSelect={isPdf ? handleSelectPin : undefined}
-                      onAnswer={answerPins}
+                      messages={threads}
+                      onSend={sendToPins}
                       emptyText="No comments from the client yet."
                     />
                   </CardContent>

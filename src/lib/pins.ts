@@ -25,6 +25,20 @@ export type Pin = {
   answered_version?: number | null
 }
 
+/** One message in a pin's conversation (supabase/threads.sql). */
+export type PinMessage = {
+  id: string
+  pin_id: string
+  order_id: string
+  author_role: "client" | "workshop"
+  author_name: string
+  body: string
+  file_url: string | null
+  /** The workshop marked the spot fixed with this message. */
+  marks_fixed: boolean
+  created_at: string
+}
+
 /** fixed: done · kept: left as is on purpose · reopened: the client says it isn't done. */
 export type FixStatus = "fixed" | "kept" | "reopened"
 
@@ -194,4 +208,74 @@ export function useShopPins(orderIds: string[]) {
 /** Stable pin numbers (by creation order) so the client and the shop see the same "#3". */
 export function usePinNumbers(pins: Pin[]) {
   return useMemo(() => new Map(pins.map((p, i) => [p.id, i + 1])), [pins])
+}
+
+/** Messages inside the pins of an order (the workshop's side), kept live via realtime. */
+export function usePinMessages(orderId: string | null) {
+  const [messages, setMessages] = useState<PinMessage[]>([])
+  const [missing, setMissing] = useState(false)
+
+  const load = useCallback(async () => {
+    if (!orderId) return
+    const { data, error } = await supabase
+      .from("pin_messages").select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true })
+    if (error) {
+      // Until supabase/threads.sql has run there is no table: conversations stay hidden.
+      if (/pin_messages|relation|schema cache/i.test(error.message)) setMissing(true)
+      else console.error("Messages load error:", error)
+      return
+    }
+    setMissing(false)
+    setMessages(data as PinMessage[])
+  }, [orderId])
+
+  useEffect(() => {
+    if (!orderId) return
+    const first = setTimeout(load, 0)
+    const channel = supabase
+      .channel(`pin-messages-${orderId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pin_messages", filter: `order_id=eq.${orderId}` }, () => load())
+      .subscribe()
+    return () => {
+      clearTimeout(first)
+      supabase.removeChannel(channel)
+    }
+  }, [orderId, load])
+
+  /** The same message in one or more pins; marking it fixed resolves them. */
+  const send = useCallback(async (
+    pins: Pin[],
+    message: { body: string; fileUrl?: string | null; fixed: boolean },
+    authorName: string,
+  ) => {
+    if (!orderId || !pins.length) return
+    const { data, error } = await supabase.from("pin_messages").insert(pins.map((p) => ({
+      pin_id: p.id,
+      order_id: orderId,
+      author_role: "workshop",
+      author_name: authorName,
+      body: message.body,
+      file_url: message.fileUrl ?? null,
+      marks_fixed: message.fixed,
+    }))).select()
+    if (error) throw error
+    setMessages((prev) => [...prev, ...(data as PinMessage[])])
+    if (message.fixed) {
+      const { error: pinError } = await supabase.from("order_pins")
+        .update({ fix_status: "fixed", resolved: true })
+        .in("id", pins.map((p) => p.id))
+      if (pinError) console.error("Pin update error:", pinError)
+    }
+  }, [orderId])
+
+  return { messages, missing, send, reload: load }
+}
+
+/** Messages grouped by pin, oldest first. */
+export function messagesByPin(messages: PinMessage[]) {
+  const map = new Map<string, PinMessage[]>()
+  for (const m of messages) map.set(m.pin_id, [...(map.get(m.pin_id) ?? []), m])
+  return map
 }

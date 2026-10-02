@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
-import { pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { messagesByPin, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { PinThread } from "@/components/orders/PinThread"
 import { usePortal } from "@/lib/portal-client"
 import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
@@ -34,11 +35,17 @@ export default function PortalPage() {
 
   // Everything goes through the server: the database itself is closed to portal visitors.
   const portal = usePortal(orderId)
-  const { phase, order, setResolved, movePin, deletePin, setFixStatus } = portal
+  const { phase, order, setResolved, movePin, deletePin, sendMessage } = portal
   const [loading, setLoading] = useState(false)
 
   // The client always works on the latest version; comments on earlier versions stay with them.
   const pins = pinsOfVersion(portal.pins, order?.version)
+  const threads = messagesByPin(portal.messages)
+  const lastMessages = new Map([...threads].map(([id, list]) => [id, list[list.length - 1]]))
+  // The client writes in a pin; the workshop's files and "fixed" come from the other side.
+  const thread = (pin: Pin) => (
+    <PinThread messages={threads.get(pin.id) ?? []} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => sendMessage(pin.id, m.body)} />
+  )
   // The server puts the comment on the current version under the visitor's name.
   const addPin = (pin: NewPin) => portal.addPin(pin)
   // The portal belongs to the client: they can move and delete any comment on their order.
@@ -253,7 +260,8 @@ export default function PortalPage() {
               onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
               onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
               onDeletePin={(pin) => deletePin(pin.id)}
-              onReopenPin={(pin, reopen) => setFixStatus(pin.id, reopen ? "reopened" : "fixed")}
+              renderThread={thread}
+              lastMessages={lastMessages}
               canEdit={canEdit}
               focusPin={focusPin}
             />
@@ -326,7 +334,7 @@ export default function PortalPage() {
                 onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
                 onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
                 onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
-                onReopen={(reopen) => setFixStatus(selectedPin.id, reopen ? "reopened" : "fixed")}
+                thread={thread(selectedPin)}
               />
             </div>
           )}
@@ -417,6 +425,7 @@ export default function PortalPage() {
                     selectedId={isPdf ? null : selectedPinId}
                     onSelect={handleSelectPin}
                     emptyText="No comments yet. Click on the file to add one."
+                    lastMessages={lastMessages}
                   />
                 </CardContent>
               </Card>
@@ -474,6 +483,7 @@ export default function PortalPage() {
           selectedId={isPdf ? null : selectedPinId}
           onSelect={(pin) => { setCommentsOpen(false); handleSelectPin(pin) }}
           emptyText="No comments yet. Click on the file to add one."
+          lastMessages={lastMessages}
         />
       </Sheet>
     </div>

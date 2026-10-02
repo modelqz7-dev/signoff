@@ -16,8 +16,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     p.reply_file_url ? { ...p, reply_file_url: await signedFileUrl(ctx.db, p.reply_file_url) } : p
   ))
 
+  // The conversations inside the pins (empty until supabase/threads.sql has run).
+  const { data: msgs } = await ctx.db
+    .from("pin_messages").select("*").eq("order_id", id).order("created_at", { ascending: true })
+  const messages = await Promise.all((msgs ?? []).map(async (m) =>
+    m.file_url ? { ...m, file_url: await signedFileUrl(ctx.db, m.file_url) } : m
+  ))
+
   return Response.json(
-    { order: await publicOrder(ctx.db, ctx.order), pins: signedPins, viewer: ctx.name },
+    { order: await publicOrder(ctx.db, ctx.order), pins: signedPins, messages, viewer: ctx.name },
     { headers: { "Cache-Control": "no-store" } }
   )
 }

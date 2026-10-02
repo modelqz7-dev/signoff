@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Order } from "@/components/dashboard/types"
-import type { NewPin, Pin } from "@/lib/pins"
+import type { NewPin, Pin, PinMessage } from "@/lib/pins"
 import { fileKey } from "@/lib/storage-path"
 
 /** The order as the portal sees it: private fields (password, client email…) are never sent. */
@@ -50,6 +50,7 @@ export function usePortal(orderId: string) {
   const [phase, setPhase] = useState<Phase>("loading")
   const [order, setOrder] = useState<PortalOrder | null>(null)
   const [pins, setPins] = useState<Pin[]>([])
+  const [messages, setMessages] = useState<PinMessage[]>([])
   const [viewer, setViewer] = useState("")
   const [hasPassword, setHasPassword] = useState(true)
   const phaseRef = useRef(phase)
@@ -69,7 +70,10 @@ export function usePortal(orderId: string) {
     const { res, body } = await api(`${base}/state`)
     if (res.ok && body) {
       setOrder((prev) => keepFileLink(prev, body.order))
-      if (editsRef.current.pending === 0 && editsRef.current.seq === seqAtStart) setPins(sortPins(body.pins))
+      if (editsRef.current.pending === 0 && editsRef.current.seq === seqAtStart) {
+        setPins(sortPins(body.pins))
+        setMessages(body.messages ?? [])
+      }
       setViewer(body.viewer)
       setPhase("view")
     } else if (res.status === 401) {
@@ -142,9 +146,24 @@ export function usePortal(orderId: string) {
 
   const setResolved = useCallback((id: string, resolved: boolean) => patchPin(id, { resolved }), [patchPin])
   const movePin = useCallback((id: string, x: number, y: number) => patchPin(id, { x, y }), [patchPin])
-  /** The client's check of the workshop's answer: reopened, or fixed after all. */
-  const setFixStatus = useCallback((id: string, status: "fixed" | "reopened") =>
-    patchPin(id, { fix_status: status, resolved: status === "fixed" }), [patchPin])
+  /** The client writes in a pin; a fixed pin opens again. Shown at once, saved in the background. */
+  const sendMessage = useCallback(async (pinId: string, text: string) => {
+    const tempId = `temp-${Date.now()}`
+    setMessages((prev) => [...prev, {
+      id: tempId, pin_id: pinId, order_id: orderId, author_role: "client", author_name: viewer,
+      body: text, file_url: null, marks_fixed: false, created_at: new Date().toISOString(),
+    }])
+    setPins((prev) => prev.map((p) => (p.id === pinId && p.fix_status === "fixed" ? { ...p, fix_status: "reopened", resolved: false } : p)))
+    await track(async () => {
+      const { res, body } = await api(`${base}/pins/${pinId}/messages`, { method: "POST", body: JSON.stringify({ body: text }) })
+      if (!res.ok || !body?.message) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId))
+        load()
+        throw new Error("Couldn't send the message")
+      }
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? body.message : m)))
+    })
+  }, [base, orderId, viewer, track, load])
 
   const deletePin = useCallback(async (id: string) => {
     let removed: Pin | undefined
@@ -169,5 +188,5 @@ export function usePortal(orderId: string) {
     return true
   }, [base])
 
-  return { phase, order, pins, viewer, hasPassword, enter, leave, addPin, setResolved, movePin, setFixStatus, deletePin, decide }
+  return { phase, order, pins, messages, viewer, hasPassword, enter, leave, addPin, setResolved, movePin, sendMessage, deletePin, decide }
 }
