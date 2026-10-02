@@ -18,7 +18,7 @@ export type Plan = {
 }
 
 export const YEARLY_DISCOUNT = 0.2
-export const TRIAL_DAYS = 14
+export const TRIAL_DAYS = 7
 
 // Not charged yet: plans can be switched freely in Billing during early access.
 export const PLANS: Plan[] = [

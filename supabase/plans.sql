@@ -1,10 +1,10 @@
--- Nodly: plans, the 14-day Pro trial and the active-order limit.
+-- Nodly: plans, the 7-day Pro trial and the active-order limit.
 -- Run once in Supabase → SQL Editor → New query. Safe to run again.
 
 -- 1. Trial end and portal logo on the workshop.
---    Every workshop (new and existing) gets 14 days of Pro from the moment this runs / it is created.
+--    Every workshop (new and existing) gets 7 days of Pro from the moment this runs / it is created.
 alter table public.shops
-  add column if not exists trial_ends_at timestamptz default (now() + interval '14 days'),
+  add column if not exists trial_ends_at timestamptz default (now() + interval '7 days'),
   add column if not exists logo_url      text;
 
 -- 2. Refuse new orders over the plan's active-order limit (orders awaiting review or with
