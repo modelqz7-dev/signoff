@@ -25,6 +25,8 @@ type PDFViewerProps = {
   onMovePin?: (pin: Pin, x: number, y: number) => void
   onDeletePin?: (pin: Pin) => Promise<void>
   canEdit?: (pin: Pin) => boolean
+  /** The client checking the workshop's answer on a comment (portal). */
+  onReopenPin?: (pin: Pin, reopen: boolean) => void
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
 }
@@ -59,6 +61,7 @@ export function PDFViewer({
   onMovePin,
   onDeletePin,
   canEdit = () => true,
+  onReopenPin,
   focusPin,
 }: PDFViewerProps) {
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -410,6 +413,7 @@ export function PDFViewer({
       onToggleResolved={onToggleResolved ? () => onToggleResolved(selectedPin) : undefined}
       onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
       onStartMove={onMovePin && canEdit(selectedPin) ? () => { setMovingId(selectedPin.id); setSelectedId(null); setPending(null) } : undefined}
+      onReopen={onReopenPin ? (reopen) => onReopenPin(selectedPin, reopen) : undefined}
     />
   )
 

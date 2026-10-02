@@ -15,13 +15,13 @@ import { Button } from "@/components/ui/button"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import { PinList, PinMarker } from "@/components/orders/pins"
+import { PinMarker } from "@/components/orders/pins"
 import { PortalQrButton } from "@/components/orders/PortalQr"
 import { NextStep, OrderProgress, useDeadlineText } from "@/components/orders/OrderOverview"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
-import { pinsAnsweredBy, pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
-import { FixesDialog, MakerChangesCard, type FixAnswer } from "@/components/orders/Revisions"
-import { fileNameFromUrl, uploadNewVersion, useOrderVersions } from "@/lib/versions"
+import { pinsOfVersion, usePinNumbers, usePins, type Pin } from "@/lib/pins"
+import { AnswerablePinList, type PinReply } from "@/components/orders/Revisions"
+import { fileNameFromUrl, uploadNewVersion, uploadOrderFile, useOrderVersions } from "@/lib/versions"
 import { can } from "@/lib/plans"
 import { openPanel } from "@/lib/panels"
 import { markLinkShared } from "@/lib/onboarding"
@@ -55,9 +55,7 @@ export default function OrderPage() {
   // Client comments from the portal, updated live.
   // The shop only reviews comments here: moving and deleting pins is left to the client.
   const { pins: allPins, setResolved, reload: reloadPins } = usePins(order ? orderId : null)
-  // Comments on the previous version, answered with the current one.
-  const answered = pinsAnsweredBy(allPins, order?.version)
-  const [fixesOpen, setFixesOpen] = useState(false)
+
   // Earlier files of the order; null = the current file.
   const versions = useOrderVersions(order ? orderId : null, order?.version)
   const [viewVersion, setViewVersion] = useState<number | null>(null)
@@ -113,26 +111,26 @@ export default function OrderPage() {
     setUploading(true)
     setUploadError(null)
     try {
-      const updated = await uploadNewVersion(order, file)
-      setOrder(updated)
+      setOrder(await uploadNewVersion(order, file))
       setViewVersion(null)
-      // A new version answers the client's comments on the previous one: ask right away.
-      if (pinsAnsweredBy(allPins, updated.version).length) setFixesOpen(true)
     } catch (err) {
       setUploadError((err as Error)?.message || t("Couldn't upload the file"))
     }
     setUploading(false)
   }
 
-  async function saveAnswers(answers: Record<string, FixAnswer>) {
+  /** One answer (status, note, optional file) for one or more of the client's comments. */
+  async function answerPins(targets: Pin[], answer: PinReply) {
     if (!order) return
-    const results = await Promise.all(Object.entries(answers).map(([id, a]) =>
+    const fileUrl = answer.file ? await uploadOrderFile(order.shop_id, answer.file) : undefined
+    const results = await Promise.all(targets.map((pin) =>
       supabase.from("order_pins").update({
-        fix_status: a.status,
-        reply: a.reply.trim() || null,
+        fix_status: answer.status,
+        reply: answer.reply || null,
+        ...(fileUrl ? { reply_file_url: fileUrl } : {}),
         answered_version: order.version ?? 1,
-        ...(a.status === "fixed" ? { resolved: true } : {}),
-      }).eq("id", id)
+        resolved: answer.status === "fixed",
+      }).eq("id", pin.id)
     ))
     await reloadPins()
     const failed = results.find((r) => r.error)?.error
@@ -458,24 +456,21 @@ export default function OrderPage() {
                   </CardContent>
                 </Card>
 
-                {!oldVersion && (
-                  <MakerChangesCard version={order.version ?? 1} pins={answered} onEdit={() => setFixesOpen(true)} />
-                )}
-
                 {/* Client comments */}
                 <div ref={commentsRef} className="scroll-mt-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-sm">{t("Client comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</CardTitle>
                     <CardDescription>
-                      {t("Comments left in the client portal appear here instantly.")}{isPdf && " " + t("Click one to open it on the file.")}
+                      {t("Comments left in the client portal appear here instantly.")}{isPdf && " " + t("Click one to open it on the file.")}{" " + t("Answer them with a note or a file: the client sees it on the pin.")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <PinList
+                    <AnswerablePinList
                       pins={pins}
                       numbers={numbers}
                       onSelect={isPdf ? handleSelectPin : undefined}
+                      onAnswer={answerPins}
                       emptyText="No comments from the client yet."
                     />
                   </CardContent>
@@ -522,15 +517,6 @@ export default function OrderPage() {
           </div>
         </div>
       </div>
-      {order && (
-        <FixesDialog
-          open={fixesOpen}
-          onOpenChange={setFixesOpen}
-          version={order.version ?? 1}
-          pins={answered}
-          onSave={saveAnswers}
-        />
-      )}
     </div>
   )
 }
