@@ -564,6 +564,7 @@ export const ru: Record<string, string> = {
   "{n} due this week": "сроки на неделе: {n}",
   "{n} need you": "ждут вас: {n}",
   "{n} new comments": "Комментарии: {n}",
+  "{n} orders": "Заказов: {n}",
   "{n} pages": "Страниц: {n}",
   "{n} waiting on clients": "ждут клиента: {n}",
   "{n}d": "{n} дн.",
