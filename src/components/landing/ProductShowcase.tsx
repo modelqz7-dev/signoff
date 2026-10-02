@@ -54,8 +54,10 @@ export function ProductShowcase({ t }: { t: T }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
           <Label no="02">{t("Changes")}</Label>
           <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("“We fixed it.” Now the client can see it.")}</h2>
-            <Points items={[t("Each comment answered: fixed, or why it stays"), t("Before and after on the very spot"), t("Reopen in one tap if it isn't right")]} />
+            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Anna asked for three changes. Here's what we did.")}</h2>
+            <p className="max-w-md text-base text-muted-foreground lg:justify-self-end">
+              {t("With each new version the client compares every spot she commented on, so she doesn't have to take your word for it.")}
+            </p>
           </div>
           <BeforeAfter t={t} />
         </div>
