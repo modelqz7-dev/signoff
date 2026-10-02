@@ -31,9 +31,11 @@ function PinShape({ fill }: { fill: string }) {
   )
 }
 
+const PIN_ICON_PATH = "M8.1 21.2125C6.88333 20.6875 5.825 19.975 4.925 19.075C4.025 18.175 3.3125 17.1167 2.7875 15.9C2.2625 14.6833 2 13.3833 2 12C2 10.6167 2.2625 9.31667 2.7875 8.1C3.3125 6.88333 4.025 5.825 4.925 4.925C5.825 4.025 6.88333 3.3125 8.1 2.7875C9.31667 2.2625 10.6167 2 12 2C13.3833 2 14.6833 2.2625 15.9 2.7875C17.1167 3.3125 18.175 4.025 19.075 4.925C19.975 5.825 20.6875 6.88333 21.2125 8.1C21.7375 9.31667 22 10.6167 22 12C22 13.3833 21.7375 14.6833 21.2125 15.9C20.6875 17.1167 19.975 18.175 19.075 19.075C18.175 19.975 17.1167 20.6875 15.9 21.2125C14.6833 21.7375 13.3833 22 12 22C10.6167 22 9.31667 21.7375 8.1 21.2125ZM12 17.5C12.75 16.75 13.4167 15.975 14 15.175C14.5 14.4917 14.9583 13.7417 15.375 12.925C15.7917 12.1083 16 11.3 16 10.5C16 9.4 15.6083 8.45833 14.825 7.675C14.0417 6.89167 13.1 6.5 12 6.5C10.9 6.5 9.95833 6.89167 9.175 7.675C8.39167 8.45833 8 9.4 8 10.5C8 11.3 8.20833 12.1083 8.625 12.925C9.04167 13.7417 9.5 14.4917 10 15.175C10.5833 15.975 11.25 16.75 12 17.5ZM10.9375 11.5625C10.6458 11.2708 10.5 10.9167 10.5 10.5C10.5 10.0833 10.6458 9.72917 10.9375 9.4375C11.2292 9.14583 11.5833 9 12 9C12.4167 9 12.7708 9.14583 13.0625 9.4375C13.3542 9.72917 13.5 10.0833 13.5 10.5C13.5 10.9167 13.3542 11.2708 13.0625 11.5625C12.7708 11.8542 12.4167 12 12 12C11.5833 12 11.2292 11.8542 10.9375 11.5625Z"
+
 /**
- * The same pin as a static inline symbol for lists, feeds and cards, so comments look
- * identical everywhere: number inside, a check when resolved, or any short label.
+ * A comment as an inline symbol for lists, feeds and cards: the round pin icon, with the
+ * comment's number (or a check when resolved) in a small badge at its corner.
  */
 export function PinGlyph({
   label,
@@ -46,29 +48,32 @@ export function PinGlyph({
   size?: "sm" | "md"
   className?: string
 }) {
+  const badge = resolved ? <CheckIcon className="size-2" strokeWidth={3.5} /> : label
   return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "relative inline-block shrink-0 font-semibold text-white",
-        size === "sm" ? "h-[18px] w-[14px] text-[8px]" : "h-[23px] w-[18px] text-[9px]",
-        className
+    <span aria-hidden="true" className={cn("relative inline-block shrink-0 text-foreground", size === "sm" ? "size-4" : "size-5", className)}>
+      <svg viewBox="0 0 24 24" fill="currentColor" className="size-full"><path d={PIN_ICON_PATH} /></svg>
+      {badge !== undefined && badge !== null && badge !== "" && (
+        <span className="absolute -right-1 -bottom-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-foreground px-0.5 text-[8px] leading-none font-semibold text-background ring-2 ring-card tabular-nums">
+          {badge}
+        </span>
       )}
-    >
-      <PinShape fill={resolved ? "var(--pin-resolved)" : "var(--pin)"} />
-      <span className="absolute inset-x-0 top-0 flex h-[80%] items-center justify-center leading-none">
-        {resolved ? <CheckIcon className={size === "sm" ? "size-2" : "size-2.5"} strokeWidth={3} /> : label}
-      </span>
     </span>
   )
 }
 
-/** Outline pin in the current text color, sized like a lucide icon (for counters and tiles). */
+/** Comments: an envelope in front of an opened one. */
+export function CommentsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("size-4", className)}>
+      <path d="M4 17C3.45 17 2.97917 16.8042 2.5875 16.4125C2.19583 16.0208 2 15.55 2 15V7.15C2 6.9 2.07083 6.65417 2.2125 6.4125C2.35417 6.17083 2.55 5.98333 2.8 5.85L10.5 2L18.05 5.85C18.25 5.95 18.4208 6.10833 18.5625 6.325C18.7042 6.54167 18.8 6.76667 18.85 7H15.925L10.5 4.25L4 7.475V17ZM7 21C6.45 21 5.97917 20.8042 5.5875 20.4125C5.19583 20.0208 5 19.55 5 19V10C5 9.45 5.19583 8.97917 5.5875 8.5875C5.97917 8.19583 6.45 8 7 8H20C20.55 8 21.0208 8.19583 21.4125 8.5875C21.8042 8.97917 22 9.45 22 10V19C22 19.55 21.8042 20.0208 21.4125 20.4125C21.0208 20.8042 20.55 21 20 21H7ZM13.5 15.35L7 12V19H20V12L13.5 15.35ZM13.5 13.35L20 10H7L13.5 13.35Z" />
+    </svg>
+  )
+}
+
 export function PinOutlineIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true" className={cn("size-4", className)}>
-      <path d="M12 22s-7-6.7-7-12.5a7 7 0 0 1 14 0C19 15.3 12 22 12 22z" />
-      <circle cx="12" cy="9.5" r="2.2" />
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("size-4", className)}>
+      <path d={PIN_ICON_PATH} />
     </svg>
   )
 }

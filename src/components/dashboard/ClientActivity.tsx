@@ -44,7 +44,7 @@ export function ClientActivity({ orders, pins }: { orders: Order[]; pins: Pin[] 
             href={`/orders/${pin.order_id}`}
             className={cn("flex items-start gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/60", pin.resolved && "opacity-50")}
           >
-            <PinGlyph label={(pin.author_name[0] || "?").toUpperCase()} resolved={pin.resolved} className="mt-0.5" />
+            <PinGlyph resolved={pin.resolved} className="mt-0.5" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">{pin.author_name}</span> {t("on")}{" "}
