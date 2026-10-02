@@ -56,6 +56,17 @@ def button(label: str) -> str:
     )
 
 
+def link_button(label: str) -> str:
+    """A button to the site itself, for notices that need no confirmation."""
+    return (
+        '<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;"><tr>'
+        '<td align="center" style="border-radius:12px;background:#171615;">'
+        '<a href="{{ .SiteURL }}/login" style="display:inline-block;padding:15px 32px;font-family:' + FONT + ';'
+        'font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:12px;">' + label + '</a>'
+        '</td></tr></table>'
+    )
+
+
 CODE = (
     '<div style="display:inline-block;padding:18px 28px;background:#f4f3f1;border:1px solid #e7e5e2;border-radius:14px;'
     'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:34px;font-weight:700;'
@@ -98,6 +109,21 @@ EMAILS = {
         text="Введите этот код в Nodly, чтобы подтвердить смену пароля.",
         action=CODE,
         note="Код действует несколько минут. Если это были не вы, никому не сообщайте код и смените пароль."),
+    # Security notices (Supabase → Emails → Security): sent after the change, nothing to confirm.
+    "password-changed": dict(
+        subject="Пароль в Nodly изменён",
+        title="Пароль изменён", preheader="Пароль вашего аккаунта Nodly изменён.",
+        heading="Пароль изменён",
+        text="Пароль аккаунта Nodly {{ .Email }} только что изменён. Если это сделали вы, ничего делать не нужно.",
+        action=link_button("Открыть Nodly"),
+        note="Если вы не меняли пароль, сразу восстановите доступ через «Забыли пароль?» на странице входа."),
+    "email-changed": dict(
+        subject="Почта в Nodly изменена",
+        title="Почта изменена", preheader="Почта вашего аккаунта Nodly изменена.",
+        heading="Почта изменена",
+        text="Почта аккаунта Nodly изменена. Теперь для входа используется новый адрес. Если это сделали вы, ничего делать не нужно.",
+        action=link_button("Открыть Nodly"),
+        note="Если вы не меняли почту, срочно напишите нам в поддержку."),
     "invite": dict(
         subject="Вас пригласили в Nodly",
         title="Приглашение в Nodly", preheader="Примите приглашение.",
