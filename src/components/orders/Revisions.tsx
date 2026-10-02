@@ -241,7 +241,7 @@ export function ClientPinList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div id="pin-switch" role="tablist" aria-label={t("Pins")} className="flex scroll-mt-20 flex-wrap gap-1.5">
+      <div id="pin-switch" role="tablist" aria-label={t("Pins")} className="flex scroll-mt-20 flex-wrap gap-2">
         {ordered.map((p) => {
           const on = p.id === chosen.id
           const bare = !p.title.trim()
@@ -256,7 +256,7 @@ export function ClientPinList({
               title={p.title || t("No description yet")}
               onClick={() => setChosenId(p.id)}
               className={cn(
-                "relative flex size-9 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors",
+                "relative flex size-11 items-center justify-center rounded-full text-base font-semibold tabular-nums transition-colors",
                 on
                   ? "bg-foreground text-background"
                   : bare
@@ -309,17 +309,17 @@ function PinPanel({ pin, number, thread, focusKey, onDescribe, onSend, onDelete,
   const saved = !pin.id.startsWith("temp-")
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-muted/40 p-4 ring-1 ring-foreground/5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-foreground">{t("Pin {n}", { n: number ?? "" })}</span>
-        <span className="text-xs text-muted-foreground">{t("p. {n}", { n: pin.page })}</span>
+    <div className="flex flex-col gap-5 rounded-xl bg-muted/40 p-5 ring-1 ring-foreground/5 sm:p-6">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-base font-medium text-foreground">{t("Pin {n}", { n: number ?? "" })}</span>
+        <span className="text-sm text-muted-foreground">{t("p. {n}", { n: pin.page })}</span>
         {!bare && <PinStatus pin={pin} />}
         <button
           type="button"
           onClick={() => onShow(pin)}
-          className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <PinOutlineIcon className="size-3.5" />{t("Show on the file")}
+          <PinOutlineIcon className="size-4" />{t("Show on the file")}
         </button>
       </div>
 
@@ -334,22 +334,22 @@ function PinPanel({ pin, number, thread, focusKey, onDescribe, onSend, onDelete,
       ) : (
         <>
           <div className="flex flex-col gap-1">
-            <p className="text-[17px] leading-snug font-medium break-words text-foreground">{pin.title}</p>
-            {pin.description && <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>}
+            <p className="text-xl leading-snug font-medium break-words text-foreground">{pin.title}</p>
+            {pin.description && <p className="text-base leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>}
           </div>
           <PinThread messages={thread} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => onSend(pin, m.body)} />
         </>
       )}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
         {!writing && (
           <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 hover:text-foreground">
-            <PencilIcon className="size-3" />{t("Edit text")}
+            <PencilIcon className="size-3.5" />{t("Edit text")}
           </button>
         )}
         {!bare && !pin.fix_status && (
           <button type="button" onClick={() => onToggleResolved(pin)} className="inline-flex items-center gap-1 hover:text-foreground">
-            {pin.resolved ? <RotateCcwIcon className="size-3" /> : <CheckIcon className="size-3" />}
+            {pin.resolved ? <RotateCcwIcon className="size-3.5" /> : <CheckIcon className="size-3.5" />}
             {pin.resolved ? t("Reopen") : t("Resolve")}
           </button>
         )}
@@ -402,7 +402,7 @@ function PinTextForm({ pin, disabled, focusKey, onSave, onCancel }: {
         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); save() } }}
         placeholder={t("Title, e.g. Black handles")}
         aria-label={t("Title")}
-        className="h-10 bg-background text-[15px]"
+        className="h-11 bg-background text-base"
       />
       <Textarea
         value={description}
@@ -410,7 +410,7 @@ function PinTextForm({ pin, disabled, focusKey, onSave, onCancel }: {
         placeholder={t("Your question or what to change (optional)")}
         aria-label={t("Description")}
         rows={3}
-        className="bg-background text-[15px]"
+        className="bg-background text-base"
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex justify-end gap-2">

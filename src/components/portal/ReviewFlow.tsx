@@ -20,11 +20,11 @@ export function ReviewSteps({ status, commented }: { status: Order["status"]; co
   ]
   const current = steps.findIndex((s) => !s.done)
   return (
-    <ol className="grid grid-cols-3 gap-2" aria-label={t("Your review")}>
+    <ol className="grid grid-cols-3 gap-3" aria-label={t("Your review")}>
       {steps.map((s, i) => (
         <li key={s.label} className="flex min-w-0 flex-col gap-1.5" aria-current={i === current ? "step" : undefined}>
           <span className={cn("h-1 rounded-full", s.done ? "bg-foreground/70" : i === current ? "bg-foreground/25" : "bg-muted")} />
-          <span className={cn("flex items-start gap-1.5 text-[11px] leading-tight sm:text-xs", s.done || i === current ? "text-foreground" : "text-muted-foreground")}>
+          <span className={cn("flex items-start gap-1.5 text-xs leading-tight sm:text-sm", s.done || i === current ? "text-foreground" : "text-muted-foreground")}>
             <span className="shrink-0 tabular-nums text-muted-foreground">{i + 1}</span>
             {s.label}
           </span>
@@ -38,14 +38,14 @@ export function ApprovedBanner({ order }: { order: Pick<Order, "approved_at" | "
   const { t, locale } = useT()
   const when = order.approved_at ? new Date(order.approved_at).toLocaleDateString(locale, { dateStyle: "long" }) : null
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm text-foreground ring-1 ring-foreground/10">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-        <CheckIcon className="size-4" />
+    <div className="flex items-center gap-3 rounded-xl bg-card px-5 py-4 text-base text-foreground ring-1 ring-foreground/10">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+        <CheckIcon className="size-5" />
       </span>
       <div className="flex flex-col">
         <span className="font-medium">{t("This design is approved")}</span>
         {(when || order.approved_by) && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {[when, order.approved_by].filter(Boolean).join(" · ")}
           </span>
         )}
