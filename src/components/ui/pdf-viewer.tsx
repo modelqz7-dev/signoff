@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, XIcon, Maximize
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTitle } from "@/components/ui/dialog"
-import { PinComposer, PinDetails, PinList, PinMarker, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
+import { PinComposer, PinDetails, PinList, PinMarker, PinNav, PinOutlineIcon, PinPopover } from "@/components/orders/pins"
 import { usePinNumbers, type NewPin, type Pin, type PinMessage } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 import { fileNameFromUrl } from "@/lib/versions"
@@ -107,6 +107,7 @@ export function PDFViewer({
   const numbers = usePinNumbers(pins)
   const { t } = useT()
   const narrow = useNarrowScreen()
+  const wide = useWideScreen()
   const pagePins = pins.filter((p) => p.page === page)
   const selectedPin = pagePins.find((p) => p.id === selectedId) || null
 
@@ -414,6 +415,10 @@ export function PDFViewer({
   }
 
   const composer = <PinComposer onSave={savePending} onCancel={() => setPending(null)} />
+  // Step through the comments in their numbered order, page by page, without aiming at pins.
+  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
+  const at = selectedPin ? ordered.findIndex((p) => p.id === selectedPin.id) : -1
+  const step = (d: number) => { if (ordered.length) selectPin(ordered[(at + d + ordered.length) % ordered.length]) }
   const details = selectedPin && (
     <PinDetails
       key={selectedPin.id}
@@ -423,6 +428,7 @@ export function PDFViewer({
       onDelete={onDeletePin && canEdit(selectedPin) ? () => onDeletePin(selectedPin) : undefined}
       onStartMove={onMovePin && canEdit(selectedPin) ? () => { setMovingId(selectedPin.id); setSelectedId(null); setPending(null) } : undefined}
       thread={renderThread?.(selectedPin)}
+      nav={<PinNav index={at} total={ordered.length} onPrev={() => step(-1)} onNext={() => step(1)} />}
     />
   )
 
@@ -540,21 +546,36 @@ export function PDFViewer({
                 {pending && !narrow && (
                   <PinPopover x={pending.x} y={pending.y}>{composer}</PinPopover>
                 )}
-                {selectedPin && !pending && !narrow && (
+                {/* on wide screens the comment opens in the side column, off the design */}
+                {selectedPin && !pending && !narrow && !wide && (
                   <PinPopover x={selectedPin.x} y={selectedPin.y}>{details}</PinPopover>
                 )}
               </div>
             </div>
           </div>
 
-          <aside className="hidden w-72 shrink-0 flex-col border-l border-border md:flex">
-            <div className="border-b border-border px-4 py-3">
-              <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
-              {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
-            </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} lastMessages={lastMessages} />
-            </div>
+          <aside data-pin-ui className="hidden w-80 shrink-0 flex-col border-l border-border md:flex">
+            {selectedPin && !pending ? (
+              <>
+                <div className="border-b border-border px-2 py-1.5">
+                  <Button variant="ghost" size="sm" onPress={() => setSelectedId(null)}>
+                    <ChevronLeftIcon />
+                    {t("All comments")}
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 text-sm">{details}</div>
+              </>
+            ) : (
+              <>
+                <div className="border-b border-border px-4 py-3">
+                  <p className="text-sm font-medium">{t("Comments ({n})", { n: pins.filter((p) => !p.resolved).length })}</p>
+                  {onAddPin && <p className="mt-0.5 text-xs text-muted-foreground">{t("Click on the page to add one, drag a pin to move it.")}</p>}
+                </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                  <PinList pins={pins} numbers={numbers} selectedId={selectedId} onSelect={selectPin} lastMessages={lastMessages} />
+                </div>
+              </>
+            )}
           </aside>
         </div>
 
@@ -582,6 +603,19 @@ function subscribeNarrow(onChange: () => void) {
   const mq = window.matchMedia(NARROW)
   mq.addEventListener("change", onChange)
   return () => mq.removeEventListener("change", onChange)
+}
+
+const WIDE = "(min-width: 768px)"
+
+function subscribeWide(onChange: () => void) {
+  const mq = window.matchMedia(WIDE)
+  mq.addEventListener("change", onChange)
+  return () => mq.removeEventListener("change", onChange)
+}
+
+/** True where the viewer has its side column, which then holds the open comment. */
+function useWideScreen() {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false)
 }
 
 /** True on phone-sized screens, where comment cards dock under the page instead of floating. */
