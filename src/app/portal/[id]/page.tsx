@@ -92,12 +92,6 @@ export default function PortalPage() {
     setListFocus((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 }))
   }
 
-  /** Open the file to put a pin on it: the PDF full screen, an image brought into view. */
-  function openFile() {
-    if (isPdf) { setFocusPin((f) => ({ id: "", nonce: (f?.nonce ?? 0) + 1 })); return }
-    fileContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
-  }
-
   /** Show where a comment sits: the PDF opens on it, an image gets it highlighted. */
   function showOnFile(pin: Pin) {
     if (isPdf) { setFocusPin((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 })); return }
@@ -345,7 +339,6 @@ export default function PortalPage() {
                       onDelete={(pin) => deletePin(pin.id)}
                       onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
                       onShow={showOnFile}
-                      onOpenFile={openFile}
                       onPick={(pin) => setSelectedPinId(pin?.id ?? null)}
                     />
                   </CardContent>
