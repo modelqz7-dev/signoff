@@ -1,0 +1,8 @@
+confirm-signup: {{ if eq (printf "%v" .Data.lang) "ru" }}Подтвердите почту в Nodly{{ else }}Confirm your email for Nodly{{ end }}
+reset-password: {{ if eq (printf "%v" .Data.lang) "ru" }}Сброс пароля в Nodly{{ else }}Reset your Nodly password{{ end }}
+magic-link: {{ if eq (printf "%v" .Data.lang) "ru" }}Вход в Nodly{{ else }}Sign in to Nodly{{ end }}
+change-email: {{ if eq (printf "%v" .Data.lang) "ru" }}Подтвердите новую почту в Nodly{{ else }}Confirm your new email for Nodly{{ end }}
+reauthentication: {{ if eq (printf "%v" .Data.lang) "ru" }}Код подтверждения Nodly{{ else }}Your Nodly confirmation code{{ end }}
+password-changed: {{ if eq (printf "%v" .Data.lang) "ru" }}Пароль в Nodly изменён{{ else }}Your Nodly password was changed{{ end }}
+email-changed: {{ if eq (printf "%v" .Data.lang) "ru" }}Почта в Nodly изменена{{ else }}Your Nodly email was changed{{ end }}
+invite: {{ if eq (printf "%v" .Data.lang) "ru" }}Вас пригласили в Nodly{{ else }}You're invited to Nodly{{ end }}

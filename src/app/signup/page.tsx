@@ -11,7 +11,7 @@ import { siteOrigin } from "@/lib/site"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { t } = useT()
+  const { t, lang } = useT()
   const [shopName, setShopName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -29,8 +29,9 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        // The workshop name is picked up by the sign-up trigger (or getOrCreateShop).
-        data: { shop_name: shopName.trim() },
+        // The workshop name is picked up by the sign-up trigger (or getOrCreateShop); the
+        // language picks the language of the emails Supabase sends.
+        data: { shop_name: shopName.trim(), lang },
         emailRedirectTo: `${siteOrigin()}/dashboard`,
       },
     })
