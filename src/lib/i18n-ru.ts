@@ -154,6 +154,7 @@ export const ru: Record<string, string> = {
   "Delete": "Удалить",
   "Delete order": "Удалить заказ",
   "Delete order?": "Удалить заказ?",
+  "Delete this comment?": "Удалить комментарий?",
   "Deleting...": "Удаление...",
   "Description (optional)": "Описание (необязательно)",
   "Design": "Макет",

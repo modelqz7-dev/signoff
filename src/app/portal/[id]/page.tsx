@@ -274,7 +274,7 @@ export default function PortalPage() {
                   number={numbers.get(pin.id) ?? ""}
                   selected={pin.id === selectedPinId}
                   onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                  onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
+                  onMove={canEdit(pin) ? (x, y) => { movePin(pin.id, x, y); setMovingPinId(null) } : undefined}
                 />
               ))}
               {pendingPin && <PinMarker pin={{ ...pendingPin, resolved: false }} pending />}

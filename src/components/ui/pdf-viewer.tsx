@@ -520,7 +520,7 @@ export function PDFViewer({
                     number={numbers.get(pin.id) ?? ""}
                     selected={pin.id === selectedId || pin.id === movingId}
                     onSelect={() => { setPending(null); setSelectedId(pin.id === selectedId ? null : pin.id) }}
-                    onMove={onMovePin && canEdit(pin) ? (x, y) => onMovePin(pin, x, y) : undefined}
+                    onMove={onMovePin && canEdit(pin) ? (x, y) => { onMovePin(pin, x, y); setMovingId(null) } : undefined}
                   />
                 ))}
                 {pending && <PinMarker pin={{ ...pending, resolved: false }} pending />}

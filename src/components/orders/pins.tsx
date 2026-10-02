@@ -381,18 +381,29 @@ export function PinDetails({
         </div>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {(onToggleResolved || onDelete || onStartMove) && (
+      {confirmDelete ? (
+        // Asking first, in place of the usual buttons.
+        <div className="flex items-center justify-end gap-2">
+          <span className="mr-auto text-xs text-muted-foreground">{t("Delete this comment?")}</span>
+          <Button variant="ghost" size="sm" onPress={() => setConfirmDelete(false)} isDisabled={deleting}>
+            {t("Cancel")}
+          </Button>
+          <Button size="sm" onPress={handleDelete} isDisabled={deleting} className="bg-destructive text-white hover:bg-destructive/90">
+            <Trash2Icon />
+            {deleting ? t("Deleting...") : t("Delete")}
+          </Button>
+        </div>
+      ) : (onToggleResolved || onDelete || onStartMove) && (
         <div className="flex items-center justify-end gap-2">
           {onDelete && (
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
               onPress={handleDelete}
-              isDisabled={deleting}
-              className="mr-auto"
+              aria-label={t("Delete")}
+              className="mr-auto text-muted-foreground hover:text-destructive"
             >
               <Trash2Icon />
-              {deleting ? t("Deleting...") : confirmDelete ? t("Confirm delete") : t("Delete")}
             </Button>
           )}
           {onStartMove && (
