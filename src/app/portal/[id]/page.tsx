@@ -465,7 +465,7 @@ export default function PortalPage() {
               ) : (
               <Card size="sm" className="hidden lg:flex">
                 <CardHeader>
-                  <CardTitle>{t("Comments ({n})", { n: openCount })}</CardTitle>
+                  <CardTitle>{t("Comments ({n})", { n: pins.length })}</CardTitle>
                 </CardHeader>
                 <CardContent className="px-1.5">
                   <PinList
@@ -524,7 +524,7 @@ export default function PortalPage() {
       <Sheet
         isOpen={commentsOpen}
         onOpenChange={setCommentsOpen}
-        title={t("Comments ({n})", { n: openCount })}
+        title={t("Comments ({n})", { n: pins.length })}
         className="lg:hidden"
       >
         <PinList
