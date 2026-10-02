@@ -1,7 +1,7 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
-import { CheckIcon, MoveIcon, PaperclipIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, MoveIcon, PaperclipIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -341,6 +341,7 @@ export function PinDetails({
   onDelete,
   onStartMove,
   thread,
+  nav,
 }: {
   pin: Pin
   number: number
@@ -350,14 +351,19 @@ export function PinDetails({
   onStartMove?: () => void
   /** The conversation inside the pin (messages and a reply box). */
   thread?: React.ReactNode
+  /** "‹ 2 of 5 ›" to step through the comments without aiming at pins. */
+  nav?: React.ReactNode
 }) {
   const { t, locale } = useT()
+  const [menu, setMenu] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Once the workshop answers, the conversation decides; resolving by hand is for the rest.
+  const canResolve = onToggleResolved && !pin.fix_status
+  const hasMenu = onStartMove || onDelete || (canResolve && thread)
 
   async function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return }
     setDeleting(true)
     setError(null)
     try {
@@ -370,61 +376,101 @@ export function PinDetails({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start gap-2">
-        <PinGlyph label={number} resolved={pin.resolved} className="-mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <p className={cn("font-medium break-words", pin.resolved && "text-muted-foreground", pin.resolved && !pin.fix_status && "line-through")}>{pin.title}</p>
-          {pin.description && (
-            <p className="mt-1 text-xs whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <PinGlyph label={number} resolved={pin.resolved} />
+        <span className="text-xs text-muted-foreground">
+          {pin.fix_status === "fixed" ? t("Fixed") : pin.resolved ? t("Resolved") : t("Comment {n}", { n: number })}
+        </span>
+        <span className="ml-auto flex items-center gap-1">
+          {nav}
+          {hasMenu && (
+            <span
+              className="relative"
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setMenu(false) }}
+            >
+              <button
+                type="button"
+                onClick={() => setMenu((v) => !v)}
+                aria-label={t("More")}
+                aria-expanded={menu}
+                className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground"
+              >
+                <MoreHorizontalIcon className="size-4" />
+              </button>
+              {menu && (
+                <span role="menu" className="absolute top-full right-0 z-20 mt-1 flex w-44 flex-col rounded-lg bg-popover p-1 text-sm shadow-lg ring-1 ring-foreground/10">
+                  {onStartMove && (
+                    <button type="button" role="menuitem" onClick={() => { setMenu(false); onStartMove() }} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-hover">
+                      <MoveIcon className="size-4 text-muted-foreground" />{t("Move")}
+                    </button>
+                  )}
+                  {canResolve && thread && (
+                    <button type="button" role="menuitem" onClick={() => { setMenu(false); onToggleResolved?.() }} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-hover">
+                      {pin.resolved ? <RotateCcwIcon className="size-4 text-muted-foreground" /> : <CheckIcon className="size-4 text-muted-foreground" />}
+                      {pin.resolved ? t("Reopen") : t("Resolve")}
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button type="button" role="menuitem" onClick={() => { setMenu(false); setConfirmDelete(true) }} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-destructive hover:bg-destructive/10">
+                      <Trash2Icon className="size-4" />{t("Delete")}
+                    </button>
+                  )}
+                </span>
+              )}
+            </span>
           )}
-          <p className="mt-1.5 text-[11px] text-muted-foreground/70">
-            {pin.author_name} · {formatDate(pin.created_at, locale)} · {t("page {n}", { n: pin.page })}
-          </p>
-        </div>
+        </span>
       </div>
+
+      {/* the comment itself, as the first message of the conversation */}
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[11px] text-muted-foreground">
+          <span className="font-medium text-foreground">{pin.author_name}</span> · {formatDate(pin.created_at, locale)} · {t("page {n}", { n: pin.page })}
+        </p>
+        <p className="font-medium break-words text-foreground">{pin.title}</p>
+        {pin.description && <p className="text-sm whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>}
+      </div>
+
       {thread}
+
+      {/* without a conversation, resolving stays a plain button */}
+      {canResolve && !thread && (
+        <Button variant="outline" size="sm" onPress={onToggleResolved} className="self-end">
+          {pin.resolved ? <><RotateCcwIcon /> {t("Reopen")}</> : <><CheckIcon /> {t("Resolve")}</>}
+        </Button>
+      )}
+
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {confirmDelete ? (
-        // Asking first, in place of the usual buttons.
-        <div className="flex items-center justify-end gap-2">
-          <span className="mr-auto text-xs text-muted-foreground">{t("Delete this comment?")}</span>
+      {confirmDelete && (
+        <div className="flex items-center justify-end gap-2 rounded-lg bg-destructive/8 px-2.5 py-2">
+          <span className="mr-auto text-xs text-foreground">{t("Delete this comment?")}</span>
           <Button variant="ghost" size="sm" onPress={() => setConfirmDelete(false)} isDisabled={deleting}>
             {t("Cancel")}
           </Button>
           <Button size="sm" onPress={handleDelete} isDisabled={deleting} className="bg-destructive text-white hover:bg-destructive/90">
-            <Trash2Icon />
             {deleting ? t("Deleting...") : t("Delete")}
           </Button>
         </div>
-      ) : (onToggleResolved || onDelete || onStartMove) && (
-        <div className="flex items-center justify-end gap-2">
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onPress={handleDelete}
-              aria-label={t("Delete")}
-              className="mr-auto text-muted-foreground hover:text-destructive"
-            >
-              <Trash2Icon />
-            </Button>
-          )}
-          {onStartMove && (
-            <Button variant="outline" size="sm" onPress={onStartMove}>
-              <MoveIcon />
-              {t("Move")}
-            </Button>
-          )}
-          {/* once the workshop answers, the conversation decides: no separate resolve */}
-          {onToggleResolved && !(thread && pin.fix_status) && (
-            <Button variant="outline" size="sm" onPress={onToggleResolved}>
-              {pin.resolved ? <><RotateCcwIcon /> {t("Reopen")}</> : <><CheckIcon /> {t("Resolve")}</>}
-            </Button>
-          )}
-        </div>
       )}
     </div>
+  )
+}
+
+/** "‹ 2 of 5 ›": step through comments in order. */
+export function PinNav({ index, total, onPrev, onNext }: { index: number; total: number; onPrev: () => void; onNext: () => void }) {
+  const { t } = useT()
+  if (total < 2) return null
+  return (
+    <span className="flex items-center text-xs text-muted-foreground tabular-nums">
+      <button type="button" onClick={onPrev} aria-label={t("Previous comment")} className="flex size-7 items-center justify-center rounded-md hover:bg-hover hover:text-foreground">
+        <ChevronLeftIcon className="size-4" />
+      </button>
+      {t("{i} of {n}", { i: index + 1, n: total })}
+      <button type="button" onClick={onNext} aria-label={t("Next comment")} className="flex size-7 items-center justify-center rounded-md hover:bg-hover hover:text-foreground">
+        <ChevronRightIcon className="size-4" />
+      </button>
+    </span>
   )
 }
 
@@ -464,7 +510,7 @@ export function PinList({
       >
         <PinGlyph label={numbers.get(pin.id)} resolved={pin.resolved} className="-mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className={cn("truncate text-xs font-medium", pin.resolved && !pin.fix_status && "line-through")}>{pin.title}</p>
+          <p className={cn("truncate text-xs font-medium", pin.resolved && "text-muted-foreground")}>{pin.title}</p>
           {pin.description && !pin.resolved && (
             <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{pin.description}</p>
           )}

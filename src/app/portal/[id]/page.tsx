@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon, ChevronLeftIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import { CommentsIcon, PinDetails, PinList, PinMarker } from "@/components/orders/pins"
+import { CommentsIcon, PinDetails, PinList, PinMarker, PinNav } from "@/components/orders/pins"
 import { messagesByPin, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
 import { PinThread } from "@/components/orders/PinThread"
 import { usePortal } from "@/lib/portal-client"
@@ -240,6 +240,24 @@ export default function PortalPage() {
   const status = STATUS_MAP[order.status] || STATUS_MAP.await
   const selectedPin = pins.find((p) => p.id === selectedPinId) || null
   const openCount = pins.filter((p) => !p.resolved).length
+  // Comments in their numbered order, for "‹ 2 of 5 ›".
+  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
+  const pinDetails = (pin: Pin) => {
+    const at = ordered.findIndex((p) => p.id === pin.id)
+    const step = (d: number) => setSelectedPinId(ordered[(at + d + ordered.length) % ordered.length].id)
+    return (
+      <PinDetails
+        key={pin.id}
+        pin={pin}
+        number={numbers.get(pin.id) ?? 0}
+        onToggleResolved={() => setResolved(pin.id, !pin.resolved)}
+        onDelete={canEdit(pin) ? async () => { await deletePin(pin.id); setSelectedPinId(null) } : undefined}
+        onStartMove={canEdit(pin) ? () => { setMovingPinId(pin.id); setSelectedPinId(null) } : undefined}
+        thread={thread(pin)}
+        nav={<PinNav index={at} total={ordered.length} onPrev={() => step(-1)} onNext={() => step(1)} />}
+      />
+    )
+  }
 
   const fileCard = order.file_url ? (
     <Card>
@@ -331,17 +349,10 @@ export default function PortalPage() {
             </div>
           )}
 
+          {/* phones and tablets: the open comment sits under the design */}
           {selectedPin && !pendingPin && !isPdf && (
-            <div id="pin-details" className="mt-4 scroll-mt-20 rounded-lg border border-border/40 p-4 text-sm">
-              <PinDetails
-                key={selectedPin.id}
-                pin={selectedPin}
-                number={numbers.get(selectedPin.id) ?? 0}
-                onToggleResolved={() => setResolved(selectedPin.id, !selectedPin.resolved)}
-                onDelete={canEdit(selectedPin) ? async () => { await deletePin(selectedPin.id); setSelectedPinId(null) } : undefined}
-                onStartMove={canEdit(selectedPin) ? () => { setMovingPinId(selectedPin.id); setSelectedPinId(null) } : undefined}
-                thread={thread(selectedPin)}
-              />
+            <div id="pin-details" className="mt-4 scroll-mt-20 rounded-lg border border-border/40 p-4 text-sm lg:hidden">
+              {pinDetails(selectedPin)}
             </div>
           )}
       </CardContent>
@@ -440,6 +451,18 @@ export default function PortalPage() {
               )}
 
               {/* on phones the comments open from the bar at the bottom */}
+              {/* wide screens: the open comment takes the place of the list, off the design */}
+              {selectedPin && !pendingPin && !isPdf ? (
+                <Card size="sm" className="hidden lg:flex">
+                  <div className="-mt-1 px-1.5">
+                    <Button variant="ghost" size="sm" onPress={() => setSelectedPinId(null)}>
+                      <ChevronLeftIcon />
+                      {t("All comments")}
+                    </Button>
+                  </div>
+                  <CardContent className="text-sm">{pinDetails(selectedPin)}</CardContent>
+                </Card>
+              ) : (
               <Card size="sm" className="hidden lg:flex">
                 <CardHeader>
                   <CardTitle>{t("Comments ({n})", { n: openCount })}</CardTitle>
@@ -455,6 +478,7 @@ export default function PortalPage() {
                   />
                 </CardContent>
               </Card>
+              )}
 
               <PortalContactCard brand={brand} />
             </aside>

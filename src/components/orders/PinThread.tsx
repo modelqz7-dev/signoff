@@ -54,16 +54,16 @@ function Message({ message }: { message: PinMessage }) {
   const shop = message.author_role === "workshop"
   const when = new Date(message.created_at).toLocaleDateString(locale, { day: "numeric", month: "short" })
   return (
-    <div className={cn("flex flex-col gap-1 rounded-lg px-2.5 py-2", shop ? "bg-muted/70" : "border border-border/70")}>
+    <div className={cn("flex flex-col gap-1 border-l-2 pl-2.5", shop ? "border-foreground/40" : "border-border")}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
         <span className="font-medium text-foreground">{message.author_name || (shop ? t("Workshop") : t("Client"))}</span>
+        <span suppressHydrationWarning>{when}</span>
         {message.marks_fixed && (
-          <span className="inline-flex items-center gap-1 rounded bg-foreground px-1 py-px text-[10px] font-medium text-background">
-            <CheckIcon className="size-2.5" strokeWidth={3} />
+          <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
+            <CheckIcon className="size-3" strokeWidth={3} />
             {t("Fixed")}
           </span>
         )}
-        <span suppressHydrationWarning>{when}</span>
       </div>
       {message.body && <p className="text-sm whitespace-pre-wrap text-foreground">{message.body}</p>}
       {message.file_url && <Attachment url={message.file_url} />}
@@ -78,10 +78,11 @@ function Attachment({ url }: { url: string }) {
   const signed = useFileUrl(presigned ? null : url)
   const file = presigned ? url : signed
   const [viewing, setViewing] = useState(false)
-  if (!file) return <span className="h-20 animate-pulse rounded-md bg-background" />
+  // A small thumbnail: tapping opens it large, so a tall photo never pushes the reply box away.
+  if (!file) return <span className="size-16 animate-pulse rounded-md bg-muted" />
   return (
     <>
-      <button type="button" onClick={() => setViewing(true)} className="group block w-full overflow-hidden rounded-md text-left ring-1 ring-foreground/10">
+      <button type="button" onClick={() => setViewing(true)} className="group w-fit overflow-hidden rounded-md text-left ring-1 ring-foreground/10">
         {isPdfUrl(url) ? (
           <span className="flex items-center gap-2 bg-background px-3 py-2 text-sm text-foreground group-hover:bg-hover">
             <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -89,7 +90,7 @@ function Attachment({ url }: { url: string }) {
           </span>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={file} alt={t("The fix")} className="max-h-44 w-full bg-background object-contain transition-opacity group-hover:opacity-90" />
+          <img src={file} alt={t("The fix")} className="block h-16 w-24 bg-background object-cover transition-opacity group-hover:opacity-85" />
         )}
       </button>
       {viewing && <AttachmentViewer url={file} onClose={() => setViewing(false)} />}
@@ -148,6 +149,21 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
             </button>
           </>
         )}
+        {shop && !fixed && (
+          <button
+            type="button"
+            onClick={() => setFixedChoice(!markFixed)}
+            aria-pressed={markFixed}
+            title={t("Mark as fixed")}
+            className={cn(
+              "order-last mb-0.5 inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors",
+              markFixed ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:bg-hover"
+            )}
+          >
+            <CheckIcon className="size-3.5" strokeWidth={markFixed ? 3 : 2} />
+            {t("Fixed")}
+          </button>
+        )}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value.slice(0, 2000))}
@@ -163,27 +179,17 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
           onClick={send}
           disabled={!canSend}
           aria-label={t("Send")}
-          className="mb-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-30"
+          className="order-last mb-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-30"
         >
           <ArrowUpIcon className="size-4" />
         </button>
       </div>
-      {(file || shop) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-xs text-muted-foreground">
-          {file && (
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <PaperclipIcon className="size-3 shrink-0" />
-              <span className="max-w-48 truncate">{file.name}</span>
-              <button type="button" onClick={() => setFile(null)} aria-label={t("Remove")} className="hover:text-foreground"><XIcon className="size-3" /></button>
-            </span>
-          )}
-          {shop && !fixed && (
-            <label className="inline-flex cursor-pointer items-center gap-1.5">
-              <input type="checkbox" checked={markFixed} onChange={(e) => setFixedChoice(e.target.checked)} className="size-3.5 accent-[var(--foreground)]" />
-              {t("Mark as fixed")}
-            </label>
-          )}
-        </div>
+      {file && (
+        <span className="inline-flex min-w-0 items-center gap-1 px-0.5 text-xs text-muted-foreground">
+          <PaperclipIcon className="size-3 shrink-0" />
+          <span className="max-w-48 truncate">{file.name}</span>
+          <button type="button" onClick={() => setFile(null)} aria-label={t("Remove")} className="hover:text-foreground"><XIcon className="size-3" /></button>
+        </span>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

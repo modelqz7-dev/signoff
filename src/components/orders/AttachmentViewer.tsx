@@ -13,10 +13,10 @@ export function AttachmentViewer({ url, onClose }: { url: string; onClose: () =>
   const { t } = useT()
   if (isPdfUrl(url)) return <PDFViewer url={url} startOpen onClose={onClose} />
   return (
-    <Dialog isOpen onOpenChange={(v) => !v && onClose()} className="w-auto max-w-[96vw] p-2 sm:max-w-[96vw]">
+    <Dialog isOpen onOpenChange={(v) => !v && onClose()} className="w-[96vw] max-w-[96vw] p-2 sm:w-auto sm:max-w-[96vw]">
       <DialogTitle className="sr-only">{t("The fix")}</DialogTitle>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={url} alt={t("The fix")} className="max-h-[86dvh] max-w-full rounded-lg object-contain" />
+      <img src={url} alt={t("The fix")} className="mx-auto max-h-[86dvh] w-full rounded-lg object-contain sm:w-auto sm:max-w-full" />
     </Dialog>
   )
 }
