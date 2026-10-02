@@ -82,7 +82,7 @@ export function OrdersList({
     <div className="flex flex-col gap-4">
       {/* Filters */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div role="tablist" aria-label={t("Status")} className="-mx-4 flex gap-5 overflow-x-auto border-b border-border/60 px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+        <div role="tablist" aria-label={t("Status")} className="-mx-4 flex gap-5 overflow-x-auto overflow-y-hidden border-b border-border/60 px-4 [scrollbar-width:none] sm:mx-0 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
           {FILTERS.map((f) => {
             const active = filter === f
             return (
@@ -93,7 +93,7 @@ export function OrdersList({
                 onClick={() => setFilter(f)}
                 aria-selected={active}
                 className={cn(
-                  "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 pb-2.5 text-sm whitespace-nowrap transition-colors",
+                  "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 pt-0.5 pb-2.5 text-sm whitespace-nowrap transition-colors",
                   active ? "border-foreground font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
