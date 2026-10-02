@@ -474,7 +474,7 @@ export function PDFViewer({
         isOpen={open}
         onOpenChange={(v) => { setOpen(v); if (!v) onClose?.() }}
         showCloseButton={false}
-        className="flex h-[94dvh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
+        className="flex h-[calc(var(--vvh,100dvh)*0.94)] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
         <DialogTitle className="sr-only">{t("Document preview")}</DialogTitle>
 
@@ -588,7 +588,16 @@ export function PDFViewer({
 
         {/* Phones: the comment card sits under the page, so it never covers the pins. */}
         {narrow && (pending || selectedPin) && (
-          <div data-pin-ui className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200">
+          // While typing it takes most of the window (the keyboard has already shrunk it) and
+          // keeps the field in sight, so the page gives way instead of the reply box.
+          <div
+            data-pin-ui
+            onFocus={(e) => {
+              const field = e.target
+              if (field.matches("textarea, input")) window.setTimeout(() => field.scrollIntoView({ block: "nearest" }), 300)
+            }}
+            className="max-h-[45%] shrink-0 overflow-y-auto border-t border-border bg-popover p-3 text-sm animate-in slide-in-from-bottom-4 fade-in-0 duration-200 has-[textarea:focus,input:focus]:max-h-[75%]"
+          >
             {pending ? composer : details}
           </div>
         )}
