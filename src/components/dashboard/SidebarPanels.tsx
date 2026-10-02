@@ -301,6 +301,7 @@ function PortalLogo({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop
   async function save(logoUrl: string | null) {
     if (!shop) return
     const { data, error } = await supabase.from("shops").update({ logo_url: logoUrl }).eq("id", shop.id).select().maybeSingle()
+    if (error && /logo_url|column/i.test(error.message)) throw new Error(t("Run supabase/update.sql in Supabase first, then try again."))
     if (error || !data) throw error ?? new Error(t("Couldn't save the logo"))
     onSaved(data as Shop)
   }
@@ -919,7 +920,7 @@ function BrandKit({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) 
     setSaving(false)
     if (error || !data) {
       const missing = /portal_|column/i.test(error?.message ?? "")
-      setStatus({ ok: false, text: missing ? t("Run supabase/branding.sql in Supabase first, then save again.") : error?.message || t("Something went wrong") })
+      setStatus({ ok: false, text: missing ? t("Run supabase/update.sql in Supabase first, then try again.") : error?.message || t("Something went wrong") })
       return
     }
     onSaved(data as Shop)
