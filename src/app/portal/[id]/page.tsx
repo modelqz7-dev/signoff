@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
 import { PinDetails, PinList, PinMarker } from "@/components/orders/pins"
-import { pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { pinsAnsweredBy, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
+import { ClientChangesCard } from "@/components/orders/Revisions"
 import { usePortal } from "@/lib/portal-client"
 import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
@@ -34,11 +35,13 @@ export default function PortalPage() {
 
   // Everything goes through the server: the database itself is closed to portal visitors.
   const portal = usePortal(orderId)
-  const { phase, order, setResolved, movePin, deletePin } = portal
+  const { phase, order, setResolved, movePin, deletePin, setFixStatus } = portal
   const [loading, setLoading] = useState(false)
 
   // The client always works on the latest version; comments on earlier versions stay with them.
   const pins = pinsOfVersion(portal.pins, order?.version)
+  // Their comments on the previous version, with the workshop's answers.
+  const answered = pinsAnsweredBy(portal.pins, order?.version)
   // The server puts the comment on the current version under the visitor's name.
   const addPin = (pin: NewPin) => portal.addPin(pin)
   // The portal belongs to the client: they can move and delete any comment on their order.
@@ -372,7 +375,18 @@ export default function PortalPage() {
           )}
 
           <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="flex min-w-0 flex-col gap-5">{fileCard}</div>
+            <div className="flex min-w-0 flex-col gap-5">
+              {order.status !== "approved" && order.status !== "prod" && (
+                <ClientChangesCard
+                  version={order.version ?? 1}
+                  pins={answered}
+                  previousUrl={portal.previous?.file_url ?? null}
+                  currentUrl={order.file_url}
+                  onReopen={(pin, reopen) => setFixStatus(pin.id, reopen ? "reopened" : "fixed")}
+                />
+              )}
+              {fileCard}
+            </div>
 
             <aside className="flex min-w-0 flex-col gap-4">
               <Card size="sm">

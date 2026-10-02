@@ -12,7 +12,7 @@ async function loadPin(request: Request, id: string, pinId: string) {
   return { ...ctx, pin }
 }
 
-/** Resolve, reopen or move any comment on the order: the portal belongs to the client. */
+/** Resolve, reopen, move or re-check any comment on the order: the portal belongs to the client. */
 export async function PATCH(request: Request, { params }: Params) {
   const { id, pinId } = await params
   const ctx = await loadPin(request, id, pinId)
@@ -21,6 +21,13 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
   const patch: Record<string, unknown> = {}
   if (typeof body.resolved === "boolean") patch.resolved = body.resolved
+  // The client checks the workshop's answer: "not done" reopens it, "it's fine" takes it back.
+  if (body.fix_status === "reopened" || body.fix_status === "fixed") {
+    const current = (ctx.pin as { fix_status?: string | null }).fix_status
+    if (current !== "fixed" && current !== "reopened") return Response.json({ error: "invalid" }, { status: 400 })
+    patch.fix_status = body.fix_status
+    patch.resolved = body.fix_status === "fixed"
+  }
   if (typeof body.x === "number" && typeof body.y === "number") {
     patch.x = Math.min(100, Math.max(0, body.x))
     patch.y = Math.min(100, Math.max(0, body.y))
