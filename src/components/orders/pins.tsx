@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn, isPdfUrl } from "@/lib/utils"
 import { useFileUrl } from "@/lib/files"
+import { AttachmentViewer } from "@/components/orders/AttachmentViewer"
 import type { Pin } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 
@@ -515,6 +516,7 @@ export function PinAnswer({ pin, className }: { pin: Pin; className?: string }) 
   const presigned = !!pin.reply_file_url?.includes("/object/sign/")
   const signed = useFileUrl(presigned ? null : pin.reply_file_url)
   const file = presigned ? pin.reply_file_url! : signed
+  const [viewing, setViewing] = useState(false)
   if (!pin.fix_status && !pin.reply && !pin.reply_file_url) return null
   const pdf = isPdfUrl(pin.reply_file_url)
   return (
@@ -536,7 +538,7 @@ export function PinAnswer({ pin, className }: { pin: Pin; className?: string }) 
       {pin.reply && <p className="text-sm whitespace-pre-wrap text-foreground">{pin.reply}</p>}
       {pin.reply_file_url && (
         file ? (
-          <a href={file} target="_blank" rel="noopener noreferrer" className="group block overflow-hidden rounded-md ring-1 ring-foreground/10">
+          <button type="button" onClick={() => setViewing(true)} className="group block w-full overflow-hidden rounded-md text-left ring-1 ring-foreground/10">
             {pdf ? (
               <span className="flex items-center gap-2 bg-background px-3 py-2.5 text-sm text-foreground group-hover:bg-hover">
                 <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -545,11 +547,12 @@ export function PinAnswer({ pin, className }: { pin: Pin; className?: string }) 
             ) : (
               <img src={file} alt={t("The fix")} className="max-h-56 w-full bg-background object-contain transition-opacity group-hover:opacity-90" />
             )}
-          </a>
+          </button>
         ) : (
           <span className="h-24 animate-pulse rounded-md bg-background" />
         )
       )}
+      {viewing && file && <AttachmentViewer url={file} onClose={() => setViewing(false)} />}
     </div>
   )
 }

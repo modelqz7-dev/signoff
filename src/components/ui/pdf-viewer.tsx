@@ -29,6 +29,10 @@ type PDFViewerProps = {
   onReopenPin?: (pin: Pin, reopen: boolean) => void
   /** Open the viewer on this pin's page with the pin selected (change `nonce` to repeat). */
   focusPin?: { id: string; nonce: number } | null
+  /** Just the full-screen viewer, already open, without the file tile (e.g. an attachment). */
+  startOpen?: boolean
+  /** Called when the viewer is closed. */
+  onClose?: () => void
 }
 
 const MIN_SCALE = 0.5
@@ -63,6 +67,8 @@ export function PDFViewer({
   canEdit = () => true,
   onReopenPin,
   focusPin,
+  startOpen = false,
+  onClose,
 }: PDFViewerProps) {
   const modalCanvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -87,7 +93,7 @@ export function PDFViewer({
   const [scale, setScale] = useState(1)
   const [renderScale, setRenderScale] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(startOpen)
   const [dragging, setDragging] = useState(false)
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -429,7 +435,7 @@ export function PDFViewer({
     <>
       {/* A file tile instead of a page preview: a tall drawing at full width pushed everything
           below far down. The whole file opens full screen, with zoom and comments. */}
-      <button
+      {!startOpen && <button
         type="button"
         onClick={() => openModal()}
         disabled={!totalPages}
@@ -453,11 +459,11 @@ export function PDFViewer({
           <span className="hidden sm:inline">{t("Open full screen")}</span>
           <span className="sm:hidden">{t("Open")}</span>
         </span>
-      </button>
+      </button>}
 
       <Dialog
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={(v) => { setOpen(v); if (!v) onClose?.() }}
         showCloseButton={false}
         className="flex h-[94dvh] w-[1400px] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-[96vw] data-entering:duration-300 data-entering:ease-out data-entering:slide-in-from-bottom-6 [&>[data-slot=dialog]]:h-full [&>[data-slot=dialog]]:min-h-0 [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-0"
       >
