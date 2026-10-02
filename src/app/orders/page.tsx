@@ -73,31 +73,41 @@ export default function OrdersPage() {
         />
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-base font-medium text-foreground">{t("Orders")}</h2>
-              <span className="text-sm text-muted-foreground">{orders.length}</span>
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground">
+                  {t("{n} orders", { n: orders.length })}
+                </p>
+                <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-3xl">
+                  {t("Orders")}
+                </h1>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                <PlusIcon className="size-4" />
+                {t("New Order")}
+              </button>
             </div>
-            <Button size="sm" onPress={() => setModalOpen(true)}>
-              <PlusIcon />
-              {t("New Order")}
-            </Button>
-          </div>
 
-          {orders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl py-20 text-center ring-1 ring-foreground/10">
-              <p className="text-sm text-foreground">{t("No orders yet")}</p>
-              <p className="max-w-xs text-xs text-muted-foreground">
-                {t("Create an order, upload the design and share the portal link with your client.")}
-              </p>
-              <Button size="sm" variant="outline" onPress={() => setModalOpen(true)}>
-                <PlusIcon />
-                {t("Create your first order")}
-              </Button>
-            </div>
-          ) : (
-            <OrdersList orders={orders} pins={pins} onDeleted={handleOrderDeleted} />
-          )}
+            {orders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl py-20 text-center ring-1 ring-foreground/10">
+                <p className="text-sm text-foreground">{t("No orders yet")}</p>
+                <p className="max-w-xs text-xs text-muted-foreground">
+                  {t("Create an order, upload the design and share the portal link with your client.")}
+                </p>
+                <Button size="sm" variant="outline" onPress={() => setModalOpen(true)}>
+                  <PlusIcon />
+                  {t("Create your first order")}
+                </Button>
+              </div>
+            ) : (
+              <OrdersList orders={orders} pins={pins} onDeleted={handleOrderDeleted} />
+            )}
+          </div>
         </div>
       </div>
 

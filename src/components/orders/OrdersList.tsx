@@ -5,14 +5,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowUpDownIcon, ChevronRightIcon, FileIcon, FileTextIcon, SearchIcon, XIcon } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { PinOutlineIcon } from "@/components/orders/pins"
-import { STATUS_MAP, type Order, type OrderStatus } from "@/components/dashboard/types"
+import { STATUS_MAP, STATUS_SHADE, type Order, type OrderStatus } from "@/components/dashboard/types"
 import type { Pin } from "@/lib/pins"
 import { cn, isPdfUrl } from "@/lib/utils"
 import { useNow } from "@/lib/use-now"
@@ -82,24 +81,24 @@ export function OrdersList({
   return (
     <div className="flex flex-col gap-4">
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/40 p-1">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div role="tablist" aria-label={t("Status")} className="-mx-4 flex gap-5 overflow-x-auto border-b border-border/60 px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
           {FILTERS.map((f) => {
             const active = filter === f
             return (
               <button
                 key={f}
                 type="button"
+                role="tab"
                 onClick={() => setFilter(f)}
-                aria-pressed={active}
+                aria-selected={active}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors",
-                  active ? "bg-card text-foreground shadow-sm ring-1 ring-foreground/10" : "text-muted-foreground hover:text-foreground"
+                  "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 pb-2.5 text-sm whitespace-nowrap transition-colors",
+                  active ? "border-foreground font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                {f !== "all" && <span className="size-1.5 rounded-full" style={{ backgroundColor: STATUS_MAP[f].color }} />}
                 {f === "all" ? t("All") : t(STATUS_MAP[f].label)}
-                <span className="text-muted-foreground">{counts[f] ?? 0}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{counts[f] ?? 0}</span>
               </button>
             )
           })}
@@ -145,7 +144,6 @@ export function OrdersList({
           {/* Phones: one compact card per order */}
           <ul className="divide-y divide-border sm:hidden">
             {visible.map((order) => {
-              const status = STATUS_MAP[order.status]
               const comments = openComments.get(order.id) ?? 0
               const active = order.status === "await" || order.status === "changes"
               const lateDays = active && order.deadline
@@ -160,13 +158,7 @@ export function OrdersList({
                         {[order.client_name, order.code].filter(Boolean).join(" · ")}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-                        <Badge
-                          variant="secondary"
-                          className="border-0 px-2 py-0.5 text-[11px]"
-                          style={{ backgroundColor: status.bg, color: status.color }}
-                        >
-                          {t(status.label)}
-                        </Badge>
+                        <StatusChip status={order.status} />
                         {comments > 0 && (
                           <span className="inline-flex items-center gap-1 text-muted-foreground">
                             <PinOutlineIcon className="size-3" />
@@ -203,7 +195,6 @@ export function OrdersList({
             </TableHeader>
             <TableBody>
               {visible.map((order) => {
-                const status = STATUS_MAP[order.status]
                 const comments = openComments.get(order.id) ?? 0
                 const active = order.status === "await" || order.status === "changes"
                 const lateDays = active && order.deadline
@@ -212,7 +203,7 @@ export function OrdersList({
                 return (
                   <TableRow
                     key={order.id}
-                    className="cursor-pointer"
+                    className="group cursor-pointer"
                     onClick={() => router.push(`/orders/${order.id}`)}
                   >
                     <TableCell className="max-w-[220px] pl-4">
@@ -230,18 +221,12 @@ export function OrdersList({
                       {order.client_email && <p className="truncate text-xs text-muted-foreground">{order.client_email}</p>}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className="border-0 px-2 py-0.5 text-[11px]"
-                        style={{ backgroundColor: status.bg, color: status.color }}
-                      >
-                        {t(status.label)}
-                      </Badge>
+                      <StatusChip status={order.status} />
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {comments > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-xs text-foreground">
-                          <PinOutlineIcon className="size-3 text-accent" />
+                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs text-foreground tabular-nums">
+                          <PinOutlineIcon className="size-3.5" />
                           {comments}
                         </span>
                       ) : (
@@ -273,7 +258,10 @@ export function OrdersList({
                     </TableCell>
                     <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-0.5">
-                        <DeleteOrderButton order={order} onDeleted={() => onDeleted(order)} />
+                        {/* delete only shows on the row you're pointing at */}
+                        <span className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                          <DeleteOrderButton order={order} onDeleted={() => onDeleted(order)} />
+                        </span>
                         <ChevronRightIcon className="size-4 text-muted-foreground" />
                       </div>
                     </TableCell>
@@ -291,5 +279,16 @@ export function OrdersList({
         {activeValue > 0 && <> · {t("{value} in active orders", { value: money(activeValue) })}</>}
       </p>
     </div>
+  )
+}
+
+/** Status as a quiet label with a dot: darker the earlier the order is in its life. */
+function StatusChip({ status }: { status: OrderStatus }) {
+  const { t } = useT()
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-foreground">
+      <span className="size-1.5 rounded-full" style={{ backgroundColor: STATUS_SHADE[status] }} />
+      {t(STATUS_MAP[status].label)}
+    </span>
   )
 }
