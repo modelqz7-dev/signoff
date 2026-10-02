@@ -57,15 +57,17 @@ export function AnswerablePinList({
         aria-label={t("Select comment {n}", { n: numbers.get(pin.id) ?? "" })}
         className="mt-1 size-4 shrink-0 accent-[var(--foreground)]"
       />
-      <button type="button" onClick={() => onSelect?.(pin)} className={cn("flex min-w-0 flex-1 items-start gap-2.5 text-left", !onSelect && "cursor-default")}>
+      <div className="flex min-w-0 flex-1 items-start gap-2.5">
         <PinGlyph label={numbers.get(pin.id)} resolved={pin.resolved && pin.fix_status !== "reopened"} className="mt-0.5" />
-        <span className="min-w-0 flex-1">
-          <span className={cn("block text-sm font-medium text-foreground", pin.resolved && pin.fix_status !== "reopened" && "text-muted-foreground")}>{pin.title}</span>
-          {pin.description && <span className="mt-0.5 block text-xs text-muted-foreground">{pin.description}</span>}
-          <span className="mt-0.5 block text-[11px] text-muted-foreground/70">{pin.author_name} · {t("p. {n}", { n: pin.page })}</span>
+        <div className="min-w-0 flex-1">
+          <button type="button" onClick={() => onSelect?.(pin)} className={cn("block w-full text-left", !onSelect && "cursor-default")}>
+            <span className={cn("block text-sm font-medium text-foreground", pin.resolved && pin.fix_status !== "reopened" && "text-muted-foreground")}>{pin.title}</span>
+            {pin.description && <span className="mt-0.5 block text-xs text-muted-foreground">{pin.description}</span>}
+            <span className="mt-0.5 block text-[11px] text-muted-foreground/70">{pin.author_name} · {t("p. {n}", { n: pin.page })}</span>
+          </button>
           <PinAnswer pin={pin} className="mt-2" />
-        </span>
-      </button>
+        </div>
+      </div>
       <Button variant="ghost" size="sm" onPress={() => setAnswering([pin])} className="shrink-0">
         <ReplyIcon />
         <span className="hidden sm:inline">{pin.fix_status ? t("Edit") : t("Answer")}</span>
