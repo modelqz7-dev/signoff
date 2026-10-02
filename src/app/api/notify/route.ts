@@ -2,7 +2,7 @@ import { adminClient, notifyShop, secretMatches, webhookSecret, type NotifyShop 
 
 /**
  * Called by Supabase Database Webhooks (see supabase/notifications.sql for setup):
- * - INSERT on order_pins  → "client left a comment"
+ * - INSERT on order_pins  → "client left a comment" (bare pins are announced once described)
  * - UPDATE on orders      → "client approved" / "client requested changes"
  * Requests must carry the shared secret in the `x-webhook-secret` header.
  */
@@ -28,7 +28,9 @@ export async function POST(request: Request) {
   let orderId: string | null = null
   let buildEvent: ((orderTitle: string) => Parameters<typeof notifyShop>[1]) | null = null
 
-  if (payload.table === "order_pins" && payload.type === "INSERT" && payload.record) {
+  // A bare pin (put on the file, described later) is announced when it gets its words, from
+  // the portal's describe route, not here.
+  if (payload.table === "order_pins" && payload.type === "INSERT" && payload.record && String(payload.record.title ?? "").trim()) {
     const pin = payload.record
     orderId = String(pin.order_id)
     buildEvent = (orderTitle) => ({

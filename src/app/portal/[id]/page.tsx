@@ -1,18 +1,17 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { ArrowRightIcon, ChevronLeftIcon } from "lucide-react"
+import { ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { STATUS_MAP } from "@/components/dashboard/types"
-import { CommentsIcon, PinDetails, PinList, PinMarker, PinNav } from "@/components/orders/pins"
+import { CommentsIcon, PinMarker } from "@/components/orders/pins"
+import { ClientPinList } from "@/components/orders/Revisions"
 import { messagesByPin, pinsOfVersion, usePinNumbers, type NewPin, type Pin } from "@/lib/pins"
-import { PinThread } from "@/components/orders/PinThread"
 import { usePortal } from "@/lib/portal-client"
 import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
@@ -21,7 +20,6 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { BrandMark, MadeWithNodly, NodlyMark, PortalContactCard, PortalWelcome, usePortalBrand } from "@/components/portal/PortalBrand"
 import { ActionBar, ApproveDialog, ApprovedBanner, ChangesDialog, DoneDialog, ReviewSteps } from "@/components/portal/ReviewFlow"
-import { Sheet } from "@/components/ui/sheet"
 
 export default function PortalPage() {
   const params = useParams()
@@ -35,7 +33,7 @@ export default function PortalPage() {
 
   // Everything goes through the server: the database itself is closed to portal visitors.
   const portal = usePortal(orderId)
-  const { phase, order, setResolved, movePin, deletePin, sendMessage } = portal
+  const { phase, order, setResolved, movePin, describePin, deletePin, sendMessage } = portal
   const [loading, setLoading] = useState(false)
 
   // The client always works on the latest version; comments on earlier versions stay with them.
@@ -44,32 +42,23 @@ export default function PortalPage() {
   const lastMessages = new Map([...threads].map(([id, list]) => [id, list[list.length - 1]]))
   // Pins where the workshop has the last word: the client should look at those.
   const answered = pins.filter((p) => lastMessages.get(p.id)?.author_role === "workshop")
-  // The client writes in a pin; the workshop's files and "fixed" come from the other side.
-  const thread = (pin: Pin) => (
-    <PinThread messages={threads.get(pin.id) ?? []} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => sendMessage(pin.id, m.body)} />
-  )
   // The server puts the comment on the current version under the visitor's name.
   const addPin = (pin: NewPin) => portal.addPin(pin)
   // The portal belongs to the client: they can move and delete any comment on their order.
   const canEdit: (pin: Pin) => boolean = () => true
   const numbers = usePinNumbers(pins)
+  // Open a pin in the full-screen PDF viewer, or a comment in the list (each `nonce` once).
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
+  const [listFocus, setListFocus] = useState<{ id: string; nonce: number } | null>(null)
   const isPdf = isPdfUrl(order?.file_url)
 
-  // Pin creation
-  const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null)
-  const [pinTitle, setPinTitle] = useState("")
-  const [pinDesc, setPinDesc] = useState("")
-  const [savingPin, setSavingPin] = useState(false)
+  // The pin picked from the list, highlighted on an image.
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
-  // Tap-to-move on images: the next tap on the file puts this pin there.
-  const [movingPinId, setMovingPinId] = useState<string | null>(null)
 
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<"approved" | "changes" | null>(null)
   const [done, setDone] = useState<"approved" | "changes" | null>(null)
-  const [commentsOpen, setCommentsOpen] = useState(false)
   const fileContainerRef = useRef<HTMLDivElement>(null)
 
   async function handleAuth(e: React.FormEvent) {
@@ -88,52 +77,26 @@ export default function PortalPage() {
     )
   }
 
+  // A tap on the image puts a numbered pin there; what it is about is written in the list.
   function handleFileClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!fileContainerRef.current) return
     const rect = fileContainerRef.current.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
-    if (movingPinId) {
-      movePin(movingPinId, x, y)
-      setSelectedPinId(movingPinId)
-      setMovingPinId(null)
-      return
-    }
-    setPendingPin({ x, y })
-    setPinTitle("")
-    setPinDesc("")
     setSelectedPinId(null)
+    addPin({ x, y, page: 1, title: "", description: null }).catch((err) => console.error("Pin save error:", err))
   }
 
-  async function handleSavePin() {
-    if (!pendingPin || !pinTitle.trim()) return
-    setSavingPin(true)
-
-    try {
-      await addPin({
-        x: pendingPin.x,
-        y: pendingPin.y,
-        page: 1,
-        title: pinTitle.trim(),
-        description: pinDesc.trim() || null,
-      })
-      setPendingPin(null)
-      setPinTitle("")
-      setPinDesc("")
-    } catch (e) {
-      console.error("Pin save error:", e)
-    }
-    setSavingPin(false)
-  }
-
+  /** Open the comment in the list under the file. */
   function handleSelectPin(pin: Pin) {
-    setPendingPin(null)
-    if (isPdf) setFocusPin({ id: pin.id, nonce: Date.now() })
-    else {
-      setSelectedPinId(pin.id === selectedPinId ? null : pin.id)
-      // the comment opens under the design: bring it into view
-      requestAnimationFrame(() => document.getElementById("pin-details")?.scrollIntoView({ behavior: "smooth", block: "center" }))
-    }
+    setListFocus((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 }))
+  }
+
+  /** Show where a comment sits: the PDF opens on it, an image gets it highlighted. */
+  function showOnFile(pin: Pin) {
+    if (isPdf) { setFocusPin((f) => ({ id: pin.id, nonce: (f?.nonce ?? 0) + 1 })); return }
+    setSelectedPinId(pin.id)
+    fileContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
   }
 
   async function handleAction(newStatus: "approved" | "changes") {
@@ -238,26 +201,7 @@ export default function PortalPage() {
   // ── View screen ──
   if (!order) return null
   const status = STATUS_MAP[order.status] || STATUS_MAP.await
-  const selectedPin = pins.find((p) => p.id === selectedPinId) || null
   const openCount = pins.filter((p) => !p.resolved).length
-  // Comments in their numbered order, for "‹ 2 of 5 ›".
-  const ordered = [...pins].sort((a, b) => (numbers.get(a.id) ?? 0) - (numbers.get(b.id) ?? 0))
-  const pinDetails = (pin: Pin) => {
-    const at = ordered.findIndex((p) => p.id === pin.id)
-    const step = (d: number) => setSelectedPinId(ordered[(at + d + ordered.length) % ordered.length].id)
-    return (
-      <PinDetails
-        key={pin.id}
-        pin={pin}
-        number={numbers.get(pin.id) ?? 0}
-        onToggleResolved={() => setResolved(pin.id, !pin.resolved)}
-        onDelete={canEdit(pin) ? async () => { await deletePin(pin.id); setSelectedPinId(null) } : undefined}
-        onStartMove={canEdit(pin) ? () => { setMovingPinId(pin.id); setSelectedPinId(null) } : undefined}
-        thread={thread(pin)}
-        nav={<PinNav index={at} total={ordered.length} onPrev={() => step(-1)} onNext={() => step(1)} />}
-      />
-    )
-  }
 
   const fileCard = order.file_url ? (
     <Card>
@@ -271,7 +215,7 @@ export default function PortalPage() {
           )}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          {isPdf ? t("Open the file and click anywhere on a page to leave a comment.") : t("Click on the file to leave a comment.")}
+          {isPdf ? t("Open the file and tap the spot that needs a change. Describe it below.") : t("Tap the spot that needs a change. Describe it below.")}
         </p>
       </CardHeader>
       <CardContent>
@@ -281,11 +225,8 @@ export default function PortalPage() {
               url={order.file_url}
               pins={pins}
               onAddPin={addPin}
-              onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
               onMovePin={(pin, x, y) => movePin(pin.id, x, y)}
-              onDeletePin={(pin) => deletePin(pin.id)}
-              renderThread={thread}
-              lastMessages={lastMessages}
+              onPinClick={handleSelectPin}
               canEdit={canEdit}
               focusPin={focusPin}
             />
@@ -307,52 +248,10 @@ export default function PortalPage() {
                   pin={pin}
                   number={numbers.get(pin.id) ?? ""}
                   selected={pin.id === selectedPinId}
-                  onSelect={() => { setSelectedPinId(pin.id === selectedPinId ? null : pin.id); setPendingPin(null) }}
-                  onMove={canEdit(pin) ? (x, y) => { movePin(pin.id, x, y); setMovingPinId(null) } : undefined}
+                  onSelect={() => { setSelectedPinId(pin.id); handleSelectPin(pin) }}
+                  onMove={canEdit(pin) ? (x, y) => movePin(pin.id, x, y) : undefined}
                 />
               ))}
-              {pendingPin && <PinMarker pin={{ ...pendingPin, resolved: false }} pending />}
-            </div>
-          )}
-
-          {/* New pin form */}
-          {pendingPin && (
-            <div className="mt-4 rounded-lg border border-border/40 p-4 flex flex-col gap-3">
-              <p className="text-xs font-medium text-foreground">{t("New comment")}</p>
-              <Input
-                placeholder={t("Title *")}
-                value={pinTitle}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPinTitle(e.target.value)}
-                className="text-sm"
-              />
-              <Textarea
-                placeholder={t("Description (optional)")}
-                value={pinDesc}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPinDesc(e.target.value)}
-                rows={2}
-                className="text-sm"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" size="sm" onPress={() => setPendingPin(null)}>{t("Cancel")}</Button>
-                <Button size="sm" onPress={handleSavePin} isDisabled={savingPin || !pinTitle.trim()}>
-                  {savingPin ? t("Saving...") : t("Add comment")}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Selected pin detail */}
-          {movingPinId && !isPdf && (
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border/40 px-4 py-2.5 text-sm">
-              <span>{t("Tap the spot where the pin should go.")}</span>
-              <Button variant="ghost" size="sm" onPress={() => setMovingPinId(null)}>{t("Cancel")}</Button>
-            </div>
-          )}
-
-          {/* phones and tablets: the open comment sits under the design */}
-          {selectedPin && !pendingPin && !isPdf && (
-            <div id="pin-details" className="mt-4 scroll-mt-20 rounded-lg border border-border/40 p-4 text-sm lg:hidden">
-              {pinDetails(selectedPin)}
             </div>
           )}
       </CardContent>
@@ -424,6 +323,26 @@ export default function PortalPage() {
           <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="flex min-w-0 flex-col gap-5">
               {fileCard}
+              {order.file_url && (
+                <Card id="comments" className="scroll-mt-20">
+                  <CardHeader>
+                    <CardTitle className="text-sm">{t("Comments ({n})", { n: pins.length })}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-2">
+                    <ClientPinList
+                      pins={pins}
+                      numbers={numbers}
+                      messages={threads}
+                      focus={listFocus}
+                      onDescribe={(pin, text) => describePin(pin.id, text)}
+                      onSend={(pin, text) => sendMessage(pin.id, text)}
+                      onDelete={(pin) => deletePin(pin.id)}
+                      onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                      onShow={showOnFile}
+                    />
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <aside className="flex min-w-0 flex-col gap-4">
@@ -450,36 +369,6 @@ export default function PortalPage() {
                 </Card>
               )}
 
-              {/* on phones the comments open from the bar at the bottom */}
-              {/* wide screens: the open comment takes the place of the list, off the design */}
-              {selectedPin && !pendingPin && !isPdf ? (
-                <Card size="sm" className="hidden lg:flex">
-                  <div className="-mt-1 px-1.5">
-                    <Button variant="ghost" size="sm" onPress={() => setSelectedPinId(null)}>
-                      <ChevronLeftIcon />
-                      {t("All comments")}
-                    </Button>
-                  </div>
-                  <CardContent className="text-sm">{pinDetails(selectedPin)}</CardContent>
-                </Card>
-              ) : (
-              <Card size="sm" className="hidden lg:flex">
-                <CardHeader>
-                  <CardTitle>{t("Comments ({n})", { n: pins.length })}</CardTitle>
-                </CardHeader>
-                <CardContent className="px-1.5">
-                  <PinList
-                    pins={pins}
-                    numbers={numbers}
-                    selectedId={isPdf ? null : selectedPinId}
-                    onSelect={handleSelectPin}
-                    emptyText="No comments yet. Click on the file to add one."
-                    lastMessages={lastMessages}
-                  />
-                </CardContent>
-              </Card>
-              )}
-
               <PortalContactCard brand={brand} />
             </aside>
           </div>
@@ -490,7 +379,7 @@ export default function PortalPage() {
         status={order.status}
         commentCount={openCount}
         busy={actionLoading}
-        onComments={() => setCommentsOpen(true)}
+        onComments={() => document.getElementById("comments")?.scrollIntoView({ behavior: "smooth", block: "start" })}
         onChanges={() => setConfirm("changes")}
         onApprove={() => setConfirm("approved")}
       >
@@ -521,21 +410,6 @@ export default function PortalPage() {
       />
       <DoneDialog kind={done} shopName={brand?.shopName ?? ""} onClose={() => setDone(null)} footer={<MadeWithNodly brand={brand} />} />
 
-      <Sheet
-        isOpen={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        title={t("Comments ({n})", { n: pins.length })}
-        className="lg:hidden"
-      >
-        <PinList
-          pins={pins}
-          numbers={numbers}
-          selectedId={isPdf ? null : selectedPinId}
-          onSelect={(pin) => { setCommentsOpen(false); handleSelectPin(pin) }}
-          emptyText="No comments yet. Click on the file to add one."
-          lastMessages={lastMessages}
-        />
-      </Sheet>
     </div>
   )
 }

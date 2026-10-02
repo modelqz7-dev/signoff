@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { MessageSquareReplyIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { CheckIcon, MessageSquareReplyIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { PinGroups, PinNumber, PinOutlineIcon, PinRow } from "@/components/orders/pins"
 import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
@@ -171,5 +171,180 @@ export function AnswerablePinList({
         </Dialog>
       )}
     </div>
+  )
+}
+
+/**
+ * The client's list: a pin put on the file shows up here with a field for what to change;
+ * a described one opens its conversation with the workshop.
+ */
+export function ClientPinList({
+  pins,
+  numbers,
+  messages,
+  focus,
+  onDescribe,
+  onSend,
+  onDelete,
+  onToggleResolved,
+  onShow,
+}: {
+  pins: Pin[]
+  numbers: Map<string, number>
+  messages: Map<string, PinMessage[]>
+  /** Open this comment and bring it into view (change `nonce` to repeat). */
+  focus?: { id: string; nonce: number } | null
+  onDescribe: (pin: Pin, text: string) => Promise<void> | void
+  onSend: (pin: Pin, text: string) => Promise<void>
+  onDelete: (pin: Pin) => Promise<void> | void
+  onToggleResolved: (pin: Pin) => void
+  /** Show the pin on the file. */
+  onShow: (pin: Pin) => void
+}) {
+  const { t } = useT()
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [handled, setHandled] = useState<number | null>(null)
+  if (focus && focus.nonce !== handled) {
+    setHandled(focus.nonce)
+    setOpenId(focus.id)
+  }
+  useEffect(() => {
+    if (handled === null || !openId) return
+    document.getElementById(`pin-row-${openId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [handled, openId])
+
+  if (!pins.length) {
+    return <p className="py-6 text-center text-sm text-muted-foreground">{t("No comments yet. Put a pin on the file where something should change.")}</p>
+  }
+
+  const row = (pin: Pin) => {
+    const thread = messages.get(pin.id) ?? []
+    const bare = !pin.title.trim()
+    const editing = bare || editingId === pin.id
+    const isOpen = editing || openId === pin.id
+    const saved = !pin.id.startsWith("temp-")
+    return (
+      <PinRow
+        key={pin.id}
+        pin={pin}
+        number={numbers.get(pin.id)}
+        last={isOpen ? undefined : thread[thread.length - 1]}
+        selected={isOpen}
+        onClick={bare ? undefined : () => { setOpenId(isOpen ? null : pin.id); setEditingId(null) }}
+        trailing={(
+          <button
+            type="button"
+            onClick={() => onShow(pin)}
+            title={t("Show on the file")}
+            aria-label={t("Show on the file")}
+            className="-mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground"
+          >
+            <PinOutlineIcon />
+          </button>
+        )}
+      >
+        {isOpen && (
+          <div className="flex flex-col gap-3 px-3 pb-3 sm:pl-12">
+            {editing ? (
+              <DescribeField
+                initial={pin.title}
+                focusKey={focus?.id === pin.id ? `focus-${focus.nonce}` : !bare || pins.filter((p) => !p.title.trim()).at(-1)?.id === pin.id ? "mount" : undefined}
+                disabled={!saved}
+                onSave={async (text) => { await onDescribe(pin, text); setEditingId(null); setOpenId(pin.id) }}
+                onCancel={bare ? undefined : () => setEditingId(null)}
+              />
+            ) : (
+              <PinThread messages={thread} role="client" fixed={pin.fix_status === "fixed"} onSend={(m) => onSend(pin, m.body)} />
+            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {!editing && (
+                <button type="button" onClick={() => setEditingId(pin.id)} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <PencilIcon className="size-3" />{t("Edit text")}
+                </button>
+              )}
+              {!bare && !pin.fix_status && (
+                <button type="button" onClick={() => onToggleResolved(pin)} className="inline-flex items-center gap-1 hover:text-foreground">
+                  {pin.resolved ? <RotateCcwIcon className="size-3" /> : <CheckIcon className="size-3" />}
+                  {pin.resolved ? t("Reopen") : t("Resolve")}
+                </button>
+              )}
+              {saved && <DeleteLink onDelete={() => onDelete(pin)} />}
+            </div>
+          </div>
+        )}
+      </PinRow>
+    )
+  }
+
+  return <PinGroups pins={pins} render={row} />
+}
+
+function DescribeField({ initial, focusKey, disabled, onSave, onCancel }: {
+  initial: string
+  /** Take the focus whenever this changes (and on mount when set). */
+  focusKey?: string
+  disabled?: boolean
+  onSave: (text: string) => Promise<void>
+  onCancel?: () => void
+}) {
+  const { t } = useT()
+  const [text, setText] = useState(initial)
+  const [saving, setSaving] = useState(false)
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (!focusKey) return
+    // After the viewer closes it hands focus back to its button; take it once that is done.
+    const timer = window.setTimeout(() => ref.current?.focus({ preventScroll: true }), 350)
+    return () => window.clearTimeout(timer)
+  }, [focusKey])
+  const canSave = !!text.trim() && !saving && !disabled
+
+  async function save() {
+    if (!canSave) return
+    setSaving(true)
+    try { await onSave(text.trim()) } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="flex items-end gap-1.5 rounded-xl border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+      <textarea
+        ref={ref}
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, 200))}
+        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save() } else if (e.key === "Escape") onCancel?.() }}
+        rows={1}
+        placeholder={t("What should change here?")}
+        aria-label={t("What should change here?")}
+        className="max-h-40 min-h-8 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] outline-none [field-sizing:content] placeholder:text-muted-foreground"
+      />
+      <button
+        type="button"
+        onClick={save}
+        disabled={!canSave}
+        className="mb-0.5 inline-flex h-8 shrink-0 items-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-opacity disabled:opacity-30"
+      >
+        {t("Save")}
+      </button>
+    </div>
+  )
+}
+
+function DeleteLink({ onDelete }: { onDelete: () => Promise<void> | void }) {
+  const { t } = useT()
+  const [asking, setAsking] = useState(false)
+  if (!asking) {
+    return (
+      <button type="button" onClick={() => setAsking(true)} className="inline-flex items-center gap-1 hover:text-destructive">
+        <Trash2Icon className="size-3" />{t("Delete")}
+      </button>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="text-foreground">{t("Delete this comment?")}</span>
+      <button type="button" onClick={() => onDelete()} className="font-medium text-destructive">{t("Delete")}</button>
+      <button type="button" onClick={() => setAsking(false)} className="hover:text-foreground">{t("Cancel")}</button>
+    </span>
   )
 }

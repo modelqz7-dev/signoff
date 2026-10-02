@@ -21,7 +21,7 @@ import { NextStep, OrderProgress, useDeadlineText } from "@/components/orders/Or
 import { DeleteOrderButton } from "@/components/orders/DeleteOrderButton"
 import { messagesByPin, pinsOfVersion, usePinMessages, usePinNumbers, usePins, type Pin } from "@/lib/pins"
 import { AnswerablePinList } from "@/components/orders/Revisions"
-import { PinThread, type ThreadMessage } from "@/components/orders/PinThread"
+import type { ThreadMessage } from "@/components/orders/PinThread"
 import { fileNameFromUrl, uploadNewVersion, uploadOrderFile, useOrderVersions } from "@/lib/versions"
 import { can } from "@/lib/plans"
 import { openPanel } from "@/lib/panels"
@@ -52,16 +52,15 @@ export default function OrderPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const { t, locale } = useT()
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
-  // A pin clicked on an image: open its conversation in the comment list.
+  // A pin clicked on the file: open its conversation in the comment list.
   const [threadFocus, setThreadFocus] = useState<{ id: string; nonce: number } | null>(null)
 
   // Client comments from the portal, updated live.
   // The shop only reviews comments here: moving and deleting pins is left to the client.
-  const { pins: allPins, setResolved, reload: reloadPins } = usePins(order ? orderId : null)
+  const { pins: allPins, reload: reloadPins } = usePins(order ? orderId : null)
   // The conversation inside each pin.
   const { messages: allMessages, send: sendMessages } = usePinMessages(order ? orderId : null)
   const threads = messagesByPin(allMessages)
-  const lastMessages = new Map([...threads].map(([id, list]) => [id, list[list.length - 1]]))
 
   // Earlier files of the order; null = the current file.
   const versions = useOrderVersions(order ? orderId : null, order?.version)
@@ -395,14 +394,10 @@ export default function OrderPage() {
                         {isPdf ? (
                           <PDFViewer
                             key={fileKey(storedUrl)}
-                            renderThread={(pin) => (
-                              <PinThread messages={threads.get(pin.id) ?? []} role="workshop" fixed={pin.fix_status === "fixed"} onSend={(m) => sendToPins([pin], m)} />
-                            )}
-                            lastMessages={lastMessages}
                             url={fileUrl}
                             fileName={fileNameFromUrl(storedUrl)}
                             pins={pins}
-                            onToggleResolved={(pin) => setResolved(pin.id, !pin.resolved)}
+                            onPinClick={(pin) => setThreadFocus({ id: pin.id, nonce: Date.now() })}
                             focusPin={focusPin}
                           />
                         ) : (
