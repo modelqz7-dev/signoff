@@ -68,7 +68,7 @@ export function AnswerablePinList({
     const isOpen = openId === pin.id
     const isDone = pin.resolved && pin.fix_status !== "reopened"
     return (
-      <div key={pin.id} id={`pin-row-${pin.id}`} className={cn("flex scroll-mt-20 items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors", (checked.has(pin.id) || isOpen) && "bg-muted/50")}>
+      <div key={pin.id} id={`pin-row-${pin.id}`} className={cn("flex scroll-mt-20 flex-wrap items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors", (checked.has(pin.id) || isOpen) && "bg-muted/50")}>
         <input
           type="checkbox"
           checked={checked.has(pin.id)}
@@ -84,15 +84,7 @@ export function AnswerablePinList({
             <span className="mt-0.5 block text-[11px] text-muted-foreground/70">{pin.author_name} · {t("p. {n}", { n: pin.page })}</span>
           </button>
           {pin.fix_status === "reopened" && <p className="text-xs font-medium text-destructive">{t("The client says it isn't done yet")}</p>}
-          {isOpen ? (
-            <PinThread
-              messages={thread}
-              role="workshop"
-              fixed={pin.fix_status === "fixed"}
-              autoFocus
-              onSend={(m) => onSend([pin], m)}
-            />
-          ) : last ? (
+          {!isOpen && last ? (
             <button type="button" onClick={() => setOpenId(pin.id)} className="flex min-w-0 items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground">
               {last.marks_fixed && <CheckIcon className="size-3 shrink-0" strokeWidth={3} />}
               {last.file_url && <PaperclipIcon className="size-3 shrink-0" />}
@@ -107,6 +99,18 @@ export function AnswerablePinList({
           {isOpen ? <XIcon /> : <ReplyIcon />}
           <span className="hidden sm:inline">{isOpen ? t("Close") : t("Answer")}</span>
         </Button>
+        {/* the conversation takes the row's full width (room to type on phones) */}
+        {isOpen && (
+          <div className="w-full sm:pl-[3.25rem]">
+            <PinThread
+              messages={thread}
+              role="workshop"
+              fixed={pin.fix_status === "fixed"}
+              autoFocus
+              onSend={(m) => onSend([pin], m)}
+            />
+          </div>
+        )}
       </div>
     )
   }

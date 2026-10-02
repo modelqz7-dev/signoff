@@ -374,7 +374,7 @@ export function PinDetails({
       <div className="flex items-start gap-2">
         <PinGlyph label={number} resolved={pin.resolved} className="-mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className={cn("font-medium break-words", pin.resolved && "text-muted-foreground line-through")}>{pin.title}</p>
+          <p className={cn("font-medium break-words", pin.resolved && "text-muted-foreground", pin.resolved && !pin.fix_status && "line-through")}>{pin.title}</p>
           {pin.description && (
             <p className="mt-1 text-xs whitespace-pre-wrap break-words text-muted-foreground">{pin.description}</p>
           )}
@@ -464,7 +464,7 @@ export function PinList({
       >
         <PinGlyph label={numbers.get(pin.id)} resolved={pin.resolved} className="-mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className={cn("truncate text-xs font-medium", pin.resolved && "line-through")}>{pin.title}</p>
+          <p className={cn("truncate text-xs font-medium", pin.resolved && !pin.fix_status && "line-through")}>{pin.title}</p>
           {pin.description && !pin.resolved && (
             <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{pin.description}</p>
           )}
