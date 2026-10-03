@@ -1,5 +1,8 @@
 import { adminClient } from "@/lib/server/notify"
-import { portalContext } from "@/lib/server/portal"
+import { clientIp, overLimit, portalContext } from "@/lib/server/portal"
+
+/** Enough for any real review; stops a script from flooding the workshop. */
+const MAX_PINS_PER_VERSION = 100
 
 const clampPercent = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null)
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "")
@@ -18,6 +21,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const page = typeof body.page === "number" && Number.isInteger(body.page) && body.page > 0 ? body.page : 1
   // The title may be empty: a pin is put on the file first and described in the list after.
   if (x === null || y === null) return Response.json({ error: "invalid" }, { status: 400 })
+
+  const fast = await overLimit(ctx.db, `pins:${clientIp(request)}:${id}`, 30, 60_000)
+  if (fast) return fast
+  let existing = ctx.db.from("order_pins").select("id", { count: "exact", head: true }).eq("order_id", id)
+  if (typeof ctx.order.version === "number") existing = existing.eq("version", ctx.order.version)
+  const { count } = await existing
+  if ((count ?? 0) >= MAX_PINS_PER_VERSION) return Response.json({ error: "too_many_pins" }, { status: 429 })
 
   const row: Record<string, unknown> = { order_id: id, x, y, page, title, description, author_name: ctx.name }
   if (typeof ctx.order.version === "number") row.version = ctx.order.version

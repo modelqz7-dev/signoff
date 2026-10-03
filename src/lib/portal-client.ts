@@ -30,6 +30,13 @@ function sortPins(pins: Pin[]) {
   return [...pins].sort((a, b) => a.created_at.localeCompare(b.created_at))
 }
 
+/** What to tell the visitor when the server refuses because of a limit (an i18n key). */
+function limitMessage(error: unknown) {
+  if (error === "too_many_pins") return "This version already has the maximum number of pins."
+  if (error === "slow_down") return "Too many in a row. Wait a minute and try again."
+  return null
+}
+
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(path, {
     ...init,
@@ -130,7 +137,7 @@ export function usePortal(orderId: string) {
       const { res, body } = await api(`${base}/pins`, { method: "POST", body: JSON.stringify(pin) })
       if (!res.ok || !body?.pin) {
         setPins((prev) => prev.filter((p) => p.id !== tempId))
-        throw new Error(body?.error || "Couldn't save the comment")
+        throw new Error(limitMessage(body?.error) ?? "Couldn't save the comment")
       }
       setPins((prev) => sortPins([...prev.filter((p) => p.id !== tempId && p.id !== body.pin.id), body.pin]))
     })
@@ -164,7 +171,7 @@ export function usePortal(orderId: string) {
       if (!res.ok || !body?.message) {
         setMessages((prev) => prev.filter((m) => m.id !== tempId))
         load()
-        throw new Error("Couldn't send the message")
+        throw new Error(limitMessage(body?.error) ?? "Couldn't send the message")
       }
       setMessages((prev) => prev.map((m) => (m.id === tempId ? body.message : m)))
     })

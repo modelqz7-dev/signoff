@@ -269,11 +269,11 @@ export default function OrderPage() {
                 {savingPassword ? t("Saving...") : t("Save")}
               </Button>
             </div>
-            <p className={`flex items-center gap-2 text-[11px] ${passwordError ? "text-destructive" : "text-muted-foreground/70"}`}>
+            <p className={`flex items-center gap-2 text-[11px] ${passwordError ? "text-destructive" : passwordSet ? "text-muted-foreground/70" : "text-[var(--status-changes)]"}`}>
               <span className="min-w-0 flex-1">
                 {passwordError ?? (passwordSet
                   ? t("Password is set. Client needs this to access.")
-                  : t("No password. Anyone with the link can view."))}
+                  : t("No password: anyone with the link can view and approve. Set one before sending."))}
               </span>
               {passwordSet && (
                 <button type="button" onClick={() => savePassword("")} disabled={savingPassword} className="shrink-0 font-medium text-foreground/80 hover:text-foreground disabled:opacity-50">
