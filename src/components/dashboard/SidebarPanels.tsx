@@ -665,7 +665,7 @@ function SecurityPanel() {
       ) : (
         <form onSubmit={change} className="flex flex-col gap-2">
           <p className="text-sm text-foreground">
-            {email ? t("We sent a 6-digit code to {email}.", { email }) : t("We sent a 6-digit code to your email.")}
+            {email ? t("We sent a code to {email}.", { email }) : t("We sent a code to your email.")}
           </p>
           <p className="text-sm text-muted-foreground">{t("Enter it to confirm the new password. Nobody can change it without access to your mail.")}</p>
           <Label htmlFor="panel-password-code" className="mt-1">{t("Code from the email")}</Label>
