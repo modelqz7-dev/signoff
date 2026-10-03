@@ -10,6 +10,10 @@ subject into Supabase (see README.md).
 """
 from pathlib import Path
 
+# The live site, written into the emails so the logo and links work whatever Supabase's
+# Site URL setting says.
+SITE = "https://nodly.princeeio.com"
+
 FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif"
 
 
@@ -32,7 +36,7 @@ LAYOUT = """<!doctype html>
   <tr><td align="center" style="padding:48px 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
       <tr><td align="center" style="padding-bottom:28px;">
-        <img src="{{{{ .SiteURL }}}}/brand/nodly-key-light.png" width="64" height="64" alt="Nodly" style="display:block;margin:0 auto;border:0;">
+        <img src="{site}/brand/nodly-key-light.png" width="64" height="64" alt="Nodly" style="display:block;margin:0 auto;border:0;">
         <div style="margin-top:10px;font-family:{font};font-size:22px;font-weight:700;letter-spacing:-0.03em;color:#171615;">Nodly</div>
       </td></tr>
       <tr><td align="center" style="background:#ffffff;border:1px solid #e7e5e2;border-radius:20px;padding:44px 32px 36px;font-family:{font};color:#171615;text-align:center;">
@@ -43,7 +47,7 @@ LAYOUT = """<!doctype html>
       </td></tr>
       <tr><td align="center" style="padding-top:24px;font-family:{font};font-size:12px;line-height:1.7;color:#8a8783;text-align:center;">
         {tagline}<br>
-        <a href="{{{{ .SiteURL }}}}" style="color:#8a8783;text-decoration:underline;">{{{{ .SiteURL }}}}</a>
+        <a href="{site}" style="color:#8a8783;text-decoration:underline;">{site_name}</a>
       </td></tr>
     </table>
   </td></tr>
@@ -52,7 +56,7 @@ LAYOUT = """<!doctype html>
 </html>
 """
 
-TAGLINE = L("Nodly — согласование макетов с клиентами", "Nodly — client approvals for designs")
+TAGLINE = L("Согласование макетов с клиентами", "Client approvals for designs")
 
 
 def dark_button(href: str, label: str) -> str:
@@ -76,7 +80,7 @@ def button(ru: str, en: str) -> str:
 
 def site_button(ru: str, en: str) -> str:
     """A button to the site itself, for notices that need no confirmation."""
-    return dark_button("{{ .SiteURL }}/login", L(ru, en))
+    return dark_button(SITE + "/login", L(ru, en))
 
 
 CODE = (
@@ -180,6 +184,8 @@ if __name__ == "__main__":
             action=e["action"],
             note=L(*e["note"]),
             tagline=TAGLINE,
+            site=SITE,
+            site_name=SITE.removeprefix("https://"),
         )
         (here / f"{name}.html").write_text(html)
         lines.append(f"{name}: {subject(name)}")
