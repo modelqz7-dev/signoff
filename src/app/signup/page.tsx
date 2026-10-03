@@ -60,7 +60,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title={t("Create your account")}
-      description={t("Free during early access · No card required")}
+      description={t("7 days of Studio free · No card required")}
       footer={
         <>
           {t("Already have an account?")}{" "}
@@ -101,6 +101,12 @@ export default function SignupPage() {
         <Button type="submit" isDisabled={loading} className="w-full">
           {loading ? t("Creating account...") : t("Create account")}
         </Button>
+        <p className="text-center text-xs leading-relaxed text-muted-foreground">
+          {t("By creating an account you agree to the")}{" "}
+          <Link href="/terms" className="underline hover:text-foreground">{t("Terms of service")}</Link>{" "}
+          {t("and the")}{" "}
+          <Link href="/privacy" className="underline hover:text-foreground">{t("Privacy policy")}</Link>.
+        </p>
       </form>
     </AuthShell>
   )

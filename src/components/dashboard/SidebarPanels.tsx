@@ -15,7 +15,9 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ACTIVITIES, COMING_SOON_ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
-import { PLANS, can, effectivePlan, trialDaysLeft } from "@/lib/plans"
+import { PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
+import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
+import { openCheckout } from "@/lib/paddle-client"
 import { uploadPublicAsset, useFileUrl } from "@/lib/files"
 import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
@@ -366,18 +368,66 @@ function BillingPanel() {
   const [yearly, setYearly] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { t, locale } = useT()
+  const { t, locale, lang } = useT()
+  const shop = usage?.shop
+  // A live Paddle subscription (cancelled ones keep their plan until the period ends, then
+  // the webhook moves the workshop to Start).
+  const subscribed = !!shop?.paddle_subscription_id && shop.subscription_status !== "canceled"
 
-  async function choose(id: string) {
-    if (!usage) return
-    setSwitching(id)
+  async function authHeaders() {
+    const { data: { session } } = await supabase.auth.getSession()
+    return { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` }
+  }
+
+  async function openPortal() {
     setError(null)
-    const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", usage.shop.id).select().maybeSingle()
-    if (error || !data) setError(error?.message || t("Couldn't change the plan"))
-    else {
-      notifyPlanChanged()
-      // The pressed "Choose" button disappears; keep focus inside the dialog so Esc still works.
-      requestAnimationFrame(() => document.getElementById(`plan-${id}`)?.focus())
+    setSwitching("portal")
+    const res = await fetch("/api/paddle/portal", { method: "POST", headers: await authHeaders() })
+    const body = await res.json().catch(() => ({}))
+    if (body.url) window.open(body.url, "_blank", "noopener")
+    else setError(t("Couldn't open billing. Try again in a minute."))
+    setSwitching(null)
+  }
+
+  async function choose(id: PlanId) {
+    if (!usage) return
+    setError(null)
+
+    // Before billing is set up: plans switch freely (early access).
+    if (!PADDLE_ENABLED) {
+      setSwitching(id)
+      const { data, error } = await supabase.from("shops").update({ plan: id }).eq("id", usage.shop.id).select().maybeSingle()
+      if (error || !data) setError(error?.message || t("Couldn't change the plan"))
+      else {
+        notifyPlanChanged()
+        // The pressed "Choose" button disappears; keep focus inside the dialog so Esc still works.
+        requestAnimationFrame(() => document.getElementById(`plan-${id}`)?.focus())
+      }
+      setSwitching(null)
+      return
+    }
+
+    // Going back to Start means cancelling, which Paddle's portal does with a clear summary.
+    if (id === "free") { if (subscribed) await openPortal(); return }
+
+    setSwitching(id)
+    try {
+      if (subscribed) {
+        const res = await fetch("/api/paddle/change", {
+          method: "POST",
+          headers: await authHeaders(),
+          body: JSON.stringify({ plan: id, cycle: yearly ? "yearly" : "monthly" }),
+        })
+        if (!res.ok) throw new Error()
+        for (const ms of [1500, 4000, 8000]) window.setTimeout(notifyPlanChanged, ms)
+      } else {
+        const price = priceFor(id, yearly ? "yearly" : "monthly")
+        if (!price) throw new Error()
+        const { data: { user } } = await supabase.auth.getUser()
+        await openCheckout({ priceId: price, email: user?.email, shopId: usage.shop.id, lang })
+      }
+    } catch {
+      setError(t("Couldn't open the payment. Try again in a minute."))
     }
     setSwitching(null)
   }
@@ -444,7 +494,21 @@ function BillingPanel() {
         })}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Note>{t("No charges during early access: you can switch plans freely. Billing will be announced before any payment.")}</Note>
+      {PADDLE_ENABLED && shop?.paddle_customer_id && (
+        <Button variant="outline" onPress={openPortal} isDisabled={!!switching} className="w-full">
+          {switching === "portal" ? t("Opening...") : t("Manage subscription and invoices")}
+        </Button>
+      )}
+      {PADDLE_ENABLED && subscribed && shop?.current_period_end && (
+        <p className="text-xs text-muted-foreground" suppressHydrationWarning>
+          {t("Next payment: {date}", { date: new Date(shop.current_period_end).toLocaleDateString(locale) })}
+        </p>
+      )}
+      <Note>
+        {PADDLE_ENABLED
+          ? t("Payments are processed by Paddle. Cancel any time; a refund is available within 14 days of a payment.")
+          : t("No charges during early access: you can switch plans freely. Billing will be announced before any payment.")}
+      </Note>
     </div>
   )
 }
