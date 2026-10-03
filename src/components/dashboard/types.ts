@@ -47,6 +47,11 @@ export type Shop = {
   notify_lang?: string
   // Plans (see supabase/plans.sql)
   trial_ends_at?: string | null
+  // Billing through Paddle (see supabase/billing.sql)
+  paddle_customer_id?: string | null
+  paddle_subscription_id?: string | null
+  subscription_status?: string | null
+  current_period_end?: string | null
   logo_url?: string | null
   // Welcome message and contacts, Studio (see supabase/branding.sql)
   portal_welcome?: string | null
