@@ -103,23 +103,54 @@ export function readSession(request: Request, orderId: string, order: PasswordFi
   }
 }
 
-// ── Brute-force protection (best effort, per server instance) ──
+// ── Limits: password guessing and spam ──────────────────
+// Counters live in the database (supabase/rate-limits.sql) so they hold across serverless
+// instances. Until that SQL is run, a per-instance memory counter stands in.
 
-const attempts = new Map<string, { count: number; until: number }>()
-const WINDOW_MS = 15 * 60_000
-const MAX_ATTEMPTS = 10
+const memory = new Map<string, { count: number; until: number }>()
 
-export function tooManyAttempts(key: string) {
-  const a = attempts.get(key)
-  return !!a && a.until > Date.now() && a.count >= MAX_ATTEMPTS
+function memoryHit(key: string, windowMs: number, add: boolean) {
+  const now = Date.now()
+  let a = memory.get(key)
+  if (!a || a.until < now) {
+    if (!add) return 0
+    a = { count: 0, until: now + windowMs }
+    memory.set(key, a)
+  }
+  if (add) a.count++
+  if (memory.size > 5000) for (const [k, v] of memory) if (v.until < now) memory.delete(k)
+  return a.count
 }
 
-export function recordFailedAttempt(key: string) {
-  const now = Date.now()
-  const a = attempts.get(key)
-  if (!a || a.until < now) attempts.set(key, { count: 1, until: now + WINDOW_MS })
-  else a.count++
-  if (attempts.size > 5000) for (const [k, v] of attempts) if (v.until < now) attempts.delete(k)
+/** Counts one hit for `key` in a window and returns how many there were so far. */
+export async function hitLimit(db: SupabaseClient, key: string, windowMs: number) {
+  const { data, error } = await db.rpc("portal_limit_hit", { p_key: key, p_window_seconds: Math.ceil(windowMs / 1000) })
+  if (!error && typeof data === "number") return data
+  return memoryHit(key, windowMs, true)
+}
+
+/** Hits so far for `key` in its current window, without counting a new one. */
+async function peekLimit(db: SupabaseClient, key: string) {
+  const { data, error } = await db.from("portal_limits").select("count, until").eq("key", key).maybeSingle()
+  if (!error) return data && new Date(data.until).getTime() > Date.now() ? data.count : 0
+  return memoryHit(key, 0, false)
+}
+
+const LOGIN_WINDOW_MS = 15 * 60_000
+const MAX_ATTEMPTS = 10
+
+export async function tooManyAttempts(db: SupabaseClient, key: string) {
+  return (await peekLimit(db, `login:${key}`)) >= MAX_ATTEMPTS
+}
+
+export async function recordFailedAttempt(db: SupabaseClient, key: string) {
+  await hitLimit(db, `login:${key}`, LOGIN_WINDOW_MS)
+}
+
+/** A 429 response when the visitor goes over `max` hits per window, else null. */
+export async function overLimit(db: SupabaseClient, key: string, max: number, windowMs: number) {
+  if ((await hitLimit(db, key, windowMs)) <= max) return null
+  return Response.json({ error: "slow_down" }, { status: 429 })
 }
 
 export function clientIp(request: Request) {

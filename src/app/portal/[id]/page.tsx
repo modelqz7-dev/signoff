@@ -43,7 +43,11 @@ export default function PortalPage() {
   // Pins where the workshop has the last word: the client should look at those.
   const answered = pins.filter((p) => lastMessages.get(p.id)?.author_role === "workshop")
   // The server puts the comment on the current version under the visitor's name.
-  const addPin = (pin: NewPin) => portal.addPin(pin)
+  // A refused pin (a limit) is explained in the action bar.
+  const addPin = (pin: NewPin) => portal.addPin(pin).catch((err: Error) => {
+    console.error("Pin save error:", err)
+    setActionError(t(err.message))
+  })
   // The portal belongs to the client: they can move and delete any comment on their order.
   const canEdit: (pin: Pin) => boolean = () => true
   const numbers = usePinNumbers(pins)
@@ -84,7 +88,7 @@ export default function PortalPage() {
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
     setSelectedPinId(null)
-    addPin({ x, y, page: 1, title: "", description: null }).catch((err) => console.error("Pin save error:", err))
+    addPin({ x, y, page: 1, title: "", description: null })
   }
 
   /** Open the comment in the list under the file. */

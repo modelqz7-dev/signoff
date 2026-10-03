@@ -16,16 +16,16 @@ export async function POST(request: Request, { params }: Params) {
   const password = typeof body.password === "string" ? body.password.slice(0, 200) : ""
   if (!name) return Response.json({ error: "name_required" }, { status: 400 })
 
-  const key = `${clientIp(request)}:${id}`
-  if (tooManyAttempts(key)) return Response.json({ error: "too_many_attempts" }, { status: 429 })
-
   const db = adminClient()
+  const key = `${clientIp(request)}:${id}`
+  if (await tooManyAttempts(db, key)) return Response.json({ error: "too_many_attempts" }, { status: 429 })
+
   const { data: order } = await db.from("orders").select("*").eq("id", id).maybeSingle()
   if (!order) return Response.json({ error: "not_found" }, { status: 404 })
 
   const check = checkPassword(order, password)
   if (!check.ok) {
-    recordFailedAttempt(key)
+    await recordFailedAttempt(db, key)
     return Response.json({ error: "wrong_password" }, { status: 401 })
   }
 

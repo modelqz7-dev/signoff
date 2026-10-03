@@ -1,5 +1,5 @@
 import { adminClient } from "@/lib/server/notify"
-import { isUuid, portalContext } from "@/lib/server/portal"
+import { clientIp, isUuid, overLimit, portalContext } from "@/lib/server/portal"
 
 /**
  * The client writes in a pin's conversation. A message on a pin the workshop marked fixed
@@ -17,6 +17,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const body = (await request.json().catch(() => ({}))) as { body?: unknown }
   const text = typeof body.body === "string" ? body.body.trim().slice(0, 2000) : ""
   if (!text) return Response.json({ error: "invalid" }, { status: 400 })
+
+  const fast = await overLimit(ctx.db, `messages:${clientIp(request)}:${id}`, 20, 60_000)
+  if (fast) return fast
 
   const { data: message, error } = await ctx.db.from("pin_messages").insert({
     pin_id: pinId,

@@ -170,7 +170,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
       setFile(null)
       setFixedChoice(null)
     } catch (e) {
-      setError((e as Error)?.message || t("Something went wrong"))
+      setError(t((e as Error)?.message || "Something went wrong"))
     }
     setSending(false)
   }
