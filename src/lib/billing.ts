@@ -4,16 +4,22 @@ import type { PlanId } from "@/lib/plans"
 
 export type Cycle = "monthly" | "yearly"
 
+/** Tolerates values pasted with spaces, line breaks or quotes around them. */
+const clean = (v: string | undefined) => v?.trim().replace(/^["']|["']$/g, "").trim() || undefined
+
 const PRICES: Record<Exclude<PlanId, "free">, Record<Cycle, string | undefined>> = {
   go: {
-    monthly: process.env.NEXT_PUBLIC_PADDLE_PRICE_GO_MONTHLY,
-    yearly: process.env.NEXT_PUBLIC_PADDLE_PRICE_GO_YEARLY,
+    monthly: clean(process.env.NEXT_PUBLIC_PADDLE_PRICE_GO_MONTHLY),
+    yearly: clean(process.env.NEXT_PUBLIC_PADDLE_PRICE_GO_YEARLY),
   },
   pro: {
-    monthly: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY,
-    yearly: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY,
+    monthly: clean(process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY),
+    yearly: clean(process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY),
   },
 }
+
+/** A Paddle price id looks like "pri_" followed by 26 letters and digits. */
+export const isPriceId = (v: string | undefined) => !!v && /^pri_[a-z0-9]{26}$/i.test(v)
 
 /** Paddle is set up: a client token and at least the monthly prices. */
 export const PADDLE_ENABLED = !!(
