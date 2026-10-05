@@ -13,8 +13,18 @@ export async function paddleApi<T = unknown>(path: string, init: { method?: stri
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
   })
   const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(`Paddle ${res.status}: ${JSON.stringify((json as { error?: unknown }).error ?? json)}`)
+  if (!res.ok) {
+    const err = (json as { error?: { code?: string; detail?: string } }).error
+    throw new PaddleError(res.status, err?.code ?? "unknown", err?.detail ?? "", JSON.stringify(err ?? json))
+  }
   return json as T
+}
+
+/** An error answer from the Paddle API; `detail` is Paddle's own human-readable reason. */
+export class PaddleError extends Error {
+  constructor(public status: number, public code: string, public detail: string, raw: string) {
+    super(`Paddle ${status}: ${raw}`)
+  }
 }
 
 /**

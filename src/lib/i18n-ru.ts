@@ -369,6 +369,7 @@ export const ru: Record<string, string> = {
   "Overdue {n}d": "Просрочен на {n} дн.",
   "PDF / File": "PDF / файл",
   "PDF files with any number of pages, and PNG or JPG images.": "PDF с любым числом страниц, а также изображения PNG и JPG.",
+  "Paddle couldn't change the plan: {reason}": "Paddle не смог сменить тариф: {reason}",
   "Password": "Пароль",
   "Password is set. Client needs this to access.": "Пароль задан. Он нужен клиенту для входа.",
   "Password updated": "Пароль обновлён",

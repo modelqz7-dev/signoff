@@ -1,5 +1,5 @@
 import { priceFor, type Cycle } from "@/lib/billing"
-import { paddleApi } from "@/lib/server/paddle"
+import { PaddleError, paddleApi } from "@/lib/server/paddle"
 import { shopFromRequest } from "@/lib/server/shop-auth"
 import type { PlanId } from "@/lib/plans"
 
@@ -27,6 +27,8 @@ export async function POST(request: Request) {
     return Response.json({ ok: true })
   } catch (e) {
     console.error("Paddle change error:", e)
+    // Paddle's reason (a declined card, a missing permission…) is shown to the workshop.
+    if (e instanceof PaddleError) return Response.json({ error: e.code, detail: e.detail }, { status: 502 })
     return Response.json({ error: "failed" }, { status: 502 })
   }
 }
