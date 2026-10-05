@@ -30,7 +30,7 @@ function loadPaddle(): Promise<PaddleGlobal> {
       if (!paddle) return reject(new Error("Paddle didn't load"))
       if (process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox") paddle.Environment.set("sandbox")
       paddle.Initialize({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!.trim(),
         // The webhook changes the plan a moment after payment: refresh the plan a few times.
         eventCallback: (e) => {
           if (e.name !== "checkout.completed") return

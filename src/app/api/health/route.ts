@@ -1,4 +1,4 @@
-import { PADDLE_ENABLED } from "@/lib/billing"
+import { PADDLE_ENABLED, isPriceId, priceFor } from "@/lib/billing"
 import { adminClient } from "@/lib/server/notify"
 
 /**
@@ -29,6 +29,13 @@ export async function GET() {
       clientToken: Boolean(process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.trim()),
       apiKey: has("PADDLE_API_KEY"),
       webhookSecret: has("PADDLE_WEBHOOK_SECRET"),
+      // Each price must be a "pri_…" id; a product id ("pro_…") or a name here breaks the checkout.
+      prices: {
+        makerMonthly: isPriceId(priceFor("go", "monthly") ?? undefined),
+        makerYearly: isPriceId(priceFor("go", "yearly") ?? undefined),
+        studioMonthly: isPriceId(priceFor("pro", "monthly") ?? undefined),
+        studioYearly: isPriceId(priceFor("pro", "yearly") ?? undefined),
+      },
     },
     commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
   }
