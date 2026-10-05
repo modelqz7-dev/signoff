@@ -418,7 +418,12 @@ function BillingPanel() {
           headers: await authHeaders(),
           body: JSON.stringify({ plan: id, cycle: yearly ? "yearly" : "monthly" }),
         })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          setError(body.detail ? t("Paddle couldn't change the plan: {reason}", { reason: body.detail }) : t("Couldn't change the plan"))
+          setSwitching(null)
+          return
+        }
         for (const ms of [1500, 4000, 8000]) window.setTimeout(notifyPlanChanged, ms)
       } else {
         const price = priceFor(id, yearly ? "yearly" : "monthly")
