@@ -435,6 +435,8 @@ function BillingPanel() {
   if (!usage) return <p className="text-muted-foreground">{t("Loading...")}</p>
 
   const trialEnds = usage.shop.trial_ends_at ? new Date(usage.shop.trial_ends_at).toLocaleDateString(locale) : ""
+  // A paid plan picked for free during early access: it has no subscription behind it yet.
+  const unpaid = PADDLE_ENABLED && !subscribed && usage.chosen.id !== "free"
 
   return (
     <div className="flex flex-col gap-3">
@@ -446,6 +448,15 @@ function BillingPanel() {
           <p className="mt-0.5 text-muted-foreground">
             {t("Everything in Studio is unlocked until {date}. Then you move to Start unless you choose a plan.", { date: trialEnds })}
           </p>
+        </div>
+      )}
+
+      {unpaid && (
+        <div className="rounded-lg bg-accent/10 px-3 py-2 text-xs ring-1 ring-accent/30">
+          <p className="font-medium text-foreground">
+            {t("Your {plan} plan was free during early access", { plan: t(usage.chosen.name) })}
+          </p>
+          <p className="mt-0.5 text-muted-foreground">{t("Subscribe to keep it. Payments are now live.")}</p>
         </div>
       )}
 
@@ -482,7 +493,11 @@ function BillingPanel() {
                   ))}
                 </ul>
               </div>
-              {isCurrent ? (
+              {isCurrent && unpaid ? (
+                <Button size="sm" onPress={() => choose(plan.id)} isDisabled={!!switching}>
+                  {switching === plan.id ? t("Opening...") : t("Subscribe")}
+                </Button>
+              ) : isCurrent ? (
                 <span className="rounded-md bg-accent/20 px-2 py-0.5 text-xs text-foreground">{t("Current")}</span>
               ) : (
                 <Button size="sm" variant="outline" onPress={() => choose(plan.id)} isDisabled={!!switching}>
