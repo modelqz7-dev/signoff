@@ -261,7 +261,7 @@ export default function PageEditor() {
           ] as [Section, string, React.ReactNode][]).map(([id, label, icon]) => (
             <button key={id} type="button" onClick={() => setSection(id)} aria-label={label}
               className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm lg:flex-col lg:gap-1.5 lg:rounded-none lg:px-0 lg:py-0 lg:text-xs ${id === "settings" ? "lg:absolute lg:bottom-4" : ""}`}>
-              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-foreground lg:text-background lg:ring-2 lg:ring-foreground lg:ring-offset-2 lg:ring-offset-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
+              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-primary lg:text-primary-foreground lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
               <span className={`${section === id ? "font-medium text-foreground" : "text-muted-foreground lg:text-foreground"} ${id === "settings" ? "lg:hidden" : ""}`}>{label}</span>
             </button>
           ))}
@@ -296,7 +296,7 @@ export default function PageEditor() {
                 <div className="flex gap-5 border-b border-border text-sm">
                   {([["links", t("Links")], ["services", t("Services")], ["portfolio", t("Portfolio")]] as [ContentTab, string][]).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
-                      className={`-mb-px border-b-2 px-1 pb-2.5 ${tab === id ? "border-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                      className={`-mb-px border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
                       {label}
                     </button>
                   ))}
@@ -341,7 +341,7 @@ export default function PageEditor() {
                     {data.portfolio.length < MAX_PORTFOLIO && (
                       <FileButton multiple busy={uploading === "portfolio"} label={t("Add photos")}
                         onFiles={async (files) => { for (const f of files.slice(0, MAX_PORTFOLIO - data.portfolio.length)) await upload(f, "portfolio") }}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60">
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60">
                         <ImagePlusIcon className="size-4" />{uploading === "portfolio" ? t("Uploading...") : t("Add photos")}
                       </FileButton>
                     )}
@@ -480,13 +480,13 @@ export default function PageEditor() {
 
       {/* Phones: preview on demand */}
       <button type="button" onClick={() => setPreviewOpen(true)}
-        className="fixed bottom-5 left-1/2 z-30 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background shadow-xl lg:hidden">
+        className="fixed bottom-5 left-1/2 z-30 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-xl lg:hidden">
         <EyeIcon className="size-4" />{t("Preview")}
       </button>
       {previewOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-background lg:hidden">
           <button type="button" aria-label={t("Close")} onClick={() => setPreviewOpen(false)}
-            className="fixed top-3 right-3 z-10 flex size-10 items-center justify-center rounded-full bg-foreground text-background shadow-lg"><XIcon className="size-5" /></button>
+            className="fixed top-3 right-3 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><XIcon className="size-5" /></button>
           {preview}
         </div>
       )}
@@ -497,7 +497,7 @@ export default function PageEditor() {
 function AddButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40">
+      className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40">
       <PlusIcon className="size-4" />{label}
     </button>
   )
@@ -592,7 +592,7 @@ function ContactModal({ state, contacts, onPick, onBack, onClose, onSave }: {
               <p className="px-1.5 text-xs text-muted-foreground">{t("Example: {value}", { value: CONTACT_PLACEHOLDER[editing.key] })}</p>
             </div>
             <button type="submit" disabled={!value.trim() || value.trim() === current}
-              className="h-12 rounded-full bg-foreground text-[15px] font-medium text-background transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
+              className="h-12 rounded-full bg-primary text-[15px] font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
               {current ? t("Save") : t("Add")}
             </button>
             {current && (

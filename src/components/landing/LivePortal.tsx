@@ -814,7 +814,7 @@ export function LivePortal({ t }: { t: T }) {
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm">
         {auto ? (
-          <button type="button" onClick={takeOver} className="inline-flex h-9 items-center gap-2 rounded-lg bg-foreground px-4 font-medium text-background transition-opacity hover:opacity-85">
+          <button type="button" onClick={takeOver} className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 font-medium text-primary-foreground transition-opacity hover:opacity-85">
             <MousePointerClickIcon className="size-4" />
             {t("Try it yourself")}
           </button>

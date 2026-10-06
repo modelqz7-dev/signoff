@@ -44,7 +44,7 @@ export function PinGlyph({
     <span aria-hidden="true" className={cn("relative inline-block shrink-0 text-foreground", size === "sm" ? "size-4" : "size-5", className)}>
       <svg viewBox="0 0 24 24" fill="currentColor" className="size-full"><path d={PIN_ICON_PATH} /></svg>
       {badge !== undefined && badge !== null && badge !== "" && (
-        <span className="absolute -right-1 -bottom-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-foreground px-0.5 text-[8px] leading-none font-semibold text-background ring-2 ring-card tabular-nums">
+        <span className="absolute -right-1 -bottom-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-primary px-0.5 text-[8px] leading-none font-semibold text-primary-foreground ring-2 ring-card tabular-nums">
           {badge}
         </span>
       )}
@@ -220,7 +220,7 @@ export function PinNumber({ n, done, className }: { n?: number; done?: boolean; 
       aria-hidden="true"
       className={cn(
         "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums",
-        done ? "bg-muted text-muted-foreground" : "bg-foreground text-background",
+        done ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground",
         className
       )}
     >

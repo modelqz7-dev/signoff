@@ -206,7 +206,7 @@ function ModeSwitcher({ mode }: { mode: Mode }) {
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
         className="flex h-12 w-full items-center gap-2.5 rounded-xl px-2.5 text-left hover:bg-hover">
         {mode === "page"
-          ? <><span className="flex size-7 items-center justify-center rounded-lg bg-foreground text-background [&_svg]:size-4">{NAV_ICONS.page}</span><span className="flex-1 truncate text-[15px] font-semibold">{t("My page")}</span></>
+          ? <><span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground [&_svg]:size-4">{NAV_ICONS.page}</span><span className="flex-1 truncate text-[15px] font-semibold">{t("My page")}</span></>
           : <span className="flex-1"><Logo /></span>}
         <ChevronDownIcon className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -273,7 +273,7 @@ function SetupChecklist({ steps, done }: { steps: SetupStep[]; done: number }) {
         <span className="relative flex size-14 items-center justify-center">
           <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">
             <circle cx="28" cy="28" r={r} fill="none" strokeWidth="4" className="stroke-muted" />
-            <circle cx="28" cy="28" r={r} fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-foreground"
+            <circle cx="28" cy="28" r={r} fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-primary"
               strokeDasharray={c} strokeDashoffset={c * (1 - done / steps.length)} />
           </svg>
           <span className="text-sm font-medium tabular-nums">{pct}%</span>
@@ -287,7 +287,7 @@ function SetupChecklist({ steps, done }: { steps: SetupStep[]; done: number }) {
         <ul className="flex flex-col gap-1.5 text-sm">
           {steps.map((s) => (
             <li key={s.label} className={`flex items-center gap-2 ${s.done ? "text-muted-foreground line-through" : ""}`}>
-              <span className={`flex size-4 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-foreground text-background" : "ring-1 ring-foreground/25"}`}>
+              <span className={`flex size-4 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-primary text-primary-foreground" : "ring-1 ring-foreground/25"}`}>
                 {s.done && <CheckIcon className="size-3" />}
               </span>
               {s.label}
@@ -295,7 +295,7 @@ function SetupChecklist({ steps, done }: { steps: SetupStep[]; done: number }) {
           ))}
         </ul>
       )}
-      <a href="/link/edit" className="flex h-11 items-center justify-center rounded-full bg-foreground text-sm font-medium text-background hover:opacity-90">
+      <a href="/link/edit" className="flex h-11 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground hover:opacity-90">
         {t("Finish setup")}
       </a>
     </div>

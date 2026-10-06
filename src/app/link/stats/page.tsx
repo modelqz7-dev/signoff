@@ -69,7 +69,7 @@ export default function PageStats() {
               <div className="flex h-48 items-end gap-1">
                 {days.map((d) => (
                   <div key={d} className="group relative flex h-full flex-1 flex-col justify-end">
-                    <div className="w-full rounded-t-md bg-foreground/80 group-hover:bg-foreground"
+                    <div className="w-full rounded-t-md bg-primary/80 group-hover:bg-primary"
                       style={{ height: `${Math.max(2, ((views[d] ?? 0) / peak) * 100)}%`, opacity: views[d] ? 1 : 0.15 }} />
                     <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-foreground px-1.5 py-0.5 text-[11px] whitespace-nowrap text-background group-hover:block">
                       {label(d)}: {views[d] ?? 0}

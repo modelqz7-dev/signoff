@@ -76,7 +76,7 @@ export function ChatLine({
         aria-hidden="true"
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase",
-          shop ? "bg-foreground text-background" : "bg-muted text-foreground ring-1 ring-foreground/10"
+          shop ? "bg-primary text-primary-foreground" : "bg-muted text-foreground ring-1 ring-foreground/10"
         )}
       >
         {name.trim().charAt(0) || "·"}

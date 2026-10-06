@@ -38,11 +38,11 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
             <RotatingWord
               hashtag
               words={[
-                { text: t("kitchen"), color: "#e0913a" },
-                { text: t("wardrobe"), color: "#8b5cf6" },
-                { text: t("bathroom"), color: "#3b82f6" },
-                { text: t("hallway"), color: "#3f9d5c" },
-                { text: t("home office"), color: "#d4a72c" },
+                { text: t("kitchen"), color: "var(--primary)" },
+                { text: t("wardrobe"), color: "var(--primary)" },
+                { text: t("bathroom"), color: "var(--primary)" },
+                { text: t("hallway"), color: "var(--primary)" },
+                { text: t("home office"), color: "var(--primary)" },
               ]}
             />
           </span>

@@ -105,7 +105,7 @@ export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]
               <span
                 className={cn(
                   "flex size-8 items-center justify-center rounded-full text-sm tabular-nums transition-colors",
-                  isPicked ? "bg-foreground font-medium text-background"
+                  isPicked ? "bg-primary font-medium text-primary-foreground"
                     : isToday ? "font-medium text-foreground ring-1 ring-foreground/40"
                     : due.length ? "text-foreground group-hover:bg-hover"
                     : "text-muted-foreground/70 group-hover:bg-hover"
@@ -221,7 +221,7 @@ export function StatsDialog({ orders, open, onOpenChange }: { orders: Order[]; o
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-foreground/20" />{t("New orders")}</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-foreground/80" />{t("Approved orders")}</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-primary/80" />{t("Approved orders")}</span>
           </div>
           <div role="radiogroup" aria-label={t("Show")} className="flex rounded-lg bg-muted p-0.5">
             {(["orders", "value"] as const).map((m) => (
@@ -242,7 +242,7 @@ export function StatsDialog({ orders, open, onOpenChange }: { orders: Order[]; o
           {series.map((s, i) => (
             <div key={i} className="flex h-full flex-col justify-end gap-1.5">
               <div className="flex flex-1 items-end justify-center gap-1">
-                {[{ v: s.a, tone: "bg-foreground/20" }, { v: s.b, tone: "bg-foreground/80" }].map((bar, j) => (
+                {[{ v: s.a, tone: "bg-foreground/20" }, { v: s.b, tone: "bg-primary/80" }].map((bar, j) => (
                   <div key={j} className="flex h-full w-full max-w-6 flex-col items-center justify-end gap-1">
                     <span className="text-[10px] text-muted-foreground tabular-nums" suppressHydrationWarning>{bar.v ? fmt(bar.v) : ""}</span>
                     <div

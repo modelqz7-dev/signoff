@@ -50,7 +50,7 @@ export default function PageQr() {
             )}
             <div className="flex flex-wrap gap-2">
               <a href={png || undefined} download={`${file}.png`} aria-disabled={!png}
-                className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-90">
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90">
                 <DownloadIcon className="size-4" />{t("Download PNG")}
               </a>
               <a href={svgHref || undefined} download={`${file}.svg`} aria-disabled={!svg}

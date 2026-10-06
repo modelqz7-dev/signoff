@@ -158,7 +158,7 @@ export default function MyPage() {
                 <div className="mt-auto flex h-24 items-end gap-2">
                   {days.map((d) => (
                     <div key={d} className="flex flex-1 flex-col items-center gap-1.5">
-                      <div className="w-full rounded-md bg-foreground/80" title={`${views[d] ?? 0}`}
+                      <div className="w-full rounded-md bg-primary/80" title={`${views[d] ?? 0}`}
                         style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 70)}px`, opacity: views[d] ? 1 : 0.15 }} />
                       <span className="text-[11px] text-muted-foreground">{weekday(d)}</span>
                     </div>
@@ -207,7 +207,7 @@ function ShareSheet({ page, copied, onCopy, onClose }: { page: PageRow | null; c
         {!page || !page.published ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">{!page ? t("Create your page first, then share its link anywhere.") : t("Publish your page to share it")}</p>
-            <a href="/link/edit" className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background hover:opacity-90">
+            <a href="/link/edit" className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground hover:opacity-90">
               {!page ? t("Create page") : t("Open the editor to publish")}
             </a>
           </div>
@@ -223,7 +223,7 @@ function ShareSheet({ page, copied, onCopy, onClose }: { page: PageRow | null; c
             </div>
             <div className="flex h-12 items-center gap-2 rounded-2xl bg-muted pr-1.5 pl-4">
               <span className="min-w-0 flex-1 truncate text-sm">{link.replace(/^https?:\/\//, "")}</span>
-              <button type="button" onClick={onCopy} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-foreground px-3 text-sm font-medium text-background">
+              <button type="button" onClick={onCopy} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground">
                 {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}
               </button>
             </div>

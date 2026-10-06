@@ -439,7 +439,7 @@ export function PinSwitch({ pins, numbers, chosenId, onChoose, checked, onToggle
             className={cn(
               "relative flex size-11 items-center justify-center rounded-full text-base font-semibold tabular-nums transition-colors",
               on
-                ? "bg-foreground text-background"
+                ? "bg-primary text-primary-foreground"
                 : bare
                   ? "text-foreground outline-1 -outline-offset-1 outline-dashed outline-foreground/50 hover:bg-hover"
                   : done
@@ -448,7 +448,7 @@ export function PinSwitch({ pins, numbers, chosenId, onChoose, checked, onToggle
             )}
           >
             {numbers.get(p.id) ?? ""}
-            {ticking && on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full bg-foreground p-0.5 text-background ring-2 ring-card" strokeWidth={3} />}
+            {ticking && on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full bg-primary p-0.5 text-primary-foreground ring-2 ring-card" strokeWidth={3} />}
             {!ticking && done && !on && <CheckIcon className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full bg-card p-0.5" strokeWidth={3} />}
             {reopened && <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-2 ring-card" />}
           </button>
