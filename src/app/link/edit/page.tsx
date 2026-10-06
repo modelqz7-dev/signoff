@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon,
+  ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon,
   LayoutListIcon, PaletteIcon, PlusIcon, SettingsIcon, Share2Icon, Trash2Icon, UserRoundIcon, XIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -58,7 +58,7 @@ export default function PageEditor() {
     return () => document.removeEventListener("mousedown", onDown)
   }, [pillOpen])
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [editingContact, setEditingContact] = useState<keyof PageContacts | null>(null)
+  const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -281,24 +281,17 @@ export default function PageEditor() {
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <p className="truncate text-lg font-medium">{data.title || shop?.name}</p>
                     <div className="flex items-center gap-0.5">
-                      {QUICK_CONTACTS.map((key) => (
-                        <button key={key} type="button" title={t(CONTACT_LABEL[key])} onClick={() => setEditingContact(editingContact === key ? null : key)}
-                          className={`relative flex size-9 items-center justify-center rounded-full transition-colors [&_svg]:size-[24px] [&_svg]:stroke-[1.75] ${data.contacts[key] ? "text-foreground" : "text-muted-foreground"} ${editingContact === key ? "bg-hover-strong" : "hover:bg-hover"}`}>
+                      {CONTACT_KEYS.filter((key) => QUICK_CONTACTS.includes(key) || data.contacts[key]).map((key) => (
+                        <button key={key} type="button" title={t(CONTACT_LABEL[key])} onClick={() => setContactModal({ key, fromPicker: false })}
+                          className={`relative flex size-9 items-center justify-center rounded-full transition-colors hover:bg-hover [&_svg]:size-[24px] [&_svg]:stroke-[1.75] ${data.contacts[key] ? "text-foreground" : "text-muted-foreground"}`}>
                           {CONTACT_ICON[key]}
                           {!data.contacts[key] && <span className="absolute top-0.5 right-0.5 flex size-3 items-center justify-center rounded-full bg-card text-[11px] leading-none font-bold text-foreground">+</span>}
                         </button>
                       ))}
-                      <button type="button" title={t("All contacts")} onClick={() => setSection("settings")} className="ml-1 flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-hover-strong"><PlusIcon className="size-[18px]" /></button>
+                      <button type="button" title={t("All contacts")} onClick={() => setContactModal("pick")} className="ml-1 flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-hover-strong"><PlusIcon className="size-[18px]" /></button>
                     </div>
                   </div>
                 </div>
-                {editingContact && (
-                  <div className="flex items-center gap-2">
-                    <Input autoFocus aria-label={t(CONTACT_LABEL[editingContact])} value={data.contacts[editingContact] ?? ""} placeholder={CONTACT_PLACEHOLDER[editingContact]}
-                      onChange={(e) => update({ contacts: { ...data.contacts, [editingContact]: e.target.value } })} />
-                    <Button size="sm" variant="outline" onPress={() => setEditingContact(null)}>{t("Done")}</Button>
-                  </div>
-                )}
 
                 <div className="flex gap-5 border-b border-border text-sm">
                   {([["links", t("Links")], ["services", t("Services")], ["portfolio", t("Portfolio")]] as [ContentTab, string][]).map(([id, label]) => (
@@ -477,6 +470,14 @@ export default function PageEditor() {
         </aside>
       </div>
 
+      {contactModal && (
+        <ContactModal key={contactModal === "pick" ? "pick" : contactModal.key} state={contactModal} contacts={data.contacts}
+          onPick={(key) => setContactModal({ key, fromPicker: true })}
+          onBack={() => setContactModal("pick")}
+          onClose={() => setContactModal(null)}
+          onSave={(key, value) => { update({ contacts: { ...data.contacts, [key]: value } }); setContactModal(null) }} />
+      )}
+
       {/* Phones: preview on demand */}
       <button type="button" onClick={() => setPreviewOpen(true)}
         className="fixed bottom-5 left-1/2 z-30 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background shadow-xl lg:hidden">
@@ -525,6 +526,82 @@ function ItemCard({ children, onUp, onDown, onRemove, first, last }: {
         <IconBtn label={t("Move up")} onClick={onUp} disabled={first}><ArrowUpIcon /></IconBtn>
         <IconBtn label={t("Move down")} onClick={onDown} disabled={last}><ArrowDownIcon /></IconBtn>
         <IconBtn label={t("Remove")} onClick={onRemove}><Trash2Icon /></IconBtn>
+      </div>
+    </div>
+  )
+}
+
+type ContactModalState = "pick" | { key: keyof PageContacts; fromPicker: boolean } | null
+
+/** What the field asks for, by contact. */
+const CONTACT_PROMPT: Record<keyof PageContacts, string> = {
+  instagram: "Enter Instagram username", telegram: "Enter Telegram username or number", viber: "Enter Viber number",
+  whatsapp: "Enter WhatsApp number", phone: "Enter phone number", email: "Enter email address", website: "Enter website address",
+}
+
+/** "Add Instagram icon": a list of contacts, then one field for the chosen one. */
+function ContactModal({ state, contacts, onPick, onBack, onClose, onSave }: {
+  state: Exclude<ContactModalState, null>
+  contacts: PageContacts
+  onPick: (key: keyof PageContacts) => void
+  onBack: () => void
+  onClose: () => void
+  onSave: (key: keyof PageContacts, value: string) => void
+}) {
+  const { t } = useT()
+  const editing = state === "pick" ? null : state
+  const current = editing ? contacts[editing.key] ?? "" : ""
+  const [value, setValue] = useState(current)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  const name = editing ? t(CONTACT_LABEL[editing.key]) : ""
+  const title = !editing ? t("Add icon") : current ? t("Edit {name} icon", { name }) : t("Add {name} icon", { name })
+  const iconBtn = "flex size-9 items-center justify-center rounded-full hover:bg-hover"
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
+        className="flex w-full max-w-[512px] flex-col gap-5 rounded-t-[28px] bg-card p-6 shadow-2xl sm:rounded-[28px]">
+        <div className="flex items-center justify-between gap-2">
+          {editing?.fromPicker ? <button type="button" aria-label={t("Back")} onClick={onBack} className={iconBtn}><ChevronLeftIcon className="size-5" /></button> : <span className="size-9" />}
+          <h2 className="text-lg font-bold">{title}</h2>
+          <button type="button" aria-label={t("Close")} onClick={onClose} className={iconBtn}><XIcon className="size-5" /></button>
+        </div>
+
+        {!editing ? (
+          <div className="flex flex-col">
+            {CONTACT_KEYS.map((key) => (
+              <button key={key} type="button" onClick={() => onPick(key)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-hover [&_svg]:size-5">
+                <span className="flex size-9 items-center justify-center rounded-full bg-muted">{CONTACT_ICON[key]}</span>
+                <span className="flex-1 text-[15px] font-medium">{t(CONTACT_LABEL[key])}</span>
+                {contacts[key] ? <CheckIcon className="text-muted-foreground" /> : <ChevronRightIcon className="text-muted-foreground" />}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (value.trim()) onSave(editing.key, value.trim()) }}>
+            <div className="flex flex-col gap-2">
+              <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder={t(CONTACT_PROMPT[editing.key]) + "*"}
+                aria-label={t(CONTACT_PROMPT[editing.key])} maxLength={120}
+                className="h-12 rounded-xl bg-muted px-4 text-[15px] outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-foreground/20" />
+              <p className="px-1.5 text-xs text-muted-foreground">{t("Example: {value}", { value: CONTACT_PLACEHOLDER[editing.key] })}</p>
+            </div>
+            <button type="submit" disabled={!value.trim() || value.trim() === current}
+              className="h-12 rounded-full bg-foreground text-[15px] font-medium text-background transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
+              {current ? t("Save") : t("Add")}
+            </button>
+            {current && (
+              <button type="button" onClick={() => onSave(editing.key, "")} className="-mt-2 text-sm text-muted-foreground hover:text-destructive">
+                {t("Remove icon")}
+              </button>
+            )}
+          </form>
+        )}
       </div>
     </div>
   )
