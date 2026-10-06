@@ -13,7 +13,12 @@ export type PageContacts = {
 
 export type PageService = { name: string; price: string }
 
+/** A button on the page that opens any link (a catalog, a review site, a booking form…). */
+export type PageLink = { title: string; url: string }
+
 export type PageTheme = "light" | "dark"
+
+export type ButtonShape = "pill" | "rounded" | "square"
 
 export type PageData = {
   title: string
@@ -24,11 +29,13 @@ export type PageData = {
   theme: PageTheme
   accent: string
   contacts: PageContacts
+  links: PageLink[]
   services: PageService[]
   portfolio: string[]
   /** Whether visitors can leave a request from the page. */
   requests: boolean
   cta: string
+  buttons: ButtonShape
 }
 
 export type ShopPage = { shop_id: string; slug: string; published: boolean; data: PageData; updated_at?: string }
@@ -38,6 +45,7 @@ export const CONTACT_KEYS = ["instagram", "telegram", "viber", "whatsapp", "phon
 /** Accent colours offered in the editor; the page only accepts these. */
 export const ACCENTS = ["#1f1e1d", "#7a5a3c", "#2f5d50", "#8b3a3a", "#36557f", "#6b4f8a"] as const
 
+export const MAX_LINKS = 20
 export const MAX_SERVICES = 12
 export const MAX_PORTFOLIO = 12
 
@@ -67,6 +75,18 @@ const url = (v: unknown) => {
   return /^https?:\/\//.test(s) ? s : null
 }
 
+/** A web link typed by a person: "site.com" becomes "https://site.com"; anything else is dropped. */
+function linkUrl(v: unknown) {
+  const s = text(v, 600)
+  if (!s) return null
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`)
+    return u.hostname.includes(".") ? u.toString() : null
+  } catch {
+    return null
+  }
+}
+
 /** Keeps only known fields within their limits; used on save and when reading. */
 export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
   const src = (value && typeof value === "object" ? value : {}) as Record<string, unknown>
@@ -76,6 +96,10 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     const v = text(contactsSrc[key], 120)
     if (v) contacts[key] = v
   }
+  const links = (Array.isArray(src.links) ? src.links : [])
+    .map((l) => ({ title: text((l as PageLink)?.title, 80), url: linkUrl((l as PageLink)?.url) }))
+    .filter((l): l is PageLink => !!l.title && !!l.url)
+    .slice(0, MAX_LINKS)
   const services = (Array.isArray(src.services) ? src.services : [])
     .map((s) => ({ name: text((s as PageService)?.name, 80), price: text((s as PageService)?.price, 40) }))
     .filter((s) => s.name)
@@ -92,10 +116,12 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     theme: src.theme === "dark" ? "dark" : "light",
     accent,
     contacts,
+    links,
     services,
     portfolio,
     requests: src.requests !== false,
     cta: text(src.cta, 40),
+    buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",
   }
 }
 
