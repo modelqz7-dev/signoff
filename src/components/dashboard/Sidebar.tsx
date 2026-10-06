@@ -57,9 +57,9 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Desktop */}
     <aside
-      className="sticky top-0 self-start hidden h-screen w-[220px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
+      className="sticky top-0 self-start hidden h-screen w-[240px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
       style={{
-        marginLeft: open ? 0 : -220,
+        marginLeft: open ? 0 : -240,
         opacity: open ? 1 : 0,
         pointerEvents: open ? "auto" : "none",
       }}
@@ -109,7 +109,8 @@ function SidebarContent({ activePage, panel, onPanel }: {
         <Logo />
       </Link>
 
-      <nav className="flex-1 px-2.5 pt-1 pb-4">
+      {/* A touch larger than the landing page's copy: 15px labels, 18px icons. */}
+      <nav className="flex-1 px-3 pt-1 pb-4 [&>a]:gap-3 [&>a]:py-2 [&>a]:text-[15px] [&>button]:gap-3 [&>button]:py-2 [&>button]:text-[15px] [&>*>span:first-child]:size-[18px]">
         <SectionLabel>{t("General")}</SectionLabel>
         <NavItem icon={NAV_ICONS.dashboard} label={t("Dashboard")} active={activePage === "dashboard"} href="/dashboard" />
         <NavItem icon={NAV_ICONS.orders} label={t("Orders")} active={activePage === "orders"} href="/orders" />
