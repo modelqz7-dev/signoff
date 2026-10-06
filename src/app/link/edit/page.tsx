@@ -277,15 +277,15 @@ export default function PageEditor() {
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <p className="truncate text-lg font-medium">{data.title || shop?.name}</p>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5">
                       {QUICK_CONTACTS.map((key) => (
                         <button key={key} type="button" title={t(CONTACT_LABEL[key])} onClick={() => setEditingContact(editingContact === key ? null : key)}
-                          className={`relative flex size-8 items-center justify-center rounded-full transition-colors [&_svg]:size-[18px] ${data.contacts[key] ? "text-foreground" : "text-muted-foreground"} ${editingContact === key ? "bg-hover-strong" : "hover:bg-hover"}`}>
+                          className={`relative flex size-9 items-center justify-center rounded-full transition-colors [&_svg]:size-[24px] [&_svg]:stroke-[1.75] ${data.contacts[key] ? "text-foreground" : "text-muted-foreground"} ${editingContact === key ? "bg-hover-strong" : "hover:bg-hover"}`}>
                           {CONTACT_ICON[key]}
-                          {!data.contacts[key] && <span className="absolute -top-0.5 -right-0.5 text-[10px] font-bold">+</span>}
+                          {!data.contacts[key] && <span className="absolute top-0.5 right-0.5 flex size-3 items-center justify-center rounded-full bg-card text-[11px] leading-none font-bold text-foreground">+</span>}
                         </button>
                       ))}
-                      <button type="button" title={t("All contacts")} onClick={() => setSection("settings")} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-hover"><PlusIcon className="size-4" /></button>
+                      <button type="button" title={t("All contacts")} onClick={() => setSection("settings")} className="ml-1 flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-hover-strong"><PlusIcon className="size-[18px]" /></button>
                     </div>
                   </div>
                 </div>
