@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
+import { createPortal } from "react-dom"
 import {
   ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, QrCodeIcon, XIcon,
 } from "lucide-react"
@@ -23,6 +24,8 @@ type SidebarProps = {
 
 export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   const [panel, setPanel] = useState<PanelId | null>(null)
+  // Checked once here: the phone drawer mounts its own copy of the menu.
+  const beta = useBetaAccess()
   // The sidebar is on every signed-in page: a good place to keep the account's language current.
   useSyncAccountLang()
   // Phones and tablets: the sidebar slides in as a drawer from the header's menu button.
@@ -67,7 +70,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
         pointerEvents: open ? "auto" : "none",
       }}
     >
-      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} />
+      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
 
     {/* Phones and tablets */}
@@ -88,7 +91,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
           >
             <XIcon className="size-4" />
           </button>
-          <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} />
+          <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
         </aside>
       </div>
     )}
@@ -97,8 +100,9 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   )
 }
 
-function SidebarContent({ activePage, panel, onPanel }: {
+function SidebarContent({ activePage, panel, onPanel, beta }: {
   activePage: string
+  beta: boolean
   panel: PanelId | null
   onPanel: (id: PanelId) => void
 }) {
@@ -106,10 +110,11 @@ function SidebarContent({ activePage, panel, onPanel }: {
   const setPanel = onPanel
   const newRequests = useNewRequestCount()
   const mode = useMode(activePage)
+  const [soon, setSoon] = useState<SoonFeature | null>(null)
   const page = usePageSetup(mode === "page")
   return (
     <>
-      <ModeSwitcher mode={mode} />
+      <ModeSwitcher mode={mode} beta={beta} onSoon={() => setSoon("page")} />
 
       {/* A touch larger than the landing page's copy: 15px labels, 18px icons. */}
       <nav className="flex-1 px-3 pt-1 pb-4 [&>a]:gap-3 [&>a]:py-2 [&>a]:text-[15px] [&>button]:gap-3 [&>button]:py-2 [&>button]:text-[15px] [&>*>span:first-child]:size-[18px]">
@@ -131,8 +136,17 @@ function SidebarContent({ activePage, panel, onPanel }: {
             <SectionLabel>{t("General")}</SectionLabel>
             <NavItem icon={NAV_ICONS.dashboard} label={t("Dashboard")} active={activePage === "dashboard"} href="/dashboard" />
             <NavItem icon={NAV_ICONS.orders} label={t("Orders")} active={activePage === "orders"} href="/orders" />
-            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
-            <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
+            {beta ? (
+              <>
+                <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
+                <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
+              </>
+            ) : (
+              <>
+                <NavItem icon={NAV_ICONS.requests} label={t("Requests")} tag={t("soon")} onClick={() => setSoon("requests")} />
+                <NavItem icon={NAV_ICONS.page} label={t("My page")} tag={t("soon")} onClick={() => setSoon("page")} />
+              </>
+            )}
           </>
         )}
 
@@ -158,6 +172,7 @@ function SidebarContent({ activePage, panel, onPanel }: {
       {mode === "page" && page && page.done < page.steps.length
         ? <SetupChecklist steps={page.steps} done={page.done} />
         : <PlanCard onOpen={() => setPanel("billing")} />}
+      {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
     </>
   )
 }
@@ -185,7 +200,7 @@ function useMode(activePage: string): Mode {
 }
 
 /** The top of the sidebar: Nodly or My page, with a menu to switch. */
-function ModeSwitcher({ mode }: { mode: Mode }) {
+function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoon: () => void }) {
   const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -202,7 +217,7 @@ function ModeSwitcher({ mode }: { mode: Mode }) {
     { id: "page", href: "/link", title: t("My page"), hint: t("Link for Instagram and requests"), icon: <span className="size-[18px]">{NAV_ICONS.page}</span> },
   ]
   return (
-    <div ref={ref} className="relative px-3 pt-3 pb-2">
+    <div ref={ref} className="relative px-3 pt-3 pb-2 max-lg:pr-12">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
         className="flex h-12 w-full items-center gap-2.5 rounded-xl px-2.5 text-left hover:bg-hover">
         {mode === "page"
@@ -213,7 +228,8 @@ function ModeSwitcher({ mode }: { mode: Mode }) {
       {open && (
         <div role="menu" className="absolute inset-x-3 top-[60px] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
           {options.map((o) => (
-            <Link key={o.id} href={o.href} role="menuitem" onClick={() => setOpen(false)}
+            <Link key={o.id} href={o.href} role="menuitem"
+              onClick={(e) => { setOpen(false); if (o.id === "page" && !beta) { e.preventDefault(); onSoon() } }}
               className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-hover">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">{o.icon}</span>
               <span className="flex min-w-0 flex-1 flex-col">
@@ -347,5 +363,52 @@ function PlanCard({ onOpen }: { onOpen: () => void }) {
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * Requests and My page are still being finished: only addresses in NEXT_PUBLIC_BETA_EMAILS
+ * (comma-separated) see them; everyone else gets a "coming soon" note.
+ */
+function useBetaAccess() {
+  const [email, setEmail] = useState<string | null>(null)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email?.toLowerCase() ?? null))
+  }, [])
+  const list = (process.env.NEXT_PUBLIC_BETA_EMAILS ?? "").toLowerCase().split(",").map((x) => x.trim()).filter(Boolean)
+  return !!email && list.includes(email)
+}
+
+type SoonFeature = "requests" | "page"
+
+function ComingSoon({ feature, onClose }: { feature: SoonFeature; onClose: () => void }) {
+  const { t } = useT()
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+  const text = feature === "page"
+    ? t("Your own page for Instagram: work, prices, contacts and a request form, all on one link. We're finishing it now.")
+    : t("Requests clients leave on your page will arrive here and turn into orders in one click. We're finishing it now.")
+  // Portal: the phone drawer is animated with a transform, which would trap a fixed overlay.
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={t("Coming soon")} onClick={(e) => e.stopPropagation()}
+        className="relative flex w-full max-w-[420px] flex-col items-center gap-4 rounded-t-[28px] bg-card px-6 pt-8 pb-6 text-center shadow-2xl sm:rounded-[28px]">
+        <button type="button" aria-label={t("Close")} onClick={onClose}
+          className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full hover:bg-hover"><XIcon className="size-5" /></button>
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary [&_svg]:size-7">
+          {feature === "page" ? NAV_ICONS.page : NAV_ICONS.requests}
+        </span>
+        <div className="flex flex-col gap-1.5">
+          <span className="mx-auto rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">{t("Coming soon")}</span>
+          <h2 className="text-lg font-bold">{feature === "page" ? t("My page") : t("Requests")}</h2>
+          <p className="text-sm text-muted-foreground">{text}</p>
+        </div>
+        <button type="button" onClick={onClose} className="mt-2 h-11 w-full rounded-full bg-primary text-sm font-medium text-primary-foreground hover:opacity-90">{t("Got it")}</button>
+      </div>
+    </div>,
+    document.body,
   )
 }

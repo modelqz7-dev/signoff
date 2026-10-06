@@ -40,6 +40,7 @@ export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
     <button type="button" onClick={onClick} className={cls}>
       <span className={`h-4 w-4 shrink-0 ${active ? "text-primary opacity-100" : "opacity-60"}`}>{icon}</span>
       {label}
+      {tag && <span className="rounded-full px-1.5 text-[11px] font-medium leading-[18px] text-foreground ring-1 ring-foreground/40">{tag}</span>}
     </button>
   )
 }
