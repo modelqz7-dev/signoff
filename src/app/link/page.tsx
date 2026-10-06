@@ -143,7 +143,7 @@ export default function MyPage() {
             )}
 
             {/* This week */}
-            <h2 className="mt-10 mb-6 text-xl font-bold tracking-tight">{t("In the last week")}</h2>
+            <h2 className="mt-[29px] mb-6 text-xl leading-7 font-bold tracking-tight">{t("In the last week")}</h2>
             <div className="grid gap-6 md:grid-cols-2">
               <StatCard title={t("Visitors")} period={t("Last 7 days")}
                 empty={totalViews === 0} emptyText={t("No activity during this time")} illustration={<GlobeArt />}
@@ -154,11 +154,11 @@ export default function MyPage() {
                   </div>
                 }>
                 <span className="text-4xl font-bold tabular-nums">{totalViews}</span>
-                <div className="mt-6 flex h-28 items-end gap-2">
+                <div className="mt-auto flex h-24 items-end gap-2">
                   {days.map((d) => (
                     <div key={d} className="flex flex-1 flex-col items-center gap-1.5">
                       <div className="w-full rounded-md bg-foreground/80" title={`${views[d] ?? 0}`}
-                        style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 88)}px`, opacity: views[d] ? 1 : 0.15 }} />
+                        style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 70)}px`, opacity: views[d] ? 1 : 0.15 }} />
                       <span className="text-[11px] text-muted-foreground">{weekday(d)}</span>
                     </div>
                   ))}
@@ -238,7 +238,7 @@ function StatCard({ title, period, empty, emptyText, illustration, footer, child
   title: string; period: string; empty: boolean; emptyText: string; illustration: React.ReactNode; footer: React.ReactNode; children: React.ReactNode
 }) {
   return (
-    <section className="flex min-h-[330px] flex-col rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
+    <section className="flex min-h-[340px] flex-col rounded-3xl md:h-[340px] bg-card p-5 ring-1 ring-foreground/10">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-bold">{title}</h3>
         <span className="flex items-center gap-1 text-sm">{period}<ChevronRightIcon className="size-4 text-muted-foreground" /></span>
