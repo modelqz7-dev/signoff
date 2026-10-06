@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageView, CONTACT_ICON, CONTACT_LABEL } from "@/components/page/PageView"
-import { Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
+import { AvatarPlaceholder, Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { uploadPublicAsset } from "@/lib/files"
 import { shrinkImage } from "@/lib/image"
@@ -177,10 +177,10 @@ export default function PageEditor() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-16 lg:border-none lg:bg-background lg:px-2 lg:backdrop-blur-none">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:px-3 lg:backdrop-blur-none">
         <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
         <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full bg-muted py-2 pr-3 pl-2 text-[15px]">
-          <span className="size-6 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url && <img src={data.avatar_url} alt="" className="size-full object-cover" />}</span>
+          <span className="size-6 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}</span>
           <span className="truncate font-medium">@{slug.slug || "…"}</span>
           <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] font-medium ${published ? "bg-[var(--status-approved-bg)] text-[var(--status-approved)]" : "bg-background text-muted-foreground"}`}>
             {published ? t("Live") : t("Draft")}
@@ -226,7 +226,7 @@ export default function PageEditor() {
       <div className="flex flex-1 flex-col lg:relative lg:flex-row lg:items-start">
         {/* Section rail */}
         {/* Section rail: 92px wide on a computer, items in the middle and settings at the bottom */}
-        <nav className="flex shrink-0 gap-1 overflow-x-auto px-3 pt-3 lg:sticky lg:top-16 lg:h-[calc(100dvh-72px)] lg:w-[92px] lg:flex-col lg:items-center lg:justify-center lg:gap-4 lg:overflow-visible lg:px-0 lg:pt-0">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto px-3 pt-3 lg:sticky lg:top-[72px] lg:h-[calc(100dvh-72px)] lg:w-[92px] lg:flex-col lg:items-center lg:justify-center lg:gap-4 lg:overflow-visible lg:px-0 lg:pt-0">
           {([
             ["content", t("Content"), <LayoutListIcon key="c" />],
             ["header", t("Header"), <UserRoundIcon key="h" />],
@@ -243,14 +243,14 @@ export default function PageEditor() {
 
         {/* Panel */}
         {/* The white panel: 851×856 on a full-size screen, scrolls inside */}
-        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:mt-[18px] lg:h-[calc(100dvh-88px)] lg:w-[851px] lg:max-w-[851px] lg:flex-none lg:overflow-y-auto lg:rounded-t-[32px] lg:bg-card lg:px-8 lg:pt-12 lg:pb-10 lg:ring-1 lg:ring-foreground/10">
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:mt-[10px] lg:h-[calc(100dvh-88px)] lg:w-[851px] lg:max-w-[851px] lg:flex-none lg:overflow-y-auto lg:rounded-t-[32px] lg:bg-card lg:px-8 lg:pt-12 lg:pb-10 lg:ring-1 lg:ring-foreground/10">
           <div className="mx-auto flex w-full max-w-[580px] flex-col gap-4">
             {section === "content" && <h2 className="hidden text-xl font-bold lg:block">{t("Content")}</h2>}
             {section === "content" && (
               <>
                 <div className="flex items-center gap-4">
                   <div className="size-16 shrink-0 overflow-hidden rounded-full bg-muted">
-                    {data.avatar_url && <img src={data.avatar_url} alt="" className="size-full object-cover" />}
+                    {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <p className="truncate text-lg font-medium">{data.title || shop?.name}</p>
@@ -436,7 +436,7 @@ export default function PageEditor() {
         </main>
 
         {/* Phone preview */}
-        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-64px)] lg:items-center lg:justify-center">
+        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-72px)] lg:items-center lg:justify-center">
           <div className="flex items-center gap-4">
             <div className="h-[min(735px,calc(100dvh-140px))] w-[340px] overflow-hidden rounded-[40px] bg-background shadow-[0_8px_40px_rgba(0,0,0,0.12)] ring-1 ring-foreground/10">
               <div className="h-full overflow-y-auto">{preview}</div>

@@ -8,6 +8,7 @@ import {
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { AvatarPlaceholder } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { cleanPage, pagePath, suggestSlug, type PageData } from "@/lib/page"
@@ -120,7 +121,7 @@ export default function MyPage() {
                 <a href="/link/edit" aria-label={t("Edit")} className="flex h-[276px] w-[278px] max-w-full shrink-0 items-center justify-center rounded-t-[23px]">
                   {avatar
                     ? <img src={avatar} alt="" className="size-[164px] rounded-full object-cover" />
-                    : <AvatarPlaceholder />}
+                    : <AvatarPlaceholder className="size-[164px]" />}
                 </a>
                 <div className="flex flex-1 items-center gap-2 px-4 pb-px">
                   <div className="flex min-w-0 flex-1 flex-col">
@@ -259,19 +260,6 @@ function StatCard({ title, period, empty, emptyText, illustration, footer, child
 function Pill({ href, onClick, children }: { href?: string; onClick?: () => void; children: React.ReactNode }) {
   const cls = "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm ring-1 ring-foreground/10 hover:bg-hover"
   return href ? <a href={href} className={cls}>{children}</a> : <button type="button" onClick={onClick} className={cls}>{children}</button>
-}
-
-function AvatarPlaceholder() {
-  return (
-    <svg viewBox="0 0 164 164" className="size-[164px]" aria-hidden>
-      <clipPath id="av-clip"><circle cx="82" cy="82" r="82" /></clipPath>
-      <g clipPath="url(#av-clip)">
-        <rect width="164" height="164" className="fill-[#a8aaa2] dark:fill-neutral-600" />
-        <circle cx="82" cy="62" r="35" className="fill-[#f2f2ef] dark:fill-neutral-300" />
-        <ellipse cx="82" cy="168" rx="66" ry="62" className="fill-[#f2f2ef] dark:fill-neutral-300" />
-      </g>
-    </svg>
-  )
 }
 
 function GlobeArt() {
