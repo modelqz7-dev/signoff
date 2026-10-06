@@ -177,10 +177,10 @@ export default function PageEditor() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5">
-        <a href="/link" aria-label={t("Back")} className="flex size-9 items-center justify-center rounded-full hover:bg-hover"><ArrowLeftIcon className="size-4" /></a>
-        <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-sm">
-          <span className="size-5 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url && <img src={data.avatar_url} alt="" className="size-full object-cover" />}</span>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-16 lg:border-none lg:bg-background lg:px-2 lg:backdrop-blur-none">
+        <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
+        <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full bg-muted py-2 pr-3 pl-2 text-[15px]">
+          <span className="size-6 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url && <img src={data.avatar_url} alt="" className="size-full object-cover" />}</span>
           <span className="truncate font-medium">@{slug.slug || "…"}</span>
           <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] font-medium ${published ? "bg-[var(--status-approved-bg)] text-[var(--status-approved)]" : "bg-background text-muted-foreground"}`}>
             {published ? t("Live") : t("Draft")}
@@ -188,9 +188,10 @@ export default function PageEditor() {
         </div>
         <span className={`hidden text-xs sm:inline ${save === "error" ? "text-destructive" : "text-muted-foreground"}`}>{saveLabel}</span>
         <div className="relative">
-          <Button variant="outline" size="sm" onPress={() => setShareOpen((v) => !v)}><Share2Icon />{t("Share")}</Button>
+          <button type="button" onClick={() => setShareOpen((v) => !v)}
+            className="flex h-10 items-center gap-2 rounded-full bg-muted px-4 text-[15px] font-medium hover:bg-hover-strong"><Share2Icon className="size-4" />{t("Share")}</button>
           {shareOpen && (
-            <div className="absolute right-0 top-10 z-40 flex w-80 flex-col gap-3 rounded-2xl bg-popover p-4 shadow-xl ring-1 ring-foreground/10">
+            <div className="absolute right-0 top-12 z-40 flex w-80 flex-col gap-3 rounded-2xl bg-popover p-4 shadow-xl ring-1 ring-foreground/10">
               {published && savedSlug ? (
                 <>
                   <p className="text-sm font-medium">{t("Your page is live")}</p>
@@ -222,26 +223,29 @@ export default function PageEditor() {
         <p className="mx-3 mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-5">{saveError || t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
       )}
 
-      <div className="flex flex-1 flex-col lg:flex-row">
+      <div className="flex flex-1 flex-col lg:relative lg:flex-row lg:items-start">
         {/* Section rail */}
-        <nav className="flex shrink-0 gap-1 overflow-x-auto px-3 pt-3 lg:w-24 lg:flex-col lg:items-center lg:gap-3 lg:px-0 lg:pt-8">
+        {/* Section rail: 92px wide on a computer, items in the middle and settings at the bottom */}
+        <nav className="flex shrink-0 gap-1 overflow-x-auto px-3 pt-3 lg:sticky lg:top-16 lg:h-[calc(100dvh-72px)] lg:w-[92px] lg:flex-col lg:items-center lg:justify-center lg:gap-4 lg:overflow-visible lg:px-0 lg:pt-0">
           {([
             ["content", t("Content"), <LayoutListIcon key="c" />],
             ["header", t("Header"), <UserRoundIcon key="h" />],
             ["design", t("Design"), <PaletteIcon key="d" />],
             ["settings", t("Settings"), <SettingsIcon key="s" />],
           ] as [Section, string, React.ReactNode][]).map(([id, label, icon]) => (
-            <button key={id} type="button" onClick={() => setSection(id)}
-              className="flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm lg:flex-col lg:gap-1 lg:rounded-none lg:px-0 lg:py-0 lg:text-[11px]">
-              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-foreground lg:text-background" : "text-muted-foreground lg:bg-muted"}`}>{icon}</span>
-              <span className={section === id ? "font-medium text-foreground" : "text-muted-foreground"}>{label}</span>
+            <button key={id} type="button" onClick={() => setSection(id)} aria-label={label}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm lg:flex-col lg:gap-1.5 lg:rounded-none lg:px-0 lg:py-0 lg:text-xs ${id === "settings" ? "lg:absolute lg:bottom-4" : ""}`}>
+              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-foreground lg:text-background lg:ring-2 lg:ring-foreground lg:ring-offset-2 lg:ring-offset-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
+              <span className={`${section === id ? "font-medium text-foreground" : "text-muted-foreground lg:text-foreground"} ${id === "settings" ? "lg:hidden" : ""}`}>{label}</span>
             </button>
           ))}
         </nav>
 
         {/* Panel */}
-        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:py-8">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
+        {/* The white panel: 851×856 on a full-size screen, scrolls inside */}
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:mt-[18px] lg:h-[calc(100dvh-88px)] lg:w-[851px] lg:max-w-[851px] lg:flex-none lg:overflow-y-auto lg:rounded-t-[32px] lg:bg-card lg:px-8 lg:pt-12 lg:pb-10 lg:ring-1 lg:ring-foreground/10">
+          <div className="mx-auto flex w-full max-w-[580px] flex-col gap-4">
+            {section === "content" && <h2 className="hidden text-xl font-bold lg:block">{t("Content")}</h2>}
             {section === "content" && (
               <>
                 <div className="flex items-center gap-4">
@@ -432,9 +436,9 @@ export default function PageEditor() {
         </main>
 
         {/* Phone preview */}
-        <aside className="hidden shrink-0 border-l border-border/50 lg:flex lg:w-[440px] lg:items-start lg:justify-center lg:pt-8 xl:w-[520px]">
-          <div className="sticky top-22 flex items-center gap-3">
-            <div className="h-[min(740px,calc(100dvh-130px))] w-[360px] overflow-hidden rounded-[44px] border-[10px] border-foreground/90 bg-background shadow-2xl">
+        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-64px)] lg:items-center lg:justify-center">
+          <div className="flex items-center gap-4">
+            <div className="h-[min(735px,calc(100dvh-140px))] w-[340px] overflow-hidden rounded-[40px] bg-background shadow-[0_8px_40px_rgba(0,0,0,0.12)] ring-1 ring-foreground/10">
               <div className="h-full overflow-y-auto">{preview}</div>
             </div>
             {published && savedSlug && (

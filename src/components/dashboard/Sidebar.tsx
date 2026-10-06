@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import {
-  ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, PencilIcon, QrCodeIcon, UsersRoundIcon, XIcon,
+  ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, QrCodeIcon, XIcon,
 } from "lucide-react"
 import { OPEN_NAV_EVENT } from "@/lib/panels"
 import { supabase } from "@/lib/supabase"
@@ -116,9 +116,6 @@ function SidebarContent({ activePage, panel, onPanel }: {
         {mode === "page" ? (
           <>
             <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
-            <NavItem icon={<PencilIcon className="size-full" strokeWidth={1.6} />} label={t("Editor")} href="/link/edit" />
-            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
-            <NavItem icon={<UsersRoundIcon className="size-full" strokeWidth={1.6} />} label={t("Clients")} active={activePage === "link-clients"} href="/link/clients" />
             <NavItem icon={<ChartColumnIcon className="size-full" strokeWidth={1.6} />} label={t("Statistics")} active={activePage === "link-stats"} href="/link/stats" />
             {page?.published && (
               <NavItem icon={<ExternalLinkIcon className="size-full" strokeWidth={1.6} />} label={t("Open page")} href={pagePath(page.slug)} />
@@ -139,18 +136,23 @@ function SidebarContent({ activePage, panel, onPanel }: {
           </>
         )}
 
-        <SectionLabel className="mt-5">{t("Account")}</SectionLabel>
-        <NavItem icon={NAV_ICONS.profile} label={t("Profile")} active={panel === "profile"} onClick={() => setPanel("profile")} />
-        <NavItem icon={NAV_ICONS.billing} label={t("Billing")} active={panel === "billing"} onClick={() => setPanel("billing")} />
-        <NavItem icon={NAV_ICONS.notifications} label={t("Notifications")} active={panel === "notifications"} onClick={() => setPanel("notifications")} />
-        <NavItem icon={NAV_ICONS.security} label={t("Security")} active={panel === "security"} onClick={() => setPanel("security")} />
-        <NavItem icon={NAV_ICONS.appearance} label={t("Appearance")} active={panel === "appearance"} onClick={() => setPanel("appearance")} />
+        {/* My page keeps its own short menu; the account lives in the orders side. */}
+        {mode === "orders" && (
+          <>
+            <SectionLabel className="mt-5">{t("Account")}</SectionLabel>
+            <NavItem icon={NAV_ICONS.profile} label={t("Profile")} active={panel === "profile"} onClick={() => setPanel("profile")} />
+            <NavItem icon={NAV_ICONS.billing} label={t("Billing")} active={panel === "billing"} onClick={() => setPanel("billing")} />
+            <NavItem icon={NAV_ICONS.notifications} label={t("Notifications")} active={panel === "notifications"} onClick={() => setPanel("notifications")} />
+            <NavItem icon={NAV_ICONS.security} label={t("Security")} active={panel === "security"} onClick={() => setPanel("security")} />
+            <NavItem icon={NAV_ICONS.appearance} label={t("Appearance")} active={panel === "appearance"} onClick={() => setPanel("appearance")} />
 
-        <SectionLabel className="mt-5">{t("Support")}</SectionLabel>
-        <NavItem icon={NAV_ICONS.help} label={t("Help Center")} active={panel === "help"} onClick={() => setPanel("help")} />
-        <NavItem icon={NAV_ICONS.contact} label={t("Contact Us")} active={panel === "contact"} onClick={() => setPanel("contact")} />
-        <NavItem icon={NAV_ICONS.docs} label={t("Documentation")} active={panel === "docs"} onClick={() => setPanel("docs")} />
-        <NavItem icon={NAV_ICONS.status} label={t("Status")} active={panel === "status"} onClick={() => setPanel("status")} />
+            <SectionLabel className="mt-5">{t("Support")}</SectionLabel>
+            <NavItem icon={NAV_ICONS.help} label={t("Help Center")} active={panel === "help"} onClick={() => setPanel("help")} />
+            <NavItem icon={NAV_ICONS.contact} label={t("Contact Us")} active={panel === "contact"} onClick={() => setPanel("contact")} />
+            <NavItem icon={NAV_ICONS.docs} label={t("Documentation")} active={panel === "docs"} onClick={() => setPanel("docs")} />
+            <NavItem icon={NAV_ICONS.status} label={t("Status")} active={panel === "status"} onClick={() => setPanel("status")} />
+          </>
+        )}
       </nav>
 
       {mode === "page" && page && page.done < page.steps.length
