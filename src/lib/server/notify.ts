@@ -84,6 +84,8 @@ const TEXT = {
     comment: (who: string, order: string) => `💬 ${who} left a comment on “${order}”`,
     approved: (order: string) => `✅ The client approved “${order}”`,
     changes: (order: string) => `✏️ The client requested changes on “${order}”`,
+    request: (who: string) => `📩 New request from ${who}`,
+    openRequests: "Open requests",
     open: "Open order",
     page: (n: number) => `page ${n}`,
     footer: "You get this because notifications are on in Nodly → Notifications.",
@@ -92,6 +94,8 @@ const TEXT = {
     comment: (who: string, order: string) => `💬 ${who} оставил(а) комментарий к «${order}»`,
     approved: (order: string) => `✅ Клиент утвердил «${order}»`,
     changes: (order: string) => `✏️ Клиент попросил правки по «${order}»`,
+    request: (who: string) => `📩 Новая заявка от ${who}`,
+    openRequests: "Открыть заявки",
     open: "Открыть заказ",
     page: (n: number) => `стр. ${n}`,
     footer: "Вы получили это письмо, потому что уведомления включены в Nodly → Уведомления.",
@@ -101,24 +105,29 @@ const TEXT = {
 export type NotifyEvent =
   | { kind: "comment"; orderTitle: string; author: string; title: string; description: string | null; page: number }
   | { kind: "approved" | "changes"; orderTitle: string }
+  | { kind: "request"; name: string; contact: string; message: string }
 
 /** Builds the Telegram text and the email subject/body for an event. */
 export function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
   const L = TEXT[lang]
-  const order = escapeHtml(event.orderTitle)
+  const order = event.kind === "request" ? "" : escapeHtml(event.orderTitle)
   const headline =
-    event.kind === "comment" ? L.comment(escapeHtml(event.author), order)
+    event.kind === "request" ? L.request(escapeHtml(event.name))
+    : event.kind === "comment" ? L.comment(escapeHtml(event.author), order)
     : event.kind === "approved" ? L.approved(order)
     : L.changes(order)
   const details = event.kind === "comment"
     ? `<b>${escapeHtml(event.title)}</b>${event.description ? `\n${escapeHtml(event.description)}` : ""}\n<i>${L.page(event.page)}</i>`
-    : ""
-  const telegram = [headline, details, `<a href="${orderUrl}">${L.open}</a>`].filter(Boolean).join("\n\n")
+    : event.kind === "request"
+      ? `<b>${escapeHtml(event.contact)}</b>${event.message ? `\n${escapeHtml(event.message.slice(0, 600))}` : ""}`
+      : ""
+  const linkLabel = event.kind === "request" ? L.openRequests : L.open
+  const telegram = [headline, details, `<a href="${orderUrl}">${linkLabel}</a>`].filter(Boolean).join("\n\n")
   const subject = headline.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
   const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f1e1d">
 <p style="margin:0 0 12px">${headline}</p>
 ${details ? `<p style="margin:0 0 16px;padding:12px 14px;background:#f6f5f3;border-radius:10px">${details.replace(/\n/g, "<br>")}</p>` : ""}
-<p style="margin:0 0 24px"><a href="${orderUrl}" style="display:inline-block;background:#1f1e1d;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">${L.open}</a></p>
+<p style="margin:0 0 24px"><a href="${orderUrl}" style="display:inline-block;background:#1f1e1d;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">${linkLabel}</a></p>
 <p style="margin:0;font-size:12px;color:#8a8987">${L.footer}</p>
 </div>`
   return { telegram, subject, html }

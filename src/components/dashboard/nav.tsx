@@ -8,12 +8,14 @@ export function SectionLabel({ children, className }: { children: React.ReactNod
   )
 }
 
-export function NavItem({ icon, label, active, href, onClick }: {
+export function NavItem({ icon, label, active, href, onClick, badge }: {
   icon: React.ReactNode
   label: string
   active?: boolean
   href?: string
   onClick?: () => void
+  /** A small count after the label (e.g. new requests). */
+  badge?: number
 }) {
   const cls = `flex w-full items-center gap-2.5 rounded-[7px] px-3 py-[7px] text-[13.5px] transition-colors ${
     active
@@ -26,6 +28,7 @@ export function NavItem({ icon, label, active, href, onClick }: {
       <a href={href} className={cls}>
         <span className={`h-4 w-4 shrink-0 ${active ? "opacity-100" : "opacity-60"}`}>{icon}</span>
         {label}
+        {!!badge && <span className="ml-auto rounded-full bg-foreground px-1.5 text-[10.5px] font-medium leading-4 text-background tabular-nums">{badge}</span>}
       </a>
     )
   }
@@ -120,9 +123,25 @@ const statusIcon = (
   </svg>
 )
 
+const pageIcon = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-.8.8" />
+    <path d="M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8A3 3 0 0 0 7.2 13l.8-.8" />
+  </svg>
+)
+
+const requestsIcon = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1.5 9.5 3.6 3a1.5 1.5 0 0 1 1.4-1h6a1.5 1.5 0 0 1 1.4 1l2.1 6.5V13a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 13z" />
+    <path d="M1.5 9.5h3.5l1 1.5h4l1-1.5h3.5" />
+  </svg>
+)
+
 export const NAV_ICONS = {
   dashboard: dashboardIcon,
   orders: ordersIcon,
+  page: pageIcon,
+  requests: requestsIcon,
   profile: profileIcon,
   billing: billingIcon,
   notifications: notifIcon,

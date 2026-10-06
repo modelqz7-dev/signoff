@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { XIcon } from "lucide-react"
 import { OPEN_NAV_EVENT } from "@/lib/panels"
+import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
@@ -100,6 +101,7 @@ function SidebarContent({ activePage, panel, onPanel }: {
 }) {
   const { t } = useT()
   const setPanel = onPanel
+  const newRequests = useNewRequestCount()
   return (
     <>
       {/* Logo */}
@@ -111,6 +113,8 @@ function SidebarContent({ activePage, panel, onPanel }: {
         <SectionLabel>{t("General")}</SectionLabel>
         <NavItem icon={NAV_ICONS.dashboard} label={t("Dashboard")} active={activePage === "dashboard"} href="/dashboard" />
         <NavItem icon={NAV_ICONS.orders} label={t("Orders")} active={activePage === "orders"} href="/orders" />
+        <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
+        <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
 
         <SectionLabel className="mt-5">{t("Account")}</SectionLabel>
         <NavItem icon={NAV_ICONS.profile} label={t("Profile")} active={panel === "profile"} onClick={() => setPanel("profile")} />
@@ -129,6 +133,18 @@ function SidebarContent({ activePage, panel, onPanel }: {
       <PlanCard onOpen={() => setPanel("billing")} />
     </>
   )
+}
+
+/** New requests from the workshop's page; 0 until supabase/pages.sql has been run. */
+function useNewRequestCount() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    supabase.from("page_requests").select("id", { count: "exact", head: true }).eq("status", "new")
+      .then(({ count, error }) => { if (!cancelled && !error) setCount(count ?? 0) })
+    return () => { cancelled = true }
+  }, [])
+  return count
 }
 
 /** Plan, trial and active-order usage at the bottom of the sidebar. */

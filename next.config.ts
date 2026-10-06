@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
   headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Workshop pages live at /@name (a folder can't start with "@": that marks a parallel route).
+  rewrites() {
+    return [{ source: "/@:slug", destination: "/p/:slug" }];
+  },
 };
 
 export default nextConfig;
