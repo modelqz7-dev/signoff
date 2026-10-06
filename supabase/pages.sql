@@ -47,4 +47,30 @@ drop policy if exists "Requests: delete own shop" on public.page_requests;
 create policy "Requests: delete own shop" on public.page_requests
   for delete to authenticated using (public.owns_shop(shop_id::text));
 
+-- Visits per day, for "In the last week" in the dashboard. Counted by the server.
+create table if not exists public.page_views (
+  shop_id uuid not null references public.shops (id) on delete cascade,
+  day     date not null,
+  count   integer not null default 0,
+  primary key (shop_id, day)
+);
+
+alter table public.page_views enable row level security;
+drop policy if exists "Views: read own shop" on public.page_views;
+create policy "Views: read own shop" on public.page_views
+  for select to authenticated using (public.owns_shop(shop_id::text));
+
+create or replace function public.page_view_hit(p_shop uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into page_views (shop_id, day, count) values (p_shop, current_date, 1)
+  on conflict (shop_id, day) do update set count = page_views.count + 1;
+$$;
+
+revoke all on function public.page_view_hit(uuid) from public, anon, authenticated;
+grant execute on function public.page_view_hit(uuid) to service_role;
+
 notify pgrst, 'reload schema';

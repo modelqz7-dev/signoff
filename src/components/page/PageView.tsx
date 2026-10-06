@@ -33,7 +33,7 @@ function InstagramGlyph() {
   )
 }
 
-const CONTACT_ICON: Record<keyof PageContacts, React.ReactNode> = {
+export const CONTACT_ICON: Record<keyof PageContacts, React.ReactNode> = {
   instagram: <InstagramGlyph />,
   telegram: <SendIcon className="size-4" />,
   viber: <MessageCircleIcon className="size-4" />,
@@ -43,7 +43,17 @@ const CONTACT_ICON: Record<keyof PageContacts, React.ReactNode> = {
   website: <GlobeIcon className="size-4" />,
 }
 
-const CONTACT_LABEL: Record<keyof PageContacts, string> = {
+const SHAPE = { pill: "rounded-full", rounded: "rounded-2xl", square: "rounded-md" } as const
+
+function Avatar({ data, initials, className = "" }: { data: PageData; initials: string; className?: string }) {
+  return (
+    <div className={`flex size-24 items-center justify-center overflow-hidden rounded-full bg-[var(--pg-card)] text-2xl font-semibold ${className}`}>
+      {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : initials}
+    </div>
+  )
+}
+
+export const CONTACT_LABEL: Record<keyof PageContacts, string> = {
   instagram: "Instagram", telegram: "Telegram", viber: "Viber", whatsapp: "WhatsApp",
   phone: "Phone", email: "Email", website: "Website",
 }
@@ -68,52 +78,63 @@ export function PageView({ data, slug, preview = false }: { data: PageData; slug
   return (
     <div style={palette(data)} className="min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
       <div className="mx-auto flex w-full max-w-[560px] flex-col pb-10">
-        {/* Banner and avatar */}
-        <div className="relative">
-          <div className="h-36 w-full overflow-hidden sm:h-44 sm:rounded-b-3xl" style={{ background: data.banner_url ? undefined : "linear-gradient(135deg, var(--pg-accent), color-mix(in srgb, var(--pg-accent) 55%, var(--pg-bg)))" }}>
-            {data.banner_url && <img src={data.banner_url} alt="" className="size-full object-cover" />}
-          </div>
-          <div className="absolute -bottom-12 left-1/2 flex size-24 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-[var(--pg-card)] text-2xl font-semibold ring-4 ring-[var(--pg-bg)]">
-            {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : initials}
-          </div>
-        </div>
-
-        <div className="mt-14 flex flex-col items-center gap-1.5 px-5 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">{data.title || t("Your name")}</h1>
-          {data.tagline && <p className="text-sm text-[var(--pg-muted)]">{data.tagline}</p>}
-          {data.bio && <p className="mt-2 max-w-md text-[15px] leading-relaxed whitespace-pre-line">{data.bio}</p>}
-        </div>
-
-        {/* Main action and contacts */}
-        <div className="mt-6 flex flex-col items-center gap-4 px-5">
-          {data.requests && (
-            <a
-              href="#request"
-              onClick={scrollToForm}
-              className="flex h-12 w-full max-w-sm items-center justify-center rounded-2xl bg-[var(--pg-accent)] text-[15px] font-medium text-[var(--pg-on-accent)] transition-opacity hover:opacity-90"
-            >
-              {data.cta || t("Leave a request")}
-            </a>
-          )}
-          {contacts.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2">
-              {contacts.map((c) => (
-                <a
-                  key={c.key}
-                  href={preview ? undefined : c.href!}
-                  target={c.key === "website" || c.key === "instagram" ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  aria-label={CONTACT_LABEL[c.key]}
-                  title={CONTACT_LABEL[c.key]}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-[var(--pg-border)] bg-[var(--pg-card)] px-3.5 text-sm transition-colors hover:border-[var(--pg-accent)]"
-                >
-                  {CONTACT_ICON[c.key]}
-                  <span className="hidden sm:inline">{t(CONTACT_LABEL[c.key])}</span>
-                </a>
-              ))}
+        {/* Cover (optional) and photo */}
+        {data.banner_url ? (
+          <div className="relative mb-14">
+            <div className="h-36 w-full overflow-hidden sm:h-44 sm:rounded-b-3xl">
+              <img src={data.banner_url} alt="" className="size-full object-cover" />
             </div>
-          )}
+            <Avatar data={data} initials={initials} className="absolute -bottom-12 left-1/2 -translate-x-1/2 ring-4 ring-[var(--pg-bg)]" />
+          </div>
+        ) : (
+          <div className="flex justify-center pt-12 pb-1">
+            <Avatar data={data} initials={initials} />
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-col items-center gap-1 px-5 text-center">
+          <h1 className="text-[22px] font-semibold tracking-tight">{data.title || t("Your name")}</h1>
+          {data.tagline && <p className="text-sm text-[var(--pg-muted)]">{data.tagline}</p>}
         </div>
+
+        {/* Social icons, like on any link-in-bio page */}
+        {contacts.length > 0 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 px-5">
+            {contacts.map((c) => (
+              <a
+                key={c.key}
+                href={preview ? undefined : c.href!}
+                target={c.key === "website" || c.key === "instagram" ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                aria-label={CONTACT_LABEL[c.key]}
+                title={CONTACT_LABEL[c.key]}
+                className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--pg-card)] [&_svg]:size-5"
+              >
+                {CONTACT_ICON[c.key]}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {data.bio && <p className="mx-auto mt-3 max-w-md px-5 text-center text-[15px] leading-relaxed whitespace-pre-line">{data.bio}</p>}
+
+        {/* Request button and link buttons */}
+        {(data.requests || data.links.length > 0) && (
+          <div className="mt-6 flex flex-col gap-3 px-5">
+            {data.requests && (
+              <a href="#request" onClick={scrollToForm}
+                className={`flex min-h-14 items-center justify-center px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] bg-[var(--pg-accent)] text-[var(--pg-on-accent)] ${SHAPE[data.buttons]}`}>
+                {data.cta || t("Leave a request")}
+              </a>
+            )}
+            {data.links.map((l, i) => (
+              <a key={i} href={preview ? undefined : l.url} target="_blank" rel="noopener noreferrer"
+                className={`flex min-h-14 items-center justify-center border border-[var(--pg-border)] bg-[var(--pg-card)] px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] ${SHAPE[data.buttons]}`}>
+                {l.title}
+              </a>
+            ))}
+          </div>
+        )}
 
         {/* Services */}
         {data.services.length > 0 && (
