@@ -94,6 +94,7 @@ export const ru: Record<string, string> = {
   "Avg. time to approval": "Среднее время до утверждения",
   "Awaiting": "Ожидает",
   "Back": "Назад",
+  "Back to My page": "Назад в «Мою страницу»",
   "Back to Nodly": "На главную Nodly",
   "Back to new": "Вернуть в новые",
   "Back to order": "Назад к заказу",
