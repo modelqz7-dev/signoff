@@ -38,7 +38,7 @@ export function OrderProgress({ order, pins }: { order: Order; pins: Pin[] }) {
     <ol className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label={t("Order progress")}>
       {steps.map((s, i) => (
         <li key={s.label} className="flex min-w-0 flex-col gap-1.5" aria-current={i === current ? "step" : undefined}>
-          <span className={cn("h-1 rounded-full", s.done ? "bg-foreground/70" : i === current ? "bg-foreground/25" : "bg-muted")} />
+          <span className={cn("h-1 rounded-full", s.done ? "bg-primary/70" : i === current ? "bg-foreground/25" : "bg-muted")} />
           <span className={cn("text-[11px] leading-tight font-medium break-words sm:truncate sm:text-xs", s.done || i === current ? "text-foreground" : "text-muted-foreground")}>{s.label}</span>
           {s.note && <span className="-mt-1 hidden truncate text-[11px] text-muted-foreground sm:block" suppressHydrationWarning>{s.note}</span>}
         </li>

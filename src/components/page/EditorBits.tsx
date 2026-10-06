@@ -28,7 +28,7 @@ export function IconBtn({ label, onClick, disabled, children }: { label: string;
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className="flex items-center gap-3 text-left text-sm">
-      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-foreground" : "bg-muted ring-1 ring-border"}`}>
+      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-primary" : "bg-muted ring-1 ring-border"}`}>
         <span className={`absolute top-0.5 size-4 rounded-full bg-background shadow-sm transition-all ${checked ? "left-[18px]" : "left-0.5"}`} />
       </span>
       {label}

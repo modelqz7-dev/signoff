@@ -76,7 +76,7 @@ export function PageNotice({ missingTable, hasPage }: { missingTable: boolean; h
   return (
     <div className="mt-6 flex flex-col items-start gap-3 rounded-3xl bg-card p-6 ring-1 ring-foreground/10">
       <p className="text-[15px]">{t("Create your page first, then share its link anywhere.")}</p>
-      <a href="/link/edit" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-90">{t("Create page")}</a>
+      <a href="/link/edit" className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90">{t("Create page")}</a>
     </div>
   )
 }

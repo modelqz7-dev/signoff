@@ -99,7 +99,7 @@ export function BeforeAfter({ t }: { t: T }) {
                 <span className="absolute inset-x-0 bottom-0 h-0.5 overflow-hidden bg-foreground/15">
                   <span
                     key={index}
-                    className={cn("block h-full bg-foreground", auto && "animate-[tab-progress_linear_both]")}
+                    className={cn("block h-full bg-primary", auto && "animate-[tab-progress_linear_both]")}
                     style={auto ? { animationDuration: `${HOLD_MS}ms`, animationPlayState: playing ? "running" : "paused" } : undefined}
                     onAnimationEnd={() => setIndex((n) => (n + 1) % CHANGES.length)}
                   />

@@ -312,7 +312,7 @@ export default function PortalPage() {
           {answered.length > 0 && order.status !== "approved" && order.status !== "prod" && (
             <div className="flex flex-col gap-3 rounded-xl bg-card px-5 py-4 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-start gap-3">
-                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <CommentsIcon className="size-5" />
                 </span>
                 <div className="min-w-0">

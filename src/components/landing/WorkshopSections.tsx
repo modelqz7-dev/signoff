@@ -128,7 +128,7 @@ export function Questions({ t }: { t: T }) {
                   className="flex w-full cursor-pointer items-center justify-between gap-6 px-5 py-4 text-left"
                 >
                   <span className="text-base font-medium text-foreground">{q}</span>
-                  <span className={cn("grid size-7 shrink-0 place-items-center rounded-full transition-colors", isOpen ? "bg-foreground text-background" : "bg-muted text-muted-foreground")}>
+                  <span className={cn("grid size-7 shrink-0 place-items-center rounded-full transition-colors", isOpen ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
                     <PlusIcon aria-hidden="true" className={cn("size-4 transition-transform duration-300", isOpen && "rotate-45")} />
                   </span>
                 </button>
