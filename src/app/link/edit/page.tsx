@@ -172,7 +172,6 @@ export default function PageEditor() {
     update({ [key]: list } as Partial<PageData>)
   }
 
-  const saveLabel = save === "saving" ? t("Saving...") : save === "dirty" ? (slug.status === "ok" ? t("Saving...") : t("Not saved")) : save === "error" ? t("Not saved") : t("Saved")
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -186,7 +185,6 @@ export default function PageEditor() {
             {published ? t("Live") : t("Draft")}
           </span>
         </div>
-        <span className={`hidden text-xs sm:inline ${save === "error" ? "text-destructive" : "text-muted-foreground"}`}>{saveLabel}</span>
         <div className="relative">
           <button type="button" onClick={() => setShareOpen((v) => !v)}
             className="flex h-10 items-center gap-2 rounded-full bg-muted px-4 text-[15px] font-medium hover:bg-hover-strong"><Share2Icon className="size-4" />{t("Share")}</button>
@@ -216,7 +214,6 @@ export default function PageEditor() {
             </div>
           )}
         </div>
-        {!published && <Button size="sm" className="hidden sm:inline-flex" onPress={() => persist(true)} isDisabled={slug.status !== "ok"}>{t("Publish")}</Button>}
       </header>
 
       {(missingTable || saveError) && (
