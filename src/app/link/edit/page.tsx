@@ -184,8 +184,11 @@ export default function PageEditor() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:pr-3 lg:pl-[26px] lg:backdrop-blur-none">
-        <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:pr-3 lg:pl-0 lg:backdrop-blur-none">
+        {/* Same 92px column as the section rail below, so the arrow sits right above its buttons */}
+        <div className="flex shrink-0 lg:w-[92px] lg:justify-center">
+          <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
+        </div>
         {/* Address pill, 187×40 like the reference: names longer than 14 letters are cut */}
         <div ref={pillRef} className="relative mx-auto">
           <button type="button" onClick={() => setPillOpen((v) => !v)} aria-haspopup="menu" aria-expanded={pillOpen}
