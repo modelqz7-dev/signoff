@@ -111,7 +111,7 @@ export default function MyPage() {
             {missingTable && <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
 
             {/* The page card */}
-            <h2 className="mt-10 mb-6 text-xl font-bold tracking-tight">{t("Your page")}</h2>
+            <h2 className="mt-9 mb-6 text-xl leading-7 font-bold tracking-tight">{t("Your page")}</h2>
             {loading ? (
               <div className="h-[356px] w-[280px] animate-pulse rounded-3xl bg-muted" />
             ) : (
