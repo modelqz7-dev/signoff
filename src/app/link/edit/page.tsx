@@ -184,7 +184,7 @@ export default function PageEditor() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:px-3 lg:backdrop-blur-none">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:pr-3 lg:pl-[26px] lg:backdrop-blur-none">
         <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
         {/* Address pill, 187×40 like the reference: names longer than 14 letters are cut */}
         <div ref={pillRef} className="relative mx-auto">
