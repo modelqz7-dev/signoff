@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowRightIcon, CheckIcon, CopyIcon, ExternalLinkIcon, EyeIcon, InboxIcon, PencilIcon } from "lucide-react"
+import { ChevronRightIcon, Link2Icon, Share2Icon, SparklesIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { PageView } from "@/components/page/PageView"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
@@ -14,13 +13,12 @@ import type { Shop } from "@/components/dashboard/types"
 
 type PageRow = { slug: string; published: boolean; data: PageData }
 
-/** The last 7 days, oldest first, as YYYY-MM-DD in the visitor's day (the server counts in UTC). */
+/** The last 7 days, oldest first, as YYYY-MM-DD (the server counts visits by UTC day). */
 function lastWeek() {
   const days: string[] = []
   const today = new Date()
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i))
-    days.push(d.toISOString().slice(0, 10))
+    days.push(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i)).toISOString().slice(0, 10))
   }
   return days
 }
@@ -35,9 +33,11 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true)
   const [missingTable, setMissingTable] = useState(false)
   const [days] = useState(lastWeek)
+  const [hour] = useState(() => new Date().getHours())
   const [views, setViews] = useState<Record<string, number>>({})
   const [requests, setRequests] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [tipOpen, setTipOpen] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -62,17 +62,24 @@ export default function MyPage() {
     init()
   }, [router, days])
 
-  const url = page ? (typeof window === "undefined" ? "" : window.location.host) + pagePath(page.slug) : ""
-  async function copy() {
+  async function share() {
     if (!page) return
-    await navigator.clipboard.writeText(window.location.origin + pagePath(page.slug)).catch(() => {})
+    const link = window.location.origin + pagePath(page.slug)
+    if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+      await navigator.share({ title: page.data.title, url: link }).catch(() => {})
+      return
+    }
+    await navigator.clipboard.writeText(link).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
+  const name = page?.data.title || shop?.name || ""
+  const avatar = page ? page.data.avatar_url : shop?.logo_url ?? null
+  const host = typeof window === "undefined" ? "" : window.location.host
+  const hello = hour < 5 ? t("Good evening") : hour < 12 ? t("Good morning") : hour < 18 ? t("Good afternoon") : t("Good evening")
   const totalViews = days.reduce((n, d) => n + (views[d] ?? 0), 0)
   const peak = Math.max(1, ...days.map((d) => views[d] ?? 0))
-  const linkCount = page ? page.data.links.length : 0
   const weekday = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" })
 
   return (
@@ -81,117 +88,156 @@ export default function MyPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <div className="flex-1 p-4 sm:p-8">
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-medium tracking-tight">{t("My page")}</h1>
-              <p className="text-sm text-muted-foreground">{t("One link for Instagram and clients: your work, prices, contacts and a request form.")}</p>
+        <div className="flex-1 px-4 pb-10 sm:px-8">
+          <div className="mx-auto flex w-full max-w-[1216px] flex-col">
+            {/* Greeting and the address */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pt-6 pb-4 sm:pt-8">
+              <h1 className="text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
+              {page && (
+                <div className="flex h-10 max-w-full items-center gap-2.5 rounded-full bg-muted pr-2 pl-4 text-sm font-medium">
+                  <Link2Icon className="size-4 shrink-0" />
+                  <a href={page.published ? pagePath(page.slug) : "/link/edit"} target={page.published ? "_blank" : undefined} rel="noopener" className="truncate hover:underline">
+                    {host}{pagePath(page.slug)}
+                  </a>
+                  <button type="button" onClick={share} aria-label={t("Share")} title={copied ? t("Copied") : t("Share")}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full hover:bg-background">
+                    <Share2Icon className="size-4" />
+                  </button>
+                </div>
+              )}
             </div>
 
-            {missingTable && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
+            {missingTable && <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
 
+            {/* The page card */}
+            <h2 className="mt-10 mb-6 text-xl font-bold tracking-tight">{t("Your page")}</h2>
             {loading ? (
-              <p className="text-sm text-muted-foreground">{t("Loading...")}</p>
-            ) : !page ? (
-              <section className="flex flex-col items-center gap-4 rounded-3xl bg-card px-6 py-12 text-center ring-1 ring-foreground/10">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted"><EyeIcon className="size-6 text-muted-foreground" /></div>
-                <div className="flex max-w-sm flex-col gap-1">
-                  <h2 className="text-lg font-medium">{t("Create your page")}</h2>
-                  <p className="text-sm text-muted-foreground">{t("Your work, prices and contacts on one link. Clients leave requests right there.")}</p>
-                </div>
-                <a href="/link/edit" className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-6 text-sm font-medium text-background hover:opacity-90">
-                  {t("Create page")}<ArrowRightIcon className="size-4" />
-                </a>
-              </section>
+              <div className="h-[356px] w-[280px] animate-pulse rounded-3xl bg-muted" />
             ) : (
-              <>
-                {/* The page card */}
-                <section className="flex flex-col gap-5 rounded-3xl bg-card p-4 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:p-5">
-                  <a href="/link/edit" aria-label={t("Edit")} className="relative mx-auto h-[260px] w-[150px] shrink-0 overflow-hidden rounded-[22px] bg-muted ring-4 ring-foreground/90 sm:mx-0">
-                    <div className="pointer-events-none absolute left-0 top-0 h-[693px] w-[400px] origin-top-left scale-[0.375] overflow-hidden">
-                      <PageView data={page.data} slug={page.slug} preview />
-                    </div>
+              <div className="relative flex h-[356px] w-full max-w-[280px] flex-col rounded-3xl bg-muted p-4">
+                <a href="/link/edit" aria-label={t("Edit")} className="flex flex-1 items-center justify-center">
+                  {avatar
+                    ? <img src={avatar} alt="" className="size-[164px] rounded-full object-cover" />
+                    : <AvatarPlaceholder />}
+                </a>
+                <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-xl leading-7 font-bold tracking-tight">{name}</span>
+                    <span className="truncate text-sm text-muted-foreground">
+                      {page ? (page.published ? t("{n} links", { n: page.data.links.length }) : t("Draft")) : t("Not created yet")}
+                    </span>
+                  </div>
+                  {page?.published && (
+                    <button type="button" onClick={share} aria-label={t("Share")} title={copied ? t("Copied") : t("Share")}
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background/70 hover:bg-background">
+                      <Share2Icon className="size-[18px]" />
+                    </button>
+                  )}
+                  <a href="/link/edit" className="flex h-10 shrink-0 items-center rounded-full bg-background/70 px-4 text-sm font-medium hover:bg-background">
+                    {page ? t("Edit") : t("Create")}
                   </a>
-                  <div className="flex min-w-0 flex-1 flex-col gap-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <h2 className="truncate text-xl font-medium">{page.data.title || shop?.name}</h2>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${page.published ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-                          {page.published ? t("Live") : t("Draft")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {t("{n} links", { n: linkCount })} · {t("{n} services", { n: page.data.services.length })} · {t("{n} photos", { n: page.data.portfolio.length })}
-                      </p>
-                    </div>
+                </div>
+              </div>
+            )}
 
-                    <div className="flex items-center gap-1 rounded-full bg-muted py-1 pl-4 pr-1">
-                      <span className="min-w-0 flex-1 truncate text-sm">{url}</span>
-                      <button type="button" aria-label={t("Copy Link")} title={t("Copy Link")} onClick={copy}
-                        className="flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-background">
-                        {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-                      </button>
-                      {page.published && (
-                        <a href={pagePath(page.slug)} target="_blank" rel="noopener" aria-label={t("Open page")} title={t("Open page")}
-                          className="flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-background">
-                          <ExternalLinkIcon className="size-4" />
-                        </a>
-                      )}
-                    </div>
-
-                    {!page.published && <p className="text-xs text-muted-foreground">{t("The page is hidden until you publish it.")}</p>}
-
-                    <div className="flex flex-wrap gap-2">
-                      <a href="/link/edit" className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-90">
-                        <PencilIcon className="size-4" />{t("Edit")}
-                      </a>
-                      {page.published && (
-                        <button type="button" onClick={copy} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-5 text-sm font-medium hover:bg-hover">
-                          {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy Link")}
-                        </button>
-                      )}
-                    </div>
+            {/* This week */}
+            <h2 className="mt-10 mb-6 text-xl font-bold tracking-tight">{t("In the last week")}</h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <StatCard title={t("Visitors")} period={t("Last 7 days")}
+                empty={totalViews === 0} emptyText={t("No activity during this time")} illustration={<GlobeArt />}
+                footer={
+                  <div className="flex flex-col items-start gap-3">
+                    {tipOpen && <p className="text-sm text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>}
+                    <Pill onClick={() => setTipOpen((v) => !v)}><SparklesIcon className="size-4 text-violet-500" />{t("How do I get more visitors?")}</Pill>
                   </div>
-                </section>
-
-                {/* This week */}
-                <section className="flex flex-col gap-3">
-                  <h2 className="text-base font-medium">{t("In the last week")}</h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-4 rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">{t("Visitors")}</span>
-                        <EyeIcon className="size-4 text-muted-foreground" />
-                      </div>
-                      <span className="text-3xl font-medium tabular-nums">{totalViews}</span>
-                      <div className="flex h-16 items-end gap-1.5">
-                        {days.map((d) => (
-                          <div key={d} className="flex flex-1 flex-col items-center gap-1">
-                            <div className="w-full rounded-md bg-foreground/80" style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 48)}px`, opacity: views[d] ? 1 : 0.15 }}
-                              title={`${views[d] ?? 0}`} />
-                            <span className="text-[10px] text-muted-foreground">{weekday(d)}</span>
-                          </div>
-                        ))}
-                      </div>
+                }>
+                <span className="text-4xl font-bold tabular-nums">{totalViews}</span>
+                <div className="mt-6 flex h-28 items-end gap-2">
+                  {days.map((d) => (
+                    <div key={d} className="flex flex-1 flex-col items-center gap-1.5">
+                      <div className="w-full rounded-md bg-foreground/80" title={`${views[d] ?? 0}`}
+                        style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 88)}px`, opacity: views[d] ? 1 : 0.15 }} />
+                      <span className="text-[11px] text-muted-foreground">{weekday(d)}</span>
                     </div>
-                    <a href="/requests" className="group flex flex-col gap-4 rounded-3xl bg-card p-5 ring-1 ring-foreground/10 hover:ring-foreground/25">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">{t("Requests")}</span>
-                        <InboxIcon className="size-4 text-muted-foreground" />
-                      </div>
-                      <span className="text-3xl font-medium tabular-nums">{requests}</span>
-                      <span className="mt-auto inline-flex items-center gap-1 text-sm text-muted-foreground group-hover:text-foreground">
-                        {t("Open requests")}<ArrowRightIcon className="size-4" />
-                      </span>
-                    </a>
-                  </div>
-                  {!page.published && <p className="text-xs text-muted-foreground">{t("Visits are counted once the page is live.")}</p>}
-                </section>
-              </>
+                  ))}
+                </div>
+              </StatCard>
+              <StatCard title={t("Requests")} period={t("Last 7 days")}
+                empty={requests === 0} emptyText={t("No requests during this time")} illustration={<InboxArt />}
+                footer={<Pill href="/requests">{t("Open requests")}<ChevronRightIcon className="size-4" /></Pill>}>
+                <span className="text-4xl font-bold tabular-nums">{requests}</span>
+                <p className="mt-2 text-sm text-muted-foreground">{t("Requests from your page")}</p>
+              </StatCard>
+            </div>
+            {page && !page.published && (
+              <p className="mt-4 text-sm text-muted-foreground">{t("Visits are counted once the page is live.")}</p>
             )}
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function StatCard({ title, period, empty, emptyText, illustration, footer, children }: {
+  title: string; period: string; empty: boolean; emptyText: string; illustration: React.ReactNode; footer: React.ReactNode; children: React.ReactNode
+}) {
+  return (
+    <section className="flex min-h-[330px] flex-col rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-bold">{title}</h3>
+        <span className="flex items-center gap-1 text-sm">{period}<ChevronRightIcon className="size-4 text-muted-foreground" /></span>
+      </div>
+      {empty ? (
+        <>
+          <p className="mt-4 text-[15px]">{emptyText}</p>
+          <div className="flex flex-1 items-center justify-center py-6 text-muted-foreground/70">{illustration}</div>
+        </>
+      ) : (
+        <div className="mt-4 flex flex-1 flex-col">{children}</div>
+      )}
+      <div className="mt-4">{footer}</div>
+    </section>
+  )
+}
+
+function Pill({ href, onClick, children }: { href?: string; onClick?: () => void; children: React.ReactNode }) {
+  const cls = "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm ring-1 ring-foreground/10 hover:bg-hover"
+  return href ? <a href={href} className={cls}>{children}</a> : <button type="button" onClick={onClick} className={cls}>{children}</button>
+}
+
+function AvatarPlaceholder() {
+  return (
+    <svg viewBox="0 0 164 164" className="size-[164px]" aria-hidden>
+      <clipPath id="av-clip"><circle cx="82" cy="82" r="82" /></clipPath>
+      <g clipPath="url(#av-clip)">
+        <rect width="164" height="164" className="fill-[#a8aaa2] dark:fill-neutral-600" />
+        <circle cx="82" cy="62" r="35" className="fill-[#f2f2ef] dark:fill-neutral-300" />
+        <ellipse cx="82" cy="168" rx="66" ry="62" className="fill-[#f2f2ef] dark:fill-neutral-300" />
+      </g>
+    </svg>
+  )
+}
+
+function GlobeArt() {
+  return (
+    <svg viewBox="0 0 110 120" className="h-28" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="55" cy="70" r="47" />
+      <path d="M55 23c-15 14-15 80 0 94M55 23c15 14 15 80 0 94M8 70h94" />
+      <path d="M72 6a14 14 0 0 1 14 14c0 11-14 24-14 24S58 31 58 20A14 14 0 0 1 72 6Z" className="fill-current" stroke="none" />
+      <circle cx="72" cy="20" r="5" className="fill-card" stroke="none" />
+      <path d="M38 50a13 13 0 0 1 13 13c0 10-13 22-13 22S25 73 25 63a13 13 0 0 1 13-13Z" className="fill-current" stroke="none" />
+      <circle cx="38" cy="63" r="4.5" className="fill-card" stroke="none" />
+    </svg>
+  )
+}
+
+function InboxArt() {
+  return (
+    <svg viewBox="0 0 120 100" className="h-24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden>
+      <path d="M10 55 28 18h64l18 37v32H10Z" />
+      <path d="M10 55h30c0 9 9 15 20 15s20-6 20-15h30" />
+      <path d="M40 34h40M44 44h32" strokeLinecap="round" />
+    </svg>
   )
 }
