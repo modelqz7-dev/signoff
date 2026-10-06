@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, CheckIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon,
+  ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon,
   LayoutListIcon, PaletteIcon, PlusIcon, SettingsIcon, Share2Icon, Trash2Icon, UserRoundIcon, XIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -49,6 +49,14 @@ export default function PageEditor() {
   const [tab, setTab] = useState<ContentTab>("links")
   const [uploading, setUploading] = useState<string | null>(null)
   const [shareOpen, setShareOpen] = useState(false)
+  const [pillOpen, setPillOpen] = useState(false)
+  const pillRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pillOpen) return
+    const onDown = (e: MouseEvent) => { if (!pillRef.current?.contains(e.target as Node)) setPillOpen(false) }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [pillOpen])
   const [previewOpen, setPreviewOpen] = useState(false)
   const [editingContact, setEditingContact] = useState<keyof PageContacts | null>(null)
   const [copied, setCopied] = useState(false)
@@ -178,12 +186,30 @@ export default function PageEditor() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:px-3 lg:backdrop-blur-none">
         <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
-        <div className="mx-auto flex min-w-0 items-center gap-2 rounded-full bg-muted py-2 pr-3 pl-2 text-[15px]">
-          <span className="size-6 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}</span>
-          <span className="truncate font-medium">@{slug.slug || "…"}</span>
-          <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] font-medium ${published ? "bg-[var(--status-approved-bg)] text-[var(--status-approved)]" : "bg-background text-muted-foreground"}`}>
-            {published ? t("Live") : t("Draft")}
-          </span>
+        {/* Address pill, 187×40 like the reference: names longer than 14 letters are cut */}
+        <div ref={pillRef} className="relative mx-auto">
+          <button type="button" onClick={() => setPillOpen((v) => !v)} aria-haspopup="menu" aria-expanded={pillOpen}
+            className="flex h-10 w-[187px] items-center gap-1.5 rounded-full bg-muted pr-2 pl-1.5 text-[13px] font-medium hover:bg-hover-strong">
+            <span className="size-7 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}</span>
+            <span className="min-w-0 flex-1 truncate text-left">{slug.slug.length > 14 ? slug.slug.slice(0, 14) + "…" : slug.slug || "…"}</span>
+            <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${pillOpen ? "rotate-180" : ""}`} />
+          </button>
+          {pillOpen && (
+            <div role="menu" className="absolute top-12 left-1/2 z-40 flex w-60 -translate-x-1/2 flex-col gap-0.5 rounded-2xl bg-popover p-1.5 shadow-xl ring-1 ring-foreground/10">
+              <p className="truncate px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">{published ? t("Live") : t("Draft")} · {pagePath(slug.slug)}</p>
+              {published && savedSlug && (
+                <a role="menuitem" href={pagePath(savedSlug)} target="_blank" rel="noopener" onClick={() => setPillOpen(false)}
+                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm hover:bg-hover"><ExternalLinkIcon className="size-4" />{t("Open page")}</a>
+              )}
+              {published && savedSlug && (
+                <button type="button" role="menuitem" onClick={() => { copyLink(); setPillOpen(false) }}
+                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover"><CopyIcon className="size-4" />{t("Copy Link")}</button>
+              )}
+              <button type="button" role="menuitem" onClick={() => { setSection("settings"); setPillOpen(false) }}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover"><SettingsIcon className="size-4" />{t("Page address")}</button>
+              <a role="menuitem" href="/link" className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm hover:bg-hover"><ArrowLeftIcon className="size-4" />{t("Back to My page")}</a>
+            </div>
+          )}
         </div>
         <div className="relative">
           <button type="button" onClick={() => setShareOpen((v) => !v)}
