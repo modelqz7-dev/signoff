@@ -115,13 +115,14 @@ export default function MyPage() {
             {loading ? (
               <div className="h-[356px] w-[280px] animate-pulse rounded-3xl bg-muted" />
             ) : (
-              <div className="relative flex h-[356px] w-full max-w-[280px] flex-col rounded-3xl bg-muted p-4">
-                <a href="/link/edit" aria-label={t("Edit")} className="flex flex-1 items-center justify-center">
+              <div className="relative flex h-[356px] w-[280px] max-w-full flex-col rounded-3xl bg-muted p-px">
+                {/* The preview area is 278×276, the name and buttons sit in the 78px under it. */}
+                <a href="/link/edit" aria-label={t("Edit")} className="flex h-[276px] w-[278px] max-w-full shrink-0 items-center justify-center rounded-t-[23px]">
                   {avatar
                     ? <img src={avatar} alt="" className="size-[164px] rounded-full object-cover" />
                     : <AvatarPlaceholder />}
                 </a>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-1 items-center gap-2 px-4 pb-px">
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-xl leading-7 font-bold tracking-tight">{name}</span>
                     <span className="truncate text-sm text-muted-foreground">
