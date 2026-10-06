@@ -1,17 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRightIcon, Link2Icon, Share2Icon, SparklesIcon } from "lucide-react"
+import {
+  CheckIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, Link2Icon, MailIcon, MessageCircleIcon, MoreHorizontalIcon, SendIcon, ShareIcon, SparklesIcon, XIcon,
+} from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
-import { cleanPage, pagePath, type PageData } from "@/lib/page"
+import { cleanPage, pagePath, suggestSlug, type PageData } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 
 type PageRow = { slug: string; published: boolean; data: PageData }
+
+const noop = () => () => {}
 
 /** The last 7 days, oldest first, as YYYY-MM-DD (the server counts visits by UTC day). */
 function lastWeek() {
@@ -38,6 +42,7 @@ export default function MyPage() {
   const [requests, setRequests] = useState(0)
   const [copied, setCopied] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -62,21 +67,16 @@ export default function MyPage() {
     init()
   }, [router, days])
 
-  async function share() {
+  async function copyLink() {
     if (!page) return
-    const link = window.location.origin + pagePath(page.slug)
-    if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
-      await navigator.share({ title: page.data.title, url: link }).catch(() => {})
-      return
-    }
-    await navigator.clipboard.writeText(link).catch(() => {})
+    await navigator.clipboard.writeText(window.location.origin + pagePath(page.slug)).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
   const name = page?.data.title || shop?.name || ""
   const avatar = page ? page.data.avatar_url : shop?.logo_url ?? null
-  const host = typeof window === "undefined" ? "" : window.location.host
+  const host = useSyncExternalStore(noop, () => window.location.host, () => "")
   const hello = hour < 5 ? t("Good evening") : hour < 12 ? t("Good morning") : hour < 18 ? t("Good afternoon") : t("Good evening")
   const totalViews = days.reduce((n, d) => n + (views[d] ?? 0), 0)
   const peak = Math.max(1, ...days.map((d) => views[d] ?? 0))
@@ -93,21 +93,19 @@ export default function MyPage() {
 
         <div className="flex-1 px-4 pb-10 sm:px-8 xl:pl-[213px]">
           <div className="flex w-full max-w-[1216px] flex-col">
-            {/* Greeting and the address */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pt-6 pb-4 sm:pt-8 lg:pt-6">
-              <h1 className="text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
-              {page && (
-                <div className="flex h-10 max-w-full items-center gap-2.5 rounded-full bg-muted pr-2 pl-4 text-sm font-medium">
-                  <Link2Icon className="size-4 shrink-0" />
-                  <a href={page.published ? pagePath(page.slug) : "/link/edit"} target={page.published ? "_blank" : undefined} rel="noopener" className="truncate hover:underline">
-                    {host}{pagePath(page.slug)}
-                  </a>
-                  <button type="button" onClick={share} aria-label={t("Share")} title={copied ? t("Copied") : t("Share")}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-full hover:bg-background">
-                    <Share2Icon className="size-4" />
-                  </button>
-                </div>
-              )}
+            {/* Greeting and the address, pinned to the top */}
+            <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background pt-8 pb-4">
+              <h1 className="min-w-0 truncate text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
+              <div className="flex h-10 max-w-full items-center gap-2 rounded-full bg-muted pr-1.5 pl-4 text-[15px] font-medium">
+                <Link2Icon className="size-4 shrink-0" />
+                {page?.published
+                  ? <a href={pagePath(page.slug)} target="_blank" rel="noopener" className="truncate hover:underline">{host}{pagePath(page.slug)}</a>
+                  : <a href="/link/edit" className="truncate text-muted-foreground hover:underline">{host}{pagePath(page?.slug ?? (shop ? suggestSlug(shop.name) : ""))}</a>}
+                <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full hover:bg-background">
+                  <ShareIcon className="size-4" />
+                </button>
+              </div>
             </div>
 
             {missingTable && <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
@@ -130,10 +128,10 @@ export default function MyPage() {
                       {page ? (page.published ? t("{n} links", { n: page.data.links.length }) : t("Draft")) : t("Not created yet")}
                     </span>
                   </div>
-                  {page?.published && (
-                    <button type="button" onClick={share} aria-label={t("Share")} title={copied ? t("Copied") : t("Share")}
+                  {page && (
+                    <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
                       className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background/70 hover:bg-background">
-                      <Share2Icon className="size-[18px]" />
+                      <ShareIcon className="size-[18px]" />
                     </button>
                   )}
                   <a href="/link/edit" className="flex h-10 shrink-0 items-center rounded-full bg-background/70 px-4 text-sm font-medium hover:bg-background">
@@ -177,6 +175,59 @@ export default function MyPage() {
             )}
           </div>
         </div>
+      </div>
+      {shareOpen && <ShareSheet page={page} copied={copied} onCopy={copyLink} onClose={() => setShareOpen(false)} />}
+    </div>
+  )
+}
+
+/** "Share your page": the link with Copy, quick ways to send it, or what to do first. */
+function ShareSheet({ page, copied, onCopy, onClose }: { page: PageRow | null; copied: boolean; onCopy: () => void; onClose: () => void }) {
+  const { t } = useT()
+  const link = page && typeof window !== "undefined" ? window.location.origin + pagePath(page.slug) : ""
+  const text = encodeURIComponent(link)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+  const canShare = typeof navigator !== "undefined" && !!navigator.share
+  const item = "flex flex-col items-center gap-2 text-xs"
+  const circle = "flex size-14 items-center justify-center rounded-full bg-muted hover:bg-hover-strong [&_svg]:size-5"
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={t("Share your page")} onClick={(e) => e.stopPropagation()}
+        className="flex w-full max-w-[420px] flex-col gap-5 rounded-t-3xl bg-card p-6 shadow-xl sm:rounded-3xl">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">{t("Share your page")}</h2>
+          <button type="button" aria-label={t("Close")} onClick={onClose} className="flex size-8 items-center justify-center rounded-full hover:bg-hover"><XIcon className="size-4" /></button>
+        </div>
+        {!page || !page.published ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">{!page ? t("Create your page first, then share its link anywhere.") : t("Publish your page to share it")}</p>
+            <a href="/link/edit" className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background hover:opacity-90">
+              {!page ? t("Create page") : t("Open the editor to publish")}
+            </a>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-4 gap-2">
+              <a className={item} href={`https://t.me/share/url?url=${text}`} target="_blank" rel="noopener"><span className={circle}><SendIcon /></span>Telegram</a>
+              <a className={item} href={`https://wa.me/?text=${text}`} target="_blank" rel="noopener"><span className={circle}><MessageCircleIcon /></span>WhatsApp</a>
+              <a className={item} href={`mailto:?body=${text}`}><span className={circle}><MailIcon /></span>{t("Email")}</a>
+              {canShare
+                ? <button type="button" className={item} onClick={() => navigator.share({ url: link }).catch(() => {})}><span className={circle}><MoreHorizontalIcon /></span>{t("More")}</button>
+                : <a className={item} href={link} target="_blank" rel="noopener"><span className={circle}><ExternalLinkIcon /></span>{t("Open")}</a>}
+            </div>
+            <div className="flex h-12 items-center gap-2 rounded-2xl bg-muted pr-1.5 pl-4">
+              <span className="min-w-0 flex-1 truncate text-sm">{link.replace(/^https?:\/\//, "")}</span>
+              <button type="button" onClick={onCopy} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-foreground px-3 text-sm font-medium text-background">
+                {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>
+          </>
+        )}
       </div>
     </div>
   )
