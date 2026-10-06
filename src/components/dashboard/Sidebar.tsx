@@ -57,9 +57,9 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Desktop */}
     <aside
-      className="sticky top-0 self-start hidden h-screen w-[241px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
+      className="sticky top-0 self-start hidden h-screen w-[240px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
       style={{
-        marginLeft: open ? 0 : -241,
+        marginLeft: open ? 0 : -240,
         opacity: open ? 1 : 0,
         pointerEvents: open ? "auto" : "none",
       }}
