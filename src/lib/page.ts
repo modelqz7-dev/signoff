@@ -161,7 +161,8 @@ const TRANSLIT: Record<string, string> = {
 
 /** A page address made from the workshop's name (Cyrillic is spelled in Latin letters). */
 export function suggestSlug(name: string) {
-  const latin = name.toLowerCase().split("").map((ch) => TRANSLIT[ch] ?? ch).join("")
+  // Cyrillic is spelled out; accents (é → e) are dropped.
+  const latin = name.toLowerCase().split("").map((ch) => TRANSLIT[ch] ?? ch).join("").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   return latin.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30)
 }
 

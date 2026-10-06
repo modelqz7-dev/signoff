@@ -5,6 +5,12 @@
 -- Visitors never touch these tables directly; the site's server shows published pages and
 -- saves requests for them.
 
+-- Is this shop the signed-in user's? Same as in security.sql, repeated so this file runs on its own.
+create or replace function public.owns_shop(shop text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from shops where id::text = shop and user_id = auth.uid())
+$$;
+
 create table if not exists public.shop_pages (
   shop_id    uuid primary key references public.shops (id) on delete cascade,
   slug       text not null unique check (slug ~ '^[a-z0-9][a-z0-9_-]{2,29}$'),
