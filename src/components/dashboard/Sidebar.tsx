@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
-import { CheckIcon, ChevronDownIcon, ExternalLinkIcon, PencilIcon, XIcon } from "lucide-react"
+import {
+  ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, PencilIcon, QrCodeIcon, UsersRoundIcon, XIcon,
+} from "lucide-react"
 import { OPEN_NAV_EVENT } from "@/lib/panels"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
@@ -113,13 +115,19 @@ function SidebarContent({ activePage, panel, onPanel }: {
       <nav className="flex-1 px-3 pt-1 pb-4 [&>a]:gap-3 [&>a]:py-2 [&>a]:text-[15px] [&>button]:gap-3 [&>button]:py-2 [&>button]:text-[15px] [&>*>span:first-child]:size-[18px]">
         {mode === "page" ? (
           <>
-            <SectionLabel>{t("My page")}</SectionLabel>
-            <NavItem icon={NAV_ICONS.page} label={t("Overview")} active={activePage === "link"} href="/link" />
+            <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
             <NavItem icon={<PencilIcon className="size-full" strokeWidth={1.6} />} label={t("Editor")} href="/link/edit" />
             <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
+            <NavItem icon={<UsersRoundIcon className="size-full" strokeWidth={1.6} />} label={t("Clients")} active={activePage === "link-clients"} href="/link/clients" />
+            <NavItem icon={<ChartColumnIcon className="size-full" strokeWidth={1.6} />} label={t("Statistics")} active={activePage === "link-stats"} href="/link/stats" />
             {page?.published && (
               <NavItem icon={<ExternalLinkIcon className="size-full" strokeWidth={1.6} />} label={t("Open page")} href={pagePath(page.slug)} />
             )}
+
+            <SectionLabel className="mt-5">{t("Tools")}</SectionLabel>
+            <NavItem icon={<QrCodeIcon className="size-full" strokeWidth={1.6} />} label={t("QR code")} tag={t("new")} active={activePage === "link-qr"} href="/link/qr" />
+            <NavItem icon={<MessageSquareTextIcon className="size-full" strokeWidth={1.6} />} label={t("Reply templates")} active={activePage === "link-replies"} href="/link/replies" />
+            <NavItem icon={<LightbulbIcon className="size-full" strokeWidth={1.6} />} label={t("Post ideas")} active={activePage === "link-ideas"} href="/link/ideas" />
           </>
         ) : (
           <>
@@ -161,7 +169,7 @@ const MODE_EVENT = "nodly-mode"
  * Orders pages and /link decide it; shared pages (Requests) keep the last one.
  */
 function useMode(activePage: string): Mode {
-  const forced: Mode | null = activePage === "link" ? "page" : activePage === "dashboard" || activePage === "orders" ? "orders" : null
+  const forced: Mode | null = activePage.startsWith("link") ? "page" : activePage === "dashboard" || activePage === "orders" ? "orders" : null
   const stored = useSyncExternalStore(
     (cb) => { window.addEventListener(MODE_EVENT, cb); return () => window.removeEventListener(MODE_EVENT, cb) },
     () => { try { return localStorage.getItem(MODE_KEY) === "page" ? "page" : "orders" } catch { return "orders" } },

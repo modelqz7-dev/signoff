@@ -8,7 +8,7 @@ export function SectionLabel({ children, className }: { children: React.ReactNod
   )
 }
 
-export function NavItem({ icon, label, active, href, onClick, badge }: {
+export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
   icon: React.ReactNode
   label: string
   active?: boolean
@@ -16,6 +16,8 @@ export function NavItem({ icon, label, active, href, onClick, badge }: {
   onClick?: () => void
   /** A small count after the label (e.g. new requests). */
   badge?: number
+  /** A small outlined word after the label, e.g. "New". */
+  tag?: string
 }) {
   const cls = `flex w-full items-center gap-2.5 rounded-[7px] px-3 py-[7px] text-[13.5px] transition-colors ${
     active
@@ -28,6 +30,7 @@ export function NavItem({ icon, label, active, href, onClick, badge }: {
       <a href={href} className={cls}>
         <span className={`h-4 w-4 shrink-0 ${active ? "opacity-100" : "opacity-60"}`}>{icon}</span>
         {label}
+        {tag && <span className="rounded-full px-1.5 text-[11px] font-medium leading-[18px] text-foreground ring-1 ring-foreground/40">{tag}</span>}
         {!!badge && <span className="ml-auto rounded-full bg-foreground px-1.5 text-[10.5px] font-medium leading-4 text-background tabular-nums">{badge}</span>}
       </a>
     )
