@@ -131,7 +131,9 @@ export function AnswerablePinList({
             <p className="text-sm text-muted-foreground" suppressHydrationWarning>
               {chosen.author_name} · {new Date(chosen.created_at).toLocaleDateString(locale, { day: "numeric", month: "short" })}
             </p>
-            <p className="text-xl leading-snug font-medium break-words text-foreground">{chosen.title}</p>
+            {chosen.title.trim()
+              ? <p className="text-xl leading-snug font-medium break-words text-foreground">{chosen.title}</p>
+              : <p className="text-base text-muted-foreground italic">{t("The client marked this spot but didn't write anything. Ask what they meant.")}</p>}
             {chosen.description && <p className="text-base leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">{chosen.description}</p>}
           </div>
           {chosen.fix_status === "reopened" && <p className="text-sm font-medium text-destructive">{t("The client says it isn't done yet")}</p>}
@@ -155,7 +157,7 @@ export function AnswerablePinList({
             {selected.map((p) => (
               <li key={p.id} className="flex items-start gap-2 text-sm">
                 <PinNumber n={numbers.get(p.id)} className="size-5 text-[10px]" />
-                <span className="min-w-0 flex-1 truncate text-foreground">{p.title}</span>
+                <span className="min-w-0 flex-1 truncate text-foreground">{p.title || t("No description yet")}</span>
               </li>
             ))}
           </ul>

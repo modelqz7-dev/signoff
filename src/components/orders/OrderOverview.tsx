@@ -64,7 +64,8 @@ type Props = {
 export function NextStep({ order, pins, unanswered, copied, uploading, certificateHref, onCopyLink, onUpload, onSeeComments }: Props) {
   const { t, locale } = useT()
   const now = useNow()
-  const client = order.client_name || t("The client")
+  // "-" or "—" typed as a placeholder isn't a name.
+  const client = order.client_name?.replace(/^[\s\-–—.]+$/, "") || t("The client")
   const open = pinsOfVersion(pins, order.version).filter((p) => !p.resolved).length
   const nextVersion = (order.version ?? 1) + 1
 

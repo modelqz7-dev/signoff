@@ -692,6 +692,7 @@ export const ru: Record<string, string> = {
   "The client asks to redo it": "Клиент просит доработать",
   "The client clicks on the file to pin comments; you see them live.": "Клиент ставит метки с комментариями прямо на файле, а вы видите их сразу.",
   "The client hasn't approved this order yet.": "Клиент ещё не утвердил этот заказ.",
+  "The client marked this spot but didn't write anything. Ask what they meant.": "Клиент отметил это место, но ничего не написал. Спросите, что он имел в виду.",
   "The client points their phone's camera at it and the portal opens. Show it in person or print it on the estimate.": "Клиент наводит камеру телефона — и портал открывается. Покажите его при встрече или распечатайте на смете.",
   "The client portal on a phone": "Портал клиента на телефоне",
   "The client presses Approve or Request Changes; the status updates instantly.": "Клиент нажимает «Утвердить» или «Нужны правки» — статус обновляется мгновенно.",
