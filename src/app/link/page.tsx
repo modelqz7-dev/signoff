@@ -91,8 +91,8 @@ export default function MyPage() {
           <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
 
-        <div className="flex-1 px-4 pb-10 sm:px-8 xl:pl-[213px]">
-          <div className="flex w-full max-w-[1216px] flex-col">
+        <div className="flex-1 px-4 pb-10 sm:px-8">
+          <div className="mx-auto flex w-full max-w-[1216px] flex-col">
             {/* Greeting and the address, pinned to the top */}
             <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background pt-8 pb-4">
               <h1 className="min-w-0 truncate text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
