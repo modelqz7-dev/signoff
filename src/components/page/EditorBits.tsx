@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useId, useRef } from "react"
 import { ImagePlusIcon } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { useT } from "@/lib/i18n"
@@ -81,5 +81,20 @@ export function Block({ title, hint, children }: { title?: string; hint?: string
       )}
       {children}
     </section>
+  )
+}
+
+/** A grey person silhouette, shown where the page has no photo yet. */
+export function AvatarPlaceholder({ className }: { className?: string }) {
+  const id = useId()
+  return (
+    <svg viewBox="0 0 164 164" className={className} aria-hidden>
+      <clipPath id={id}><circle cx="82" cy="82" r="82" /></clipPath>
+      <g clipPath={`url(#${id})`}>
+        <rect width="164" height="164" className="fill-[#a8aaa2] dark:fill-neutral-600" />
+        <circle cx="82" cy="62" r="35" className="fill-[#f2f2ef] dark:fill-neutral-300" />
+        <ellipse cx="82" cy="168" rx="66" ry="62" className="fill-[#f2f2ef] dark:fill-neutral-300" />
+      </g>
+    </svg>
   )
 }
