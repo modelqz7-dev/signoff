@@ -86,12 +86,15 @@ export default function MyPage() {
     <div className="flex min-h-screen">
       <Sidebar open={sidebarOpen} activePage="link" />
       <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        {/* On a computer the page greets you itself, like the dashboard; phones keep the bar for the menu. */}
+        <div className="lg:hidden">
+          <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        </div>
 
-        <div className="flex-1 px-4 pb-10 sm:px-8">
-          <div className="mx-auto flex w-full max-w-[1216px] flex-col">
+        <div className="flex-1 px-4 pb-10 sm:px-8 xl:pl-[213px]">
+          <div className="flex w-full max-w-[1216px] flex-col">
             {/* Greeting and the address */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pt-6 pb-4 sm:pt-8">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pt-6 pb-4 sm:pt-8 lg:pt-6">
               <h1 className="text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
               {page && (
                 <div className="flex h-10 max-w-full items-center gap-2.5 rounded-full bg-muted pr-2 pl-4 text-sm font-medium">
