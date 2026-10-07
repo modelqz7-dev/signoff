@@ -35,7 +35,7 @@ const SUPPORT = {
 }
 
 const TITLES: Record<PanelId, { title: string; description: string }> = {
-  profile: { title: "Profile", description: "Your studio and account." },
+  profile: { title: "Profile", description: "Your brand and account." },
   billing: { title: "Billing", description: "Your plan and payments." },
   notifications: { title: "Notifications", description: "How you hear about client activity." },
   security: { title: "Security", description: "Your password and client access." },
@@ -186,7 +186,7 @@ function ProfilePanel() {
           <AvatarFallback className="text-sm">{initials || "S"}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{shop?.name || t("Your studio")}</p>
+          <p className="truncate font-medium">{shop?.name || t("Your brand")}</p>
           <p className="truncate text-xs text-muted-foreground">{shownActivity ? t(shownActivity) : t("Add your activity below")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -207,7 +207,7 @@ function ProfilePanel() {
       </div>
 
       <form onSubmit={saveName} className="flex flex-col gap-2">
-        <Label htmlFor="panel-shop-name">{t("Studio name")}</Label>
+        <Label htmlFor="panel-shop-name">{t("Your name or brand")}</Label>
         <div className="flex gap-2">
           <Input
             id="panel-shop-name"
@@ -257,7 +257,7 @@ function ProfilePanel() {
         <DialogHeader>
           <DialogTitle>{t("Coming soon")}</DialogTitle>
           <DialogDescription>
-            {t("Nodly is built for interior designers and design studios right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
+            {t("Nodly is built for designers, SMM specialists, developers and agencies right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{t("Until then, everything works for you as it is: upload a design, send the link, get comments and approval.")}</p>

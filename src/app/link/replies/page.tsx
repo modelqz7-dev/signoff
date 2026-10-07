@@ -11,23 +11,23 @@ const noop = () => () => {}
 const TEMPLATES: { title: string; text: string }[] = [
   {
     title: "First reply to a request",
-    text: "Hello! Thank you for your request. I'm {name}. To give you an estimate I need a few details: the room size, the style you like and your budget. A photo of the room helps a lot.",
+    text: "Hello! Thank you for your request. I'm {name}. To give you an estimate I need a few details: what you need, examples you like, the deadline and your budget.",
   },
   {
-    title: "Ask for the floor plan",
-    text: "To start, please send the floor plan and a few photos of the rooms. If there's no plan, I can come and measure everything myself.",
+    title: "Ask for a brief",
+    text: "To start, please send a short brief: what you need, examples you like, the deadline and the budget. If it's easier, let's have a 15-minute call.",
   },
   {
     title: "Send the price",
-    text: "Here is the estimate: [price]. It includes the floor plan, renders of every room, working drawings and supervision. The price is valid for 14 days. Shall we start?",
+    text: "Here is the estimate: [price]. It includes the concept, 2 rounds of revisions and all source files. The price is valid for 14 days. Shall we start?",
   },
   {
     title: "Send the design for approval",
-    text: "The renders are ready. Here is your link: open it on your phone, leave comments right on the picture and approve with one button. We move on to the working drawings only after your approval.",
+    text: "The design is ready. Here is your link: open it on your phone, leave comments right on the picture and approve with one button. I move on to the next stage only after your approval.",
   },
   {
     title: "Follow up after silence",
-    text: "Hello! Just checking in about the [project]. Do you have any questions about the renders or the price? If the timing has changed, no problem, just let me know.",
+    text: "Hello! Just checking in about the [project]. Do you have any questions about the design or the price? If the timing has changed, no problem, just let me know.",
   },
   {
     title: "Thanks and a review",
