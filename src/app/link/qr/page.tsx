@@ -32,7 +32,7 @@ export default function PageQr() {
 
   return (
     <PageShell activePage="link-qr" title={t("QR code")} shopName={shop?.name ?? ""}
-      subtitle={t("Clients point their phone camera at it and your page opens. Print it on business cards, stickers on finished furniture, invoices and the workshop door.")}>
+      subtitle={t("Clients point their phone camera at it and your page opens. Print it on business cards, presentations, contracts and the studio door.")}>
       {!loading && <PageNotice missingTable={missingTable} hasPage={!!page} />}
       {page && (
         <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-start">

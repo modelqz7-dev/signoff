@@ -71,7 +71,7 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <AuthField
           id="shop-name"
-          label={t("Workshop name")}
+          label={t("Studio name")}
           placeholder={t("e.g. Print Lab")}
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}

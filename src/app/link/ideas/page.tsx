@@ -6,54 +6,54 @@ import { useT } from "@/lib/i18n"
 /** Post ideas for a furniture workshop: what to show and a caption to start from. */
 const IDEAS: { title: string; how: string; caption: string }[] = [
   {
-    title: "Drawing vs result",
-    how: "Put the drawing the client approved next to a photo of the finished piece.",
-    caption: "From drawing to kitchen: what we agreed on and what we built. Want the same? Link in bio.",
+    title: "Render vs result",
+    how: "Put the render the client approved next to a photo of the finished room.",
+    caption: "From render to real room: what we agreed on and what came out. Want the same? Link in bio.",
   },
   {
     title: "Before and after",
-    how: "The empty room on the day you measured and the same corner after installation.",
+    how: "The empty room on your first visit and the same corner when it's done.",
     caption: "Same wall, three weeks apart. Tell us about your room: the link is in bio.",
   },
   {
     title: "Material up close",
-    how: "A short video of the veneer, edge or hardware in good light. Touch it, open and close.",
-    caption: "This is what solid oak looks like up close. We'll help you pick the right finish: link in bio.",
+    how: "A short video of the materials in good light: fabric, stone, wood. Touch them.",
+    caption: "This is what these materials look like up close. We'll help you pick yours: link in bio.",
   },
   {
-    title: "A day in the workshop",
-    how: "Five short clips: cutting, edging, assembly, sanding, packing.",
-    caption: "How one wardrobe is made, in 30 seconds. Order yours: link in bio.",
+    title: "A day at the studio",
+    how: "Five short clips: measuring, moodboard, render, site visit, handover.",
+    caption: "How one room comes together, in 30 seconds. Want yours? Link in bio.",
   },
   {
     title: "What a price is made of",
-    how: "Break one real project into materials, hardware, work and installation.",
-    caption: "Why a kitchen costs what it costs. Send a request for your own estimate: link in bio.",
+    how: "Break one real project into stages: floor plan, renders, working drawings, supervision.",
+    caption: "Why a design project costs what it costs. Send a request for your own estimate: link in bio.",
   },
   {
     title: "A client's review",
-    how: "A screenshot of a message or a short video from the client next to their furniture.",
+    how: "A screenshot of a message or a short video from the client in their new room.",
     caption: "Words we love to hear. Thank you, [name]! Next could be yours: link in bio.",
   },
   {
     title: "Common mistake",
-    how: "Show one thing people often get wrong: depth of shelves, sockets behind cabinets, handles.",
-    caption: "One mistake we see in almost every kitchen and how we avoid it. Questions? Link in bio.",
+    how: "Show one thing people often get wrong: lighting, socket heights, sofa size.",
+    caption: "One mistake we see in almost every apartment and how we avoid it. Questions? Link in bio.",
   },
   {
     title: "How we work",
-    how: "A simple scheme: request, measuring, drawing, approval, production, installation.",
-    caption: "Six steps from your request to the finished furniture. Step one is in our bio.",
+    how: "A simple scheme: request, site visit, concept, renders, approval, supervision.",
+    caption: "Six steps from your request to the finished interior. Step one is in our bio.",
   },
   {
     title: "Detail of the week",
     how: "One small detail you're proud of: a hidden drawer, lighting, a joint.",
-    caption: "Small things make the furniture. Want something like this? Link in bio.",
+    caption: "Details make the interior. Want something like this? Link in bio.",
   },
   {
     title: "Answer a question",
     how: "Take a question clients often ask and answer it in a short video.",
-    caption: "You asked: how long does a kitchen take? The answer is in the video. Ask yours: link in bio.",
+    caption: "You asked: how long does a design project take? The answer is in the video. Ask yours: link in bio.",
   },
 ]
 

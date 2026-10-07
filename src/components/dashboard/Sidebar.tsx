@@ -220,7 +220,7 @@ function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoo
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey) }
   }, [open])
   const options: { id: Mode; href: string; title: string; hint: string; icon: React.ReactNode }[] = [
-    { id: "orders", href: "/dashboard", title: t("Orders"), hint: t("Drawings, approvals, clients"), icon: <span className="size-[18px]">{NAV_ICONS.orders}</span> },
+    { id: "orders", href: "/dashboard", title: t("Orders"), hint: t("Designs, approvals, clients"), icon: <span className="size-[18px]">{NAV_ICONS.orders}</span> },
     { id: "page", href: "/link", title: t("My page"), hint: t("Link for Instagram and requests"), icon: <span className="size-[18px]">{NAV_ICONS.page}</span> },
   ]
   return (

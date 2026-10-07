@@ -125,8 +125,8 @@ export function ApproveDialog({ open, onOpenChange, title, version, openComments
         <DialogTitle>{t("Approve this design?")}</DialogTitle>
         <DialogDescription>
           {version > 1
-            ? t("You're approving version {n} of “{title}”. The workshop will start working from it.", { n: version, title })
-            : t("You're approving “{title}”. The workshop will start working from it.", { title })}
+            ? t("You're approving version {n} of “{title}”. The designer will continue from it.", { n: version, title })
+            : t("You're approving “{title}”. The designer will continue from it.", { title })}
         </DialogDescription>
       </DialogHeader>
       {openComments > 0 && (
@@ -170,8 +170,8 @@ export function ChangesDialog({ open, onOpenChange, openComments, busy, onConfir
         <DialogTitle>{t("Ask for changes?")}</DialogTitle>
         <DialogDescription>
           {openComments > 0
-            ? t("The workshop will get your request with {n} comments and send a new version.", { n: openComments })
-            : t("You haven't left any comments yet. Click on the design to show what to change, so the workshop knows what to fix.")}
+            ? t("The designer will get your request with {n} comments and send a new version.", { n: openComments })
+            : t("You haven't left any comments yet. Click on the design to show what to change, so the designer knows what to fix.")}
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
@@ -207,8 +207,8 @@ export function DoneDialog({ kind, shopName, onClose, footer }: {
           {approved
             ? shopName
               ? t("{shop} has been notified and will start working. You can close this page.", { shop: shopName })
-              : t("The workshop has been notified and will start working. You can close this page.")
-            : t("The workshop has your comments. Open this same link later to see the new version.")}
+              : t("The designer has been notified and will get to work. You can close this page.")
+            : t("The designer has your comments. Open this same link later to see the new version.")}
         </DialogDescription>
         <Button className="mt-2 w-full" onPress={onClose}>{t("Done")}</Button>
         {footer}

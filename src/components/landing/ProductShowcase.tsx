@@ -42,7 +42,7 @@ export function ProductShowcase({ t }: { t: T }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
           <Label no="01">{t("The client's side")}</Label>
           <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("They point at the drawing. You get exact changes.")}</h2>
+            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("They point at the render. You get exact changes.")}</h2>
             <Points items={[t("Opens from one link, no account"), t("Pins land on the exact spot, on any page"), t("Approve or ask for changes in one tap")]} />
           </div>
           <LivePortal t={t} />

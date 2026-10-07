@@ -101,7 +101,7 @@ export function Questions({ t }: { t: T }) {
     [t("Do my clients need an account?"), t("No. They open the link, enter their name and, if you set one, the password.")],
     [t("Which files can I upload?"), t("PDF files with any number of pages, and PNG or JPG images.")],
     [t("Can a client see my other orders?"), t("No. Each link opens exactly one order.")],
-    [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Maker and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
+    [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Pro and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
   return (
@@ -113,7 +113,7 @@ export function Questions({ t }: { t: T }) {
             <span aria-hidden="true">·</span>
             <span>{t("FAQ")}</span>
           </div>
-          <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Questions shops ask.")}</h2>
+          <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Questions designers ask.")}</h2>
         </div>
         <div className="flex flex-col gap-3">
           {items.map(([q, a], i) => {

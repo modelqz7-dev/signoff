@@ -22,17 +22,17 @@ import { cn } from "@/lib/utils"
 /**
  * A working copy of the product, playing itself on a loop (like Notion's and Ramp's live
  * product windows), built from the app's own components: the workshop copies the portal link
- * on the order page, Anna opens the portal, pins three comments on the kitchen, version 2
+ * on the order page, Anna opens the portal, pins three comments on the living room, version 2
  * comes in, she approves it, and the order page shows the approval. "Try it yourself" hands
  * the portal to the visitor. Rendered at a fixed app size and scaled to fit, like a
  * screenshot. Pauses off-screen; with reduced motion it shows the approved portal.
  */
 
-// Pin tips on the kitchen render, in % of the image.
+// Pin tips on the living room render, in % of the image.
 const PINS = [
-  { x: 17.2, y: 32.6, key: "Matte black handles, please" },
-  { x: 59.7, y: 58, key: "Darker countertop" },
-  { x: 81.1, y: 18.5, key: "+20 cm on this cabinet?" },
+  { x: 30.5, y: 61, key: "Can the sofa be warmer, closer to beige?" },
+  { x: 84.5, y: 24, key: "Oak slats behind the TV instead of paint?" },
+  { x: 35, y: 18, key: "Add a pendant above the coffee table" },
 ]
 
 // How long each step lasts (ms).
@@ -294,23 +294,23 @@ export function LivePortal({ t }: { t: T }) {
   const copied = auto && step === 2
   const toast = !auto ? note
     : step === 2 ? t("Portal link copied")
-    : step === 14 ? t("Oak & Dot Workshop uploaded version 2")
+    : step === 14 ? t("Lumen Studio uploaded version 2")
     : step === 20 || step === 21 ? t("Approved by Anna K. · certificate saved")
-    : step === 22 ? t("Anna Kovalenko approved Kitchen “Modern”")
+    : step === 22 ? t("Anna Kovalenko approved Living room “Linen”")
     : null
   const clickStep = [2, 6, 9, 11, 13, 16, 18, 20].includes(step)
   const date = (y: number, m: number, d: number) => new Date(y, m, d).toLocaleDateString(locale, { dateStyle: "long" })
   const wide = !fit?.narrow
   const shopCursor = scene === "shop"
 
-  const kitchen = (
+  const room = (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element -- demo image */}
-      <img src="/landing/kitchen.webp" alt={t("Kitchen “Modern”")} className="pointer-events-none block w-full object-contain" draggable={false} />
+      <img src="/landing/living-room.webp" alt={t("Living room “Linen”")} className="pointer-events-none block w-full object-contain" draggable={false} />
       {/* version 2 scans in over version 1 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/landing/kitchen-v2.webp"
+        src="/landing/living-room-v2.webp"
         alt=""
         draggable={false}
         className="pointer-events-none absolute inset-0 block w-full ease-[cubic-bezier(.45,0,.2,1)]"
@@ -333,7 +333,7 @@ export function LivePortal({ t }: { t: T }) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs">{t("Portal Link")}</Label>
-            <Input readOnly value="https://nodly.app/portal/kitchen-modern" className="font-mono text-xs" />
+            <Input readOnly value="https://nodly.app/portal/living-room-linen" className="font-mono text-xs" />
             <span ref={copyRef} className="mt-1 block">
               <Button variant="outline" size="sm" className={cn("w-full transition-transform", copied && "scale-[.98]")}>
                 {copied ? (
@@ -395,7 +395,7 @@ export function LivePortal({ t }: { t: T }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className={cn("flex h-16 shrink-0 items-center justify-between gap-3 border-b", wide ? "px-6" : "px-4")}>
           <h1 className="truncate text-base font-light tracking-wide text-foreground">
-            {t("Welcome back,")} <span className="font-medium">Oak &amp; Dot Workshop</span>
+            {t("Welcome back,")} <span className="font-medium">Lumen Studio</span>
           </h1>
           <div className="flex items-center gap-2">
             <span className="grid size-9 place-items-center">
@@ -404,7 +404,7 @@ export function LivePortal({ t }: { t: T }) {
                 <line x1="10" y1="2" x2="10" y2="14" stroke="currentColor" strokeWidth="1.2" />
               </svg>
             </span>
-            <Avatar className="h-8 w-8"><AvatarFallback>O&amp;</AvatarFallback></Avatar>
+            <Avatar className="h-8 w-8"><AvatarFallback>LS</AvatarFallback></Avatar>
           </div>
         </header>
         <div className={cn("min-h-0 flex-1 overflow-hidden", wide ? "p-6" : "p-4")}>
@@ -413,7 +413,7 @@ export function LivePortal({ t }: { t: T }) {
               <div className="flex w-full max-w-2xl flex-col gap-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h1 className="text-lg font-medium text-foreground">{t("Kitchen “Modern”")}</h1>
+                    <h1 className="text-lg font-medium text-foreground">{t("Living room “Linen”")}</h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">ORD-24</p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -441,7 +441,7 @@ export function LivePortal({ t }: { t: T }) {
                       <Info label={t("Deadline")} value={date(2026, 9, 5)} />
                       <Info label={t("Created")} value={date(2026, 8, 21)} />
                       <Info label={t("Status")} value={t(statusInfo.label)} color={statusInfo.color} />
-                      <Info label={t("Stage")} value={t("drawing")} />
+                      <Info label={t("Stage")} value={t("renders")} />
                       <Info label={t("Code")} value="ORD-24" />
                     </div>
                   </CardContent>
@@ -455,7 +455,7 @@ export function LivePortal({ t }: { t: T }) {
                   </CardHeader>
                   <CardContent>
                     <div className="relative overflow-hidden rounded-lg border border-border/50 bg-muted/60">
-                      {kitchen}
+                      {room}
                     </div>
                   </CardContent>
                 </Card>
@@ -472,7 +472,7 @@ export function LivePortal({ t }: { t: T }) {
   const portal = (
     <div className="flex h-full flex-col bg-background">
       <header className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-border/40 py-2.5", wide ? "px-6" : "px-4")}>
-        <span className="truncate text-sm font-medium text-foreground">Oak &amp; Dot Workshop</span>
+        <span className="truncate text-sm font-medium text-foreground">Lumen Studio</span>
         <div className="flex items-center gap-3">
           {wide && (
             <span className="text-xs text-muted-foreground">
@@ -495,7 +495,7 @@ export function LivePortal({ t }: { t: T }) {
             <div className="flex flex-col gap-1.5">
               <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">ORD-24</p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h1 className={cn("font-[family-name:var(--font-brand)] leading-tight font-bold tracking-[-0.03em] text-foreground", wide ? "text-3xl" : "text-2xl")}>{t("Kitchen “Modern”")}</h1>
+                <h1 className={cn("font-[family-name:var(--font-brand)] leading-tight font-bold tracking-[-0.03em] text-foreground", wide ? "text-3xl" : "text-2xl")}>{t("Living room “Linen”")}</h1>
                 <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">{t(statusInfo.label)}</span>
               </div>
             </div>
@@ -528,7 +528,7 @@ export function LivePortal({ t }: { t: T }) {
                       setDescription("")
                     }}
                   >
-                    {kitchen}
+                    {room}
                     {pins.filter((p) => !p.resolved).map((p) => (
                       <div key={p.id} className="pointer-events-none absolute inset-0 animate-[pin-drop_.45s_cubic-bezier(.2,.9,.3,1)_both]">
                         <PinMarker pin={p} number={numbers.get(p.id)} />
@@ -658,8 +658,8 @@ export function LivePortal({ t }: { t: T }) {
                     <p className="font-heading text-base leading-none font-medium">{t("Approve this design?")}</p>
                     <p className="text-sm text-muted-foreground">
                       {version > 1
-                        ? t("You're approving version {n} of “{title}”. The workshop will start working from it.", { n: version, title: t("Kitchen “Modern”") })
-                        : t("You're approving “{title}”. The workshop will start working from it.", { title: t("Kitchen “Modern”") })}
+                        ? t("You're approving version {n} of “{title}”. The designer will continue from it.", { n: version, title: t("Living room “Linen”") })
+                        : t("You're approving “{title}”. The designer will continue from it.", { title: t("Living room “Linen”") })}
                     </p>
                   </div>
                   {openCount > 0 && (
@@ -704,8 +704,8 @@ export function LivePortal({ t }: { t: T }) {
                     <p className="font-heading text-base leading-none font-medium">{t("Ask for changes?")}</p>
                     <p className="text-sm text-muted-foreground">
                       {openCount > 0
-                        ? t("The workshop will get your request with {n} comments and send a new version.", { n: openCount })
-                        : t("You haven't left any comments yet. Click on the design to show what to change, so the workshop knows what to fix.")}
+                        ? t("The designer will get your request with {n} comments and send a new version.", { n: openCount })
+                        : t("You haven't left any comments yet. Click on the design to show what to change, so the designer knows what to fix.")}
                     </p>
                   </div>
                   <div className="-mx-4 -mb-4 flex flex-row justify-end gap-2 rounded-b-xl border-t bg-muted/50 p-4">
@@ -714,7 +714,7 @@ export function LivePortal({ t }: { t: T }) {
                       onPress={() => {
                         setDialog(null)
                         setYouStatus("changes")
-                        showNote(t("Oak & Dot Workshop got {n} comments", { n: openCount }))
+                        showNote(t("Lumen Studio got {n} comments", { n: openCount }))
                       }}
                     >
                       <SendIcon />
@@ -734,11 +734,11 @@ export function LivePortal({ t }: { t: T }) {
     // Wider than the text column around it, so the app reads at close to its real size.
     <div ref={rootRef} className="relative left-1/2 w-[min(1360px,calc(100vw-2rem))] -translate-x-1/2 lg:mt-14">
       <div className="relative">
-        {/* Anna, the client, and the workshop's maker peek over the window's top edge */}
+        {/* Anna, the client, and the designer peek over the window's top edge */}
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative character art */}
         <img src="/landing/characters/client-flipped.svg" alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute -top-[86px] left-[12%] z-0 hidden w-[130px] select-none lg:block" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/landing/characters/maker-flipped.svg" alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] select-none lg:block" />
+        <img src="/landing/characters/designer-flipped.svg" alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute -top-[86px] right-[12%] z-0 hidden w-[130px] select-none lg:block" />
         {/* their hands grip the window's edge, drawn over it; both hold on the whole time */}
         <Grip className="left-[calc(12%+18px)]" />
         <Grip className="left-[calc(12%+84px)]" />
@@ -747,13 +747,13 @@ export function LivePortal({ t }: { t: T }) {
 
         <div
           role="group"
-          aria-label={t("A demo of the client portal: comments are pinned on a kitchen drawing, version 2 is uploaded and the client approves it")}
+          aria-label={t("A demo of the client portal: comments are pinned on a living room render, version 2 is uploaded and the client approves it")}
           className="relative z-10 overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10"
         >
           {/* window bar */}
           <div className="flex items-center border-b border-border bg-card px-4 py-2">
             <span className="mx-auto rounded-md bg-muted px-3 py-0.5 text-[11px] text-muted-foreground">
-              {scene === "shop" ? "nodly.app/orders/ord-24" : "nodly.app/portal/kitchen-modern"}
+              {scene === "shop" ? "nodly.app/orders/ord-24" : "nodly.app/portal/living-room-linen"}
             </span>
           </div>
 
@@ -789,8 +789,8 @@ export function LivePortal({ t }: { t: T }) {
                     )}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={shopCursor ? "/landing/characters/maker.svg" : "/landing/characters/client.svg"} alt="" className="size-5 rounded-full bg-white" />
-                    {shopCursor ? "Oak & Dot" : "Anna K."}
+                    <img src={shopCursor ? "/landing/characters/designer.svg" : "/landing/characters/client.svg"} alt="" className="size-5 rounded-full bg-white" />
+                    {shopCursor ? "Lumen" : "Anna K."}
                   </span>
                 </div>
               )}
@@ -820,7 +820,7 @@ export function LivePortal({ t }: { t: T }) {
           </button>
         ) : (
           <>
-            <span className="text-muted-foreground">{t("You're Anna now: click the kitchen to leave a comment.")}</span>
+            <span className="text-muted-foreground">{t("You're Anna now: click the room to leave a comment.")}</span>
             <button type="button" onClick={replay} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-4 font-medium text-foreground transition-colors hover:bg-hover">
               <RotateCcwIcon className="size-4" />
               {t("Replay demo")}

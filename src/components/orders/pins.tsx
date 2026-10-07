@@ -258,7 +258,7 @@ export function PinRow({
   const done = pin.resolved && !reopened
   // Old comments carry the same words in both fields; say them once.
   const detail = pin.description && pin.description.trim() !== pin.title.trim() ? pin.description : null
-  const who = last ? (last.author_role === "workshop" ? t("Workshop") : last.author_name) : null
+  const who = last ? (last.author_role === "workshop" ? t("Designer") : last.author_name) : null
   return (
     <div id={`pin-row-${pin.id}`} className={cn("scroll-mt-20 rounded-xl transition-colors has-[>div>button:focus-visible]:ring-2 has-[>div>button:focus-visible]:ring-ring/50", selected ? "bg-muted/70" : onClick && "hover:bg-muted/40")}>
       <div className="flex items-start gap-3 px-3 py-3">

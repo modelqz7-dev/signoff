@@ -98,7 +98,7 @@ function Message({ message }: { message: PinMessage }) {
   const shop = message.author_role === "workshop"
   return (
     <ChatLine
-      name={message.author_name || (shop ? t("Workshop") : t("Client"))}
+      name={message.author_name || (shop ? t("Designer") : t("Client"))}
       shop={shop}
       date={message.created_at}
       extra={message.marks_fixed && (

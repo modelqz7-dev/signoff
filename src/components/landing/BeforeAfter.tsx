@@ -4,28 +4,28 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { T } from "@/lib/i18n"
 
-// The client's three comments on version 1 of the kitchen, one tab each, with the same spot
-// on version 1 and version 2 side by side, like the before / after view in the portal. The
-// two renders really differ in exactly these three things.
+// The client's three comments on version 1 of the living room, one tab each, with the same
+// spot on version 1 and version 2 side by side, like the before / after view in the portal.
+// The two renders really differ in exactly these three things.
 
 const CHANGES = [
   {
-    tab: "Handles",
-    ask: "Matte black handles, please",
-    reply: "Matte black, the same as on your wardrobe.",
-    x: 19, y: 30, zoom: 3.4,
+    tab: "Sofa",
+    ask: "Can the sofa be warmer, closer to beige?",
+    reply: "Caramel bouclé. I've put the fabric sample in your folder.",
+    x: 31, y: 64, zoom: 2.4,
   },
   {
-    tab: "Countertop",
-    ask: "Darker countertop",
-    reply: "Graphite oak. A sample is waiting at the showroom.",
-    x: 50, y: 58, zoom: 2.6,
+    tab: "TV wall",
+    ask: "Oak slats behind the TV instead of paint?",
+    reply: "Done: oak slats with a light strip along the top.",
+    x: 72, y: 34, zoom: 2.2,
   },
   {
-    tab: "Tall cabinet",
-    ask: "+20 cm on this cabinet?",
-    reply: "Raised it to the ceiling, the doors stay the same.",
-    x: 78, y: 22, zoom: 2.2,
+    tab: "Lighting",
+    ask: "Add a pendant above the coffee table",
+    reply: "Added a linen pendant, 40 cm across.",
+    x: 35, y: 22, zoom: 2.6,
   },
 ] as const
 
@@ -113,11 +113,11 @@ export function BeforeAfter({ t }: { t: T }) {
       <div id="change-panel" role="tabpanel" aria-labelledby={`change-tab-${index}`} className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-end">
         <div className="grid grid-cols-2 gap-3">
           <figure className="flex flex-col gap-2">
-            <Spot src="/landing/kitchen.webp" alt={t("Version 1 of the kitchen")} x={change.x} y={change.y} zoom={change.zoom} />
+            <Spot src="/landing/living-room.webp" alt={t("Version 1 of the living room")} x={change.x} y={change.y} zoom={change.zoom} />
             <figcaption className="text-xs text-muted-foreground">{t("Version 1, what Anna commented on")}</figcaption>
           </figure>
           <figure className="flex flex-col gap-2">
-            <Spot src="/landing/kitchen-v2.webp" alt={t("Version 2 of the kitchen")} x={change.x} y={change.y} zoom={change.zoom} />
+            <Spot src="/landing/living-room-v2.webp" alt={t("Version 2 of the living room")} x={change.x} y={change.y} zoom={change.zoom} />
             <figcaption className="text-xs text-foreground">{t("Version 2, what she got")}</figcaption>
           </figure>
         </div>
@@ -129,7 +129,7 @@ export function BeforeAfter({ t }: { t: T }) {
             <p className="text-lg leading-snug text-foreground">{t(change.ask)}</p>
           </div>
           <div className="flex flex-col gap-1 border-l-2 border-foreground/25 pl-3">
-            <p className="text-xs text-muted-foreground">Oak &amp; Dot Workshop</p>
+            <p className="text-xs text-muted-foreground">Lumen Studio</p>
             <p className="text-lg leading-snug text-foreground">{t(change.reply)}</p>
           </div>
         </div>

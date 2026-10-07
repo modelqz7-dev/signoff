@@ -11,11 +11,16 @@ export type Profile = {
   activity: string
 }
 
-/** What the workshop does. Nodly is built for the first two today; the rest are coming soon. */
-export const ACTIVITIES = ["Furniture maker", "Kitchen studio"] as const
-export const COMING_SOON_ACTIVITIES = ["Interior designer", "Windows and doors", "Signage and print", "Other"] as const
+/** What the account does. Nodly is built for the first two today; the rest are coming soon. */
+export const ACTIVITIES = ["Interior designer", "Design studio"] as const
+export const COMING_SOON_ACTIVITIES = ["Architect", "3D visualizer", "Signage and print", "Other"] as const
 /** Older choices still stored in some profiles; kept so they keep their translations. */
-export const LEGACY_ACTIVITIES = ["Designer", "Freelancer", "Print shop", "Manufacturer", "Studio"] as const
+export const LEGACY_ACTIVITIES = ["Windows and doors", "Designer", "Freelancer", "Print shop", "Manufacturer", "Studio"] as const
+
+/** The saved activity if it's one we still offer; older ones (e.g. from before designers) read as not set. */
+export function currentActivity(activity: string) {
+  return ([...ACTIVITIES, ...COMING_SOON_ACTIVITIES] as readonly string[]).includes(activity) ? activity : ""
+}
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 

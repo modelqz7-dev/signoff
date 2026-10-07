@@ -14,7 +14,7 @@ import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { ACTIVITIES, COMING_SOON_ACTIVITIES, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
+import { ACTIVITIES, COMING_SOON_ACTIVITIES, currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
@@ -35,7 +35,7 @@ const SUPPORT = {
 }
 
 const TITLES: Record<PanelId, { title: string; description: string }> = {
-  profile: { title: "Profile", description: "Your workshop and account." },
+  profile: { title: "Profile", description: "Your studio and account." },
   billing: { title: "Billing", description: "Your plan and payments." },
   notifications: { title: "Notifications", description: "How you hear about client activity." },
   security: { title: "Security", description: "Your password and client access." },
@@ -176,6 +176,7 @@ function ProfilePanel() {
   }
 
   if (loading || !profile) return <p className="text-muted-foreground">{t("Loading...")}</p>
+  const shownActivity = currentActivity(profile.activity)
 
   return (
     <div className="flex flex-col gap-4">
@@ -185,8 +186,8 @@ function ProfilePanel() {
           <AvatarFallback className="text-sm">{initials || "S"}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{shop?.name || t("Your workshop")}</p>
-          <p className="truncate text-xs text-muted-foreground">{profile.activity ? t(profile.activity) : t("Add your activity below")}</p>
+          <p className="truncate font-medium">{shop?.name || t("Your studio")}</p>
+          <p className="truncate text-xs text-muted-foreground">{shownActivity ? t(shownActivity) : t("Add your activity below")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || uploading}>
@@ -206,7 +207,7 @@ function ProfilePanel() {
       </div>
 
       <form onSubmit={saveName} className="flex flex-col gap-2">
-        <Label htmlFor="panel-shop-name">{t("Workshop name")}</Label>
+        <Label htmlFor="panel-shop-name">{t("Studio name")}</Label>
         <div className="flex gap-2">
           <Input
             id="panel-shop-name"
@@ -256,7 +257,7 @@ function ProfilePanel() {
         <DialogHeader>
           <DialogTitle>{t("Coming soon")}</DialogTitle>
           <DialogDescription>
-            {t("Nodly is built for furniture makers and kitchen studios right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
+            {t("Nodly is built for interior designers and design studios right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{t("Until then, everything works for you as it is: upload a design, send the link, get comments and approval.")}</p>
@@ -905,7 +906,7 @@ function DocsPanel() {
     await: "Waiting for the client to review.",
     changes: "The client asked for changes.",
     approved: "The client approved the design.",
-    prod: "In production.",
+    prod: "In implementation.",
   }
   const shortcuts = [
     ["← →", "Previous / next page"],
@@ -1099,7 +1100,7 @@ function BrandKit({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) 
             maxLength={WELCOME_MAX}
             value={welcomeValue}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWelcome(e.target.value)}
-            placeholder={t("Hi! Here is your project. Tap anywhere on the drawing to leave a comment.")}
+            placeholder={t("Hi! Here is your project. Tap anywhere on the design to leave a comment.")}
             className="text-sm"
           />
           <p className="text-right text-[11px] text-muted-foreground">{welcomeValue.length}/{WELCOME_MAX}</p>
