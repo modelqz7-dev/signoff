@@ -342,6 +342,7 @@ export const ru: Record<string, string> = {
   "Free 15-minute call": "Бесплатный созвон на 15 минут",
   "Free during early access · No card required": "Бесплатно в период раннего доступа · Карта не нужна",
   "Freelancer": "Фрилансер",
+  "From 12 comments to approved: a short video about Nodly": "От 12 комментариев до «Согласовано»: короткое видео о Nodly",
   "From a blank canvas to the final design in 30 seconds. Want yours? Link in bio.": "От пустого листа до готового дизайна за 30 секунд. Хотите свой? Ссылка в шапке профиля.",
   "General": "Основное",
   "Get a portal like this for your business": "Сделайте такой же портал для своего бизнеса",
