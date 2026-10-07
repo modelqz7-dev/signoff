@@ -76,7 +76,7 @@ export default function CertificatePage() {
     [t("Version"), `v${order.version ?? 1}`],
     [t("File"), fileNameFromUrl(order.file_url) || "—"],
     [t("Client comments on this version"), versionPins.length ? t("{n} ({resolved} resolved)", { n: versionPins.length, resolved }) : "0"],
-    [t("Designer"), shop.name],
+    [t("Contractor"), shop.name],
     [t("Order code"), order.code],
   ]
 

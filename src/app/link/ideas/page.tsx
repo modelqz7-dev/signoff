@@ -6,54 +6,54 @@ import { useT } from "@/lib/i18n"
 /** Post ideas for a furniture workshop: what to show and a caption to start from. */
 const IDEAS: { title: string; how: string; caption: string }[] = [
   {
-    title: "Render vs result",
-    how: "Put the render the client approved next to a photo of the finished room.",
-    caption: "From render to real room: what we agreed on and what came out. Want the same? Link in bio.",
+    title: "Before and after",
+    how: "Put the client's old design next to what you made.",
+    caption: "Before and after: what the client had and what we made. Want the same? Link in bio.",
   },
   {
     title: "Before and after",
-    how: "The empty room on your first visit and the same corner when it's done.",
-    caption: "Same wall, three weeks apart. Tell us about your room: the link is in bio.",
+    how: "The client's page before you started and the same page now.",
+    caption: "Same page, three weeks apart. Tell us about your project: the link is in bio.",
   },
   {
     title: "Material up close",
-    how: "A short video of the materials in good light: fabric, stone, wood. Touch them.",
-    caption: "This is what these materials look like up close. We'll help you pick yours: link in bio.",
+    how: "A screen recording of the process: from the first sketch to the final file.",
+    caption: "From a blank canvas to the final design in 30 seconds. Want yours? Link in bio.",
   },
   {
-    title: "A day at the studio",
-    how: "Five short clips: measuring, moodboard, render, site visit, handover.",
-    caption: "How one room comes together, in 30 seconds. Want yours? Link in bio.",
+    title: "A day at work",
+    how: "Five short clips: brief, references, sketch, design, handover.",
+    caption: "How one project comes together, in 30 seconds. Want yours? Link in bio.",
   },
   {
     title: "What a price is made of",
-    how: "Break one real project into stages: floor plan, renders, working drawings, supervision.",
-    caption: "Why a design project costs what it costs. Send a request for your own estimate: link in bio.",
+    how: "Break one real project into stages: brief, concept, design, revisions, handover.",
+    caption: "Why a project costs what it costs. Send a request for your own estimate: link in bio.",
   },
   {
     title: "A client's review",
-    how: "A screenshot of a message or a short video from the client in their new room.",
+    how: "A screenshot of a happy message from the client.",
     caption: "Words we love to hear. Thank you, [name]! Next could be yours: link in bio.",
   },
   {
     title: "Common mistake",
-    how: "Show one thing people often get wrong: lighting, socket heights, sofa size.",
-    caption: "One mistake we see in almost every apartment and how we avoid it. Questions? Link in bio.",
+    how: "Show one thing people often get wrong: fonts, contrast, too much text.",
+    caption: "One mistake we see on almost every brand's Instagram and how to fix it. Questions? Link in bio.",
   },
   {
     title: "How we work",
-    how: "A simple scheme: request, site visit, concept, renders, approval, supervision.",
-    caption: "Six steps from your request to the finished interior. Step one is in our bio.",
+    how: "A simple scheme: request, brief, concept, design, approval, handover.",
+    caption: "Six steps from your request to the finished project. Step one is in our bio.",
   },
   {
     title: "Detail of the week",
     how: "One small detail you're proud of: a hidden drawer, lighting, a joint.",
-    caption: "Details make the interior. Want something like this? Link in bio.",
+    caption: "Details make the design. Want something like this? Link in bio.",
   },
   {
     title: "Answer a question",
     how: "Take a question clients often ask and answer it in a short video.",
-    caption: "You asked: how long does a design project take? The answer is in the video. Ask yours: link in bio.",
+    caption: "You asked: how long does a project take? The answer is in the video. Ask yours: link in bio.",
   },
 ]
 

@@ -59,12 +59,12 @@ export const CONTACT_LABEL: Record<keyof PageContacts, string> = {
 export const BUSINESS_FIELDS: Record<keyof PageBusiness, { label: string; icon: React.ReactNode }> = {
   since: { label: "In business since", icon: <CalendarIcon /> },
   team: { label: "Team", icon: <UsersIcon /> },
-  address: { label: "Studio address", icon: <MapPinIcon /> },
-  areas: { label: "Areas we serve", icon: <MapIcon /> },
-  measure: { label: "Site visit", icon: <RulerIcon /> },
+  address: { label: "Location", icon: <MapPinIcon /> },
+  areas: { label: "Where you work", icon: <MapIcon /> },
+  measure: { label: "Intro call", icon: <RulerIcon /> },
   terms: { label: "Project timeline", icon: <HourglassIcon /> },
   payment: { label: "Payment", icon: <BanknoteIcon /> },
-  warranty: { label: "Supervision", icon: <ShieldCheckIcon /> },
+  warranty: { label: "Revisions", icon: <ShieldCheckIcon /> },
 }
 
 export const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
@@ -328,7 +328,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
-                {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about your studio")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
+                {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about yourself")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
                 {data.bio && (
                   <p className={`text-sm leading-relaxed whitespace-pre-line ${longAbout && !moreAbout ? "line-clamp-4" : ""}`}>{data.bio}</p>
                 )}
@@ -356,7 +356,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.projects.length > 0 || preview) && (
               <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
-                {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Photos of a finished interior, the city and a couple of words.")} onClick={() => onEdit?.("projects")} />}
+                {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Images of finished work and a couple of words about it.")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
                     <button key={i} type="button" onClick={() => setProject(i)}
@@ -447,8 +447,8 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
             )}
 
             {(areas.length > 0 || preview) && (
-              <Section id={sid("areas")} title={t("Areas served")}>
-                {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add the areas you serve")} hint={t("Cities and districts where you take on projects; online projects anywhere.")} onClick={() => onEdit?.("areas")} />}
+              <Section id={sid("areas")} title={t("Where we work")}>
+                {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add where you work")} hint={t("Cities, countries or simply Online.")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
@@ -706,7 +706,7 @@ function ContactModal({ data, slug, preview, rating, count, initials, onClose }:
           </div>
         ) : (
           <>
-            <h2 className="pr-8 text-2xl font-semibold tracking-tight">{t("Contact this designer")}</h2>
+            <h2 className="pr-8 text-2xl font-semibold tracking-tight">{t("Contact this freelancer")}</h2>
             <div>
               <p className="mb-1.5 text-sm">{t("To:")}</p>
               <div className="flex items-center gap-2.5">

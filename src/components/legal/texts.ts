@@ -11,12 +11,12 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     en: {
       title: "Terms of service",
       intro:
-        "These terms govern your use of Nodly ({site}), a web service that lets interior designers, design studios and other professionals share designs with their clients, collect pinned comments and get approvals. Nodly is provided by {seller}. By creating an account or using Nodly you agree to these terms.",
+        "These terms govern your use of Nodly ({site}), a web service that lets freelancers, designers, agencies and other professionals share designs with their clients, collect pinned comments and get approvals. Nodly is provided by {seller}. By creating an account or using Nodly you agree to these terms.",
       sections: [
         {
           heading: "1. Your account",
           body: [
-            "You need an account to use Nodly as a designer. Give accurate information, keep your password safe and tell us at {email} if you think someone else has access to your account. You are responsible for what happens in your account.",
+            "You need an account to use Nodly as a freelancer or a team. Give accurate information, keep your password safe and tell us at {email} if you think someone else has access to your account. You are responsible for what happens in your account.",
             "Your clients do not need an account: they open the order link you send them and may be asked for the password you set.",
           ],
         },
@@ -84,12 +84,12 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     ru: {
       title: "Условия использования",
       intro:
-        "Эти условия регулируют использование Nodly ({site}), веб-сервиса, в котором дизайнеры интерьера, дизайн-студии и другие специалисты показывают клиентам макеты, собирают комментарии на пинах и получают утверждение. Nodly предоставляет {seller}. Создавая аккаунт или пользуясь Nodly, вы соглашаетесь с этими условиями. Юридическую силу имеет английская версия; это перевод.",
+        "Эти условия регулируют использование Nodly ({site}), веб-сервиса, в котором фрилансеры, дизайнеры, агентства и другие специалисты показывают клиентам макеты, собирают комментарии на пинах и получают утверждение. Nodly предоставляет {seller}. Создавая аккаунт или пользуясь Nodly, вы соглашаетесь с этими условиями. Юридическую силу имеет английская версия; это перевод.",
       sections: [
         {
           heading: "1. Ваш аккаунт",
           body: [
-            "Чтобы пользоваться Nodly как дизайнер, нужен аккаунт. Указывайте верные данные, храните пароль в тайне и напишите нам на {email}, если думаете, что кто-то получил доступ к вашему аккаунту. Вы отвечаете за действия в своём аккаунте.",
+            "Чтобы пользоваться Nodly как исполнитель или команда, нужен аккаунт. Указывайте верные данные, храните пароль в тайне и напишите нам на {email}, если думаете, что кто-то получил доступ к вашему аккаунту. Вы отвечаете за действия в своём аккаунте.",
             "Вашим клиентам аккаунт не нужен: они открывают ссылку на заказ, которую вы им отправили, и при необходимости вводят заданный вами пароль.",
           ],
         },
@@ -166,7 +166,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
           heading: "1. What we collect",
           body: [
             [
-              "Account data: your email address, password (stored only as a secure hash), studio name, logo and contact details you choose to add.",
+              "Account data: your email address, password (stored only as a secure hash), brand name, logo and contact details you choose to add.",
               "Order data: designs and files you upload, order details, your clients' names, emails or phone numbers if you enter them, comments, messages and approval records.",
               "Data from your clients: the name they enter when opening an order link, their comments and approvals.",
               "Billing data: your plan and subscription status. Payment card details are handled by Paddle and never reach us.",
@@ -239,7 +239,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
           heading: "1. Что мы собираем",
           body: [
             [
-              "Данные аккаунта: адрес почты, пароль (хранится только в виде защищённого хеша), название студии, логотип и контакты, которые вы решили добавить.",
+              "Данные аккаунта: адрес почты, пароль (хранится только в виде защищённого хеша), название бренда, логотип и контакты, которые вы решили добавить.",
               "Данные заказов: макеты и файлы, которые вы загружаете, детали заказов, имена клиентов и их почта или телефон, если вы их указали, комментарии, сообщения и записи об утверждении.",
               "Данные ваших клиентов: имя, которое они вводят, открывая ссылку на заказ, их комментарии и решения.",
               "Данные об оплате: тариф и статус подписки. Данные карты обрабатывает Paddle, к нам они не попадают.",

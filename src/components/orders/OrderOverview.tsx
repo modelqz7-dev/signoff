@@ -88,7 +88,7 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
 
   if (!order.file_url) {
     title = t("Upload the design")
-    text = t("Add the render or floor plan, then send the client the portal link.")
+    text = t("Add the design or screenshot, then send the client the portal link.")
     action = button(<UploadIcon className="size-4" />, uploading ? t("Uploading...") : t("Upload PDF or image"), onUpload, uploading)
   } else if (order.status === "changes") {
     tone = "changes"
@@ -100,7 +100,7 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
   } else if (order.status === "await" && open > 0 && (unanswered ?? open) > 0) {
     const n = unanswered ?? open
     title = n === 1 ? t("{client} left a comment", { client }) : t("{client} left {n} comments", { client, n })
-    text = t("Answer right in each comment: what you changed, with a photo or render if it helps.")
+    text = t("Answer right in each comment: what you changed, with a screenshot if it helps.")
     action = button(<CommentsIcon className="size-4" />, t("Answer"), onSeeComments)
   } else if (order.status === "await" && open > 0) {
     title = t("You answered every comment")

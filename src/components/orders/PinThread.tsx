@@ -98,7 +98,7 @@ function Message({ message }: { message: PinMessage }) {
   const shop = message.author_role === "workshop"
   return (
     <ChatLine
-      name={message.author_name || (shop ? t("Designer") : t("Client"))}
+      name={message.author_name || (shop ? t("Contractor") : t("Client"))}
       shop={shop}
       date={message.created_at}
       extra={message.marks_fixed && (
@@ -187,7 +187,7 @@ function Composer({ role, fixed, onSend, autoFocus, hasMessages }: {
         {shop && (
           <>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = "" }} />
-            <button type="button" onClick={() => fileRef.current?.click()} aria-label={t("Attach a file: photo, render or PDF")} className="mb-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground">
+            <button type="button" onClick={() => fileRef.current?.click()} aria-label={t("Attach a file: image, screenshot or PDF")} className="mb-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-foreground">
               <PaperclipIcon className="size-4" />
             </button>
           </>

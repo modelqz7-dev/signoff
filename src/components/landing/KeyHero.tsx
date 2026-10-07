@@ -29,26 +29,26 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
     <section className="relative overflow-hidden">
       <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pt-16 pb-24 text-center sm:px-6 lg:pt-20">
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-          {t("For interior designers and design studios")}
+          {t("For freelancers, designers and agencies")}
         </p>
         <h1 className={cn(HEADLINE, "mt-5 max-w-5xl text-[40px] leading-[1.02] sm:text-6xl lg:text-[68px]")}>
-          <span className="block">{t("Where designers and clients")}</span>
+          <span className="block">{t("Where freelancers and clients")}</span>
           <span className="mt-1 flex flex-wrap items-center justify-center gap-x-[0.25em]">
             <span>{t("approve every")}</span>
             <RotatingWord
               hashtag
               words={[
-                { text: t("living room"), color: "var(--primary)" },
-                { text: t("bedroom"), color: "var(--primary)" },
-                { text: t("bathroom"), color: "var(--primary)" },
-                { text: t("kids' room"), color: "var(--primary)" },
-                { text: t("home office"), color: "var(--primary)" },
+                { text: t("logo"), color: "var(--primary)" },
+                { text: t("post"), color: "var(--primary)" },
+                { text: t("website"), color: "var(--primary)" },
+                { text: t("banner"), color: "var(--primary)" },
+                { text: t("video"), color: "var(--primary)" },
               ]}
             />
           </span>
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-          {t("Send one link. The client marks changes right on the render or floor plan and approves with a tap, and the approval stays on record.")}
+          {t("Send one link. The client marks changes right on the design or screenshot and approves with a tap, and the approval stays on record.")}
         </p>
 
         {/* the key */}
@@ -73,7 +73,7 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
             {t(status.label)}
           </span>
           <span className="text-muted-foreground">
-            {approved ? t("Approved by Anna K. · just now") : t("Living room “Linen” · press the key to approve")}
+            {approved ? t("Approved by Anna K. · just now") : t("Website “Bloom” · press the key to approve")}
           </span>
         </div>
 

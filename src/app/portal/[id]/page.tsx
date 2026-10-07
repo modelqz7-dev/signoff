@@ -318,8 +318,8 @@ export default function PortalPage() {
                 <div className="min-w-0">
                   <p className="text-base font-medium text-foreground">
                     {answered.length === 1
-                      ? t("{shop} answered your comment", { shop: brand?.shopName || t("The designer") })
-                      : t("{shop} answered {n} of your comments", { shop: brand?.shopName || t("The designer"), n: answered.length })}
+                      ? t("{shop} answered your comment", { shop: brand?.shopName || t("The contractor") })
+                      : t("{shop} answered {n} of your comments", { shop: brand?.shopName || t("The contractor"), n: answered.length })}
                   </p>
                   <p className="text-sm text-muted-foreground">{t("Open a pin to see the answer. If something isn't right, write back in it.")}</p>
                 </div>
