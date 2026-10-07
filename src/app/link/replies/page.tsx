@@ -19,11 +19,11 @@ const TEMPLATES: { title: string; text: string }[] = [
   },
   {
     title: "Send the price",
-    text: "Here is the estimate: [price]. It includes 3 logo concepts, 2 rounds of revisions and all source files. The price is valid for 14 days. Shall we start?",
+    text: "Here is the estimate: [price] a month. It includes a content plan, 12 posts, 20 stories and 2 rounds of revisions. The price is valid for 14 days. Shall we start?",
   },
   {
     title: "Send the design for approval",
-    text: "The logo concepts are ready. Here is your link: open it on your phone, leave comments right on the picture and approve with one button. I move on only after your approval.",
+    text: "The posts for next week are ready. Here is your link: open it on your phone, leave comments right on the pictures and approve with one button. I publish only after your approval.",
   },
   {
     title: "Follow up after silence",
