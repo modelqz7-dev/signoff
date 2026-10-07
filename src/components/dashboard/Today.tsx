@@ -232,7 +232,7 @@ export function YourMove({ today }: { today: ReturnType<typeof useToday> }) {
             r.kind === "overdue" ? <Chip key="o" tone="danger">{t("Overdue {n}d", { n: r.n ?? 0 })}</Chip>
             : r.kind === "changes" ? <Chip key="c" tone="changes">{t("Changes requested")}</Chip>
             : r.kind === "comments" ? <Chip key="m" tone="neutral"><PinOutlineIcon className="size-3" />{r.n === 1 ? t("1 new comment") : t("{n} new comments", { n: r.n ?? 0 })}</Chip>
-            : <Chip key="a" tone="approved"><CheckIcon className="size-3" />{t("Approved, ready to build")}</Chip>
+            : <Chip key="a" tone="approved"><CheckIcon className="size-3" />{t("Approved, ready to go")}</Chip>
           )}
         </OrderRow>
       ))}

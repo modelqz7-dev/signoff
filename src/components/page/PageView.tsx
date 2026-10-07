@@ -59,12 +59,12 @@ export const CONTACT_LABEL: Record<keyof PageContacts, string> = {
 export const BUSINESS_FIELDS: Record<keyof PageBusiness, { label: string; icon: React.ReactNode }> = {
   since: { label: "In business since", icon: <CalendarIcon /> },
   team: { label: "Team", icon: <UsersIcon /> },
-  address: { label: "Workshop address", icon: <MapPinIcon /> },
+  address: { label: "Studio address", icon: <MapPinIcon /> },
   areas: { label: "Areas we serve", icon: <MapIcon /> },
-  measure: { label: "Measuring visit", icon: <RulerIcon /> },
-  terms: { label: "Lead time", icon: <HourglassIcon /> },
+  measure: { label: "Site visit", icon: <RulerIcon /> },
+  terms: { label: "Project timeline", icon: <HourglassIcon /> },
   payment: { label: "Payment", icon: <BanknoteIcon /> },
-  warranty: { label: "Warranty", icon: <ShieldCheckIcon /> },
+  warranty: { label: "Supervision", icon: <ShieldCheckIcon /> },
 }
 
 export const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
@@ -328,7 +328,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
-                {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about your workshop")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
+                {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about your studio")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
                 {data.bio && (
                   <p className={`text-sm leading-relaxed whitespace-pre-line ${longAbout && !moreAbout ? "line-clamp-4" : ""}`}>{data.bio}</p>
                 )}
@@ -356,7 +356,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.projects.length > 0 || preview) && (
               <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
-                {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Photos of a finished kitchen or wardrobe, the city and a couple of words.")} onClick={() => onEdit?.("projects")} />}
+                {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Photos of a finished interior, the city and a couple of words.")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
                     <button key={i} type="button" onClick={() => setProject(i)}
@@ -448,14 +448,14 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(areas.length > 0 || preview) && (
               <Section id={sid("areas")} title={t("Areas served")}>
-                {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add the areas you serve")} hint={t("Cities and districts you travel to for measuring and installation.")} onClick={() => onEdit?.("areas")} />}
+                {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add the areas you serve")} hint={t("Cities and districts where you take on projects; online projects anywhere.")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
 
             {(data.credentials.length > 0 || preview) && (
               <Section id={sid("credentials")} title={t("Credentials")}>
-                {data.credentials.length === 0 && <Placeholder icon={<AwardIcon />} title={t("Add awards and certificates")} hint={t("Partner badges (Blum, Egger), certificates, contest wins.")} onClick={() => onEdit?.("credentials")} />}
+                {data.credentials.length === 0 && <Placeholder icon={<AwardIcon />} title={t("Add awards and certificates")} hint={t("Certificates, publications, contest wins.")} onClick={() => onEdit?.("credentials")} />}
                 <div className="flex flex-wrap gap-5">
                   {data.credentials.map((c, i) => (
                     <div key={i} className="flex w-28 flex-col gap-2">
@@ -706,7 +706,7 @@ function ContactModal({ data, slug, preview, rating, count, initials, onClose }:
           </div>
         ) : (
           <>
-            <h2 className="pr-8 text-2xl font-semibold tracking-tight">{t("Contact this workshop")}</h2>
+            <h2 className="pr-8 text-2xl font-semibold tracking-tight">{t("Contact this designer")}</h2>
             <div>
               <p className="mb-1.5 text-sm">{t("To:")}</p>
               <div className="flex items-center gap-2.5">

@@ -50,7 +50,7 @@ export default function CertificatePage() {
   if (!can(shop, "certificate")) {
     return (
       <Centered>
-        <p className="text-sm text-foreground">{t("Approval certificates are available on Maker and Studio.")}</p>
+        <p className="text-sm text-foreground">{t("Approval certificates are available on Pro and Studio.")}</p>
         <UpgradeChip feature="certificate" />
         <Link href={`/orders/${order.id}`} className="text-xs text-muted-foreground hover:text-foreground">{t("Back to order")}</Link>
       </Centered>
@@ -76,7 +76,7 @@ export default function CertificatePage() {
     [t("Version"), `v${order.version ?? 1}`],
     [t("File"), fileNameFromUrl(order.file_url) || "—"],
     [t("Client comments on this version"), versionPins.length ? t("{n} ({resolved} resolved)", { n: versionPins.length, resolved }) : "0"],
-    [t("Workshop"), shop.name],
+    [t("Designer"), shop.name],
     [t("Order code"), order.code],
   ]
 

@@ -37,7 +37,7 @@ export const PLANS: Plan[] = [
   },
   {
     id: "go",
-    name: "Maker",
+    name: "Pro",
     monthly: 19,
     activeOrders: 25,
     features: ["versions", "certificate", "branding", "reminders"],
@@ -57,7 +57,7 @@ export const PLANS: Plan[] = [
     features: ["versions", "certificate", "branding", "reminders", "brandKit"],
     highlights: [
       "Unlimited active orders",
-      "Everything in Maker",
+      "Everything in Pro",
       "Your welcome message and contacts in the portal",
       "Priority support",
     ],

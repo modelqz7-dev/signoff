@@ -11,19 +11,19 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     en: {
       title: "Terms of service",
       intro:
-        "These terms govern your use of Nodly ({site}), a web service that lets furniture makers, kitchen studios and other workshops share designs with their clients, collect pinned comments and get approvals. Nodly is provided by {seller}. By creating an account or using Nodly you agree to these terms.",
+        "These terms govern your use of Nodly ({site}), a web service that lets interior designers, design studios and other professionals share designs with their clients, collect pinned comments and get approvals. Nodly is provided by {seller}. By creating an account or using Nodly you agree to these terms.",
       sections: [
         {
           heading: "1. Your account",
           body: [
-            "You need an account to use Nodly as a workshop. Give accurate information, keep your password safe and tell us at {email} if you think someone else has access to your account. You are responsible for what happens in your account.",
+            "You need an account to use Nodly as a designer. Give accurate information, keep your password safe and tell us at {email} if you think someone else has access to your account. You are responsible for what happens in your account.",
             "Your clients do not need an account: they open the order link you send them and may be asked for the password you set.",
           ],
         },
         {
           heading: "2. Plans, trial and payment",
           body: [
-            "Nodly has a free plan with limits and paid plans (Maker and Studio) billed monthly or yearly. Prices are shown on the website and in your account before you pay.",
+            "Nodly has a free plan with limits and paid plans (Pro and Studio) billed monthly or yearly. Prices are shown on the website and in your account before you pay.",
             "New accounts get a free trial of the Studio plan. No payment card is needed for the trial. When it ends, the account moves to the free plan unless you choose a paid plan.",
             "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns. Paddle charges your payment method, issues invoices and collects applicable taxes.",
             "Paid plans renew automatically at the end of each billing period until you cancel. You can cancel at any time from your account; the plan stays active until the end of the period you have paid for.",
@@ -84,19 +84,19 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     ru: {
       title: "Условия использования",
       intro:
-        "Эти условия регулируют использование Nodly ({site}), веб-сервиса, в котором мебельные мастерские, кухонные студии и другие мастерские показывают клиентам макеты, собирают комментарии на пинах и получают утверждение. Nodly предоставляет {seller}. Создавая аккаунт или пользуясь Nodly, вы соглашаетесь с этими условиями. Юридическую силу имеет английская версия; это перевод.",
+        "Эти условия регулируют использование Nodly ({site}), веб-сервиса, в котором дизайнеры интерьера, дизайн-студии и другие специалисты показывают клиентам макеты, собирают комментарии на пинах и получают утверждение. Nodly предоставляет {seller}. Создавая аккаунт или пользуясь Nodly, вы соглашаетесь с этими условиями. Юридическую силу имеет английская версия; это перевод.",
       sections: [
         {
           heading: "1. Ваш аккаунт",
           body: [
-            "Чтобы пользоваться Nodly как мастерская, нужен аккаунт. Указывайте верные данные, храните пароль в тайне и напишите нам на {email}, если думаете, что кто-то получил доступ к вашему аккаунту. Вы отвечаете за действия в своём аккаунте.",
+            "Чтобы пользоваться Nodly как дизайнер, нужен аккаунт. Указывайте верные данные, храните пароль в тайне и напишите нам на {email}, если думаете, что кто-то получил доступ к вашему аккаунту. Вы отвечаете за действия в своём аккаунте.",
             "Вашим клиентам аккаунт не нужен: они открывают ссылку на заказ, которую вы им отправили, и при необходимости вводят заданный вами пароль.",
           ],
         },
         {
           heading: "2. Тарифы, пробный период и оплата",
           body: [
-            "В Nodly есть бесплатный тариф с ограничениями и платные тарифы («Мастер» и «Студия») с оплатой помесячно или за год. Цены указаны на сайте и в аккаунте до оплаты.",
+            "В Nodly есть бесплатный тариф с ограничениями и платные тарифы («Про» и «Студия») с оплатой помесячно или за год. Цены указаны на сайте и в аккаунте до оплаты.",
             "Новые аккаунты получают бесплатный пробный период тарифа «Студия». Карта для него не нужна. Когда он заканчивается, аккаунт переходит на бесплатный тариф, если вы не выбрали платный.",
             "Оформление заказов выполняет наш онлайн-реселлер Paddle.com. Paddle.com является продавцом (Merchant of Record) по всем нашим заказам: принимает оплату, выставляет счета, взимает применимые налоги, отвечает на вопросы по оплате и оформляет возвраты.",
             "Платные тарифы продлеваются автоматически в конце каждого оплаченного периода, пока вы их не отмените. Отменить можно в любой момент в аккаунте; тариф действует до конца оплаченного периода.",
@@ -166,7 +166,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
           heading: "1. What we collect",
           body: [
             [
-              "Account data: your email address, password (stored only as a secure hash), workshop name, logo and contact details you choose to add.",
+              "Account data: your email address, password (stored only as a secure hash), studio name, logo and contact details you choose to add.",
               "Order data: designs and files you upload, order details, your clients' names, emails or phone numbers if you enter them, comments, messages and approval records.",
               "Data from your clients: the name they enter when opening an order link, their comments and approvals.",
               "Billing data: your plan and subscription status. Payment card details are handled by Paddle and never reach us.",
@@ -239,7 +239,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
           heading: "1. Что мы собираем",
           body: [
             [
-              "Данные аккаунта: адрес почты, пароль (хранится только в виде защищённого хеша), название мастерской, логотип и контакты, которые вы решили добавить.",
+              "Данные аккаунта: адрес почты, пароль (хранится только в виде защищённого хеша), название студии, логотип и контакты, которые вы решили добавить.",
               "Данные заказов: макеты и файлы, которые вы загружаете, детали заказов, имена клиентов и их почта или телефон, если вы их указали, комментарии, сообщения и записи об утверждении.",
               "Данные ваших клиентов: имя, которое они вводят, открывая ссылку на заказ, их комментарии и решения.",
               "Данные об оплате: тариф и статус подписки. Данные карты обрабатывает Paddle, к нам они не попадают.",
@@ -309,7 +309,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     en: {
       title: "Refund policy",
       intro:
-        "We want you to pay for Nodly only if it helps your workshop. Payments are processed by Paddle, our Merchant of Record, which also handles refunds.",
+        "We want you to pay for Nodly only if it helps your work. Payments are processed by Paddle, our Merchant of Record, which also handles refunds.",
       sections: [
         {
           heading: "1. Try it free first",
@@ -342,7 +342,7 @@ export const LEGAL_DOCS: Record<LegalDocId, Record<"en" | "ru", Doc>> = {
     ru: {
       title: "Политика возврата",
       intro:
-        "Мы хотим, чтобы вы платили за Nodly, только если он помогает вашей мастерской. Платежи принимает Paddle, наш продавец (Merchant of Record). Он же оформляет возвраты. Юридическую силу имеет английская версия; это перевод.",
+        "Мы хотим, чтобы вы платили за Nodly, только если он помогает вашей работе. Платежи принимает Paddle, наш продавец (Merchant of Record). Он же оформляет возвраты. Юридическую силу имеет английская версия; это перевод.",
       sections: [
         {
           heading: "1. Сначала бесплатно",

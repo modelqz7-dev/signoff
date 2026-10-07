@@ -365,7 +365,7 @@ function PinTextForm({ pin, disabled, focusKey, onSave, onCancel }: {
         value={title}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value.slice(0, 200))}
         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); save() } }}
-        placeholder={t("Title, e.g. Black handles")}
+        placeholder={t("Title, e.g. Lighter sofa")}
         aria-label={t("Title")}
         className="h-11 bg-background text-base"
       />
@@ -494,7 +494,7 @@ function FirstSteps({ onOpenFile }: { onOpenFile: () => void }) {
     },
     {
       title: t("Pick the number here and write"),
-      text: t("A short title and what to change. The workshop answers in the same pin."),
+      text: t("A short title and what to change. The designer answers in the same pin."),
       picture: (
         <span className="flex w-full flex-col gap-2 rounded-lg bg-card p-2.5 ring-1 ring-foreground/10">
           <span className="flex gap-1.5">

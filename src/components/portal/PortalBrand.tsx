@@ -50,7 +50,7 @@ export function PortalContactCard({ brand, className }: { brand: PortalBrand | n
       <div>
         <p className="text-base font-medium text-foreground">{t("Questions about the design?")}</p>
         <p className="text-sm text-muted-foreground">
-          {brand?.shopName ? t("Contact {shop} directly:", { shop: brand.shopName }) : t("Contact the workshop directly:")}
+          {brand?.shopName ? t("Contact {shop} directly:", { shop: brand.shopName }) : t("Contact the designer directly:")}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">

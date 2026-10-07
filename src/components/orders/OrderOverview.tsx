@@ -88,7 +88,7 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
 
   if (!order.file_url) {
     title = t("Upload the design")
-    text = t("Add the drawing or render, then send the client the portal link.")
+    text = t("Add the render or floor plan, then send the client the portal link.")
     action = button(<UploadIcon className="size-4" />, uploading ? t("Uploading...") : t("Upload PDF or image"), onUpload, uploading)
   } else if (order.status === "changes") {
     tone = "changes"
@@ -116,7 +116,7 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
   } else if (order.status === "approved") {
     tone = "approved"
     const when = order.approved_at ? new Date(order.approved_at).toLocaleDateString(locale, { day: "numeric", month: "long" }) : null
-    title = t("Approved, ready to build")
+    title = t("Approved, ready to go")
     text = [order.approved_by || client, when, t("version {n}", { n: order.version ?? 1 })].filter(Boolean).join(" · ")
     if (certificateHref) {
       action = (
@@ -127,7 +127,7 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
       )
     }
   } else {
-    title = t("In production")
+    title = t("In implementation")
     text = t("Approved and being built. The approval stays on record with the certificate.")
   }
 

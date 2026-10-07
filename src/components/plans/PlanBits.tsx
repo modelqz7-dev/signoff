@@ -77,7 +77,7 @@ export function UsageMeter({ used, limit, className }: { used: number; limit: nu
   )
 }
 
-/** Small "Maker" chip for features the current plan doesn't include; opens Billing. */
+/** Small "Pro" chip for features the current plan doesn't include; opens Billing. */
 export function UpgradeChip({ feature, className }: { feature: Feature; className?: string }) {
   const { t } = useT()
   const plan = planFor(feature)

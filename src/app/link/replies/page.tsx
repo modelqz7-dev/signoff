@@ -14,20 +14,20 @@ const TEMPLATES: { title: string; text: string }[] = [
     text: "Hello! Thank you for your request. I'm {name}. To give you an estimate I need a few details: the room size, the style you like and your budget. A photo of the room helps a lot.",
   },
   {
-    title: "Ask for measurements",
-    text: "To make the drawing, please send the wall length and ceiling height, and mark windows, sockets and pipes on a photo. If it's easier, I can come and measure myself.",
+    title: "Ask for the floor plan",
+    text: "To start, please send the floor plan and a few photos of the rooms. If there's no plan, I can come and measure everything myself.",
   },
   {
     title: "Send the price",
-    text: "Here is the estimate: [price]. It includes materials, making, delivery and installation. The price is valid for 14 days. Shall I start the drawing?",
+    text: "Here is the estimate: [price]. It includes the floor plan, renders of every room, working drawings and supervision. The price is valid for 14 days. Shall we start?",
   },
   {
-    title: "Send the drawing for approval",
-    text: "The drawing is ready. I've sent you a link: you can open it on your phone, leave comments right on the picture and approve it with one button. I start production only after your approval.",
+    title: "Send the design for approval",
+    text: "The renders are ready. Here is your link: open it on your phone, leave comments right on the picture and approve with one button. We move on to the working drawings only after your approval.",
   },
   {
     title: "Follow up after silence",
-    text: "Hello! Just checking in about the [kitchen]. Do you have any questions about the drawing or the price? If the timing has changed, no problem, just let me know.",
+    text: "Hello! Just checking in about the [project]. Do you have any questions about the renders or the price? If the timing has changed, no problem, just let me know.",
   },
   {
     title: "Thanks and a review",
