@@ -14,6 +14,7 @@ import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
+import { modeMain } from "@/lib/mode-transition"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -87,10 +88,14 @@ export default function Dashboard() {
     return () => { supabase.removeChannel(channel) }
   }, [shopId])
 
+  // The sidebar stays while loading, so switching here from My page slides in one piece.
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
+      <div className="flex min-h-screen">
+        <Sidebar open={sidebarOpen} activePage="dashboard" />
+        <div {...modeMain("orders")} className="flex min-h-screen min-w-0 flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
+        </div>
       </div>
     )
   }
@@ -101,7 +106,7 @@ export default function Dashboard() {
       <Sidebar open={sidebarOpen} activePage="dashboard" />
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div {...modeMain("orders")} className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           shopName={shop?.name || ""}
           title={t("Dashboard")}

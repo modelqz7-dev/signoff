@@ -13,7 +13,7 @@ export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
   label: string
   active?: boolean
   href?: string
-  onClick?: () => void
+  onClick?: (e: React.MouseEvent) => void
   /** A small count after the label (e.g. new requests). */
   badge?: number
   /** A small outlined word after the label, e.g. "New". */
@@ -27,7 +27,7 @@ export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
 
   if (href) {
     return (
-      <a href={href} className={cls}>
+      <a href={href} onClick={onClick} className={cls}>
         <span className={`h-4 w-4 shrink-0 ${active ? "text-primary opacity-100" : "opacity-60"}`}>{icon}</span>
         {label}
         {tag && <span className="rounded-full px-1.5 text-[11px] font-medium leading-[18px] text-foreground ring-1 ring-foreground/40">{tag}</span>}
