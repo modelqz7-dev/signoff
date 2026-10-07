@@ -75,10 +75,28 @@ export function PageView({ data, slug, preview = false }: { data: PageData; slug
     document.getElementById(preview ? "pg-request-preview" : "pg-request")?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  const contactLinks = (pills: boolean) => contacts.map((c) => (
+    <a
+      key={c.key}
+      href={preview ? undefined : c.href!}
+      target={c.key === "website" || c.key === "instagram" ? "_blank" : undefined}
+      rel="noopener noreferrer"
+      aria-label={CONTACT_LABEL[c.key]}
+      title={CONTACT_LABEL[c.key]}
+      className={pills
+        ? "flex h-10 items-center gap-2 rounded-full border border-[var(--pg-border)] bg-[var(--pg-card)] px-4 text-sm font-medium transition-colors hover:border-[var(--pg-text)] [&_svg]:size-4"
+        : "flex size-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--pg-card)] [&_svg]:size-5"}
+    >
+      {CONTACT_ICON[c.key]}
+      {pills && t(CONTACT_LABEL[c.key])}
+    </a>
+  ))
+
+  // Laid out by its own width (a container), not the screen's: the editor previews it as a phone or a computer.
   return (
-    <div style={palette(data)} className="min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
-      <div className="mx-auto flex w-full max-w-[560px] flex-col pb-10">
-        {/* Cover (optional) and photo */}
+    <div style={palette(data)} className="@container min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
+      {/* Phone: centred, like a link-in-bio page */}
+      <div className="mx-auto flex w-full max-w-[560px] flex-col @4xl:hidden">
         {data.banner_url ? (
           <div className="relative mb-14">
             <div className="h-36 w-full overflow-hidden sm:h-44 sm:rounded-b-3xl">
@@ -91,93 +109,108 @@ export function PageView({ data, slug, preview = false }: { data: PageData; slug
             <Avatar data={data} initials={initials} />
           </div>
         )}
-
         <div className="mt-3 flex flex-col items-center gap-1 px-5 text-center">
           <h1 className="text-[22px] font-semibold tracking-tight">{data.title || t("Your name")}</h1>
           {data.tagline && <p className="text-sm text-[var(--pg-muted)]">{data.tagline}</p>}
         </div>
+        {contacts.length > 0 && <div className="mt-4 flex flex-wrap justify-center gap-1.5 px-5">{contactLinks(false)}</div>}
+      </div>
 
-        {/* Social icons, like on any link-in-bio page */}
-        {contacts.length > 0 && (
-          <div className="mt-4 flex flex-wrap justify-center gap-1.5 px-5">
-            {contacts.map((c) => (
-              <a
-                key={c.key}
-                href={preview ? undefined : c.href!}
-                target={c.key === "website" || c.key === "instagram" ? "_blank" : undefined}
-                rel="noopener noreferrer"
-                aria-label={CONTACT_LABEL[c.key]}
-                title={CONTACT_LABEL[c.key]}
-                className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--pg-card)] [&_svg]:size-5"
-              >
-                {CONTACT_ICON[c.key]}
-              </a>
-            ))}
+      {/* Computer: a workshop's site — wide cover, the name on the left, contacts as buttons */}
+      <div className="hidden @4xl:block">
+        <div className="h-64 overflow-hidden bg-[var(--pg-card)]">
+          {data.banner_url ? (
+            <img src={data.banner_url} alt="" className="size-full object-cover" />
+          ) : data.avatar_url ? (
+            <img src={data.avatar_url} alt="" className="size-full scale-125 object-cover opacity-50 blur-3xl" />
+          ) : (
+            <div className="size-full" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--pg-accent) 22%, var(--pg-card)), var(--pg-card) 70%)" }} />
+          )}
+        </div>
+        <div className="mx-auto flex max-w-[1120px] items-end gap-6 px-10">
+          <Avatar data={data} initials={initials} className="-mt-16 shrink-0 ring-[6px] ring-[var(--pg-bg)] @4xl:size-32 @4xl:text-4xl" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1 pb-1">
+            <h1 className="truncate text-[32px] leading-tight font-semibold tracking-tight">{data.title || t("Your name")}</h1>
+            {data.tagline && <p className="text-[15px] text-[var(--pg-muted)]">{data.tagline}</p>}
           </div>
-        )}
+        </div>
+        {contacts.length > 0 && <div className="mx-auto mt-6 flex max-w-[1120px] flex-wrap gap-2 px-10">{contactLinks(true)}</div>}
+      </div>
 
-        {data.bio && <p className="mx-auto mt-3 max-w-md px-5 text-center text-[15px] leading-relaxed whitespace-pre-line">{data.bio}</p>}
+      {/* The rest: one column on a phone; on a computer the request form sits on the right and follows the scroll */}
+      <div className="mx-auto w-full max-w-[560px] pb-10 @4xl:mt-10 @4xl:grid @4xl:max-w-[1120px] @4xl:grid-cols-[minmax(0,1fr)_360px] @4xl:items-start @4xl:gap-12 @4xl:px-10">
+        <div className="flex flex-col">
+          {data.bio && (
+            <section className="mt-3 px-5 @4xl:mt-0 @4xl:px-0">
+              <h2 className="mb-3 hidden text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase @4xl:block">{t("About us")}</h2>
+              <p className="mx-auto max-w-md text-center text-[15px] leading-relaxed whitespace-pre-line @4xl:mx-0 @4xl:max-w-none @4xl:text-left @4xl:text-base">{data.bio}</p>
+            </section>
+          )}
 
-        {/* Request button and link buttons */}
-        {(data.requests || data.links.length > 0) && (
-          <div className="mt-6 flex flex-col gap-3 px-5">
-            {data.requests && (
-              <a href="#request" onClick={scrollToForm}
-                className={`flex min-h-14 items-center justify-center px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] bg-[var(--pg-accent)] text-[var(--pg-on-accent)] ${SHAPE[data.buttons]}`}>
-                {data.cta || t("Leave a request")}
-              </a>
-            )}
-            {data.links.map((l, i) => (
-              <a key={i} href={preview ? undefined : l.url} target="_blank" rel="noopener noreferrer"
-                className={`flex min-h-14 items-center justify-center border border-[var(--pg-border)] bg-[var(--pg-card)] px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] ${SHAPE[data.buttons]}`}>
-                {l.title}
-              </a>
-            ))}
-          </div>
-        )}
-
-        {/* Services */}
-        {data.services.length > 0 && (
-          <section className="mt-9 px-5">
-            <h2 className="mb-3 text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase">{t("Services")}</h2>
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--pg-border)] bg-[var(--pg-card)]">
-              {data.services.map((s, i) => (
-                <div key={i} className={`flex items-baseline justify-between gap-4 px-4 py-3.5 ${i ? "border-t border-[var(--pg-border)]" : ""}`}>
-                  <span className="text-[15px]">{s.name}</span>
-                  {s.price && <span className="shrink-0 text-sm font-medium tabular-nums">{s.price}</span>}
+          {/* Request button (phones only: computers show the form alongside) and link buttons */}
+          {(data.requests || data.links.length > 0) && (
+            <div className={`mt-6 flex flex-col gap-3 px-5 @4xl:px-0 ${data.links.length ? "" : "@4xl:hidden"} ${data.bio ? "@4xl:mt-9" : "@4xl:mt-0"}`}>
+              {data.requests && (
+                <a href="#request" onClick={scrollToForm}
+                  className={`flex min-h-14 items-center justify-center px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] bg-[var(--pg-accent)] text-[var(--pg-on-accent)] @4xl:hidden ${SHAPE[data.buttons]}`}>
+                  {data.cta || t("Leave a request")}
+                </a>
+              )}
+              {data.links.length > 0 && <h2 className="hidden text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase @4xl:block">{t("Links")}</h2>}
+              {data.links.length > 0 && (
+                <div className="flex flex-col gap-3 @4xl:grid @4xl:grid-cols-2">
+                  {data.links.map((l, i) => (
+                    <a key={i} href={preview ? undefined : l.url} target="_blank" rel="noopener noreferrer"
+                      className={`flex min-h-14 items-center justify-center border border-[var(--pg-border)] bg-[var(--pg-card)] px-5 text-center text-[15px] font-medium transition-transform hover:scale-[1.015] ${SHAPE[data.buttons]}`}>
+                      {l.title}
+                    </a>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          </section>
-        )}
+          )}
 
-        {/* Portfolio */}
-        {data.portfolio.length > 0 && (
-          <section className="mt-9 px-5">
-            <h2 className="mb-3 text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase">{t("Portfolio")}</h2>
-            <div className="grid grid-cols-3 gap-1.5">
-              {data.portfolio.map((src) => (
-                <button key={src} type="button" onClick={() => setZoom(src)} className="aspect-square overflow-hidden rounded-lg bg-[var(--pg-card)]">
-                  <img src={src} alt="" loading="lazy" className="size-full object-cover transition-transform hover:scale-[1.03]" />
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+          {data.services.length > 0 && (
+            <section className="mt-9 px-5 @4xl:px-0">
+              <h2 className="mb-3 text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase">{t("Services")}</h2>
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--pg-border)] bg-[var(--pg-card)]">
+                {data.services.map((s, i) => (
+                  <div key={i} className={`flex items-baseline justify-between gap-4 px-4 py-3.5 @4xl:px-5 @4xl:py-4 ${i ? "border-t border-[var(--pg-border)]" : ""}`}>
+                    <span className="text-[15px]">{s.name}</span>
+                    {s.price && <span className="shrink-0 text-sm font-medium tabular-nums">{s.price}</span>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-        {/* Request */}
-        {data.requests && (
-          <section id={preview ? "pg-request-preview" : "pg-request"} className="mt-9 scroll-mt-4 px-5">
-            <RequestForm slug={slug} title={data.title} preview={preview} />
-          </section>
-        )}
+          {data.portfolio.length > 0 && (
+            <section className="mt-9 px-5 @4xl:px-0">
+              <h2 className="mb-3 text-xs font-medium tracking-wide text-[var(--pg-muted)] uppercase">{t("Portfolio")}</h2>
+              <div className="grid grid-cols-3 gap-1.5 @4xl:gap-3">
+                {data.portfolio.map((src) => (
+                  <button key={src} type="button" onClick={() => setZoom(src)} className="aspect-square overflow-hidden rounded-lg bg-[var(--pg-card)] @4xl:aspect-[4/3] @4xl:rounded-xl">
+                    <img src={src} alt="" loading="lazy" className="size-full object-cover transition-transform hover:scale-[1.03]" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
 
-        <a
-          href={preview ? undefined : "/?ref=page"}
-          className="mt-10 self-center text-xs text-[var(--pg-muted)] transition-colors hover:text-[var(--pg-text)]"
-        >
-          {t("Made with Nodly")}
-        </a>
+        <div className="flex flex-col @4xl:sticky @4xl:top-6">
+          {data.requests && (
+            <section id={preview ? "pg-request-preview" : "pg-request"} className="mt-9 scroll-mt-4 px-5 @4xl:mt-0 @4xl:px-0">
+              <RequestForm slug={slug} title={data.title} preview={preview} />
+            </section>
+          )}
+          <a
+            href={preview ? undefined : "/?ref=page"}
+            className="mt-10 self-center text-xs text-[var(--pg-muted)] transition-colors hover:text-[var(--pg-text)] @4xl:mt-6"
+          >
+            {t("Made with Nodly")}
+          </a>
+        </div>
       </div>
 
       {zoom && (

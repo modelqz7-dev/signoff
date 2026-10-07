@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageView, CONTACT_ICON, CONTACT_LABEL } from "@/components/page/PageView"
+import { DevicePreview } from "@/components/page/DevicePreview"
 import { AvatarPlaceholder, Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { uploadPublicAsset } from "@/lib/files"
@@ -454,19 +455,16 @@ export default function PageEditor() {
           </div>
         </main>
 
-        {/* Phone preview */}
-        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-72px)] lg:items-center lg:justify-center">
-          <div className="flex items-center gap-4">
-            <div className="h-[min(735px,calc(100dvh-140px))] w-[340px] overflow-hidden rounded-[40px] bg-background shadow-[0_8px_40px_rgba(0,0,0,0.12)] ring-1 ring-foreground/10">
-              <div className="h-full overflow-y-auto">{preview}</div>
+        {/* Live preview: a phone or a computer */}
+        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-72px)] lg:px-6">
+          <DevicePreview path={pagePath(slug.slug)} side={published && savedSlug && (
+            <div className="flex flex-col gap-1 rounded-full bg-muted p-1">
+              <IconBtn label={t("Copy Link")} onClick={copyLink}>{copied ? <CheckIcon /> : <CopyIcon />}</IconBtn>
+              <IconBtn label={t("Open page")} onClick={() => window.open(pagePath(savedSlug), "_blank", "noopener")}><ExternalLinkIcon /></IconBtn>
             </div>
-            {published && savedSlug && (
-              <div className="flex flex-col gap-1 rounded-full bg-muted p-1">
-                <IconBtn label={t("Copy Link")} onClick={copyLink}>{copied ? <CheckIcon /> : <CopyIcon />}</IconBtn>
-                <IconBtn label={t("Open page")} onClick={() => window.open(pagePath(savedSlug), "_blank", "noopener")}><ExternalLinkIcon /></IconBtn>
-              </div>
-            )}
-          </div>
+          )}>
+            {preview}
+          </DevicePreview>
         </aside>
       </div>
 
