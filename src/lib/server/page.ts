@@ -18,7 +18,7 @@ export async function loadPublicPage(rawSlug: string): Promise<PublicPage | null
 /** The newest reviews clients left on a workshop's page (none if the table isn't set up yet). */
 export async function loadPageReviews(shopId: string): Promise<PageReview[]> {
   const { data, error } = await adminClient()
-    .from("page_reviews").select("id, name, rating, text, created_at")
+    .from("page_reviews").select("*")
     .eq("shop_id", shopId).order("created_at", { ascending: false }).limit(100)
   if (error) { console.error("Reviews load error:", error); return [] }
   return (data ?? []) as PageReview[]

@@ -18,14 +18,14 @@ import { uploadPublicAsset } from "@/lib/files"
 import { shrinkImage } from "@/lib/image"
 import { useT } from "@/lib/i18n"
 import {
-  ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_LINKS, MAX_PROJECT_PHOTOS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
+  ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_CREDENTIALS, MAX_LINKS, MAX_PROJECT_PHOTOS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
   normalizeSlug, pagePath, slugProblem, suggestSlug, type ButtonShape, type PageBusiness, type PageContacts, type PageData,
   type PageProject, type PageReview,
 } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 
 type Section = "content" | "header" | "design" | "settings"
-type ContentTab = "projects" | "services" | "reviews" | "links"
+type ContentTab = "projects" | "services" | "reviews" | "credentials" | "links"
 type SlugState = { slug: string; status: "checking" | "ok" | "taken" | "invalid"; problem?: string }
 type SaveState = "saved" | "dirty" | "saving" | "error"
 
@@ -77,7 +77,7 @@ export default function PageEditor() {
       if (!shopData) return
       setShop(shopData)
       // Reviews clients left (a separate table; missing until pages.sql is run again — then just none).
-      supabase.from("page_reviews").select("id, name, rating, text, created_at").eq("shop_id", shopData.id)
+      supabase.from("page_reviews").select("*").eq("shop_id", shopData.id)
         .order("created_at", { ascending: false }).limit(100)
         .then(({ data: rows }) => setReviews((rows as PageReview[] | null) ?? []))
       const { data: row, error } = await supabase.from("shop_pages").select("*").eq("shop_id", shopData.id).maybeSingle()
@@ -210,7 +210,7 @@ export default function PageEditor() {
   }
 
   const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview />
-  const move = <K extends "links" | "services" | "projects">(key: K, i: number, d: -1 | 1) => {
+  const move = <K extends "links" | "services" | "projects" | "credentials">(key: K, i: number, d: -1 | 1) => {
     const list = [...data[key]] as PageData[K]
     const j = i + d
     if (j < 0 || j >= list.length) return
@@ -332,7 +332,7 @@ export default function PageEditor() {
                 </div>
 
                 <div className="flex gap-5 border-b border-border text-sm">
-                  {([["projects", t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["links", t("Links")]] as [ContentTab, string][]).map(([id, label]) => (
+                  {([["projects", t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][]).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
                       className={`-mb-px border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
                       {label}
@@ -413,6 +413,33 @@ export default function PageEditor() {
                   </>
                 )}
 
+                {tab === "credentials" && (
+                  <>
+                    <AddButton disabled={data.credentials.length >= MAX_CREDENTIALS} label={t("Add award or certificate")}
+                      onClick={() => update({ credentials: [...data.credentials, { title: "", image_url: null }] })} />
+                    {data.credentials.length === 0 && <Empty title={t("No credentials yet")} text={t("Awards, certificates, partner badges (Blum, Egger…), contest wins: they build trust.")} />}
+                    {data.credentials.map((c, i) => (
+                      <ItemCard key={i} onUp={() => move("credentials", i, -1)} onDown={() => move("credentials", i, 1)} first={i === 0} last={i === data.credentials.length - 1}
+                        onRemove={() => update({ credentials: data.credentials.filter((_, j) => j !== i) })}>
+                        <div className="flex items-center gap-3">
+                          <ImagePick label={t("Badge")} src={c.image_url} busy={uploading === `credential-${i}`}
+                            onPick={async (f) => {
+                              if (!f) return
+                              setUploading(`credential-${i}`)
+                              const url = await uploadImage(f, "credential", 600)
+                              if (url) update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, image_url: url } : x)) })
+                              setUploading(null)
+                            }}
+                            onClear={() => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, image_url: null } : x)) })} />
+                          <Input aria-label={t("Title")} placeholder={t("Official Blum partner")} value={c.title} maxLength={80}
+                            className="h-9 flex-1 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0"
+                            onChange={(e) => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} />
+                        </div>
+                      </ItemCard>
+                    ))}
+                  </>
+                )}
+
                 {tab === "reviews" && (
                   <>
                     <p className="text-sm text-muted-foreground">{t("Clients write reviews themselves on your page and they show at once. You can delete any of them.")}</p>
@@ -439,6 +466,7 @@ export default function PageEditor() {
                   <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => upload(f, "banner")} onClear={() => update({ banner_url: null })} />
                 </div>
                 <Field label={t("Name")}><Input value={data.title} maxLength={80} onChange={(e) => update({ title: e.target.value })} /></Field>
+                <Field label={t("Category")}><Input value={data.category} placeholder={t("Kitchens & wardrobes to measure")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
                 <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t("Custom kitchens · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
                 <Field label={t("About")}><Textarea value={data.bio} placeholder={t("What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
               </Block>
@@ -447,13 +475,18 @@ export default function PageEditor() {
             {section === "header" && (
               <Block title={t("Business")} hint={t("Only filled ones show on the page.")}>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {BUSINESS_KEYS.map((key) => (
+                  {BUSINESS_KEYS.filter((key) => key !== "areas").map((key) => (
                     <Field key={key} label={t(BUSINESS_FIELDS[key].label)}>
-                      <Input value={data.business[key]} placeholder={t(BUSINESS_PLACEHOLDER[key])} maxLength={key === "areas" ? 300 : 160}
+                      <Input value={data.business[key]} placeholder={t(BUSINESS_PLACEHOLDER[key])} maxLength={160}
                         onChange={(e) => update({ business: { ...data.business, [key]: e.target.value } })} />
                     </Field>
                   ))}
                 </div>
+                <Field label={t("Areas we serve")}>
+                  <Textarea value={data.business.areas} placeholder={t(BUSINESS_PLACEHOLDER.areas)} maxLength={300} className="min-h-16"
+                    onChange={(e) => update({ business: { ...data.business, areas: e.target.value } })} />
+                </Field>
+                <p className="-mt-1 text-xs text-muted-foreground">{t("Separate cities and districts with commas: they show as a list.")}</p>
               </Block>
             )}
 

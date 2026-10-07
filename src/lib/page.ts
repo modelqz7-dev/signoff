@@ -19,8 +19,18 @@ export type PageLink = { title: string; url: string }
 /** A finished job: a few photos with a name, the city and a short story, like a Houzz project. */
 export type PageProject = { title: string; city: string; description: string; photos: string[] }
 
-/** A review a client left on the page (its own table: clients write them, the workshop can delete them). */
-export type PageReview = { id: string; name: string; rating: number; text: string; created_at: string }
+/**
+ * A review a client left on the page (its own table: clients write them, the workshop can delete them).
+ * Besides the overall stars, optional 1–5 marks for quality of work, communication and value.
+ */
+export type PageReview = {
+  id: string; name: string; rating: number; text: string; created_at: string
+  quality?: number | null; communication?: number | null; value?: number | null
+}
+export const REVIEW_ASPECTS = ["quality", "communication", "value"] as const
+
+/** An award, certificate or partner badge (e.g. "Blum partner"), with an optional picture. */
+export type PageCredential = { title: string; image_url: string | null }
 
 /** Facts a furniture workshop's clients ask about first; only filled ones show. */
 export const BUSINESS_KEYS = ["since", "team", "address", "areas", "measure", "terms", "payment", "warranty"] as const
@@ -36,6 +46,8 @@ export type ButtonShape = "pill" | "rounded" | "square"
 export type PageData = {
   title: string
   tagline: string
+  /** What the workshop is, e.g. "Kitchens & wardrobes" (under the name and at the end of About). */
+  category: string
   bio: string
   avatar_url: string | null
   banner_url: string | null
@@ -47,6 +59,7 @@ export type PageData = {
   projects: PageProject[]
   business: PageBusiness
   hours: PageHours
+  credentials: PageCredential[]
   /** Whether visitors can leave a request from the page. */
   requests: boolean
   cta: string
@@ -64,6 +77,12 @@ export const MAX_LINKS = 20
 export const MAX_SERVICES = 12
 export const MAX_PROJECTS = 12
 export const MAX_PROJECT_PHOTOS = 12
+export const MAX_CREDENTIALS = 12
+
+/** "Dnipro, Samar; Pidhorodne" → ["Dnipro", "Samar", "Pidhorodne"]. */
+export function splitList(value: string) {
+  return value.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean)
+}
 
 /** Addresses taken by the site itself. */
 const RESERVED = new Set([
@@ -139,6 +158,10 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     .slice(0, MAX_PROJECTS)
   const businessSrc = (src.business && typeof src.business === "object" ? src.business : {}) as Record<string, unknown>
   const business = Object.fromEntries(BUSINESS_KEYS.map((k) => [k, text(businessSrc[k], k === "areas" ? 300 : 160)])) as PageBusiness
+  const credentials = (Array.isArray(src.credentials) ? src.credentials : [])
+    .map((c) => ({ title: text((c as PageCredential)?.title, 80), image_url: url((c as PageCredential)?.image_url) }))
+    .filter((c) => c.title || c.image_url)
+    .slice(0, MAX_CREDENTIALS)
   const time = (v: unknown) => (typeof v === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : null)
   const hoursSrc = Array.isArray(src.hours) ? src.hours : []
   const hours: PageHours = Array.from({ length: 7 }, (_, i) => {
@@ -150,6 +173,7 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
   return {
     title: text(src.title, 80) || fallbackTitle,
     tagline: text(src.tagline, 120),
+    category: text(src.category, 80),
     bio: text(src.bio, 2000),
     avatar_url: url(src.avatar_url),
     banner_url: url(src.banner_url),
@@ -161,6 +185,7 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     projects,
     business,
     hours,
+    credentials,
     requests: src.requests !== false,
     cta: text(src.cta, 40),
     buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",

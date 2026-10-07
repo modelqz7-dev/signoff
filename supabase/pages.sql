@@ -90,6 +90,11 @@ create table if not exists public.page_reviews (
   created_at timestamptz not null default now()
 );
 
+-- Optional marks per aspect, like on Houzz: quality of work, communication, value.
+alter table public.page_reviews add column if not exists quality smallint check (quality between 1 and 5);
+alter table public.page_reviews add column if not exists communication smallint check (communication between 1 and 5);
+alter table public.page_reviews add column if not exists value smallint check (value between 1 and 5);
+
 create index if not exists page_reviews_shop_idx on public.page_reviews (shop_id, created_at desc);
 
 alter table public.page_reviews enable row level security;
