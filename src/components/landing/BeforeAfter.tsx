@@ -4,28 +4,28 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { T } from "@/lib/i18n"
 
-// The client's three comments on version 1 of the website, one tab each, with the same
+// The client's three comments on version 1 of the post, one tab each, with the same
 // spot on version 1 and version 2 side by side, like the before / after view in the portal.
 // The two renders really differ in exactly these three things.
 
 const CHANGES = [
   {
-    tab: "Headline",
-    ask: "Shorter headline, please, it's too long",
-    reply: "Cut it to four words and made it bigger.",
-    x: 26, y: 28, zoom: 2,
+    tab: "Logo",
+    ask: "Bigger logo, it gets lost",
+    reply: "Made it twice as big, white on the brand colour.",
+    x: 15, y: 17, zoom: 3,
   },
   {
-    tab: "Button",
-    ask: "Button in our brand colour, please",
-    reply: "Done: terracotta, like on your logo.",
-    x: 22, y: 60, zoom: 2.8,
+    tab: "Text",
+    ask: "Less text on the picture, please",
+    reply: "Kept just the offer: −20% on latte.",
+    x: 30, y: 33, zoom: 2,
   },
   {
-    tab: "Photo",
-    ask: "A brighter photo, closer to our menu",
-    reply: "Swapped for the latte shot from your photo shoot.",
-    x: 76, y: 43, zoom: 1.7,
+    tab: "Background",
+    ask: "Brand colour instead of grey",
+    reply: "Done: our terracotta, like on the logo.",
+    x: 28, y: 72, zoom: 2.2,
   },
 ] as const
 
@@ -113,11 +113,11 @@ export function BeforeAfter({ t }: { t: T }) {
       <div id="change-panel" role="tabpanel" aria-labelledby={`change-tab-${index}`} className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-end">
         <div className="grid grid-cols-2 gap-3">
           <figure className="flex flex-col gap-2">
-            <Spot src="/landing/bloom-site.webp" alt={t("Version 1 of the website")} x={change.x} y={change.y} zoom={change.zoom} />
+            <Spot src="/landing/bloom-post.webp" alt={t("Version 1 of the post")} x={change.x} y={change.y} zoom={change.zoom} />
             <figcaption className="text-xs text-muted-foreground">{t("Version 1, what Anna commented on")}</figcaption>
           </figure>
           <figure className="flex flex-col gap-2">
-            <Spot src="/landing/bloom-site-v2.webp" alt={t("Version 2 of the website")} x={change.x} y={change.y} zoom={change.zoom} />
+            <Spot src="/landing/bloom-post-v2.webp" alt={t("Version 2 of the post")} x={change.x} y={change.y} zoom={change.zoom} />
             <figcaption className="text-xs text-foreground">{t("Version 2, what she got")}</figcaption>
           </figure>
         </div>
