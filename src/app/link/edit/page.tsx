@@ -212,6 +212,7 @@ export default function PageEditor() {
   // Tapping an empty section in the preview opens the part of the editor where it's filled in.
   const editTarget = (target: PageEditTarget) => {
     if (target === "projects" || target === "services" || target === "credentials") { setSection("content"); setTab(target) }
+    else if (target === "contacts") { setSection("content"); setContactModal("pick") }
     else setSection("header")
     setPreviewOpen(false)
   }
