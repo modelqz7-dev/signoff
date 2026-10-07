@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
-  BanknoteIcon, CalendarIcon, ChevronDownIcon, ClockIcon, ExternalLinkIcon, GlobeIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
-  ImagesIcon, MailIcon, MapIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, RulerIcon, SendIcon, Share2Icon, ShieldCheckIcon,
+  AlignLeftIcon, AwardIcon, BanknoteIcon, CalendarIcon, ChevronDownIcon, ClockIcon, ExternalLinkIcon, GlobeIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
+  ImagesIcon, ListChecksIcon, MailIcon, MapIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, RulerIcon, SendIcon, Share2Icon, ShieldCheckIcon,
   StarIcon, UsersIcon, XIcon,
 } from "lucide-react"
 import { useT } from "@/lib/i18n"
@@ -135,14 +135,20 @@ function Section({ id, title, aside, children }: { id: string; title: string; as
 
 /** A 3-column list that shows the first 9 and a "Show N more" toggle, like Houzz's Services and Areas. */
 /** Where an empty section is filled in, for the editor's preview. */
-export type PageEditTarget = "about" | "projects" | "business" | "services" | "areas" | "credentials"
+export type PageEditTarget = "about" | "projects" | "business" | "contacts" | "services" | "areas" | "credentials"
 
-/** An empty section in the editor's preview: what goes here, and a tap opens that part of the editor. */
-function Placeholder({ text, onClick }: { text: string; onClick?: () => void }) {
+/** An empty section in the editor's preview, like the dashboard's empty states: what goes here, and "Add". */
+function Placeholder({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick?: () => void }) {
+  const { t } = useT()
   return (
     <button type="button" onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[var(--pg-border)] px-4 py-6 text-sm text-[var(--pg-muted)] transition-colors hover:border-[var(--pg-text)] hover:text-[var(--pg-text)]">
-      <span className="text-base leading-none">+</span>{text}
+      className="group flex w-full items-center gap-4 rounded-md bg-[var(--pg-field)] px-4 py-4 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--pg-field),var(--pg-text)_4%)]">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--pg-bg)] text-[var(--pg-muted)] ring-1 ring-[var(--pg-border)] [&_svg]:size-[18px]">{icon}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-sm font-medium">{title}</span>
+        <span className="text-xs text-[var(--pg-muted)]">{hint}</span>
+      </span>
+      <span className="flex h-8 shrink-0 items-center rounded-md border border-[var(--pg-border)] bg-[var(--pg-bg)] px-3 text-xs font-medium transition-colors group-hover:border-[var(--pg-text)]">{t("Add")}</span>
     </button>
   )
 }
@@ -166,11 +172,14 @@ function MoreList({ items }: { items: React.ReactNode[] }) {
   )
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({ label, children, onEmpty }: { label: string; children?: React.ReactNode; onEmpty?: () => void }) {
+  const { t } = useT()
   return (
     <div className="min-w-0">
       <dt className="text-sm font-semibold">{label}</dt>
-      <dd className="mt-1 text-sm break-words text-[var(--pg-text)]/85">{children}</dd>
+      <dd className="mt-1 text-sm break-words text-[var(--pg-text)]/85">
+        {children ?? <button type="button" onClick={onEmpty} className="text-[var(--pg-muted)] hover:text-[var(--pg-text)] hover:underline">{t("Not specified")}</button>}
+      </dd>
     </div>
   )
 }
@@ -202,7 +211,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
   const contactLink = (key: keyof PageContacts) => (data.contacts[key] ? pageContactHref(key, data.contacts[key]!) : null)
   const socials = SOCIAL_KEYS.filter((k) => contactLink(k))
-  const details = BUSINESS_DETAIL_KEYS.filter((k) => data.business[k])
   const areas = splitList(data.business.areas)
   const allReviews = [...added, ...reviews]
   const rating = average(allReviews.map((r) => r.rating))
@@ -307,7 +315,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
             </div>
 
             {/* Section tabs, pinned while scrolling; the current one is underlined */}
-            <nav className="sticky top-0 z-10 mt-5 flex gap-6 overflow-x-auto border-b border-[var(--pg-border)] bg-[var(--pg-bg)] px-5 text-sm [scrollbar-width:none] @3xl:px-0">
+            <nav className="sticky top-0 z-10 mt-5 flex gap-6 overflow-x-auto overflow-y-hidden border-b border-[var(--pg-border)] bg-[var(--pg-bg)] px-5 text-sm [scrollbar-width:none] @3xl:px-0">
               {tabs.map(([, id, label]) => (
                 <button key={id} type="button" onClick={() => go(id)}
                   className={`-mb-px shrink-0 border-b-2 py-3 font-medium whitespace-nowrap transition-colors ${
@@ -320,7 +328,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
-                {!data.bio && !data.category && <Placeholder text={t("Tell clients about your workshop")} onClick={() => onEdit?.("about")} />}
+                {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about your workshop")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
                 {data.bio && (
                   <p className={`text-sm leading-relaxed whitespace-pre-line ${longAbout && !moreAbout ? "line-clamp-4" : ""}`}>{data.bio}</p>
                 )}
@@ -348,7 +356,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.projects.length > 0 || preview) && (
               <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
-                {data.projects.length === 0 && <Placeholder text={t("Add your first project: photos of a finished kitchen or wardrobe")} onClick={() => onEdit?.("projects")} />}
+                {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Photos of a finished kitchen or wardrobe, the city and a couple of words.")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
                     <button key={i} type="button" onClick={() => setProject(i)}
@@ -374,44 +382,53 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
             )}
 
             <Section id={sid("business")} title={t("Business details")}>
+              {/* Every field in a fixed order; on the live page only filled ones, in the preview all of them */}
               <dl className="grid gap-x-10 gap-y-5 @md:grid-cols-2">
                 <Detail label={t("Business name")}>{data.title || t("Your name")}</Detail>
-                {data.contacts.phone && contactLink("phone") && (
-                  <Detail label={t("Phone number")}><a href={preview ? undefined : contactLink("phone")!} className="hover:underline">{data.contacts.phone}</a></Detail>
-                )}
-                {socials.length > 0 && (
-                  <Detail label={t("Socials")}>
-                    <span className="flex gap-2.5 [&_svg]:size-[18px]">
-                      {socials.map((k) => (
-                        <a key={k} href={preview ? undefined : contactLink(k)!} target="_blank" rel="noopener noreferrer" aria-label={CONTACT_LABEL[k]} title={CONTACT_LABEL[k]} className="hover:opacity-70">
-                          {CONTACT_ICON[k]}
-                        </a>
-                      ))}
-                    </span>
+                {(contactLink("phone") || preview) && (
+                  <Detail label={t("Phone number")} onEmpty={() => onEdit?.("contacts")}>
+                    {contactLink("phone") ? <a href={preview ? undefined : contactLink("phone")!} className="hover:underline">{data.contacts.phone}</a> : undefined}
                   </Detail>
                 )}
-                {data.contacts.website && contactLink("website") && (
-                  <Detail label={t("Website")}>
-                    <a href={preview ? undefined : contactLink("website")!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:underline">
-                      {data.contacts.website.replace(/^https?:\/\//, "")}<ExternalLinkIcon className="size-3.5" />
-                    </a>
+                {(socials.length > 0 || preview) && (
+                  <Detail label={t("Socials")} onEmpty={() => onEdit?.("contacts")}>
+                    {socials.length > 0 ? (
+                      <span className="flex gap-2.5 [&_svg]:size-[18px]">
+                        {socials.map((k) => (
+                          <a key={k} href={preview ? undefined : contactLink(k)!} target="_blank" rel="noopener noreferrer" aria-label={CONTACT_LABEL[k]} title={CONTACT_LABEL[k]} className="hover:opacity-70">
+                            {CONTACT_ICON[k]}
+                          </a>
+                        ))}
+                      </span>
+                    ) : undefined}
                   </Detail>
                 )}
-                {data.business.address && <Detail label={t("Address")}><span className="whitespace-pre-line">{data.business.address}</span></Detail>}
-                {details.map((k) => <Detail key={k} label={t(BUSINESS_FIELDS[k].label)}>{data.business[k]}</Detail>)}
-                {preview && !details.length && !data.business.address && !hasHours(data.hours) && (
-                  <div className="@md:col-span-2"><Placeholder text={t("Add the address, working hours, warranty, lead times…")} onClick={() => onEdit?.("business")} /></div>
+                {(contactLink("website") || preview) && (
+                  <Detail label={t("Website")} onEmpty={() => onEdit?.("contacts")}>
+                    {contactLink("website") ? (
+                      <a href={preview ? undefined : contactLink("website")!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:underline">
+                        {data.contacts.website!.replace(/^https?:\/\//, "")}<ExternalLinkIcon className="size-3.5" />
+                      </a>
+                    ) : undefined}
+                  </Detail>
                 )}
-                {hasHours(data.hours) && (
-                  <Detail label={t("Working hours")}>
-                    <ul className="flex max-w-60 flex-col gap-1">
-                      {data.hours.map((d, i) => (
-                        <li key={i} className={`flex justify-between gap-4 ${i === today ? "font-semibold" : ""}`}>
-                          <span className="capitalize">{days[i]}</span>
-                          <span className={d ? "tabular-nums" : "text-[var(--pg-muted)]"}>{d ? `${d.from}–${d.to}` : t("Day off")}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {(["address", ...BUSINESS_DETAIL_KEYS] as const).filter((k) => data.business[k] || preview).map((k) => (
+                  <Detail key={k} label={k === "address" ? t("Address") : t(BUSINESS_FIELDS[k].label)} onEmpty={() => onEdit?.("business")}>
+                    {data.business[k] ? <span className="whitespace-pre-line">{data.business[k]}</span> : undefined}
+                  </Detail>
+                ))}
+                {(hasHours(data.hours) || preview) && (
+                  <Detail label={t("Working hours")} onEmpty={() => onEdit?.("business")}>
+                    {hasHours(data.hours) ? (
+                      <ul className="flex max-w-60 flex-col gap-1">
+                        {data.hours.map((d, i) => (
+                          <li key={i} className={`flex justify-between gap-4 ${i === today ? "font-semibold" : ""}`}>
+                            <span className="capitalize">{days[i]}</span>
+                            <span className={d ? "tabular-nums" : "text-[var(--pg-muted)]"}>{d ? `${d.from}–${d.to}` : t("Day off")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : undefined}
                   </Detail>
                 )}
               </dl>
@@ -419,7 +436,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(data.services.length > 0 || preview) && (
               <Section id={sid("services")} title={t("Services provided")}>
-                {data.services.length === 0 && <Placeholder text={t("List what you make and from what price")} onClick={() => onEdit?.("services")} />}
+                {data.services.length === 0 && <Placeholder icon={<ListChecksIcon />} title={t("Add services and prices")} hint={t("What you make and from what price.")} onClick={() => onEdit?.("services")} />}
                 <MoreList items={data.services.map((s, i) => (
                   <span key={i} className="flex flex-col">
                     <span>{s.name}{s.price && <span className="text-[var(--pg-muted)]"> · {s.price}</span>}</span>
@@ -431,14 +448,14 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
             {(areas.length > 0 || preview) && (
               <Section id={sid("areas")} title={t("Areas served")}>
-                {areas.length === 0 && <Placeholder text={t("Add the cities and districts you work in")} onClick={() => onEdit?.("areas")} />}
+                {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add the areas you serve")} hint={t("Cities and districts you travel to for measuring and installation.")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
 
             {(data.credentials.length > 0 || preview) && (
               <Section id={sid("credentials")} title={t("Credentials")}>
-                {data.credentials.length === 0 && <Placeholder text={t("Add awards, certificates or partner badges")} onClick={() => onEdit?.("credentials")} />}
+                {data.credentials.length === 0 && <Placeholder icon={<AwardIcon />} title={t("Add awards and certificates")} hint={t("Partner badges (Blum, Egger), certificates, contest wins.")} onClick={() => onEdit?.("credentials")} />}
                 <div className="flex flex-wrap gap-5">
                   {data.credentials.map((c, i) => (
                     <div key={i} className="flex w-28 flex-col gap-2">
