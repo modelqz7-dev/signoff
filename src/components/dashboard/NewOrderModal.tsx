@@ -156,7 +156,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
           <Label htmlFor="order-title">{t("Order name *")}</Label>
           <Input
             id="order-title"
-            placeholder={t("e.g. Instagram posts, week 2")}
+            placeholder={t("e.g. Logo, round 2")}
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             required

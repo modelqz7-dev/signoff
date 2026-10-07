@@ -12,8 +12,8 @@ export type Profile = {
 }
 
 /** What the account does. Nodly is built for these today; the rest are coming soon. */
-export const ACTIVITIES = ["SMM specialist", "SMM agency", "Graphic designer"] as const
-export const COMING_SOON_ACTIVITIES = ["Targetologist", "Copywriter", "Video editor", "Photographer", "Developer", "Other"] as const
+export const ACTIVITIES = ["Graphic designer", "Brand designer", "Design studio"] as const
+export const COMING_SOON_ACTIVITIES = ["SMM specialist", "SMM agency", "Copywriter", "Photographer", "Developer", "Other"] as const
 
 /** The saved activity if it's one we still offer; older ones read as not set. */
 export function currentActivity(activity: string) {
