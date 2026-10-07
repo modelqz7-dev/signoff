@@ -46,7 +46,7 @@ export function DevicePreview({ children, path, side }: { children: React.ReactN
       <div className="flex items-center gap-4">
         <div
           style={{ width: computer ? computerWidth : PHONE_WIDTH, height }}
-          className={`overflow-hidden bg-background shadow-[0_8px_40px_rgba(0,0,0,0.12)] ring-1 ring-foreground/10 transition-[width,border-radius] duration-300 ease-out motion-reduce:transition-none ${computer ? "rounded-2xl" : "rounded-[40px]"}`}
+          className={`overflow-hidden bg-background shadow-[0_8px_40px_rgba(0,0,0,0.12)] [transform:translateZ(0)] ring-1 ring-foreground/10 transition-[width,border-radius] duration-300 ease-out motion-reduce:transition-none ${computer ? "rounded-2xl" : "rounded-[40px]"}`}
         >
           {computer ? (
             <div className="flex h-full flex-col">
@@ -60,11 +60,9 @@ export function DevicePreview({ children, path, side }: { children: React.ReactN
                 <span className="w-[42px]" />
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
-                <div
-                  style={{ width: SITE_WIDTH, height: (height - BAR_HEIGHT) / scale, transform: `scale(${scale})`, transformOrigin: "0 0" }}
-                  className="overflow-y-auto"
-                >
-                  {children}
+                {/* Scaled (so the page's own pop-ups stay inside this window), and scrolls inside */}
+                <div style={{ width: SITE_WIDTH, height: (height - BAR_HEIGHT) / scale, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
+                  <div className="h-full overflow-y-auto">{children}</div>
                 </div>
               </div>
             </div>

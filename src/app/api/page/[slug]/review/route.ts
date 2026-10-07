@@ -1,6 +1,7 @@
 import { adminClient } from "@/lib/server/notify"
 import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
+import { REVIEW_ASPECTS } from "@/lib/page"
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -18,16 +19,22 @@ export async function POST(request: Request, { params }: Params) {
 
   const name = text(body.name, 60)
   const review = text(body.text, 1000)
-  const rating = Math.round(Number(body.rating))
-  if (!name || review.length < 3 || !(rating >= 1 && rating <= 5)) return Response.json({ error: "invalid" }, { status: 400 })
+  const mark = (v: unknown) => {
+    const n = Math.round(Number(v))
+    return n >= 1 && n <= 5 ? n : null
+  }
+  const rating = mark(body.rating)
+  if (!name || review.length < 3 || !rating) return Response.json({ error: "invalid" }, { status: 400 })
+  // Optional marks per aspect; only sent when the client set them.
+  const aspects = Object.fromEntries(REVIEW_ASPECTS.map((k) => [k, mark(body[k])]).filter(([, v]) => v))
 
   const db = adminClient()
   const limited = await overLimit(db, `review:${clientIp(request)}:${page.shopId}`, 3, 60 * 60_000)
   if (limited) return limited
 
   const { data, error } = await db.from("page_reviews")
-    .insert({ shop_id: page.shopId, name, rating, text: review })
-    .select("id, name, rating, text, created_at").single()
+    .insert({ shop_id: page.shopId, name, rating, text: review, ...aspects })
+    .select("*").single()
   if (error) {
     console.error("Review save error:", error)
     return Response.json({ error: "failed" }, { status: 500 })
