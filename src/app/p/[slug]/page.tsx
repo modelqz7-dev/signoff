@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { PageView } from "@/components/page/PageView"
-import { loadPublicPage } from "@/lib/server/page"
+import { loadPageReviews, loadPublicPage } from "@/lib/server/page"
 import { adminClient } from "@/lib/server/notify"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -32,9 +32,10 @@ export default async function PublicPage({ params }: Props) {
   if (!/bot|crawl|spider|preview|facebookexternalhit|whatsapp|telegram|slack|discord/i.test(agent)) {
     await adminClient().rpc("page_view_hit", { p_shop: page.shopId }).then(() => {}, () => {})
   }
+  const reviews = await loadPageReviews(page.shopId)
   return (
     <main className="min-h-dvh">
-      <PageView data={page.data} slug={page.slug} />
+      <PageView data={page.data} slug={page.slug} reviews={reviews} />
     </main>
   )
 }
