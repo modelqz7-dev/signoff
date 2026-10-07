@@ -11,6 +11,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { AvatarPlaceholder } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
+import { modeMain } from "@/lib/mode-transition"
 import { cleanPage, pagePath, suggestSlug, type PageData } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 
@@ -86,7 +87,7 @@ export default function MyPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar open={sidebarOpen} activePage="link" />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div {...modeMain("page")} className="flex min-w-0 flex-1 flex-col">
         {/* On a computer the page greets you itself, like the dashboard; phones keep the bar for the menu. */}
         <div className="lg:hidden">
           <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />

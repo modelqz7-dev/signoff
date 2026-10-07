@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
   ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, QrCodeIcon, XIcon,
@@ -16,6 +17,7 @@ import { usePlanUsage } from "@/lib/use-plan"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
+import { switchMode } from "@/lib/mode-transition"
 
 type SidebarProps = {
   open: boolean
@@ -70,7 +72,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
         pointerEvents: open ? "auto" : "none",
       }}
     >
-      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
+      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} slides />
     </aside>
 
     {/* Phones and tablets */}
@@ -100,9 +102,11 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   )
 }
 
-function SidebarContent({ activePage, panel, onPanel, beta }: {
+function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   activePage: string
   beta: boolean
+  /** The computer sidebar: its menu slides when switching between Orders and My page. */
+  slides?: boolean
   panel: PanelId | null
   onPanel: (id: PanelId) => void
 }) {
@@ -112,8 +116,9 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
   const mode = useMode(activePage)
   const [soon, setSoon] = useState<SoonFeature | null>(null)
   const page = usePageSetup(mode === "page")
+  const router = useRouter()
   return (
-    <>
+    <div className="flex flex-1 flex-col" style={slides ? { viewTransitionName: "mode-side" } : undefined}>
       <ModeSwitcher mode={mode} beta={beta} onSoon={() => setSoon("page")} />
 
       {/* A touch larger than the landing page's copy: 15px labels, 18px icons. */}
@@ -139,7 +144,8 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
             {beta ? (
               <>
                 <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
-                <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
+                <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link"
+                  onClick={(e) => switchMode(e, router.push, "/link", "page")} />
               </>
             ) : (
               <>
@@ -173,7 +179,7 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
         ? <SetupChecklist steps={page.steps} done={page.done} />
         : <PlanCard onOpen={() => setPanel("billing")} />}
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
-    </>
+    </div>
   )
 }
 
@@ -204,6 +210,7 @@ function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoo
   const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const router = useRouter()
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
@@ -229,7 +236,11 @@ function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoo
         <div role="menu" className="absolute inset-x-3 top-[60px] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
           {options.map((o) => (
             <Link key={o.id} href={o.href} role="menuitem"
-              onClick={(e) => { setOpen(false); if (o.id === "page" && !beta) { e.preventDefault(); onSoon() } }}
+              onClick={(e) => {
+                setOpen(false)
+                if (o.id === "page" && !beta) { e.preventDefault(); onSoon(); return }
+                if (o.id !== mode) switchMode(e, router.push, o.href, o.id)
+              }}
               className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-hover">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">{o.icon}</span>
               <span className="flex min-w-0 flex-1 flex-col">
