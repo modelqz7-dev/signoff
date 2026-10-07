@@ -257,7 +257,7 @@ function ProfilePanel() {
         <DialogHeader>
           <DialogTitle>{t("Coming soon")}</DialogTitle>
           <DialogDescription>
-            {t("Nodly is built for graphic designers and design studios right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
+            {t("Nodly is built for SMM specialists and agencies right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{t("Until then, everything works for you as it is: upload a design, send the link, get comments and approval.")}</p>

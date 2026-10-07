@@ -29,26 +29,26 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
     <section className="relative overflow-hidden">
       <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pt-16 pb-24 text-center sm:px-6 lg:pt-20">
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-          {t("For graphic designers and design studios")}
+          {t("For SMM specialists and agencies")}
         </p>
         <h1 className={cn(HEADLINE, "mt-5 max-w-5xl text-[40px] leading-[1.02] sm:text-6xl lg:text-[68px]")}>
-          <span className="block">{t("Where designers and clients")}</span>
+          <span className="block">{t("Where SMM specialists and clients")}</span>
           <span className="mt-1 flex flex-wrap items-center justify-center gap-x-[0.25em]">
             <span>{t("approve every")}</span>
             <RotatingWord
               hashtag
               words={[
-                { text: t("packaging"), color: "var(--primary)" },
-                { text: t("logo"), color: "var(--primary)" },
-                { text: t("poster"), color: "var(--primary)" },
+                { text: t("story"), color: "var(--primary)" },
+                { text: t("post"), color: "var(--primary)" },
+                { text: t("reel"), color: "var(--primary)" },
                 { text: t("banner"), color: "var(--primary)" },
-                { text: t("brand book"), color: "var(--primary)" },
+                { text: t("carousel"), color: "var(--primary)" },
               ]}
             />
           </span>
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-          {t("Send one link. The client marks changes right on the design and approves with a tap, and the approval stays on record.")}
+          {t("Send one link. The client marks changes right on the post and approves with a tap, and the approval stays on record.")}
         </p>
 
         {/* the key */}
@@ -73,7 +73,7 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
             {t(status.label)}
           </span>
           <span className="text-muted-foreground">
-            {approved ? t("Approved by Anna K. · just now") : t("Logo for “Bloom” · press the key to approve")}
+            {approved ? t("Approved by Anna K. · just now") : t("Posts for “Bloom” · press the key to approve")}
           </span>
         </div>
 
