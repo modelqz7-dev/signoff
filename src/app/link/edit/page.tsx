@@ -35,9 +35,9 @@ const CONTACT_PLACEHOLDER: Record<keyof PageContacts, string> = {
 }
 const QUICK_CONTACTS: (keyof PageContacts)[] = ["instagram", "telegram", "whatsapp", "email"]
 const BUSINESS_PLACEHOLDER: Record<keyof PageBusiness, string> = {
-  since: "2012", team: "3 people: designer, copywriter, developer", address: "Dnipro, 12 Naberezhna St",
+  since: "2012", team: "3 people: SMM manager, designer, videographer", address: "Dnipro, 12 Naberezhna St",
   areas: "Dnipro, Samar, Pidhorodne and up to 50 km around", measure: "Free 15-minute call",
-  terms: "Logo in 1 week, website in 3–4 weeks", payment: "50% upfront, the rest on delivery", warranty: "2 rounds of revisions included",
+  terms: "Content plan in 3 days, first posts in a week", payment: "Monthly, paid upfront", warranty: "2 rounds of revisions included",
 }
 
 /** Full-screen page editor: sections on the left, the content in the middle, the phone preview on the right. */
@@ -376,7 +376,7 @@ export default function PageEditor() {
                           <Input aria-label={t("Price")} placeholder={t("from $500")} value={s.price} maxLength={40} className="h-9 w-32 border-none px-0 text-right text-sm shadow-none focus-visible:ring-0"
                             onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)) })} />
                         </div>
-                        <Input aria-label={t("Description")} placeholder={t("What's included: concept, 2 rounds of revisions, source files…")} value={s.description} maxLength={300}
+                        <Input aria-label={t("Description")} placeholder={t("What's included: content plan, 12 posts, 20 stories, 2 rounds of revisions…")} value={s.description} maxLength={300}
                           className="h-8 border-none px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
                           onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)) })} />
                       </ItemCard>
@@ -392,7 +392,7 @@ export default function PageEditor() {
                     {data.projects.map((p, i) => (
                       <ItemCard key={i} onUp={() => move("projects", i, -1)} onDown={() => move("projects", i, 1)} first={i === 0} last={i === data.projects.length - 1}
                         onRemove={() => update({ projects: data.projects.filter((_, j) => j !== i) })}>
-                        <Input aria-label={t("Project name")} placeholder={t("Rebrand for a coffee shop")} value={p.title} maxLength={80}
+                        <Input aria-label={t("Project name")} placeholder={t("Instagram for a coffee shop: +2,000 followers")} value={p.title} maxLength={80}
                           className="h-9 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { title: e.target.value })} />
                         <Input aria-label={t("City")} placeholder={t("City")} value={p.city} maxLength={60}
                           className="h-8 border-none px-0 text-sm shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { city: e.target.value })} />
@@ -438,7 +438,7 @@ export default function PageEditor() {
                               setUploading(null)
                             }}
                             onClear={() => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, image_url: null } : x)) })} />
-                          <Input aria-label={t("Title")} placeholder={t("Featured on Behance")} value={c.title} maxLength={80}
+                          <Input aria-label={t("Title")} placeholder={t("Meta Blueprint certificate")} value={c.title} maxLength={80}
                             className="h-9 flex-1 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0"
                             onChange={(e) => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} />
                         </div>
@@ -473,8 +473,8 @@ export default function PageEditor() {
                   <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => upload(f, "banner")} onClear={() => update({ banner_url: null })} />
                 </div>
                 <Field label={t("Name")}><Input value={data.title} maxLength={80} onChange={(e) => update({ title: e.target.value })} /></Field>
-                <Field label={t("Category")}><Input value={data.category} placeholder={t("Branding, social media and websites")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
-                <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t("Design & SMM · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
+                <Field label={t("Category")}><Input value={data.category} placeholder={t("Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
+                <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t("SMM specialist · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
                 <Field label={t("About")}><Textarea value={data.bio} placeholder={t("What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
               </Block>
             )}
