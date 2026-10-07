@@ -11,10 +11,23 @@ export type PageContacts = {
   website?: string
 }
 
-export type PageService = { name: string; price: string }
+export type PageService = { name: string; price: string; description: string }
 
 /** A button on the page that opens any link (a catalog, a review site, a booking form…). */
 export type PageLink = { title: string; url: string }
+
+/** A finished job: a few photos with a name, the city and a short story, like a Houzz project. */
+export type PageProject = { title: string; city: string; description: string; photos: string[] }
+
+/** A review a client left on the page (its own table: clients write them, the workshop can delete them). */
+export type PageReview = { id: string; name: string; rating: number; text: string; created_at: string }
+
+/** Facts a furniture workshop's clients ask about first; only filled ones show. */
+export const BUSINESS_KEYS = ["since", "team", "address", "areas", "measure", "terms", "payment", "warranty"] as const
+export type PageBusiness = Record<(typeof BUSINESS_KEYS)[number], string>
+
+/** Opening hours, Monday first: a "from"–"to" pair (HH:MM) or null for a day off. All null: not filled in. */
+export type PageHours = ({ from: string; to: string } | null)[]
 
 export type PageTheme = "light" | "dark"
 
@@ -31,7 +44,9 @@ export type PageData = {
   contacts: PageContacts
   links: PageLink[]
   services: PageService[]
-  portfolio: string[]
+  projects: PageProject[]
+  business: PageBusiness
+  hours: PageHours
   /** Whether visitors can leave a request from the page. */
   requests: boolean
   cta: string
@@ -47,7 +62,8 @@ export const ACCENTS = ["#1f1e1d", "#7a5a3c", "#2f5d50", "#8b3a3a", "#36557f", "
 
 export const MAX_LINKS = 20
 export const MAX_SERVICES = 12
-export const MAX_PORTFOLIO = 12
+export const MAX_PROJECTS = 12
+export const MAX_PROJECT_PHOTOS = 12
 
 /** Addresses taken by the site itself. */
 const RESERVED = new Set([
@@ -101,16 +117,40 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     .filter((l): l is PageLink => !!l.title && !!l.url)
     .slice(0, MAX_LINKS)
   const services = (Array.isArray(src.services) ? src.services : [])
-    .map((s) => ({ name: text((s as PageService)?.name, 80), price: text((s as PageService)?.price, 40) }))
+    .map((s) => ({
+      name: text((s as PageService)?.name, 80),
+      price: text((s as PageService)?.price, 40),
+      description: text((s as PageService)?.description, 300),
+    }))
     .filter((s) => s.name)
     .slice(0, MAX_SERVICES)
-  const portfolio = (Array.isArray(src.portfolio) ? src.portfolio : [])
-    .map(url).filter((u): u is string => !!u).slice(0, MAX_PORTFOLIO)
+  const photos = (v: unknown) => (Array.isArray(v) ? v : []).map(url).filter((u): u is string => !!u).slice(0, MAX_PROJECT_PHOTOS)
+  // Pages made before projects had a flat photo list: it becomes one untitled project.
+  const projectsSrc = Array.isArray(src.projects) ? src.projects
+    : photos(src.portfolio).length ? [{ photos: src.portfolio }] : []
+  const projects = projectsSrc
+    .map((p) => ({
+      title: text((p as PageProject)?.title, 80),
+      city: text((p as PageProject)?.city, 60),
+      description: text((p as PageProject)?.description, 1000),
+      photos: photos((p as PageProject)?.photos),
+    }))
+    .filter((p) => p.title || p.photos.length)
+    .slice(0, MAX_PROJECTS)
+  const businessSrc = (src.business && typeof src.business === "object" ? src.business : {}) as Record<string, unknown>
+  const business = Object.fromEntries(BUSINESS_KEYS.map((k) => [k, text(businessSrc[k], k === "areas" ? 300 : 160)])) as PageBusiness
+  const time = (v: unknown) => (typeof v === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : null)
+  const hoursSrc = Array.isArray(src.hours) ? src.hours : []
+  const hours: PageHours = Array.from({ length: 7 }, (_, i) => {
+    const d = hoursSrc[i] as { from?: unknown; to?: unknown } | null
+    const from = time(d?.from), to = time(d?.to)
+    return from && to ? { from, to } : null
+  })
   const accent = typeof src.accent === "string" && (ACCENTS as readonly string[]).includes(src.accent) ? src.accent : ACCENTS[0]
   return {
     title: text(src.title, 80) || fallbackTitle,
     tagline: text(src.tagline, 120),
-    bio: text(src.bio, 600),
+    bio: text(src.bio, 2000),
     avatar_url: url(src.avatar_url),
     banner_url: url(src.banner_url),
     theme: src.theme === "dark" ? "dark" : "light",
@@ -118,7 +158,9 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     contacts,
     links,
     services,
-    portfolio,
+    projects,
+    business,
+    hours,
     requests: src.requests !== false,
     cta: text(src.cta, 40),
     buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",

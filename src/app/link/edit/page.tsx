@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PageView, CONTACT_ICON, CONTACT_LABEL } from "@/components/page/PageView"
+import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
 import { AvatarPlaceholder, Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
@@ -18,13 +18,14 @@ import { uploadPublicAsset } from "@/lib/files"
 import { shrinkImage } from "@/lib/image"
 import { useT } from "@/lib/i18n"
 import {
-  ACCENTS, CONTACT_KEYS, MAX_LINKS, MAX_PORTFOLIO, MAX_SERVICES, cleanPage, emptyPage, normalizeSlug, pagePath,
-  slugProblem, suggestSlug, type ButtonShape, type PageContacts, type PageData,
+  ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_LINKS, MAX_PROJECT_PHOTOS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
+  normalizeSlug, pagePath, slugProblem, suggestSlug, type ButtonShape, type PageBusiness, type PageContacts, type PageData,
+  type PageProject, type PageReview,
 } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 
 type Section = "content" | "header" | "design" | "settings"
-type ContentTab = "links" | "services" | "portfolio"
+type ContentTab = "projects" | "services" | "reviews" | "links"
 type SlugState = { slug: string; status: "checking" | "ok" | "taken" | "invalid"; problem?: string }
 type SaveState = "saved" | "dirty" | "saving" | "error"
 
@@ -33,11 +34,16 @@ const CONTACT_PLACEHOLDER: Record<keyof PageContacts, string> = {
   phone: "+1 555 123 4567", email: "hello@studio.com", website: "studio.com",
 }
 const QUICK_CONTACTS: (keyof PageContacts)[] = ["instagram", "telegram", "whatsapp", "email"]
+const BUSINESS_PLACEHOLDER: Record<keyof PageBusiness, string> = {
+  since: "2012", team: "5 people: designer, 3 makers, installer", address: "Dnipro, 12 Naberezhna St",
+  areas: "Dnipro, Samar, Pidhorodne and up to 50 km around", measure: "Free, within 1–2 days",
+  terms: "Kitchens 3–5 weeks, wardrobes 2–3 weeks", payment: "50% upfront, the rest after installation", warranty: "2 years on furniture and fittings",
+}
 
 /** Full-screen page editor: sections on the left, the content in the middle, the phone preview on the right. */
 export default function PageEditor() {
   const router = useRouter()
-  const { t } = useT()
+  const { t, locale } = useT()
   const [shop, setShop] = useState<Shop | null>(null)
   const [data, setData] = useState<PageData | null>(null)
   const [savedSlug, setSavedSlug] = useState<string | null>(null)
@@ -47,7 +53,8 @@ export default function PageEditor() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [missingTable, setMissingTable] = useState(false)
   const [section, setSection] = useState<Section>("content")
-  const [tab, setTab] = useState<ContentTab>("links")
+  const [tab, setTab] = useState<ContentTab>("projects")
+  const [reviews, setReviews] = useState<PageReview[]>([])
   const [uploading, setUploading] = useState<string | null>(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [pillOpen, setPillOpen] = useState(false)
@@ -69,6 +76,10 @@ export default function PageEditor() {
       const { data: shopData } = await getOrCreateShop(session.user)
       if (!shopData) return
       setShop(shopData)
+      // Reviews clients left (a separate table; missing until pages.sql is run again — then just none).
+      supabase.from("page_reviews").select("id, name, rating, text, created_at").eq("shop_id", shopData.id)
+        .order("created_at", { ascending: false }).limit(100)
+        .then(({ data: rows }) => setReviews((rows as PageReview[] | null) ?? []))
       const { data: row, error } = await supabase.from("shop_pages").select("*").eq("shop_id", shopData.id).maybeSingle()
       if (error && /shop_pages|relation|schema cache/i.test(error.message)) setMissingTable(true)
       if (row) {
@@ -142,22 +153,48 @@ export default function PageEditor() {
     return () => window.clearTimeout(timer)
   }, [save, slug.status, data, persist])
 
-  async function upload(file: File | undefined, kind: "avatar" | "banner" | "portfolio") {
-    if (!file || !shop) return
-    if (!file.type.startsWith("image/")) { setSaveError(t("Choose an image file")); return }
-    setUploading(kind)
+  /** Shrinks and uploads an image; returns its public address (null if it failed, with the reason shown). */
+  async function uploadImage(file: File, kind: string, maxSide: number) {
+    if (!shop) return null
+    if (!file.type.startsWith("image/")) { setSaveError(t("Choose an image file")); return null }
     try {
-      const small = await shrinkImage(file, kind === "avatar" ? 600 : 1600)
+      const small = await shrinkImage(file, maxSide)
       if (small.size > 4 * 1024 * 1024) throw new Error(t("Image must be under 4 MB"))
-      const url = await uploadPublicAsset(shop.id, small, `page-${kind}`)
-      if (kind === "avatar") update({ avatar_url: url })
-      else if (kind === "banner") update({ banner_url: url })
-      else setData((d) => (d ? { ...d, portfolio: [...d.portfolio, url].slice(0, MAX_PORTFOLIO) } : d))
-      if (kind === "portfolio") setSave("dirty")
+      return await uploadPublicAsset(shop.id, small, `page-${kind}`)
     } catch (e) {
       setSaveError((e as Error)?.message || t("Upload failed"))
+      return null
+    }
+  }
+
+  async function upload(file: File | undefined, kind: "avatar" | "banner") {
+    if (!file) return
+    setUploading(kind)
+    const url = await uploadImage(file, kind, kind === "avatar" ? 600 : 1600)
+    if (url) update(kind === "avatar" ? { avatar_url: url } : { banner_url: url })
+    setUploading(null)
+  }
+
+  function updateProject(i: number, patch: Partial<PageProject>) {
+    setData((d) => (d ? { ...d, projects: d.projects.map((p, j) => (j === i ? { ...p, ...patch } : p)) } : d))
+    setSave("dirty")
+  }
+
+  async function addProjectPhotos(i: number, files: File[]) {
+    setUploading(`project-${i}`)
+    for (const f of files) {
+      const url = await uploadImage(f, "project", 1600)
+      if (!url) continue
+      setData((d) => (d ? { ...d, projects: d.projects.map((p, j) => (j === i ? { ...p, photos: [...p.photos, url].slice(0, MAX_PROJECT_PHOTOS) } : p)) } : d))
+      setSave("dirty")
     }
     setUploading(null)
+  }
+
+  async function deleteReview(id: string) {
+    const { error } = await supabase.from("page_reviews").delete().eq("id", id)
+    if (error) { setSaveError(error.message); return }
+    setReviews((list) => list.filter((r) => r.id !== id))
   }
 
   const publicUrl = typeof window !== "undefined" && savedSlug ? `${window.location.origin}${pagePath(savedSlug)}` : ""
@@ -172,8 +209,8 @@ export default function PageEditor() {
     return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">{t("Loading...")}</p></div>
   }
 
-  const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} preview />
-  const move = <K extends "links" | "services">(key: K, i: number, d: -1 | 1) => {
+  const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview />
+  const move = <K extends "links" | "services" | "projects">(key: K, i: number, d: -1 | 1) => {
     const list = [...data[key]] as PageData[K]
     const j = i + d
     if (j < 0 || j >= list.length) return
@@ -295,7 +332,7 @@ export default function PageEditor() {
                 </div>
 
                 <div className="flex gap-5 border-b border-border text-sm">
-                  {([["links", t("Links")], ["services", t("Services")], ["portfolio", t("Portfolio")]] as [ContentTab, string][]).map(([id, label]) => (
+                  {([["projects", t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["links", t("Links")]] as [ContentTab, string][]).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
                       className={`-mb-px border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
                       {label}
@@ -321,7 +358,7 @@ export default function PageEditor() {
 
                 {tab === "services" && (
                   <>
-                    <AddButton disabled={data.services.length >= MAX_SERVICES} onClick={() => update({ services: [...data.services, { name: "", price: "" }] })} label={t("Add service")} />
+                    <AddButton disabled={data.services.length >= MAX_SERVICES} onClick={() => update({ services: [...data.services, { name: "", price: "", description: "" }] })} label={t("Add service")} />
                     {data.services.length === 0 && <Empty title={t("No services yet")} text={t("List what you make and from what price: clients see it right away.")} />}
                     {data.services.map((s, i) => (
                       <ItemCard key={i} onUp={() => move("services", i, -1)} onDown={() => move("services", i, 1)} first={i === 0} last={i === data.services.length - 1}
@@ -332,33 +369,64 @@ export default function PageEditor() {
                           <Input aria-label={t("Price")} placeholder={t("from $500")} value={s.price} maxLength={40} className="h-9 w-32 border-none px-0 text-right text-sm shadow-none focus-visible:ring-0"
                             onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)) })} />
                         </div>
+                        <Input aria-label={t("Description")} placeholder={t("What's included: materials, fittings, installation…")} value={s.description} maxLength={300}
+                          className="h-8 border-none px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+                          onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)) })} />
                       </ItemCard>
                     ))}
                   </>
                 )}
 
-                {tab === "portfolio" && (
+                {tab === "projects" && (
                   <>
-                    {data.portfolio.length < MAX_PORTFOLIO && (
-                      <FileButton multiple busy={uploading === "portfolio"} label={t("Add photos")}
-                        onFiles={async (files) => { for (const f of files.slice(0, MAX_PORTFOLIO - data.portfolio.length)) await upload(f, "portfolio") }}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60">
-                        <ImagePlusIcon className="size-4" />{uploading === "portfolio" ? t("Uploading...") : t("Add photos")}
-                      </FileButton>
-                    )}
-                    {data.portfolio.length === 0
-                      ? <Empty title={t("No photos yet")} text={t("Up to {n} photos of your work.", { n: MAX_PORTFOLIO })} />
-                      : (
-                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                          {data.portfolio.map((src) => (
-                            <div key={src} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                    <AddButton disabled={data.projects.length >= MAX_PROJECTS} label={t("Add project")}
+                      onClick={() => update({ projects: [{ title: "", city: "", description: "", photos: [] }, ...data.projects] })} />
+                    {data.projects.length === 0 && <Empty title={t("No projects yet")} text={t("Show finished kitchens and wardrobes: a few photos, the city and a couple of words about each.")} />}
+                    {data.projects.map((p, i) => (
+                      <ItemCard key={i} onUp={() => move("projects", i, -1)} onDown={() => move("projects", i, 1)} first={i === 0} last={i === data.projects.length - 1}
+                        onRemove={() => update({ projects: data.projects.filter((_, j) => j !== i) })}>
+                        <Input aria-label={t("Project name")} placeholder={t("Kitchen in sage green")} value={p.title} maxLength={80}
+                          className="h-9 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { title: e.target.value })} />
+                        <Input aria-label={t("City")} placeholder={t("City")} value={p.city} maxLength={60}
+                          className="h-8 border-none px-0 text-sm shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { city: e.target.value })} />
+                        <Textarea aria-label={t("Description")} placeholder={t("Materials, fittings, what the client wanted…")} value={p.description} maxLength={1000}
+                          className="min-h-16 text-sm" onChange={(e) => updateProject(i, { description: e.target.value })} />
+                        <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                          {p.photos.map((src, k) => (
+                            <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                               <img src={src} alt="" className="size-full object-cover" />
-                              <button type="button" aria-label={t("Remove")} onClick={() => update({ portfolio: data.portfolio.filter((p) => p !== src) })}
-                                className="absolute top-1.5 right-1.5 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"><Trash2Icon className="size-3.5" /></button>
+                              {k === 0 && <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] text-white">{t("Cover")}</span>}
+                              <button type="button" aria-label={t("Remove")} onClick={() => updateProject(i, { photos: p.photos.filter((x) => x !== src) })}
+                                className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"><Trash2Icon className="size-3" /></button>
                             </div>
                           ))}
+                          {p.photos.length < MAX_PROJECT_PHOTOS && (
+                            <FileButton multiple busy={uploading === `project-${i}`} label={t("Add photos")}
+                              onFiles={(files) => addProjectPhotos(i, files.slice(0, MAX_PROJECT_PHOTOS - p.photos.length))}
+                              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:bg-hover disabled:opacity-60">
+                              <ImagePlusIcon className="size-4" />{uploading === `project-${i}` ? "…" : t("Photos")}
+                            </FileButton>
+                          )}
                         </div>
-                      )}
+                      </ItemCard>
+                    ))}
+                  </>
+                )}
+
+                {tab === "reviews" && (
+                  <>
+                    <p className="text-sm text-muted-foreground">{t("Clients write reviews themselves on your page and they show at once. You can delete any of them.")}</p>
+                    {reviews.length === 0 && <Empty title={t("No reviews yet")} text={t("Send your page to happy clients and ask them to leave a review.")} />}
+                    {reviews.map((r) => (
+                      <div key={r.id} className="flex flex-col gap-1.5 rounded-2xl p-4 ring-1 ring-foreground/10">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold">{r.name} <span className="ml-1 text-[#f5a524]">{"★".repeat(r.rating)}<span className="text-foreground/15">{"★".repeat(5 - r.rating)}</span></span></span>
+                          <IconBtn label={t("Delete")} onClick={() => { if (window.confirm(t("Delete this review?"))) deleteReview(r.id) }}><Trash2Icon /></IconBtn>
+                        </div>
+                        <p className="text-sm whitespace-pre-line">{r.text}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</p>
+                      </div>
+                    ))}
                   </>
                 )}
               </>
@@ -372,7 +440,51 @@ export default function PageEditor() {
                 </div>
                 <Field label={t("Name")}><Input value={data.title} maxLength={80} onChange={(e) => update({ title: e.target.value })} /></Field>
                 <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t("Custom kitchens · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
-                <Field label={t("About")}><Textarea value={data.bio} placeholder={t("What you make, how you work, what clients love.")} maxLength={600} onChange={(e) => update({ bio: e.target.value })} /></Field>
+                <Field label={t("About")}><Textarea value={data.bio} placeholder={t("What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
+              </Block>
+            )}
+
+            {section === "header" && (
+              <Block title={t("Business")} hint={t("Only filled ones show on the page.")}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {BUSINESS_KEYS.map((key) => (
+                    <Field key={key} label={t(BUSINESS_FIELDS[key].label)}>
+                      <Input value={data.business[key]} placeholder={t(BUSINESS_PLACEHOLDER[key])} maxLength={key === "areas" ? 300 : 160}
+                        onChange={(e) => update({ business: { ...data.business, [key]: e.target.value } })} />
+                    </Field>
+                  ))}
+                </div>
+              </Block>
+            )}
+
+            {section === "header" && (
+              <Block title={t("Working hours")} hint={t("Clients see whether you're open right now.")}>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onPress={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 5 ? { from: "09:00", to: "18:00" } : null)) })}>{t("Mon–Fri 9–18")}</Button>
+                  <Button size="sm" variant="outline" onPress={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 6 ? { from: "09:00", to: i === 5 ? "15:00" : "18:00" } : null)) })}>{t("Mon–Sat")}</Button>
+                  {data.hours.some(Boolean) && <Button size="sm" variant="ghost" onPress={() => update({ hours: Array(7).fill(null) })}>{t("Clear")}</Button>}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {weekdays(locale, "long").map((day, i) => {
+                    const d = data.hours[i]
+                    const set = (v: { from: string; to: string } | null) => update({ hours: data.hours.map((x, j) => (j === i ? v : x)) })
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <label className="flex w-36 shrink-0 items-center gap-2 text-sm capitalize">
+                          <input type="checkbox" checked={!!d} onChange={(e) => set(e.target.checked ? { from: "09:00", to: "18:00" } : null)} className="size-4 accent-[var(--primary)]" />
+                          {day}
+                        </label>
+                        {d ? (
+                          <span className="flex items-center gap-2 text-sm">
+                            <input type="time" value={d.from} onChange={(e) => e.target.value && set({ ...d, from: e.target.value })} className="h-8 rounded-md border border-input bg-transparent px-2" />
+                            –
+                            <input type="time" value={d.to} onChange={(e) => e.target.value && set({ ...d, to: e.target.value })} className="h-8 rounded-md border border-input bg-transparent px-2" />
+                          </span>
+                        ) : <span className="text-sm text-muted-foreground">{t("Day off")}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
               </Block>
             )}
 

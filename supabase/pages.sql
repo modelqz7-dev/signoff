@@ -79,4 +79,25 @@ $$;
 revoke all on function public.page_view_hit(uuid) from public, anon, authenticated;
 grant execute on function public.page_view_hit(uuid) to service_role;
 
+-- Reviews clients leave on the page. They show at once; the owner can read and delete them.
+-- Created by the site's server only (rate-limited), like requests.
+create table if not exists public.page_reviews (
+  id         uuid primary key default gen_random_uuid(),
+  shop_id    uuid not null references public.shops (id) on delete cascade,
+  name       text not null check (char_length(name) between 1 and 60),
+  rating     smallint not null check (rating between 1 and 5),
+  text       text not null check (char_length(text) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists page_reviews_shop_idx on public.page_reviews (shop_id, created_at desc);
+
+alter table public.page_reviews enable row level security;
+drop policy if exists "Reviews: read own shop" on public.page_reviews;
+create policy "Reviews: read own shop" on public.page_reviews
+  for select to authenticated using (public.owns_shop(shop_id::text));
+drop policy if exists "Reviews: delete own shop" on public.page_reviews;
+create policy "Reviews: delete own shop" on public.page_reviews
+  for delete to authenticated using (public.owns_shop(shop_id::text));
+
 notify pgrst, 'reload schema';

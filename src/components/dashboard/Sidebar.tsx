@@ -280,7 +280,7 @@ function usePageSetup(enabled: boolean) {
     { label: t("Create your page"), done: !!row },
     { label: t("Add a photo or logo"), done: !!d?.avatar_url },
     { label: t("Write a line about you"), done: !!(d?.tagline || d?.bio) },
-    { label: t("Add 3 photos of your work"), done: (d?.portfolio.length ?? 0) >= 3 },
+    { label: t("Add 3 photos of your work"), done: (d?.projects.reduce((n, p) => n + p.photos.length, 0) ?? 0) >= 3 },
     { label: t("Add a contact"), done: !!d && Object.values(d.contacts).some(Boolean) },
     { label: t("Publish the page"), done: !!row?.published },
   ]
