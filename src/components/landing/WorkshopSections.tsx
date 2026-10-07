@@ -113,7 +113,7 @@ export function Questions({ t }: { t: T }) {
             <span aria-hidden="true">·</span>
             <span>{t("FAQ")}</span>
           </div>
-          <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Questions SMM specialists ask.")}</h2>
+          <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Questions designers ask.")}</h2>
         </div>
         <div className="flex flex-col gap-3">
           {items.map(([q, a], i) => {

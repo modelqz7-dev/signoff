@@ -22,17 +22,17 @@ import { cn } from "@/lib/utils"
 /**
  * A working copy of the product, playing itself on a loop (like Notion's and Ramp's live
  * product windows), built from the app's own components: the workshop copies the portal link
- * on the order page, Anna opens the portal, pins three comments on an Instagram post, version 2
+ * on the order page, Anna opens the portal, pins three comments on a logo concept, version 2
  * comes in, she approves it, and the order page shows the approval. "Try it yourself" hands
  * the portal to the visitor. Rendered at a fixed app size and scaled to fit, like a
  * screenshot. Pauses off-screen; with reduced motion it shows the approved portal.
  */
 
-// Pin tips on the Instagram post, in % of the image.
+// Pin tips on the logo concept, in % of the image.
 const PINS = [
-  { x: 15.5, y: 17, key: "Bigger logo, it gets lost" },
-  { x: 42, y: 34, key: "Less text on the picture, please" },
-  { x: 54, y: 22, key: "Brand colour instead of grey" },
+  { x: 33, y: 22, key: "A simpler icon, it's too detailed" },
+  { x: 45, y: 69, key: "The font feels too thin, can it be bolder?" },
+  { x: 70, y: 28, key: "Warmer colours, closer to coffee" },
 ]
 
 // How long each step lasts (ms).
@@ -296,7 +296,7 @@ export function LivePortal({ t }: { t: T }) {
     : step === 2 ? t("Portal link copied")
     : step === 14 ? t("Lumen Studio uploaded version 2")
     : step === 20 || step === 21 ? t("Approved by Anna K. · certificate saved")
-    : step === 22 ? t("Anna Kovalenko approved Posts for “Bloom”")
+    : step === 22 ? t("Anna Kovalenko approved Logo for “Bloom”")
     : null
   const clickStep = [2, 6, 9, 11, 13, 16, 18, 20].includes(step)
   const date = (y: number, m: number, d: number) => new Date(y, m, d).toLocaleDateString(locale, { dateStyle: "long" })
@@ -306,11 +306,11 @@ export function LivePortal({ t }: { t: T }) {
   const room = (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element -- demo image */}
-      <img src="/landing/bloom-post.webp" alt={t("Posts for “Bloom”")} className="pointer-events-none block w-full object-contain" draggable={false} />
+      <img src="/landing/bloom-logo.webp" alt={t("Logo for “Bloom”")} className="pointer-events-none block w-full object-contain" draggable={false} />
       {/* version 2 scans in over version 1 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/landing/bloom-post-v2.webp"
+        src="/landing/bloom-logo-v2.webp"
         alt=""
         draggable={false}
         className="pointer-events-none absolute inset-0 block w-full ease-[cubic-bezier(.45,0,.2,1)]"
@@ -333,7 +333,7 @@ export function LivePortal({ t }: { t: T }) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs">{t("Portal Link")}</Label>
-            <Input readOnly value="https://nodly.app/portal/bloom-posts" className="font-mono text-xs" />
+            <Input readOnly value="https://nodly.app/portal/bloom-logo" className="font-mono text-xs" />
             <span ref={copyRef} className="mt-1 block">
               <Button variant="outline" size="sm" className={cn("w-full transition-transform", copied && "scale-[.98]")}>
                 {copied ? (
@@ -413,7 +413,7 @@ export function LivePortal({ t }: { t: T }) {
               <div className="flex w-full max-w-2xl flex-col gap-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h1 className="text-lg font-medium text-foreground">{t("Posts for “Bloom”")}</h1>
+                    <h1 className="text-lg font-medium text-foreground">{t("Logo for “Bloom”")}</h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">ORD-24</p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -495,7 +495,7 @@ export function LivePortal({ t }: { t: T }) {
             <div className="flex flex-col gap-1.5">
               <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">ORD-24</p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h1 className={cn("font-[family-name:var(--font-brand)] leading-tight font-bold tracking-[-0.03em] text-foreground", wide ? "text-3xl" : "text-2xl")}>{t("Posts for “Bloom”")}</h1>
+                <h1 className={cn("font-[family-name:var(--font-brand)] leading-tight font-bold tracking-[-0.03em] text-foreground", wide ? "text-3xl" : "text-2xl")}>{t("Logo for “Bloom”")}</h1>
                 <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">{t(statusInfo.label)}</span>
               </div>
             </div>
@@ -658,8 +658,8 @@ export function LivePortal({ t }: { t: T }) {
                     <p className="font-heading text-base leading-none font-medium">{t("Approve this design?")}</p>
                     <p className="text-sm text-muted-foreground">
                       {version > 1
-                        ? t("You're approving version {n} of “{title}”. Work continues from this version.", { n: version, title: t("Posts for “Bloom”") })
-                        : t("You're approving “{title}”. Work continues from this version.", { title: t("Posts for “Bloom”") })}
+                        ? t("You're approving version {n} of “{title}”. Work continues from this version.", { n: version, title: t("Logo for “Bloom”") })
+                        : t("You're approving “{title}”. Work continues from this version.", { title: t("Logo for “Bloom”") })}
                     </p>
                   </div>
                   {openCount > 0 && (
@@ -734,7 +734,7 @@ export function LivePortal({ t }: { t: T }) {
     // Wider than the text column around it, so the app reads at close to its real size.
     <div ref={rootRef} className="relative left-1/2 w-[min(1360px,calc(100vw-2rem))] -translate-x-1/2 lg:mt-14">
       <div className="relative">
-        {/* Anna, the client, and the SMM specialist peek over the window's top edge */}
+        {/* Anna, the client, and the designer peek over the window's top edge */}
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative character art */}
         <img src="/landing/characters/client-flipped.svg" alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute -top-[86px] left-[12%] z-0 hidden w-[130px] select-none lg:block" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -747,13 +747,13 @@ export function LivePortal({ t }: { t: T }) {
 
         <div
           role="group"
-          aria-label={t("A demo of the client portal: comments are pinned on an Instagram post, version 2 is uploaded and the client approves it")}
+          aria-label={t("A demo of the client portal: comments are pinned on a logo concept, version 2 is uploaded and the client approves it")}
           className="relative z-10 overflow-hidden rounded-xl bg-background text-foreground shadow-2xl ring-1 ring-foreground/10"
         >
           {/* window bar */}
           <div className="flex items-center border-b border-border bg-card px-4 py-2">
             <span className="mx-auto rounded-md bg-muted px-3 py-0.5 text-[11px] text-muted-foreground">
-              {scene === "shop" ? "nodly.app/orders/ord-24" : "nodly.app/portal/bloom-posts"}
+              {scene === "shop" ? "nodly.app/orders/ord-24" : "nodly.app/portal/bloom-logo"}
             </span>
           </div>
 
@@ -820,7 +820,7 @@ export function LivePortal({ t }: { t: T }) {
           </button>
         ) : (
           <>
-            <span className="text-muted-foreground">{t("You're Anna now: click the post to leave a comment.")}</span>
+            <span className="text-muted-foreground">{t("You're Anna now: click the design to leave a comment.")}</span>
             <button type="button" onClick={replay} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-4 font-medium text-foreground transition-colors hover:bg-hover">
               <RotateCcwIcon className="size-4" />
               {t("Replay demo")}
