@@ -134,6 +134,19 @@ function Section({ id, title, aside, children }: { id: string; title: string; as
 }
 
 /** A 3-column list that shows the first 9 and a "Show N more" toggle, like Houzz's Services and Areas. */
+/** Where an empty section is filled in, for the editor's preview. */
+export type PageEditTarget = "about" | "projects" | "business" | "services" | "areas" | "credentials"
+
+/** An empty section in the editor's preview: what goes here, and a tap opens that part of the editor. */
+function Placeholder({ text, onClick }: { text: string; onClick?: () => void }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[var(--pg-border)] px-4 py-6 text-sm text-[var(--pg-muted)] transition-colors hover:border-[var(--pg-text)] hover:text-[var(--pg-text)]">
+      <span className="text-base leading-none">+</span>{text}
+    </button>
+  )
+}
+
 function MoreList({ items }: { items: React.ReactNode[] }) {
   const { t } = useT()
   const [all, setAll] = useState(false)
@@ -167,11 +180,13 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
  * About, Projects, Business, Services, Areas, Credentials and Reviews, and a "Contact" card that
  * opens a message window. `preview` is the editor's live copy: links stay inert and forms don't send.
  */
-export function PageView({ data, slug, reviews = [], preview = false }: {
+export function PageView({ data, slug, reviews = [], preview = false, onEdit }: {
   data: PageData
   slug: string
   reviews?: PageReview[]
   preview?: boolean
+  /** Editor only: an empty section was tapped. */
+  onEdit?: (target: PageEditTarget) => void
 }) {
   const { t, locale } = useT()
   const rootRef = useRef<HTMLDivElement>(null)
@@ -209,7 +224,7 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
     [areas.length > 0, "areas", t("Areas")],
     [data.credentials.length > 0, "credentials", t("Credentials")],
     [true, "reviews", t("Reviews")],
-  ] as [boolean, string, string][]).filter(([on]) => on)
+  ] as [boolean, string, string][]).filter(([on]) => on || preview)
   const current = active || tabs[0]?.[1]
 
   function go(id: string) {
@@ -303,8 +318,9 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
               ))}
             </nav>
 
-            {(data.bio || data.category) && (
+            {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
+                {!data.bio && !data.category && <Placeholder text={t("Tell clients about your workshop")} onClick={() => onEdit?.("about")} />}
                 {data.bio && (
                   <p className={`text-sm leading-relaxed whitespace-pre-line ${longAbout && !moreAbout ? "line-clamp-4" : ""}`}>{data.bio}</p>
                 )}
@@ -330,8 +346,9 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
               </Section>
             )}
 
-            {data.projects.length > 0 && (
-              <Section id={sid("projects")} title={t("Projects: {n}", { n: data.projects.length })}>
+            {(data.projects.length > 0 || preview) && (
+              <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
+                {data.projects.length === 0 && <Placeholder text={t("Add your first project: photos of a finished kitchen or wardrobe")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
                     <button key={i} type="button" onClick={() => setProject(i)}
@@ -382,6 +399,9 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
                 )}
                 {data.business.address && <Detail label={t("Address")}><span className="whitespace-pre-line">{data.business.address}</span></Detail>}
                 {details.map((k) => <Detail key={k} label={t(BUSINESS_FIELDS[k].label)}>{data.business[k]}</Detail>)}
+                {preview && !details.length && !data.business.address && !hasHours(data.hours) && (
+                  <div className="@md:col-span-2"><Placeholder text={t("Add the address, working hours, warranty, lead times…")} onClick={() => onEdit?.("business")} /></div>
+                )}
                 {hasHours(data.hours) && (
                   <Detail label={t("Working hours")}>
                     <ul className="flex max-w-60 flex-col gap-1">
@@ -397,8 +417,9 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
               </dl>
             </Section>
 
-            {data.services.length > 0 && (
+            {(data.services.length > 0 || preview) && (
               <Section id={sid("services")} title={t("Services provided")}>
+                {data.services.length === 0 && <Placeholder text={t("List what you make and from what price")} onClick={() => onEdit?.("services")} />}
                 <MoreList items={data.services.map((s, i) => (
                   <span key={i} className="flex flex-col">
                     <span>{s.name}{s.price && <span className="text-[var(--pg-muted)]"> · {s.price}</span>}</span>
@@ -408,14 +429,16 @@ export function PageView({ data, slug, reviews = [], preview = false }: {
               </Section>
             )}
 
-            {areas.length > 0 && (
+            {(areas.length > 0 || preview) && (
               <Section id={sid("areas")} title={t("Areas served")}>
+                {areas.length === 0 && <Placeholder text={t("Add the cities and districts you work in")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
 
-            {data.credentials.length > 0 && (
+            {(data.credentials.length > 0 || preview) && (
               <Section id={sid("credentials")} title={t("Credentials")}>
+                {data.credentials.length === 0 && <Placeholder text={t("Add awards, certificates or partner badges")} onClick={() => onEdit?.("credentials")} />}
                 <div className="flex flex-wrap gap-5">
                   {data.credentials.map((c, i) => (
                     <div key={i} className="flex w-28 flex-col gap-2">

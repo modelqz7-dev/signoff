@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays } from "@/components/page/PageView"
+import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
 import { AvatarPlaceholder, Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
@@ -209,7 +209,13 @@ export default function PageEditor() {
     return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">{t("Loading...")}</p></div>
   }
 
-  const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview />
+  // Tapping an empty section in the preview opens the part of the editor where it's filled in.
+  const editTarget = (target: PageEditTarget) => {
+    if (target === "projects" || target === "services" || target === "credentials") { setSection("content"); setTab(target) }
+    else setSection("header")
+    setPreviewOpen(false)
+  }
+  const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} />
   const move = <K extends "links" | "services" | "projects" | "credentials">(key: K, i: number, d: -1 | 1) => {
     const list = [...data[key]] as PageData[K]
     const j = i + d
