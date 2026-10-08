@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { CalendarDaysIcon, CheckCircle2Icon, CheckIcon, CopyIcon, PlusIcon, UploadIcon, WaypointsIcon } from "lucide-react"
+import { CheckCircle2Icon, CheckIcon, CopyIcon, PlusIcon, UploadIcon, WaypointsIcon } from "lucide-react"
 import { Thumb } from "@/components/projects/PostBits"
 import { STATUS_MAP, type Order } from "@/components/dashboard/types"
 import type { Pin } from "@/lib/pins"
@@ -74,44 +74,11 @@ export function useHome(projects: Order[], items: Order[], pins: Pin[]) {
       .map((o) => ({ item: o, days: Math.max(0, Math.round((today - startOfDay(new Date(o.status_changed_at ?? o.created_at).getTime())) / DAY)) }))
       .sort((a, b) => b.days - a.days)
 
-    return { now, summaries, move, waiting, changes: move.filter((m) => m.kind === "changes" || m.kind === "comments").length }
+    return { now, summaries, move, waiting, open, changes: move.filter((m) => m.kind === "changes" || m.kind === "comments").length }
   }, [projects, items, pins, now])
 }
 
-type Home = ReturnType<typeof useHome>
-
-/** The date, a hello, one line on what's going on, and the two things to start. */
-export function HomeGreeting({ name, home, onCalendar, onNewProject }: { name: string; home: Home; onCalendar: () => void; onNewProject: () => void }) {
-  const { t, locale } = useT()
-  const hour = new Date(home.now).getHours()
-  const hello = hour < 5 ? t("Good evening") : hour < 12 ? t("Good morning") : hour < 18 ? t("Good afternoon") : t("Good evening")
-  const date = new Date(home.now).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })
-  const parts = [
-    home.changes ? t("{n} with changes need you", { n: home.changes }) : null,
-    home.waiting.length ? t("{n} waiting on the client", { n: home.waiting.length }) : null,
-  ].filter(Boolean)
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <p className="text-sm text-muted-foreground first-letter:uppercase" suppressHydrationWarning>{date}</p>
-        <h1 className="font-[family-name:var(--font-brand)] text-3xl leading-tight font-bold tracking-[-0.03em] sm:text-4xl" suppressHydrationWarning>
-          {hello}{name ? `, ${name}` : ""}
-        </h1>
-        <p className="text-base text-muted-foreground">{parts.length ? parts.join(" · ") : t("All quiet: nothing is waiting on you.")}</p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <button type="button" onClick={onCalendar} className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium ring-1 ring-border transition-colors hover:bg-hover">
-          <CalendarDaysIcon className="size-4 text-muted-foreground" />
-          {t("Calendar")}
-        </button>
-        <button type="button" onClick={onNewProject} className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-medium whitespace-nowrap text-primary-foreground transition-opacity hover:opacity-90">
-          <PlusIcon className="size-4" />
-          {t("New project")}
-        </button>
-      </div>
-    </div>
-  )
-}
+export type Home = ReturnType<typeof useHome>
 
 function Heading({ children, count }: { children: React.ReactNode; count?: number }) {
   return (

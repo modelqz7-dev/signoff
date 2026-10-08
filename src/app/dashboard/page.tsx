@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { GettingStarted } from "@/components/dashboard/GettingStarted"
-import { HomeGreeting, ProjectCards, WaitingList, YourMoveList, useHome } from "@/components/dashboard/Home"
+import { useHome } from "@/components/dashboard/Home"
+import { BentoHome } from "@/components/dashboard/Bento"
 import { CalendarDialog } from "@/components/dashboard/Insights"
 import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
@@ -126,29 +127,25 @@ export default function Dashboard() {
       {/* Left sidebar */}
       <Sidebar open={sidebarOpen} activePage="dashboard" />
 
-      {/* Main content */}
-      <div className="flex flex-1 flex-col min-w-0">
-        <DashboardHeader
-          shopName={shop?.name || ""}
-          title={t("Home")}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-            <HomeGreeting name={shop?.name || ""} home={home} onCalendar={() => setCalendarOpen(true)} onNewProject={newProject} />
-
-            <GettingStarted orders={orders} shop={shop} onNewOrder={newProject} />
-
-            <ProjectCards home={home} onNewProject={newProject} />
-
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-              <YourMoveList home={home} projectName={projectName} />
-              <WaitingList home={home} projectName={projectName} />
-            </div>
-          </div>
+      {/* Main content: the bento home */}
+      <div className="flex min-w-0 flex-1 flex-col bg-[#e9e9e7] dark:bg-[#0f0f0f]">
+        <div className="lg:hidden">
+          <DashboardHeader
+            shopName={shop?.name || ""}
+            title={t("Home")}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
         </div>
+        <BentoHome
+          home={home}
+          projects={projects}
+          items={items}
+          projectName={projectName}
+          onNewProject={newProject}
+          onCalendar={() => setCalendarOpen(true)}
+          intro={<GettingStarted orders={orders} shop={shop} onNewOrder={newProject} />}
+        />
       </div>
 
       <CalendarDialog orders={dated} open={calendarOpen} onOpenChange={setCalendarOpen} />
