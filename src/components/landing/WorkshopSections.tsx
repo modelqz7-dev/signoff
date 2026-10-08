@@ -46,14 +46,14 @@ function Chip({ children, tone = "muted" }: { children: React.ReactNode; tone?: 
   )
 }
 
-// ── 04 · Pricing ────────────────────────────────────────
+// ── 03 · Pricing ────────────────────────────────────────
 
 export function Pricing({ t }: { t: T }) {
   const [yearly, setYearly] = useState(false)
   return (
     <section id="pricing" className="scroll-mt-16 py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="02" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
+        <SectionHeading no="03" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
         <div className="mb-8">
           <BillingCycleToggle yearly={yearly} onChange={setYearly} />
         </div>

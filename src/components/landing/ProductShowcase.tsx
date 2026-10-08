@@ -57,3 +57,50 @@ export function ProductShowcase({ t }: { t: T }) {
     </>
   )
 }
+
+/** Nodly next to the chat SMM people already use: the objection, answered row by row. */
+export function TelegramVsNodly({ t }: { t: T }) {
+  const rows: [string, string, string][] = [
+    ["Changes", "Scattered across voice notes, screenshots and replies", "Pinned right on the post, numbered"],
+    ["Versions", "“Which one is final?” and files named final_2", "Every version in order, the latest on top"],
+    ["Approval", "A thumbs-up that is easy to deny later", "“Approved” with who and when, plus a PDF"],
+    ["For the client", "Scroll back through the chat to find the post", "One link, opens on the phone, no sign-up"],
+    ["Notifications", "Buried among other chats", "Still in Telegram: a comment, a new version, approved"],
+  ]
+  return (
+    <section className="py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-12 flex flex-col gap-6">
+          <Label no="02">{t("Telegram or Nodly")}</Label>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+            <h2 className={cn(HEADLINE, "max-w-3xl text-4xl leading-[1.02] sm:text-5xl")}>{t("Keep Telegram. Lose the chaos.")}</h2>
+            <p className="max-w-xs text-sm text-muted-foreground lg:pb-2 lg:text-right">
+              {t("Nodly doesn’t replace your chat with the client: notifications still arrive in Telegram.")}
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t border-border">
+          <div className="hidden grid-cols-[200px_1fr_1fr] gap-8 border-b border-border py-4 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase md:grid">
+            <span />
+            <span>{t("In a Telegram chat")}</span>
+            <span className="text-foreground">{t("In Nodly")}</span>
+          </div>
+          {rows.map(([topic, chat, nodly]) => (
+            <div key={topic} className="grid gap-2 border-b border-border py-5 md:grid-cols-[200px_1fr_1fr] md:gap-8">
+              <p className="text-sm font-medium text-foreground">{t(topic)}</p>
+              <p className="flex gap-3 text-sm text-muted-foreground">
+                <span aria-hidden="true" className="mt-2 h-px w-4 shrink-0 bg-foreground/25" />
+                <span><span className="font-medium md:hidden">Telegram: </span>{t(chat)}</span>
+              </p>
+              <p className="flex gap-3 text-sm text-foreground">
+                <span aria-hidden="true" className="mt-2 h-px w-4 shrink-0 bg-foreground" />
+                <span><span className="font-medium md:hidden">Nodly: </span>{t(nodly)}</span>
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

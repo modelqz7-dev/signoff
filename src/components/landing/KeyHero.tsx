@@ -40,9 +40,9 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
               words={[
                 { text: t("story"), color: "var(--primary)" },
                 { text: t("post"), color: "var(--primary)" },
-                { text: t("reel"), color: "var(--primary)" },
+                { text: t("cover"), color: "var(--primary)" },
                 { text: t("banner"), color: "var(--primary)" },
-                { text: t("carousel"), color: "var(--primary)" },
+                { text: t("ad creative"), color: "var(--primary)" },
               ]}
             />
           </span>

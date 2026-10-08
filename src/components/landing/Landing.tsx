@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { KeyHero } from "@/components/landing/KeyHero"
-import { ProductShowcase } from "@/components/landing/ProductShowcase"
+import { ProductShowcase, TelegramVsNodly } from "@/components/landing/ProductShowcase"
 import { PromoVideo } from "@/components/landing/PromoVideo"
 import { Closing, Pricing, Questions, WorkshopFooter } from "@/components/landing/WorkshopSections"
 
@@ -51,6 +51,7 @@ export function Landing() {
         <KeyHero t={t} signedIn={signedIn} />
         <PromoVideo t={t} />
         <ProductShowcase t={t} />
+        <TelegramVsNodly t={t} />
         <Pricing t={t} />
         <Questions t={t} />
         <Closing t={t} signedIn={signedIn} />
