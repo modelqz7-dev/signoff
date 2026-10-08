@@ -30,3 +30,11 @@ export async function deleteOrder(order: Order) {
     if (fileError) console.error("Order file cleanup error:", fileError)
   }
 }
+
+/** Deletes a project: every post in it (with comments and files) first, then the project itself. */
+export async function deleteProject(project: Order) {
+  const { data: posts, error } = await supabase.from("orders").select("*").eq("project_id", project.id)
+  if (error) throw error
+  for (const post of (posts as Order[] | null) ?? []) await deleteOrder(post)
+  await deleteOrder(project)
+}

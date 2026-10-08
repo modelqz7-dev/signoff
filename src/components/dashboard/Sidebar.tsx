@@ -23,6 +23,7 @@ import { useSyncAccountLang } from "@/lib/account-lang"
 import { usePlanUsage } from "@/lib/use-plan"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
+import { ProjectRow } from "@/components/dashboard/ProjectRow"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
 
 type SidebarProps = {
@@ -168,15 +169,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
 
       <nav className="flex-1 px-3 pt-2 pb-4">
         <SectionLabel>{t("Projects")}</SectionLabel>
-        {projects.map((p) => (
-          <NavItem
-            key={p.id}
-            icon={<WaypointsIcon className="size-full" strokeWidth={1.6} />}
-            label={p.title || t("Untitled")}
-            active={activePage === `project:${p.id}`}
-            href={`/orders/${p.id}`}
-          />
-        ))}
+        {projects.map((p) => <ProjectRow key={p.id} project={p} active={activePage === `project:${p.id}`} />)}
         <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={t("New project")} onClick={newProject} />
 
         <SectionLabel className="mt-5">{t("Page")}</SectionLabel>
