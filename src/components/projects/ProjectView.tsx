@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { ProjectCanvas, type Board } from "@/components/projects/ProjectCanvas"
 import { PostsView } from "@/components/projects/PostsView"
+import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
 import { PROJECTS_CHANGED, openNav } from "@/lib/panels"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
@@ -149,7 +150,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
       <main className={cn("relative min-h-0 flex-1")}>
         {loaded && (view === "posts"
           ? <PostsView posts={posts} onUpload={uploadPosts} busy={busy} />
-          : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} startWithTemplates={start.templates} />)}
+          : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} startTemplate={start.template} />)}
       </main>
     </div>
   )
@@ -159,26 +160,28 @@ type View = "posts" | "canvas"
 const viewKey = (id: string) => `nodly-project-view:${id}`
 
 /**
- * Where a project opens. A new one carries ?start=posts|canvas|templates from the New project
- * dialog (read once, then dropped from the address); after that, the view last picked here;
+ * Where a project opens. A new one carries ?start=posts|canvas (and &template=<id>) from the
+ * New project dialog (read once, then dropped from the address); after that, the view last picked here;
  * otherwise the canvas if something is drawn on it, else the posts.
  */
-function readStart(project: Order): { view: View; templates: boolean } {
+function readStart(project: Order): { view: View; template?: CanvasTemplate } {
   const url = new URL(window.location.href)
   const start = url.searchParams.get("start")
   if (start) {
+    const template = TEMPLATES.find((tpl) => tpl.id === url.searchParams.get("template"))
     url.searchParams.delete("start")
+    url.searchParams.delete("template")
     window.history.replaceState(window.history.state, "", url)
     const view: View = start === "posts" ? "posts" : "canvas"
     try { localStorage.setItem(viewKey(project.id), view) } catch {}
-    return { view, templates: start === "templates" }
+    return { view, template }
   }
   try {
     const saved = localStorage.getItem(viewKey(project.id))
-    if (saved === "posts" || saved === "canvas") return { view: saved, templates: false }
+    if (saved === "posts" || saved === "canvas") return { view: saved }
   } catch {}
   const drawn = ((project.board as Board | null)?.nodes?.length ?? 0) > 0
-  return { view: drawn ? "canvas" : "posts", templates: false }
+  return { view: drawn ? "canvas" : "posts" }
 }
 
 /** Text edited in place, saved when it loses focus (Enter saves single-line text). */

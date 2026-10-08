@@ -41,8 +41,8 @@ type CanvasProps = {
   posts?: Order[]
   onCreatePosts?: (files: File[]) => Promise<Order[]>
   readOnly?: boolean
-  /** Open the template gallery right away (a project started "from a template"). */
-  startWithTemplates?: boolean
+  /** Lay this template out on first open (a project started from it). */
+  startTemplate?: CanvasTemplate
 }
 
 export function ProjectCanvas(props: CanvasProps) {
@@ -53,7 +53,7 @@ export function ProjectCanvas(props: CanvasProps) {
   )
 }
 
-function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = false, startWithTemplates = false }: CanvasProps) {
+function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = false, startTemplate }: CanvasProps) {
   const { t } = useT()
   const theme = useTheme()
   const flow = useReactFlow()
@@ -61,7 +61,7 @@ function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = f
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
-  const [templatesOpen, setTemplatesOpen] = useState(startWithTemplates)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   // The add menu, where the user double- or right-clicked: on screen, and on the canvas.
   const [menu, setMenu] = useState<{ left: number; top: number; at: { x: number; y: number } } | null>(null)
@@ -156,6 +156,16 @@ function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = f
   }
 
   /** Lays a template out around the middle of the screen, with fresh ids and the user's language. */
+  // a project started from a template gets it laid out once, the first time it opens
+  const started = useRef(false)
+  useEffect(() => {
+    if (!startTemplate || started.current) return
+    started.current = true
+    const timer = window.setTimeout(() => applyTemplate(startTemplate), 0)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  }, [])
+
   function applyTemplate(tpl: CanvasTemplate) {
     const ids = tpl.nodes.map(() => `n-${crypto.randomUUID()}`)
     const boxes = tpl.nodes.map((n) => ({ ...n, ...NODE_SIZE[n.type] }))

@@ -9,7 +9,8 @@ import {
   LogOutIcon, MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
-import { NewProjectDialog, type ProjectStart } from "@/components/projects/NewProjectDialog"
+import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
+import type { CanvasTemplate } from "@/components/projects/templates"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -140,7 +141,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   return (
     <div className="flex flex-1 flex-col">
       <WorkspaceRow onNewProject={newProject} />
-      <NewProjectDialog open={creating} onOpenChange={setCreating} onCreate={createProject} />
+      <TemplatesDialog open={creating} onOpenChange={setCreating} onPosts={() => createProject("posts")} onPick={(tpl) => createProject("canvas", tpl)} />
 
       <div className="flex flex-col gap-1.5 px-3 pb-2">
         <button
@@ -373,13 +374,14 @@ function useProjects() {
 function useCreateProject() {
   const { t } = useT()
   const router = useRouter()
-  return async (start: ProjectStart) => {
+  /** A new project opening on its posts or its canvas, a template's canvas laid out if given. */
+  return async (view: "posts" | "canvas", template?: CanvasTemplate | null) => {
     const { data: shop } = await supabase.from("shops").select("id").limit(1).maybeSingle()
     if (!shop) return
     const { data, error } = await supabase.from("orders").insert({
       shop_id: shop.id,
       code: `PRJ-${Date.now().toString(36).toUpperCase()}`,
-      title: t("Untitled"),
+      title: template ? t(template.title) : t("Untitled"),
       client_name: "",
       status: "await",
       kind: "project",
@@ -390,7 +392,7 @@ function useCreateProject() {
       return
     }
     window.dispatchEvent(new Event(PROJECTS_CHANGED))
-    router.push(`/orders/${data.id}?start=${start}`)
+    router.push(`/orders/${data.id}?start=${view}${template ? `&template=${template.id}` : ""}`)
   }
 }
 
