@@ -9,6 +9,7 @@ import {
   LogOutIcon, MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
+import { NewProjectDialog, type ProjectStart } from "@/components/projects/NewProjectDialog"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -122,6 +123,8 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const projects = useProjects()
   const [searching, setSearching] = useState(false)
   const createProject = useCreateProject()
+  const [creating, setCreating] = useState(false)
+  const newProject = () => setCreating(true)
 
   // Ctrl/⌘+K opens search from anywhere, like Notion.
   useEffect(() => {
@@ -136,7 +139,8 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const sub = "[&>a]:pl-9 [&>button]:pl-9"
   return (
     <div className="flex flex-1 flex-col">
-      <WorkspaceRow onNewProject={createProject} />
+      <WorkspaceRow onNewProject={newProject} />
+      <NewProjectDialog open={creating} onOpenChange={setCreating} onCreate={createProject} />
 
       <div className="flex flex-col gap-1.5 px-3 pb-2">
         <button
@@ -162,7 +166,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
             href={`/orders/${p.id}`}
           />
         ))}
-        <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={t("New project")} onClick={createProject} />
+        <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={t("New project")} onClick={newProject} />
 
         <SectionLabel className="mt-5">{t("Page")}</SectionLabel>
         {beta ? (
@@ -369,7 +373,7 @@ function useProjects() {
 function useCreateProject() {
   const { t } = useT()
   const router = useRouter()
-  return async () => {
+  return async (start: ProjectStart) => {
     const { data: shop } = await supabase.from("shops").select("id").limit(1).maybeSingle()
     if (!shop) return
     const { data, error } = await supabase.from("orders").insert({
@@ -386,7 +390,7 @@ function useCreateProject() {
       return
     }
     window.dispatchEvent(new Event(PROJECTS_CHANGED))
-    router.push(`/orders/${data.id}`)
+    router.push(`/orders/${data.id}?start=${start}`)
   }
 }
 

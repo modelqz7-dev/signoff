@@ -20,7 +20,12 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
   const [posts, setPosts] = useState<Order[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [view, setView] = useState<"posts" | "canvas">("posts")
+  const [start] = useState(() => readStart(project))
+  const [view, setViewState] = useState<View>(start.view)
+  const setView = (v: View) => {
+    setViewState(v)
+    try { localStorage.setItem(viewKey(project.id), v) } catch {}
+  }
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
@@ -144,10 +149,36 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
       <main className={cn("relative min-h-0 flex-1")}>
         {loaded && (view === "posts"
           ? <PostsView posts={posts} onUpload={uploadPosts} busy={busy} />
-          : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} />)}
+          : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} startWithTemplates={start.templates} />)}
       </main>
     </div>
   )
+}
+
+type View = "posts" | "canvas"
+const viewKey = (id: string) => `nodly-project-view:${id}`
+
+/**
+ * Where a project opens. A new one carries ?start=posts|canvas|templates from the New project
+ * dialog (read once, then dropped from the address); after that, the view last picked here;
+ * otherwise the canvas if something is drawn on it, else the posts.
+ */
+function readStart(project: Order): { view: View; templates: boolean } {
+  const url = new URL(window.location.href)
+  const start = url.searchParams.get("start")
+  if (start) {
+    url.searchParams.delete("start")
+    window.history.replaceState(window.history.state, "", url)
+    const view: View = start === "posts" ? "posts" : "canvas"
+    try { localStorage.setItem(viewKey(project.id), view) } catch {}
+    return { view, templates: start === "templates" }
+  }
+  try {
+    const saved = localStorage.getItem(viewKey(project.id))
+    if (saved === "posts" || saved === "canvas") return { view: saved, templates: false }
+  } catch {}
+  const drawn = ((project.board as Board | null)?.nodes?.length ?? 0) > 0
+  return { view: drawn ? "canvas" : "posts", templates: false }
 }
 
 /** Text edited in place, saved when it loses focus (Enter saves single-line text). */
