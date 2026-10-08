@@ -4,7 +4,7 @@ import "@xyflow/react/dist/style.css"
 import { createContext, memo, useCallback, useContext, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
-  Background, BackgroundVariant, ConnectionMode, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider,
+  ConnectionMode, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider,
   addEdge, useEdgesState, useNodesState, useReactFlow,
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react"
@@ -155,9 +155,7 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={readOnly ? null : ["Backspace", "Delete"]}
           className="!bg-transparent"
-        >
-          <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} className="!bg-transparent opacity-70" />
-        </ReactFlow>
+        />
 
         {nodes.length === 0 && !readOnly && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
