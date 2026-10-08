@@ -69,7 +69,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   return (
     // fills the screen, but no wider than 1680px (tiles stretched across a big monitor go flat) and
     // no shorter than its content needs: a low screen scrolls instead of squashing the tiles
-    <div className="mx-auto grid w-full max-w-[1680px] gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(560px,1fr)_minmax(260px,auto)]">
+    <div className="mx-auto grid w-full max-w-[1560px] gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(290px,auto)]">
       {/* left: the month, and the one thing to do now */}
       <div className="flex min-h-0 flex-col gap-2.5">
         <MonthTile
@@ -86,7 +86,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
       </div>
 
       {/* right: the week, always on a white sheet */}
-      <section className="surface-light flex min-h-[520px] min-w-0 flex-col rounded-[22px] bg-white p-4 text-[#151515] sm:p-5 lg:min-h-0">
+      <section className="surface-light flex min-h-[520px] min-w-0 flex-col rounded-[22px] bg-white p-4 text-[#151515] sm:p-5 lg:col-span-2 lg:min-h-0">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-[family-name:var(--font-brand)] text-[22px] font-bold tracking-[-0.03em] first-letter:uppercase">
             {addDays(week, 3).toLocaleDateString(locale, { month: "long", year: "numeric" })}
@@ -129,7 +129,8 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
       </section>
 
       {/* bottom: statuses (they filter the week), approvals this week, projects */}
-      <div className="grid gap-2.5 lg:col-span-2 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
+      {/* on computers these three join the page grid: under the month, under the week (two thirds), and the rest */}
+      <div className="grid gap-2.5 lg:contents">
         <StatusTile counts={counts} lanes={lanes} onLanes={setLanes} onNewProject={onNewProject} />
         <ApprovalsTile items={items} today={today} />
         <ProjectsTile home={home} />
@@ -445,16 +446,20 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
         <span className="ml-auto flex size-8 items-center justify-center rounded-lg bg-white/[0.07]"><BarChart3Icon className="size-4 text-white/80" /></span>
       </div>
       <div className="mt-3 grid min-h-0 flex-1 grid-cols-[22px_minmax(0,1fr)] gap-2">
-        <div className="flex flex-col justify-between pb-5 text-[10.5px] text-white/45">{ticks.map((v, i) => <span key={i}>{v}</span>)}</div>
-        <div className="relative flex items-end gap-3 pb-5" onMouseLeave={() => setHover(null)}>
+        <div className="flex flex-col justify-between pb-5 text-[10.5px] leading-none text-white/45">{ticks.map((v, i) => <span key={i} className="-translate-y-1/2 first:translate-y-0 last:translate-y-0">{v}</span>)}</div>
+        <div className="relative flex items-end gap-2 pb-5" onMouseLeave={() => setHover(null)}>
+          {/* dashed lines at the scale's steps, as in the reference */}
+          {ticks.map((_, i) => (
+            <span key={i} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-dashed border-white/[0.07]" style={{ bottom: `calc(20px + ${(1 - i / (ticks.length - 1)) * 100}% - ${(1 - i / (ticks.length - 1)) * 20}px)` }} />
+          ))}
           {data.map((x, i) => {
             const on = i === at
             const h = Math.max(6, (Math.max(x.approved, x.uploaded) / top) * 100)
             return (
               <div key={i} className="relative flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
                 {/* a thin cap on a body; the picked day turns yellow over orange stripes */}
-                <div className="mx-auto flex w-full max-w-14 flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
-                  <div className={cn("h-1 shrink-0", on ? "bg-[#ebb216]" : "bg-[#3a3a3a]")} />
+                <div className="relative mx-auto flex w-[82%] max-w-24 flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
+                  <div className={cn("h-[18%] min-h-1 shrink-0", on ? "bg-[#ebb216]" : "bg-[#3a3a3a]")} />
                   <div className={cn("flex-1", on ? "bg-[repeating-linear-gradient(-45deg,#e56019_0_4px,#f08139_4px_8px)]" : "bg-[#2c2c2c]")} />
                 </div>
                 <span className={cn("absolute -bottom-5 inset-x-0 text-center text-[10.5px] capitalize", on ? "font-semibold text-white" : "text-white/50")}>
