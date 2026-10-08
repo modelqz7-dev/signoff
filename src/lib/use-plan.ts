@@ -37,7 +37,7 @@ export async function loadPlanUsage(shopId?: string): Promise<PlanUsage | null> 
 
   const { count } = await supabase
     .from("orders").select("id", { count: "exact", head: true })
-    .eq("shop_id", shop.id).in("status", ["await", "changes"])
+    .eq("shop_id", shop.id).neq("kind", "post").in("status", ["await", "changes"])
 
   const plan = effectivePlan(shop as Shop)
   const activeOrders = count ?? 0
