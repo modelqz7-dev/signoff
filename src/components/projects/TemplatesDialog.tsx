@@ -128,7 +128,11 @@ function TablePreview({ tpl }: { tpl: CanvasTemplate }) {
           <div key={i} className="grid grid-cols-[1.1fr_1fr_0.9fr] items-center gap-x-3">
             <span className="h-1.5 w-4/5 rounded-full bg-foreground/15" />
             <span className="flex items-center gap-1.5">
-              {i !== 1 && <span className="size-3 shrink-0 rounded-full bg-foreground/20" />}
+              {/* people columns (owner, author, client) get faces, as in Notion */}
+              {tpl.preview.people && (
+                // eslint-disable-next-line @next/next/no-img-element -- tiny decorative avatar
+                <img src={`/avatars/person-${((offset * 2 + i) % 6) + 1}.svg`} alt="" className="size-4 shrink-0 rounded-full ring-1 ring-foreground/10" />
+              )}
               <span className="h-1.5 w-3/5 rounded-full bg-foreground/10" />
             </span>
             <span
