@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon, CheckIcon, FileCheckIcon, SendIcon } from "lucide-react"
 import { ApproveKey } from "@/components/landing/ApproveKey"
 import { RotatingWord } from "@/components/landing/RotatingWord"
 import { STATUS_MAP } from "@/components/dashboard/types"
@@ -13,12 +13,13 @@ const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.04
 
 /**
  * First screen: Nodly's key, big and alone in the middle. Pressing it (click, tap or Enter)
- * approves the "order": the status flips and an APPROVED stamp lands across the key.
+ * approves the "order": an "Approved" sticker lands on the key and, one by one, the events a real
+ * approval sets off appear underneath (the client's yes, the Telegram notice, the record).
  */
 export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
   const [approved, setApproved] = useState(false)
   const [stampKey, setStampKey] = useState(0)
-  const status = approved ? STATUS_MAP.approved : STATUS_MAP.await
+  const status = STATUS_MAP.await
 
   function press() {
     setApproved((v) => !v)
@@ -67,17 +68,41 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
           )}
         </div>
 
-        {/* order status under the key */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm">
-          <span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: status.bg, color: status.color }}>
-            {t(status.label)}
-          </span>
-          <span className="text-muted-foreground">
-            {approved ? t("Approved by Anna K. · just now") : t("Posts for “Bloom” · press the key to approve")}
-          </span>
+        {/* under the key: the order's status, then what one press sets off, event by event */}
+        <div className="-mt-6 flex h-[148px] w-full max-w-sm flex-col items-center sm:-mt-10 sm:h-[136px]">
+          {approved ? (
+            <ol key={stampKey} aria-live="polite" className="flex w-full flex-col gap-1.5 text-left text-sm">
+              {[
+                { icon: CheckIcon, text: t("Approved by Anna K. · just now"), approved: true },
+                { icon: SendIcon, text: t("Telegram: the client approved the posts") },
+                { icon: FileCheckIcon, text: t("Saved on record: who, when, which version") },
+              ].map(({ icon: Icon, text, approved: ok }, i) => (
+                <li
+                  key={text}
+                  className="flex animate-[row-in_.4s_ease-out_both] items-center gap-2.5 rounded-xl bg-card px-3 py-2 ring-1 ring-border motion-reduce:animate-none"
+                  style={{ animationDelay: `${150 + i * 450}ms` }}
+                >
+                  <span
+                    className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", ok ? "text-[var(--status-approved)]" : "bg-foreground/[0.06] text-foreground")}
+                    style={ok ? { backgroundColor: "color-mix(in oklab, var(--status-approved) 16%, var(--background))" } : undefined}
+                  >
+                    <Icon className="size-3.5" strokeWidth={2.5} />
+                  </span>
+                  <span className={ok ? "font-medium text-foreground" : "text-muted-foreground"}>{text}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm">
+              <span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: status.bg, color: status.color }}>
+                {t(status.label)}
+              </span>
+              <span className="text-muted-foreground">{t("Posts for “Bloom” · press the key to approve")}</span>
+            </div>
+          )}
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             href={signedIn ? "/dashboard" : "/signup"}
             className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85"
