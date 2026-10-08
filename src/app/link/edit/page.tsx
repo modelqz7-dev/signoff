@@ -535,10 +535,10 @@ export default function PageEditor() {
                     {(["light", "dark"] as const).map((th) => (
                       <button key={th} type="button" onClick={() => update({ theme: th })}
                         className={`flex flex-col gap-2 rounded-2xl p-2 text-sm ring-2 transition-colors ${data.theme === th ? "ring-foreground" : "ring-transparent hover:ring-border"}`}>
-                        <span className={`flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl ${th === "light" ? "bg-[#f6f5f3]" : "bg-[#141312]"}`}>
+                        <span className={`flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl ${th === "light" ? "bg-[#f6f5f3]" : "bg-[#191919]"}`}>
                           <span className={`size-6 rounded-full ${th === "light" ? "bg-[#d9d6d2]" : "bg-[#3a3836]"}`} />
-                          <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#1e1d1c] ring-1 ring-white/10"}`} />
-                          <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#1e1d1c] ring-1 ring-white/10"}`} />
+                          <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#252525] ring-1 ring-white/10"}`} />
+                          <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#252525] ring-1 ring-white/10"}`} />
                         </span>
                         {th === "light" ? t("Light") : t("Dark")}
                       </button>
