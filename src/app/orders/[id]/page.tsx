@@ -209,20 +209,8 @@ export default function OrderPage() {
     )
   }
 
-  if (order.kind === "project") {
-    return (
-      // a fixed-height page, so the project's canvas can fill what's left of the screen
-      <div className="flex h-screen">
-        <Sidebar open={sidebarOpen} activePage="orders" />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-          <div className="flex-1 overflow-y-auto">
-            <ProjectView project={order} onChange={setOrder} />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // A project is its own full-screen workspace, without the dashboard's menu and header.
+  if (order.kind === "project") return <ProjectView project={order} onChange={setOrder} />
 
   const status = STATUS_MAP[order.status]
   // Link and password for the client: at the top of the right column (after the file on phones).
