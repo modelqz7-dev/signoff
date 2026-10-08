@@ -32,6 +32,7 @@ import { useFileUrl } from "@/lib/files"
 import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
 import { getOrCreateShop } from "@/lib/shop"
+import { ProjectView } from "@/components/projects/ProjectView"
 import { useT } from "@/lib/i18n"
 import { siteOrigin } from "@/lib/site"
 
@@ -50,6 +51,8 @@ export default function OrderPage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [copied, setCopied] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  // A post opened from its project: the way back.
+  const [project, setProject] = useState<{ id: string; title: string } | null>(null)
   const { t, locale } = useT()
   const [focusPin, setFocusPin] = useState<{ id: string; nonce: number } | null>(null)
   // A pin clicked on the file: open its conversation in the comment list.
@@ -101,6 +104,10 @@ export default function OrderPage() {
 
       if (orderData) {
         setOrder(orderData as Order)
+        if (orderData.project_id) {
+          const { data: parent } = await supabase.from("orders").select("id, title").eq("id", orderData.project_id).maybeSingle()
+          setProject(parent ?? null)
+        }
       }
       setLoading(false)
     }
@@ -198,6 +205,20 @@ export default function OrderPage() {
         <p className={`text-sm ${loadError ? "text-destructive" : "text-muted-foreground"}`}>
           {loadError || t("Order not found")}
         </p>
+      </div>
+    )
+  }
+
+  if (order.kind === "project") {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar open={sidebarOpen} activePage="orders" />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <div className="flex-1 overflow-y-auto">
+            <ProjectView project={order} onChange={setOrder} />
+          </div>
+        </div>
       </div>
     )
   }
@@ -303,9 +324,9 @@ export default function OrderPage() {
 
             {/* Header */}
             <div className="flex flex-col gap-3">
-              <Link href="/orders" className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+              <Link href={project ? `/orders/${project.id}` : "/orders"} className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <ChevronLeftIcon className="size-3.5" />
-                {t("Orders")}
+                {project ? project.title : t("Orders")}
               </Link>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -338,7 +359,7 @@ export default function OrderPage() {
                   >
                     {t(status.label)}
                   </Badge>
-                  <DeleteOrderButton order={order} onDeleted={() => router.replace("/orders")} />
+                  <DeleteOrderButton order={order} onDeleted={() => router.replace(project ? `/orders/${project.id}` : "/orders")} />
                 </div>
               </div>
             </div>

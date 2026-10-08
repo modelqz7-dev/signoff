@@ -24,6 +24,8 @@ export async function GET(request: Request) {
     .from("orders")
     .select("id, title, client_name, client_email, shop_id, last_reminder_at, reminders_sent")
     .eq("status", "await")
+    // projects get their own client link in the next step; posts are reminded through it
+    .eq("kind", "single")
     .not("client_email", "is", null)
     .neq("client_email", "")
     .lt("reminders_sent", MAX_REMINDERS)

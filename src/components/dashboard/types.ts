@@ -23,7 +23,15 @@ export type Order = {
   approved_at?: string | null
   approved_by?: string | null
   status_changed_at?: string | null
+  // Projects (see supabase/projects.sql): a project is a page of posts, each post an order.
+  kind?: OrderKind
+  project_id?: string | null
+  caption?: string
+  publish_on?: string | null
+  position?: number
 }
+
+export type OrderKind = "single" | "project" | "post"
 
 export type OrderVersion = {
   id: string

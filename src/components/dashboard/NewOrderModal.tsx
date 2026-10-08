@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { FileIcon, LayoutListIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import {
   Dialog,
@@ -16,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { today, getLocalTimeZone, parseDate, type DateValue } from "@internationalized/date"
-import type { Order } from "./types"
+import type { Order, OrderKind } from "./types"
 import { useT } from "@/lib/i18n"
 import { I18nProvider } from "react-aria-components"
 import { isPlanLimitError, planById, PLANS, type Plan } from "@/lib/plans"
@@ -24,6 +26,7 @@ import { loadPlanUsage, notifyPlanChanged } from "@/lib/use-plan"
 import { openPanel } from "@/lib/panels"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { uploadOrderFile } from "@/lib/versions"
+import { cn } from "@/lib/utils"
 
 type NewOrderModalProps = {
   shopId: string
@@ -34,6 +37,9 @@ type NewOrderModalProps = {
 
 export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrderModalProps) {
   const { t } = useT()
+  const router = useRouter()
+  // A project is a page of posts (opens right away); a single order is one file, as before.
+  const [kind, setKind] = useState<Exclude<OrderKind, "post">>("project")
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState("")
   const [clientName, setClientName] = useState("")
@@ -77,7 +83,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
 
     let fileUrl: string | null = null
 
-    if (file) {
+    if (file && kind === "single") {
       try {
         fileUrl = await uploadOrderFile(shopId, file)
       } catch (e) {
@@ -102,6 +108,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
         status: "await",
         deadline: deadline || null,
         file_url: fileUrl,
+        kind,
       })
       .select()
       .single()
@@ -123,6 +130,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
       onCreated?.(data as Order)
       reset()
       onOpenChange(false)
+      if (kind === "project") router.push(`/orders/${data.id}`)
     }
   }
 
@@ -152,6 +160,31 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div role="radiogroup" aria-label={t("Order type")} className="grid grid-cols-2 gap-2">
+          {([
+            ["project", LayoutListIcon, t("Project"), t("A page of posts, each approved on its own")],
+            ["single", FileIcon, t("Single file"), t("One design, one approval")],
+          ] as const).map(([value, Icon, label, hint]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={kind === value}
+              onClick={() => setKind(value)}
+              className={cn(
+                "flex flex-col gap-1 rounded-lg p-3 text-left ring-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                kind === value ? "bg-foreground/[0.04] ring-foreground/70" : "ring-border hover:bg-hover"
+              )}
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Icon className="size-4" />
+                {label}
+              </span>
+              <span className="text-xs leading-snug text-muted-foreground">{hint}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="order-title">{t("Order name *")}</Label>
           <Input
@@ -205,7 +238,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        {kind === "single" && <div className="flex flex-col gap-1.5">
           <Label htmlFor="order-file">{t("PDF / File")}</Label>
           <Input
             id="order-file"
@@ -214,7 +247,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] || null)}
             className="file:text-muted-foreground file:border-0 file:bg-transparent file:text-sm cursor-pointer"
           />
-        </div>
+        </div>}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="order-notes">{t("Notes")}</Label>
@@ -234,7 +267,7 @@ export function NewOrderModal({ shopId, open, onOpenChange, onCreated }: NewOrde
         <DialogFooter>
           <DialogClose variant="outline">{t("Cancel")}</DialogClose>
           <Button type="submit" isDisabled={saving || !title.trim() || !clientName.trim()}>
-            {saving ? t("Creating...") : t("Create Order")}
+            {saving ? t("Creating...") : kind === "project" ? t("Create project") : t("Create Order")}
           </Button>
         </DialogFooter>
       </form>

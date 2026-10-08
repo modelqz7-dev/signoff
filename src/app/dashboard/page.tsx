@@ -56,6 +56,7 @@ export default function Dashboard() {
         .from("orders")
         .select("*")
         .eq("shop_id", shopData.id)
+        .neq("kind", "post")
         .order("created_at", { ascending: false })
 
       setOrders((ordersData as Order[]) || [])
@@ -77,6 +78,8 @@ export default function Dashboard() {
         (payload) => {
           if (payload.eventType === "DELETE") return
           const row = payload.new as Order
+          // posts live on their project's page, not in the order lists
+          if (row.kind === "post") return
           setOrders((prev) =>
             prev.some((o) => o.id === row.id)
               ? prev.map((o) => (o.id === row.id ? row : o))

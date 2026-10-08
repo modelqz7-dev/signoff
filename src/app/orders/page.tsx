@@ -35,7 +35,7 @@ export default function OrdersPage() {
       setShop(shopData as Shop)
 
       const { data: ordersData } = await supabase
-        .from("orders").select("*").eq("shop_id", shopData.id)
+        .from("orders").select("*").eq("shop_id", shopData.id).neq("kind", "post")
         .order("created_at", { ascending: false })
 
       setOrders((ordersData as Order[]) || [])
