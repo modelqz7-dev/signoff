@@ -41,6 +41,8 @@ type CanvasProps = {
   posts?: Order[]
   onCreatePosts?: (files: File[]) => Promise<Order[]>
   readOnly?: boolean
+  /** Open the template gallery right away (a project started "from a template"). */
+  startWithTemplates?: boolean
 }
 
 export function ProjectCanvas(props: CanvasProps) {
@@ -51,7 +53,7 @@ export function ProjectCanvas(props: CanvasProps) {
   )
 }
 
-function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = false }: CanvasProps) {
+function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = false, startWithTemplates = false }: CanvasProps) {
   const { t } = useT()
   const theme = useTheme()
   const flow = useReactFlow()
@@ -59,7 +61,7 @@ function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = f
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
-  const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(startWithTemplates)
   const fileRef = useRef<HTMLInputElement>(null)
   // The add menu, where the user double- or right-clicked: on screen, and on the canvas.
   const [menu, setMenu] = useState<{ left: number; top: number; at: { x: number; y: number } } | null>(null)
