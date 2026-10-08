@@ -148,26 +148,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
           <span className="flex-1 text-left">{t("Search")}</span>
           <kbd className="rounded bg-foreground/[0.06] px-1.5 py-0.5 font-sans text-[11px]">Ctrl+K</kbd>
         </button>
-        {/* Home (the dashboard), the workshop's own canvas and the calendar, as in Notion's top row */}
-        <div className="flex items-center gap-1 pt-1">
-          <Link
-            href="/dashboard"
-            className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
-              activePage === "dashboard" ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
-            }`}
-          >
-            <HomeIcon className="size-4" />
-            {t("Home")}
-          </Link>
-          <TopIcon href="/board" label={t("Canvas")} active={activePage === "board"}><ShapesIcon className="size-4" /></TopIcon>
-          <TopIcon
-            href="/dashboard?calendar=1"
-            label={t("Calendar")}
-            onClick={(e) => { if (activePage === "dashboard") { e.preventDefault(); window.dispatchEvent(new Event(OPEN_CALENDAR_EVENT)) } }}
-          >
-            <CalendarDaysIcon className="size-4" />
-          </TopIcon>
-        </div>
+                <TopRow activePage={activePage} />
       </div>
 
       <nav className="flex-1 px-3 pt-2 pb-4">
@@ -216,19 +197,71 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   )
 }
 
-function TopIcon({ href, label, active, onClick, children }: { href: string; label: string; active?: boolean; onClick?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
+type TopId = "home" | "canvas"
+
+// The top row's open pill, kept between pages so the switch animates across navigation.
+let lastTop: TopId | null = null
+const rememberTop = (id: TopId | null) => { lastTop = id }
+
+/**
+ * Home (the dashboard), the workshop's own canvas and the calendar, as in Notion's top row. Only
+ * the open one carries its name: picking another folds the old pill down to its icon and
+ * unfolds the new one.
+ */
+function TopRow({ activePage }: { activePage: string }) {
+  const { t } = useT()
+  const current: TopId | null = activePage === "dashboard" ? "home" : activePage === "board" ? "canvas" : null
+  // start from what was open on the previous page, then move to this page's pill
+  const [open, setOpen] = useState<TopId | null>(lastTop ?? current)
+  useEffect(() => {
+    rememberTop(current)
+    const frame = requestAnimationFrame(() => setOpen(current))
+    return () => cancelAnimationFrame(frame)
+  }, [current])
+  // fold right away on click; the next page starts from this page's pill and finishes the move
+  const go = (id: TopId) => setOpen(id)
+
+  const pill = (id: TopId, href: string, Icon: typeof HomeIcon, label: string) => {
+    const on = open === id
+    return (
+      <Link
+        href={href}
+        onClick={() => go(id)}
+        aria-label={label}
+        title={on ? undefined : label}
+        className={`flex h-8 items-center rounded-lg px-2 text-sm font-medium transition-colors duration-300 motion-reduce:transition-none ${
+          on ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-4 shrink-0" />
+        <span
+          className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+            on ? "ml-1.5 max-w-28 opacity-100" : "ml-0 max-w-0 opacity-0"
+          }`}
+        >
+          {label}
+        </span>
+      </Link>
+    )
+  }
+
   return (
-    <Link
-      href={href}
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className={`flex size-8 items-center justify-center rounded-lg transition-colors ${
-        active ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
-      }`}
-    >
-      {children}
-    </Link>
+    <div className="flex items-center gap-1 pt-1">
+      {pill("home", "/dashboard", HomeIcon, t("Home"))}
+      {pill("canvas", "/board", ShapesIcon, t("Canvas"))}
+      <Link
+        href="/dashboard?calendar=1"
+        title={t("Calendar")}
+        aria-label={t("Calendar")}
+        onClick={(e) => {
+          if (activePage === "dashboard") { e.preventDefault(); window.dispatchEvent(new Event(OPEN_CALENDAR_EVENT)) }
+          else go("home")
+        }}
+        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+      >
+        <CalendarDaysIcon className="size-4" />
+      </Link>
+    </div>
   )
 }
 
