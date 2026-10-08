@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, BarChart3Icon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
-  ImagePlusIcon, PencilIcon, PlusIcon, SearchIcon, ZapIcon,
+  ImagePlusIcon, PencilIcon, PlusIcon, ZapIcon,
 } from "lucide-react"
 import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
@@ -48,16 +48,11 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   const [project, setProject] = useState<string | null>(null)
   const [lanes, setLanes] = useState<Set<Lane>>(() => new Set(LANES))
   const [view, setView] = useState<View>("week")
-  const [query, setQuery] = useState("")
 
   const lane = (o: Order): Lane =>
     !o.file_url ? "nofile" : o.status === "changes" || (home.open.get(o.id)?.length && !isDone(o)) ? "changes" : isDone(o) ? "approved" : "waiting"
 
-  const q = query.trim().toLowerCase()
-  const visible = useMemo(() => items.filter((o) =>
-    (!project || o.project_id === project) &&
-    (!q || `${o.title} ${projectName(o)} ${o.client_name ?? ""}`.toLowerCase().includes(q))
-  ), [items, project, q, projectName])
+  const visible = useMemo(() => items.filter((o) => !project || o.project_id === project), [items, project])
 
   const counts = useMemo(() => {
     const c: Record<Lane, number> = { changes: 0, waiting: 0, nofile: 0, approved: 0 }
@@ -87,30 +82,29 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
 
       {/* right: the week, always on a white sheet */}
       <section className="surface-light flex min-h-[520px] min-w-0 flex-col rounded-[22px] bg-white p-4 text-[#151515] sm:p-5 lg:col-span-2 lg:min-h-0">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-[family-name:var(--font-brand)] text-[22px] font-bold tracking-[-0.03em] first-letter:uppercase">
-            {addDays(week, 3).toLocaleDateString(locale, { month: "long", year: "numeric" })}
+        {/* as in the reference: the month left, the switch in the middle, the clients right; then
+            the week's arrows and the yellow button */}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
+          <h1 className="font-[family-name:var(--font-brand)] text-[24px] font-extrabold tracking-[-0.035em]">
+            {monthTitle(addDays(week, 3), locale)}
           </h1>
-          <div className="flex items-center gap-1">
-            <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-7 items-center justify-center rounded-full hover:bg-black/5"><ChevronLeftIcon className="size-4" /></button>
-            <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2 py-1 text-xs font-semibold hover:bg-black/5">{t("This week")}</button>
-            <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-7 items-center justify-center rounded-full hover:bg-black/5"><ChevronRightIcon className="size-4" /></button>
-          </div>
-          <div role="tablist" className="flex rounded-full bg-[#f1f1f1] p-[3px] sm:mx-auto">
+          <div role="tablist" className="order-last col-span-2 flex justify-self-center rounded-full bg-[#f1f1f1] p-[3px] sm:order-none sm:col-span-1">
             {(["week", "projects", "list"] as View[]).map((v) => (
               <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)}
-                className={cn("rounded-full px-4 py-1.5 text-xs font-semibold transition-colors", view === v ? "bg-[#121212] text-white" : "text-[#3a3a3a] hover:text-black")}>
+                className={cn("rounded-full px-5 py-1.5 text-xs font-semibold transition-colors", view === v ? "bg-[#121212] text-white" : "text-[#3a3a3a] hover:text-black")}>
                 {v === "week" ? t("Week") : v === "projects" ? t("Projects") : t("List")}
               </button>
             ))}
           </div>
+          <Clients projects={projects} />
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
-          <label className="flex h-8 w-full max-w-xs items-center gap-2 rounded-full bg-[#f4f4f4] px-3 text-xs">
-            <SearchIcon className="size-3.5 shrink-0 text-[#9a9a9a]" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Find a post, project or client…")} className="w-full bg-transparent outline-none placeholder:text-[#9a9a9a]" />
-          </label>
-          <button type="button" onClick={onNewProject} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[#fdc019] px-3.5 text-xs font-bold text-[#151515] transition-transform hover:scale-[1.03]">
+          <div className="flex items-center gap-1 rounded-full bg-[#f4f4f4] p-[3px]">
+            <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-7 items-center justify-center rounded-full hover:bg-white"><ChevronLeftIcon className="size-4" /></button>
+            <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2.5 py-1 text-xs font-semibold hover:bg-white">{t("This week")}</button>
+            <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-7 items-center justify-center rounded-full hover:bg-white"><ChevronRightIcon className="size-4" /></button>
+          </div>
+          <button type="button" onClick={onNewProject} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#fdc019] px-4 text-xs font-bold text-[#151515] transition-transform hover:scale-[1.03]">
             <PlusIcon className="size-3.5" />{t("New project")}
           </button>
         </div>
@@ -135,6 +129,36 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         <ApprovalsTile items={items} today={today} />
         <ProjectsTile home={home} />
       </div>
+    </div>
+  )
+}
+
+/** "October, 2026", as the reference writes its month. */
+function monthTitle(d: Date, locale: string) {
+  const month = d.toLocaleDateString(locale, { month: "long" })
+  return `${month.charAt(0).toUpperCase()}${month.slice(1)}, ${d.getFullYear()}`
+}
+
+/** The clients' faces, overlapping, top right: one circle per project in its colour. */
+function Clients({ projects }: { projects: Order[] }) {
+  const { t } = useT()
+  const shown = projects.slice(0, 4)
+  if (!shown.length) return <span />
+  return (
+    <div className="flex justify-self-end">
+      {shown.map((p, i) => {
+        const name = p.client_name || p.title || t("Untitled")
+        const letters = name.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+        return (
+          <Link key={p.id} href={`/orders/${p.id}`} title={name} style={{ backgroundColor: projectColor(p.id), zIndex: shown.length - i }}
+            className={cn("flex size-8 items-center justify-center rounded-full text-[11px] font-bold text-[#1a1a1a] ring-2 ring-white transition-transform hover:-translate-y-0.5", i > 0 && "-ml-2.5")}>
+            {letters || "·"}
+          </Link>
+        )
+      })}
+      {projects.length > shown.length && (
+        <span className="-ml-2.5 flex size-8 items-center justify-center rounded-full bg-[#151515] text-[10px] font-bold text-white ring-2 ring-white">+{projects.length - shown.length}</span>
+      )}
     </div>
   )
 }
@@ -315,8 +339,8 @@ function WeekGrid({ week, today, items, lanes, lane, projectName, projects }: {
         {days.map((d) => {
           const isToday = d.getTime() === today.getTime()
           return (
-            <p key={d.getTime()} className={cn("pb-2 font-[family-name:var(--font-brand)] text-[17px] font-bold tracking-[-0.03em]", isToday ? "text-[#ec4f9a]" : "text-[#151515]")}>
-              {d.getDate()}<span className="ml-0.5 font-sans text-[11px] font-medium tracking-normal text-[#a5a5a5]">/{d.toLocaleDateString(locale, { weekday: "short" })}</span>
+            <p key={d.getTime()} className={cn("pb-3 font-[family-name:var(--font-brand)] text-[21px] leading-none font-extrabold tracking-[-0.04em]", isToday ? "text-[#ec4f9a]" : "text-[#151515]")}>
+              {d.getDate()}<span className="ml-0.5 font-sans text-[12px] font-medium tracking-normal text-[#b0b0b0]">/{d.toLocaleDateString(locale, { weekday: "short" })}</span>
             </p>
           )
         })}

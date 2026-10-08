@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import localFont from "next/font/local"
+import { Inter, Manrope } from "next/font/google"
 import "./globals.css"
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script"
 import { Analytics } from "@/components/Analytics"
@@ -12,11 +11,12 @@ const inter = Inter({
   weight: ["300", "400", "500"],
 })
 
-// Brand headlines and the "Nodly" wordmark: Manrope Bold, latin + cyrillic (SIL Open Font License).
-const brand = localFont({
-  src: "./fonts/manrope-700.woff2",
+// Brand headlines, the "Nodly" wordmark and the home page's big numbers: Manrope, latin + cyrillic
+// (SIL Open Font License). 800 for the heaviest figures, like the reference design's day numbers.
+const brand = Manrope({
   variable: "--font-brand",
-  weight: "700",
+  subsets: ["latin", "cyrillic"],
+  weight: ["700", "800"],
 })
 
 export const metadata: Metadata = {
