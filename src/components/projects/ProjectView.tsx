@@ -1,17 +1,18 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { MenuIcon, PanelLeftIcon } from "lucide-react"
+import { LayoutGridIcon, MenuIcon, PanelLeftIcon, ShapesIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { ProjectCanvas, type Board } from "@/components/projects/ProjectCanvas"
+import { PostsView } from "@/components/projects/PostsView"
 import { PROJECTS_CHANGED, openNav } from "@/lib/panels"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
 // A project page, Notion style, inside the app's one sidebar: a thin bar on top with its name and
-// client, and the rest is the project's canvas. Posts on the canvas are orders of their own
+// client, and below it either the simple list of posts (the default) or the project's canvas. Posts on the canvas are orders of their own
 // (kind = 'post'), so opening one leads to the usual order page with pins, versions and approval.
 
 export function ProjectView({ project, onChange, onToggleSidebar }: { project: Order; onChange: (p: Order) => void; onToggleSidebar: () => void }) {
@@ -19,6 +20,8 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
   const [posts, setPosts] = useState<Order[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<"posts" | "canvas">("posts")
+  const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -76,6 +79,11 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
     return added
   }
 
+  async function uploadPosts(files: File[]) {
+    setBusy(true)
+    try { return await addPosts(files) } finally { setBusy(false) }
+  }
+
   const save = useCallback(async (board: Board) => {
     const { error } = await supabase.from("orders").update({ board }).eq("id", project.id)
     return !error
@@ -112,11 +120,31 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
           className="field-sizing-content hidden max-w-[30vw] min-w-16 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-hover sm:block"
           ariaLabel={t("Client")}
         />
-        {error && <span className="ml-auto truncate text-xs text-destructive">{error}</span>}
+        {error && <span className="truncate text-xs text-destructive">{error}</span>}
+        <div role="tablist" className="ml-auto flex shrink-0 items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
+          {([["posts", LayoutGridIcon, t("Posts")], ["canvas", ShapesIcon, t("Canvas")]] as const).map(([id, Icon, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={view === id}
+              onClick={() => setView(id)}
+              className={cn(
+                "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors",
+                view === id ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="size-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <main className={cn("relative min-h-0 flex-1")}>
-        {loaded && <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} />}
+        {loaded && (view === "posts"
+          ? <PostsView posts={posts} onUpload={uploadPosts} busy={busy} />
+          : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} />)}
       </main>
     </div>
   )
