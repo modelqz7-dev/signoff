@@ -8,10 +8,12 @@ import {
   addEdge, useEdgesState, useNodesState, useReactFlow,
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react"
-import { MinusIcon, PlusIcon, ScanIcon } from "lucide-react"
+import { LayoutTemplateIcon, MinusIcon, PlusIcon, ScanIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
+import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
+import { NODE_SIZE, type CanvasTemplate } from "@/components/projects/templates"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useT, type T } from "@/lib/i18n"
@@ -28,6 +30,7 @@ export type CanvasActions = {
   addPosts: (files: File[]) => void
   /** Brings a post into view; false when the post isn't on the canvas. */
   focus: (postId: string) => boolean
+  templates: () => void
 }
 
 type Kind = "block" | "post" | "text" | "note"
@@ -65,6 +68,7 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
+  const [templatesOpen, setTemplatesOpen] = useState(false)
   const postMap = new Map(posts.map((p) => [p.id, p]))
 
   // Autosave: what the user wrote and where things stand, never selection or drag state.
@@ -121,8 +125,43 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
         setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })))
         return true
       },
+      templates: () => setTemplatesOpen(true),
     }
   })
+
+  /** Lays a template out around the middle of the screen, with fresh ids and the user's language. */
+  function applyTemplate(tpl: CanvasTemplate) {
+    const ids = tpl.nodes.map(() => `n-${crypto.randomUUID()}`)
+    const boxes = tpl.nodes.map((n) => ({ ...n, ...NODE_SIZE[n.type] }))
+    const minX = Math.min(...boxes.map((b) => b.x)), maxX = Math.max(...boxes.map((b) => b.x + b.w))
+    const minY = Math.min(...boxes.map((b) => b.y)), maxY = Math.max(...boxes.map((b) => b.y + b.h))
+    const mid = spot()
+    const dx = mid.x + 120 - (minX + maxX) / 2
+    const dy = mid.y + 60 - (minY + maxY) / 2
+    const added: Node[] = tpl.nodes.map((n, i) => ({
+      id: ids[i],
+      type: n.type,
+      position: { x: n.x + dx, y: n.y + dy },
+      data: n.type === "block" ? { title: t(n.title), text: t(n.text) } : { text: t(n.text) },
+    }))
+    // join the sides that face each other, so paths run straight
+    const links: Edge[] = tpl.edges.map(([a, b, label]) => {
+      const A = boxes[a], B = boxes[b]
+      const ddx = B.x + B.w / 2 - (A.x + A.w / 2), ddy = B.y + B.h / 2 - (A.y + A.h / 2)
+      const across = Math.abs(ddx) >= Math.abs(ddy)
+      return {
+        id: `e-${crypto.randomUUID()}`,
+        source: ids[a],
+        target: ids[b],
+        sourceHandle: across ? (ddx > 0 ? "r" : "l") : (ddy > 0 ? "b" : "t"),
+        targetHandle: across ? (ddx > 0 ? "l" : "r") : (ddy > 0 ? "t" : "b"),
+        label: label ? t(label) : undefined,
+      }
+    })
+    setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), ...added])
+    setEdges((es) => [...es, ...links])
+    window.setTimeout(() => flow.fitView({ nodes: added.map((n) => ({ id: n.id })), maxZoom: 1, padding: 0.25, duration: 400 }), 60)
+  }
 
   function renamePath(_: React.MouseEvent, edge: Edge) {
     if (readOnly) return
@@ -158,11 +197,29 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
         />
 
         {nodes.length === 0 && !readOnly && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
-            <p className="text-sm font-medium text-foreground">{t("A blank canvas")}</p>
-            <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the panel on the left, then drag from a dot on one block to another to draw a path.")}</p>
-          </div>
+          <>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
+              <p className="text-sm font-medium text-foreground">{t("A blank canvas")}</p>
+              <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the panel on the left, then drag from a dot on one block to another to draw a path.")}</p>
+            </div>
+            {/* like Notion's "Get started with" */}
+            <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col gap-2">
+              <p className="text-xs text-muted-foreground">{t("Get started with")}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTemplatesOpen(true)}
+                  className="flex items-center gap-2 rounded-full bg-foreground/[0.06] px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/[0.1]"
+                >
+                  <LayoutTemplateIcon className="size-4" />
+                  {t("Templates")}
+                </button>
+              </div>
+            </div>
+          </>
         )}
+
+        <TemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onPick={(tpl) => { if (tpl) applyTemplate(tpl) }} />
 
         {/* zoom */}
         <div className="absolute right-4 bottom-4 flex items-center gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">

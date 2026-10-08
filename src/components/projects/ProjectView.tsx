@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   AlignLeftIcon, ArrowUpRightIcon, CalendarIcon, ChevronLeftIcon, CircleDotIcon, GalleryVerticalEndIcon, ImageIcon,
-  ImagePlusIcon, MessageSquareIcon, PanelLeftIcon, PlusIcon, SearchIcon, SquareIcon, StickyNoteIcon, Table2Icon,
+  ImagePlusIcon, LayoutTemplateIcon, MessageSquareIcon, PanelLeftIcon, PlusIcon, SearchIcon, SquareIcon, StickyNoteIcon, Table2Icon,
   TextIcon, Trash2Icon, TypeIcon, UploadIcon, WaypointsIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -164,6 +164,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
   }
 
   const tools = [
+    ["templates", LayoutTemplateIcon, t("Templates")],
     ["block", SquareIcon, t("Block")],
     ["post", ImageIcon, t("Post")],
     ["text", TypeIcon, t("Text")],
@@ -210,7 +211,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
           {view === "canvas" && (
             <PanelSection title={t("Tools")}>
               {tools.map(([kind, Icon, label]) => (
-                <PanelItem key={kind} icon={Icon} onClick={() => (kind === "post" ? canvasFileRef.current?.click() : canvasRef.current?.add(kind))}>
+                <PanelItem key={kind} icon={Icon} onClick={() => (kind === "post" ? canvasFileRef.current?.click() : kind === "templates" ? canvasRef.current?.templates() : canvasRef.current?.add(kind))}>
                   {label}
                 </PanelItem>
               ))}
