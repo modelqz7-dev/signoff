@@ -211,7 +211,8 @@ export default function OrderPage() {
 
   if (order.kind === "project") {
     return (
-      <div className="flex min-h-screen">
+      // a fixed-height page, so the project's canvas can fill what's left of the screen
+      <div className="flex h-screen">
         <Sidebar open={sidebarOpen} activePage="orders" />
         <div className="flex min-w-0 flex-1 flex-col">
           <DashboardHeader shopName={shop?.name || ""} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />

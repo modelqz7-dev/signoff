@@ -29,6 +29,8 @@ export type Order = {
   caption?: string
   publish_on?: string | null
   position?: number
+  /** A project's free canvas: { nodes, edges } (see ProjectCanvas). */
+  board?: unknown
 }
 
 export type OrderKind = "single" | "project" | "post"
