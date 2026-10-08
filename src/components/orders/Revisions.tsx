@@ -412,7 +412,7 @@ function DeleteLink({ onDelete }: { onDelete: () => Promise<void> | void }) {
  * workshop. Bare pins are dashed, resolved ones carry a check, a red dot means the client asked
  * to redo it. With `checked`, the buttons tick several pins instead of switching.
  */
-export function PinSwitch({ pins, numbers, chosenId, onChoose, checked, onToggle }: {
+function PinSwitch({ pins, numbers, chosenId, onChoose, checked, onToggle }: {
   pins: Pin[]
   numbers: Map<string, number>
   chosenId: string | null

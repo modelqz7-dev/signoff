@@ -8,7 +8,7 @@ const LINK_SECONDS = 60 * 60
 const cache = new Map<string, { url: string; expires: number }>()
 
 /** A signed link (1 hour) for a file in the private bucket; any other URL is returned as is. */
-export async function fileLink(url: string) {
+async function fileLink(url: string) {
   if (!needsSignedUrl(url)) return url
   const hit = cache.get(url)
   if (hit && hit.expires > Date.now() + 60_000) return hit.url

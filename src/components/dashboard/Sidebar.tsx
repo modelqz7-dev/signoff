@@ -5,12 +5,15 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, HomeIcon, LightbulbIcon,
-  MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
+  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, LightbulbIcon,
+  LogOutIcon, MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useProfile } from "@/lib/profile"
+import { useFileUrl } from "@/lib/files"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
 import { useT } from "@/lib/i18n"
 import { useSyncAccountLang } from "@/lib/account-lang"
@@ -133,7 +136,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const sub = "[&>a]:pl-9 [&>button]:pl-9"
   return (
     <div className="flex flex-1 flex-col">
-      <WorkspaceRow panel={panel} onPanel={setPanel} onNewProject={createProject} />
+      <WorkspaceRow onNewProject={createProject} />
 
       <div className="flex flex-col gap-1.5 px-3 pb-2">
         <button
@@ -206,6 +209,7 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
       {onPage && page && page.done < page.steps.length
         ? <SetupChecklist steps={page.steps} done={page.done} />
         : <PlanCard onOpen={() => setPanel("billing")} />}
+      <AccountRow panel={panel} onPanel={setPanel} />
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
       {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
     </div>
@@ -228,11 +232,35 @@ function TopIcon({ href, label, active, onClick, children }: { href: string; lab
   )
 }
 
-/** The top of the sidebar: the workspace, with the account and help in its menu, and "new project". */
-function WorkspaceRow({ panel, onPanel, onNewProject }: { panel: PanelId | null; onPanel: (id: PanelId) => void; onNewProject: () => void }) {
+/** The top of the sidebar: Nodly and "new project". */
+function WorkspaceRow({ onNewProject }: { onNewProject: () => void }) {
   const { t } = useT()
+  return (
+    <div className="flex items-center gap-1 px-3 pt-3 pb-2 max-lg:pr-12">
+      <Link href="/dashboard" className="flex h-10 min-w-0 flex-1 items-center rounded-lg px-2 hover:bg-hover">
+        <Logo />
+      </Link>
+      <button type="button" onClick={onNewProject} title={t("New project")} aria-label={t("New project")}
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground">
+        <SquarePenIcon className="size-4" />
+      </button>
+    </div>
+  )
+}
+
+/** The bottom of the sidebar, as in Notion: who you are, with the account and help in its menu. */
+function AccountRow({ panel, onPanel }: { panel: PanelId | null; onPanel: (id: PanelId) => void }) {
+  const { t } = useT()
+  const router = useRouter()
+  const profile = useProfile()
+  const photo = useFileUrl(profile?.avatarUrl) || ""
+  const [shop, setShop] = useState<{ name: string; logo_url: string | null } | null>(null)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    supabase.from("shops").select("name, logo_url").limit(1).maybeSingle()
+      .then(({ data }) => { if (data) setShop(data) })
+  }, [])
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
@@ -241,22 +269,32 @@ function WorkspaceRow({ panel, onPanel, onNewProject }: { panel: PanelId | null;
     document.addEventListener("keydown", onKey)
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey) }
   }, [open])
+  const name = shop?.name || profile?.email || ""
+  const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) || "N"
   const item = (id: PanelId, icon: React.ReactNode, label: string) => (
     <NavItem key={id} icon={icon} label={label} active={panel === id} onClick={() => { setOpen(false); onPanel(id) }} />
   )
+  async function signOut() {
+    await supabase.auth.signOut()
+    router.replace("/login")
+  }
   return (
-    <div ref={ref} className="relative flex items-center gap-1 px-3 pt-3 pb-2 max-lg:pr-12">
+    <div ref={ref} className="relative flex items-center gap-1 border-t border-border/60 px-2.5 py-2">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
-        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left hover:bg-hover">
-        <span className="min-w-0 flex-1"><Logo /></span>
-        <ChevronDownIcon className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-1.5 text-left hover:bg-hover">
+        <Avatar className="size-6 shrink-0">
+          <AvatarImage key={photo} src={photo} alt="" />
+          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+        <ChevronsUpDownIcon className="size-3.5 shrink-0 text-muted-foreground" />
       </button>
-      <button type="button" onClick={onNewProject} title={t("New project")} aria-label={t("New project")}
+      <button type="button" onClick={() => onPanel("help")} title={t("Help Center")} aria-label={t("Help Center")}
         className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground">
-        <SquarePenIcon className="size-4" />
+        <CircleHelpIcon className="size-4" />
       </button>
       {open && (
-        <div role="menu" className="absolute inset-x-3 top-[54px] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
+        <div role="menu" className="absolute inset-x-2.5 bottom-[calc(100%+4px)] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
           <SectionLabel>{t("Account")}</SectionLabel>
           {item("profile", NAV_ICONS.profile, t("Profile"))}
           {item("billing", NAV_ICONS.billing, t("Billing"))}
@@ -268,6 +306,8 @@ function WorkspaceRow({ panel, onPanel, onNewProject }: { panel: PanelId | null;
           {item("contact", NAV_ICONS.contact, t("Contact Us"))}
           {item("docs", NAV_ICONS.docs, t("Documentation"))}
           {item("status", NAV_ICONS.status, t("Status"))}
+          <div className="my-1 h-px bg-border" />
+          <NavItem icon={<LogOutIcon className="size-full" strokeWidth={1.6} />} label={t("Sign out")} onClick={signOut} />
         </div>
       )}
     </div>

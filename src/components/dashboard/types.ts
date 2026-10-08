@@ -94,10 +94,3 @@ export const STATUS_MAP: Record<
   },
 }
 
-/** One ink in four strengths per status, for calm, colourless lists and charts. */
-export const STATUS_SHADE: Record<OrderStatus, string> = {
-  await: "color-mix(in oklab, var(--foreground) 85%, transparent)",
-  changes: "color-mix(in oklab, var(--foreground) 55%, transparent)",
-  approved: "color-mix(in oklab, var(--foreground) 40%, transparent)",
-  prod: "color-mix(in oklab, var(--foreground) 24%, transparent)",
-}

@@ -14,7 +14,6 @@ import type { Shop, Order } from "@/components/dashboard/types"
 import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
-import { modeMain } from "@/lib/mode-transition"
 import { OPEN_CALENDAR_EVENT } from "@/lib/panels"
 
 export default function Dashboard() {
@@ -109,7 +108,7 @@ export default function Dashboard() {
     return (
       <div className="flex min-h-screen">
         <Sidebar open={sidebarOpen} activePage="dashboard" />
-        <div {...modeMain("orders")} className="flex min-h-screen min-w-0 flex-1 items-center justify-center">
+        <div className="flex min-h-screen min-w-0 flex-1 items-center justify-center">
           <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
         </div>
       </div>
@@ -122,11 +121,10 @@ export default function Dashboard() {
       <Sidebar open={sidebarOpen} activePage="dashboard" />
 
       {/* Main content */}
-      <div {...modeMain("orders")} className="flex flex-1 flex-col min-w-0">
+      <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           shopName={shop?.name || ""}
           title={t("Dashboard")}
-          avatarUrl=""
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />

@@ -6,7 +6,7 @@ import type { Shop } from "@/components/dashboard/types"
 import { effectivePlan, planById, trialDaysLeft, type Plan } from "@/lib/plans"
 
 /** Fire after changing the plan or creating / finishing orders so usage widgets refresh. */
-export const PLAN_CHANGED_EVENT = "signoff:plan-changed"
+const PLAN_CHANGED_EVENT = "signoff:plan-changed"
 
 export function notifyPlanChanged() {
   window.dispatchEvent(new Event(PLAN_CHANGED_EVENT))

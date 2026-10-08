@@ -53,7 +53,7 @@ export function PinThread({
  * One line of a conversation, like in a messenger: initial, name, time, then the text in a
  * size that reads easily. The client's comment itself is shown the same way.
  */
-export function ChatLine({
+function ChatLine({
   name,
   shop,
   date,

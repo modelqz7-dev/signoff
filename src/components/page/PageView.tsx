@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
-  AlignLeftIcon, AwardIcon, BanknoteIcon, CalendarIcon, ChevronDownIcon, ClockIcon, ExternalLinkIcon, GlobeIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
+  AlignLeftIcon, AwardIcon, BanknoteIcon, CalendarIcon, ChevronDownIcon, ExternalLinkIcon, GlobeIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
   ImagesIcon, ListChecksIcon, MailIcon, MapIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, RulerIcon, SendIcon, Share2Icon, ShieldCheckIcon,
   StarIcon, UsersIcon, XIcon,
 } from "lucide-react"
 import { useT } from "@/lib/i18n"
 import {
-  ACCENTS, CONTACT_KEYS, REVIEW_ASPECTS, pageContactHref, splitList, type PageBusiness, type PageContacts, type PageData,
+  ACCENTS, REVIEW_ASPECTS, pageContactHref, splitList, type PageBusiness, type PageContacts, type PageData,
   type PageHours, type PageReview,
 } from "@/lib/page"
 import { shrinkImage } from "@/lib/image"
@@ -67,7 +67,7 @@ export const BUSINESS_FIELDS: Record<keyof PageBusiness, { label: string; icon: 
   warranty: { label: "Revisions", icon: <ShieldCheckIcon /> },
 }
 
-export const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
+const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
   quality: "Work quality", communication: "Communication", value: "Value for money",
 }
 

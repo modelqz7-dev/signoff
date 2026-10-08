@@ -310,7 +310,6 @@ export default function OrderPage() {
       <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           shopName={shop?.name || ""}
-          avatarUrl=""
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />

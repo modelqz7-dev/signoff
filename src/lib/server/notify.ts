@@ -73,7 +73,7 @@ export async function sendEmail(
   }
 }
 
-export function escapeHtml(s: string) {
+function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
@@ -108,7 +108,7 @@ export type NotifyEvent =
   | { kind: "request"; name: string; contact: string; message: string }
 
 /** Builds the Telegram text and the email subject/body for an event. */
-export function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
+function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
   const L = TEXT[lang]
   const order = event.kind === "request" ? "" : escapeHtml(event.orderTitle)
   const headline =
