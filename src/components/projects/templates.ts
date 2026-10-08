@@ -13,6 +13,8 @@ export type CanvasTemplate = {
   description: string
   /** Card tint, any CSS colour. */
   tone: string
+  /** What the gallery card shows, Notion style: three column names and a tag per row. */
+  preview: { columns: [string, string, string]; tags: [string, string, string] }
   nodes: TemplateNode[]
   /** Paths between nodes by index, with an optional label. */
   edges: [from: number, to: number, label?: string][]
@@ -28,6 +30,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Content plan for a month",
     description: "A brief, four weeks and the dates to keep in mind.",
     tone: "#3f9a5b",
+    preview: { columns: ["Week", "Theme", "Format"], tags: ["Post", "Stories", "Reel"] },
     nodes: [
       heading(0, -120, "Content plan for the month"),
       block(0, 160, "Brief", "Goals, audience and tone of voice. What the client wants this month."),
@@ -44,6 +47,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Product launch",
     description: "Teaser, announcement, launch day and the follow-up.",
     tone: "#3b78d8",
+    preview: { columns: ["Stage", "What we post", "When"], tags: ["Teaser", "Announcement", "Launch day"] },
     nodes: [
       block(0, 0, "Teaser", "2–3 days before: a hint, no details."),
       block(340, 0, "Announcement", "What, when, and why it matters."),
@@ -58,6 +62,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Content pillars",
     description: "What the account posts about, around one centre.",
     tone: "#d9822b",
+    preview: { columns: ["Pillar", "Examples", "Share of posts"], tags: ["Useful", "Selling", "Fun"] },
     nodes: [
       block(330, 230, "Content pillars", "What we post about, and how often."),
       block(0, 0, "Useful", "Tips, how-tos, checklists."),
@@ -73,6 +78,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Weekly approval cycle",
     description: "From ideas to published, with the client's yes in the middle.",
     tone: "#8b5cd6",
+    preview: { columns: ["Step", "Owner", "Status"], tags: ["Ideas", "In review", "Approved"] },
     nodes: [
       block(0, 0, "Ideas", "Topics for the week."),
       block(320, 0, "Captions", "Texts for every post."),
@@ -88,6 +94,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Client onboarding",
     description: "Everything to collect before the first post.",
     tone: "#d4566b",
+    preview: { columns: ["Item", "From the client", "Status"], tags: ["Received", "Waiting", "Received"] },
     nodes: [
       heading(0, -120, "New client"),
       block(0, 0, "Brief", "Business, goals, audience."),
@@ -104,6 +111,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Brainstorm",
     description: "One topic in the middle, ideas on stickies around it.",
     tone: "#c9a227",
+    preview: { columns: ["Idea", "Author", "Priority"], tags: ["High", "Medium", "Low"] },
     nodes: [
       block(300, 200, "Topic", "What are we looking for?"),
       note(0, 0, "Idea"),
@@ -120,6 +128,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Content funnel",
     description: "Reach, engagement, request: what each piece of content does.",
     tone: "#2a9d99",
+    preview: { columns: ["Stage", "Content", "Goal"], tags: ["Reach", "Engagement", "Sale"] },
     nodes: [
       block(0, 0, "Reach", "Reels and trends that bring new people."),
       block(0, 180, "Engagement", "Stories, polls and useful posts."),
