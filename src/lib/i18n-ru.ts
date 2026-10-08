@@ -397,7 +397,6 @@ export const ru: Record<string, string> = {
   "File": "Файл",
   "File viewer shortcuts": "Горячие клавиши просмотра",
   "Files": "Файлы",
-  "Find a post, project or client…": "Найти пост, проект или клиента…",
   "Finish setup": "Завершить настройку",
   "First put a pin on the file where something should change. It will show up here.": "Сначала поставьте пин на файле там, где нужно что-то поправить. Он появится здесь.",
   "First reply to a request": "Первый ответ на заявку",
