@@ -67,9 +67,9 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   }, [visible, home.open])
 
   return (
-    // fills the screen right from the rail; the bottom row grows with the screen's height so wide
-    // tiles don't go flat, and a low screen scrolls instead of squashing them
-    <div className="grid w-full gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(290px,32vh)]">
+    // starts right at the rail and keeps the reference's proportions: no wider than 1600px (a very
+    // wide screen keeps the spare room on the right), and a low screen scrolls instead of squashing
+    <div className="grid w-full max-w-[1600px] gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(290px,auto)]">
       {/* left: the month, and the one thing to do now */}
       <div className="flex min-h-0 flex-col gap-2.5">
         <MonthTile
