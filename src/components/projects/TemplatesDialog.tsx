@@ -3,19 +3,20 @@
 import { useMemo, useState } from "react"
 import {
   CalendarDaysIcon, CalendarRangeIcon, CircleCheckIcon, CircleDotIcon, FilterIcon, HandshakeIcon, LayoutGridIcon, LightbulbIcon,
-  LockIcon, PercentIcon, RocketIcon, SearchIcon, SquareDashedIcon, UserPlusIcon, XIcon,
+  LockIcon, PercentIcon, RocketIcon, SearchIcon, ShapesIcon, SquareDashedIcon, UserPlusIcon, XIcon,
 } from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
 import { POST_TEMPLATES, TEMPLATES, type CanvasTemplate, type GalleryItem, type PostTemplate } from "@/components/projects/templates"
 import { useT, type T } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
 
 const matches = (t: T, q: string) => (item: GalleryItem) => `${t(item.title)} ${t(item.description)} ${item.title}`.toLowerCase().includes(q)
 
 /**
  * The template gallery: search on top, an empty canvas on the right, tinted cards below.
- * With onPosts it is the New project dialog: post approval and an empty canvas first, then the
- * post plans (on every plan), then the canvases (paid: with canvasLocked they show a lock and
- * onLocked runs instead).
+ * With onPosts it is the New project dialog, in two tabs: Posts (an empty post-approval project
+ * or a post plan, on every plan) and Canvas (an empty canvas or a canvas template; paid: with
+ * canvasLocked they show a lock and onLocked runs instead).
  */
 export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLocked = false, onLocked }: {
   open: boolean
@@ -29,6 +30,8 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
 }) {
   const { t } = useT()
   const [query, setQuery] = useState("")
+  // the New project dialog keeps the two kinds apart: posts for the client, or a canvas
+  const [tab, setTab] = useState<"posts" | "canvas">("posts")
   const q = query.trim().toLowerCase()
   const isNew = !!onPosts
   const canvases = useMemo(() => (q ? TEMPLATES.filter(matches(t, q)) : TEMPLATES), [q, t])
@@ -74,43 +77,103 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
           </button>
         </div>
 
+        {isNew && (
+          <div role="tablist" className="grid shrink-0 grid-cols-2 border-b border-border">
+            <Tab active={tab === "posts"} onClick={() => setTab("posts")} icon={LayoutGridIcon} title={t("Posts")} hint={t("Posts with dates, approved by the client")} count={plans.length + 1} />
+            <Tab active={tab === "canvas"} onClick={() => setTab("canvas")} icon={ShapesIcon} title={t("Canvas")} hint={t("A free board for plans and ideas")} count={canvases.length + 1} badge={canvasLocked ? <ProBadge /> : null} />
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6">
-            {isNew && !q && (
-              <Section title={t("Start with")}>
-                <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => pickPosts(null)}>
-                  <PostsPreview />
-                </Card>
-                <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" locked={canvasLocked} onClick={() => pick(null)}>
-                  <CanvasPreview />
-                </Card>
-              </Section>
+            {isNew && tab === "posts" && (
+              plans.length > 0 || !q ? (
+                <Section title={t("Start empty or from a template")}>
+                  {!q && (
+                    <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => pickPosts(null)}>
+                      <PostsPreview />
+                    </Card>
+                  )}
+                  {plans.map((tpl) => (
+                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} onClick={() => pickPosts(tpl)}>
+                      <TablePreview item={tpl} />
+                    </Card>
+                  ))}
+                </Section>
+              ) : <NotFound other={canvases.length > 0 ? () => setTab("canvas") : null} otherLabel={t("Canvas")} />
             )}
-            {plans.length > 0 && (
-              <Section title={t("Post templates")}>
-                {plans.map((tpl) => (
-                  <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} onClick={() => pickPosts(tpl)}>
-                    <TablePreview item={tpl} />
-                  </Card>
-                ))}
-              </Section>
-            )}
-            {canvases.length > 0 && (
-              <Section title={isNew ? t("Canvas templates") : t("For SMM")} badge={isNew && canvasLocked ? <ProBadge /> : null}>
-                {canvases.map((tpl) => (
-                  <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} locked={canvasLocked} onClick={() => pick(tpl)}>
-                    <TablePreview item={tpl} />
-                  </Card>
-                ))}
-              </Section>
-            )}
-            {canvases.length === 0 && plans.length === 0 && (
-              <p className="py-10 text-center text-sm text-muted-foreground">{t("Nothing found.")}</p>
+            {(!isNew || tab === "canvas") && (
+              canvases.length > 0 || (isNew && !q) ? (
+                <Section title={isNew ? t("Start empty or from a template") : t("For SMM")}>
+                  {isNew && !q && (
+                    <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" locked={canvasLocked} onClick={() => pick(null)}>
+                      <CanvasPreview />
+                    </Card>
+                  )}
+                  {canvases.map((tpl) => (
+                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} locked={canvasLocked} onClick={() => pick(tpl)}>
+                      <TablePreview item={tpl} />
+                    </Card>
+                  ))}
+                </Section>
+              ) : <NotFound other={isNew && plans.length > 0 ? () => setTab("posts") : null} otherLabel={t("Posts")} />
             )}
           </div>
         </div>
       </div>
     </Dialog>
+  )
+}
+
+/** One of the two kinds of project, as a wide tab under the search. */
+function Tab({ active, onClick, icon: Icon, title, hint, count, badge }: {
+  active: boolean
+  onClick: () => void
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  hint: string
+  count: number
+  badge?: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "relative flex items-center gap-3 px-4 py-3 text-left transition-colors sm:px-6",
+        active ? "text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+      )}
+    >
+      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-foreground text-background" : "bg-foreground/[0.06]")}>
+        <Icon className="size-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          {title}
+          <span className="text-xs font-normal text-muted-foreground tabular-nums">{count}</span>
+          {badge}
+        </span>
+        <span className="hidden truncate text-xs text-muted-foreground sm:block">{hint}</span>
+      </span>
+      {active && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-foreground" />}
+    </button>
+  )
+}
+
+/** Nothing here for the search; maybe in the other tab. */
+function NotFound({ other, otherLabel }: { other: (() => void) | null; otherLabel: string }) {
+  const { t } = useT()
+  return (
+    <div className="flex flex-col items-center gap-3 py-10 text-center text-sm text-muted-foreground">
+      <p>{t("Nothing found.")}</p>
+      {other && (
+        <button type="button" onClick={other} className="rounded-md px-2.5 py-1.5 text-foreground ring-1 ring-border hover:bg-hover">
+          {t("Look in “{tab}”", { tab: otherLabel })}
+        </button>
+      )}
+    </div>
   )
 }
 
