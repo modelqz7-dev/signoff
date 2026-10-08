@@ -231,7 +231,7 @@ function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = f
               <p className="max-w-xs text-xs text-muted-foreground">{t("Double-click or right-click anywhere to add a block, a post or a note. Drag from a dot on one block to another to draw a path.")}</p>
             </div>
             {/* like Notion's "Get started with" */}
-            <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col gap-2">
+            <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2">
               <p className="text-xs text-muted-foreground">{t("Get started with")}</p>
               <div className="flex gap-2">
                 <button
@@ -290,10 +290,9 @@ function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = f
           <Tool icon={ScanIcon} label={t("Fit to screen")} onClick={() => flow.fitView({ maxZoom: 1, padding: 0.3, duration: 300 })} />
         </div>
 
-        {!readOnly && (
-          <p className="pointer-events-none absolute top-3 right-4 text-[11px] text-muted-foreground">
-            {saved === "saving" ? t("Saving...") : saved === "error" ? t("Couldn't save") : t("Saved")}
-          </p>
+        {/* saving is silent; only a failure speaks up */}
+        {!readOnly && saved === "error" && (
+          <p className="pointer-events-none absolute top-3 right-4 text-[11px] text-destructive">{t("Couldn't save")}</p>
         )}
       </div>
     </CanvasCtx.Provider>
