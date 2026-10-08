@@ -8,7 +8,7 @@ import {
   CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, LightbulbIcon,
   LogOutIcon, MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
-import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
+import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
@@ -128,6 +128,13 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const createProject = useCreateProject()
   const [creating, setCreating] = useState(false)
   const newProject = () => setCreating(true)
+  // the home page's "New project" asks the (computer) sidebar to open its gallery
+  useEffect(() => {
+    if (!slides) return
+    const open = () => setCreating(true)
+    window.addEventListener(OPEN_NEW_PROJECT, open)
+    return () => window.removeEventListener(OPEN_NEW_PROJECT, open)
+  }, [slides])
   const usage = usePlanUsage()
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
 

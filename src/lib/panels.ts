@@ -20,6 +20,8 @@ export function openNav() {
 export const PROJECTS_CHANGED = "signoff:projects-changed"
 /** A project renamed from the sidebar; detail: { id, title }. Its open page takes the new name. */
 export const PROJECT_RENAMED = "signoff:project-renamed"
+/** Opens the New project gallery (it lives in the sidebar) from anywhere, e.g. the home page. */
+export const OPEN_NEW_PROJECT = "signoff:open-new-project"
 
 /** Opens the dashboard's calendar when the dashboard is already on screen. */
 export const OPEN_CALENDAR_EVENT = "signoff:open-calendar"
