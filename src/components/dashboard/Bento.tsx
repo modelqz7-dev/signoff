@@ -110,7 +110,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         </div>
 
         <div className="mt-3 min-h-0 flex-1 overflow-auto">
-          {view === "week" && <WeekGrid week={week} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} projects={projects} />}
+          {view === "week" && <WeekGrid week={week} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} />}
           {view === "projects" && <div className="pt-1"><ProjectCards home={home} onNewProject={onNewProject} /></div>}
           {view === "list" && (
             <div className="surface-light grid gap-6 pt-1 xl:grid-cols-2">
@@ -310,14 +310,13 @@ function Sticker({ count }: { count: number }) {
 }
 
 /** The week: a column per day, a row per stage, every post as a card in its project's colour. */
-function WeekGrid({ week, today, items, lanes, lane, projectName, projects }: {
+function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   week: Date
   today: Date
   items: Order[]
   lanes: Set<Lane>
   lane: (o: Order) => Lane
   projectName: (o: Order) => string
-  projects: Order[]
 }) {
   const { t, locale } = useT()
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i))
@@ -330,7 +329,6 @@ function WeekGrid({ week, today, items, lanes, lane, projectName, projects }: {
     cell.set(k, [...(cell.get(k) ?? []), o])
   }
   const empty = days.every((d) => shown.every((l) => !cell.get(`${dayKey(d)}|${l}`)?.length))
-  const target = projects[0]
 
   return (
     <div className="min-w-[760px]">
@@ -357,14 +355,8 @@ function WeekGrid({ week, today, items, lanes, lane, projectName, projects }: {
           </Row>
         ))}
       </div>
-      {empty && (
-        <div className="mt-2 flex flex-col items-center gap-2 rounded-2xl border-[1.5px] border-dashed border-[#37c873] bg-[#e3f8ea] px-6 py-8 text-center text-sm text-[#1e8c4c]">
-          <span className="flex size-7 items-center justify-center rounded-full bg-[#c9f0d6]"><PlusIcon className="size-4" /></span>
-          <p className="font-semibold">{t("Nothing goes out this week")}</p>
-          <p className="max-w-sm text-xs text-[#1e8c4c]/80">{t("Posts land here on their publishing day. Start a project from a post template to get the dates.")}</p>
-          {target && <Link href={`/orders/${target.id}`} className="mt-1 rounded-full bg-[#1e8c4c] px-3 py-1.5 text-xs font-semibold text-white">{t("Add posts to {name}", { name: target.title || t("Untitled") })}</Link>}
-        </div>
-      )}
+      {/* a quiet line, not a banner: an empty week is normal */}
+      {empty && <p className="pt-6 text-center text-xs text-[#a9a9a9]">{t("Nothing goes out this week. Posts show up here on their publishing day.")}</p>}
     </div>
   )
 }
