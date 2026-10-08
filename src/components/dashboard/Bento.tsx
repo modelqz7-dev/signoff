@@ -426,8 +426,10 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
   const todayIndex = Math.round((today.getTime() - week.getTime()) / DAY)
   const [hover, setHover] = useState<number | null>(null)
   const at = hover ?? todayIndex
-  const top = Math.max(4, ...data.map((x) => Math.max(x.approved, x.uploaded)))
-  const ticks = [top, Math.round(top * 0.66), Math.round(top * 0.33), 0]
+  // an even scale: 0, step, 2·step, 3·step
+  const step = Math.max(1, Math.ceil(Math.max(...data.map((x) => Math.max(x.approved, x.uploaded))) / 3))
+  const top = step * 3
+  const ticks = [top, step * 2, step, 0]
   const total = data.reduce((s, x) => s + x.approved, 0)
 
   return (
@@ -445,18 +447,25 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
           {data.map((x, i) => {
             const on = i === at
             const h = Math.max(6, (Math.max(x.approved, x.uploaded) / top) * 100)
-            const ah = x.approved ? (x.approved / Math.max(x.approved, x.uploaded)) * 100 : 0
             return (
               <div key={i} className="relative flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
-                {/* the whole bar is what was uploaded that day, its lower part what got approved */}
-                <div className={cn("relative w-full overflow-hidden rounded-t-[6px] transition-colors", on ? "bg-[#fdc019]" : "bg-[#3a3a3a]")} style={{ height: `${h}%` }}>
-                  <div className={cn("absolute inset-x-0 bottom-0", on ? "bg-[repeating-linear-gradient(-45deg,#f4661b_0_4px,#ff8a3d_4px_8px)]" : "bg-[#2a2a2a]")} style={{ height: `${ah}%` }} />
+                {/* a thin cap on a body; the picked day turns yellow over orange stripes */}
+                <div className="flex w-full flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
+                  <div className={cn("h-1 shrink-0", on ? "bg-[#ebb216]" : "bg-[#3a3a3a]")} />
+                  <div className={cn("flex-1", on ? "bg-[repeating-linear-gradient(-45deg,#e56019_0_4px,#f08139_4px_8px)]" : "bg-[#2c2c2c]")} />
                 </div>
                 <span className={cn("absolute -bottom-5 inset-x-0 text-center text-[10.5px] capitalize", on ? "font-semibold text-white" : "text-white/50")}>
                   {x.d.toLocaleDateString(locale, { weekday: "short" })}
                 </span>
                 {on && (
-                  <div className="absolute bottom-[calc(100%+8px)] left-1/2 z-10 w-40 -translate-x-1/2 rounded-lg bg-[#2b2b2b] p-2.5 text-[10.5px] text-white/75 shadow-xl ring-1 ring-white/10" style={{ bottom: `calc(${h}% + 8px)` }}>
+                  <div
+                    className={cn(
+                      "absolute z-10 w-40 rounded-lg bg-[#2b2b2b] p-2.5 text-[10.5px] text-white/75 shadow-xl ring-1 ring-white/10",
+                      // above a short bar; beside a tall one, so it stays inside the tile
+                      h <= 55 ? "left-1/2 -translate-x-1/2" : i < 4 ? "top-0 left-[calc(100%+8px)]" : "top-0 right-[calc(100%+8px)]"
+                    )}
+                    style={h <= 55 ? { bottom: `calc(${h}% + 8px)` } : undefined}
+                  >
                     {x.d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
                     <p className="mt-1.5 flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#f4661b]" />{t("Approved posts")}<b className="ml-auto text-white">{x.approved}</b></p>
                     <p className="mt-1 flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#fdc019]" />{t("Uploaded")}<b className="ml-auto text-white">{x.uploaded}</b></p>
