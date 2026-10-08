@@ -14,7 +14,7 @@ export type CanvasTemplate = {
   /** Card tint, any CSS colour. */
   tone: string
   /** What the gallery card shows, Notion style: three column names and a tag per row. */
-  preview: { columns: [string, string, string]; tags: [string, string, string] }
+  preview: { columns: [string, string, string]; tags: [string, string, string]; people?: boolean }
   nodes: TemplateNode[]
   /** Paths between nodes by index, with an optional label. */
   edges: [from: number, to: number, label?: string][]
@@ -78,7 +78,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Weekly approval cycle",
     description: "From ideas to published, with the client's yes in the middle.",
     tone: "#8b5cd6",
-    preview: { columns: ["Step", "Owner", "Status"], tags: ["Ideas", "In review", "Approved"] },
+    preview: { columns: ["Step", "Owner", "Status"], tags: ["Ideas", "In review", "Approved"], people: true },
     nodes: [
       block(0, 0, "Ideas", "Topics for the week."),
       block(320, 0, "Captions", "Texts for every post."),
@@ -94,7 +94,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Client onboarding",
     description: "Everything to collect before the first post.",
     tone: "#d4566b",
-    preview: { columns: ["Item", "From the client", "Status"], tags: ["Received", "Waiting", "Received"] },
+    preview: { columns: ["Item", "From the client", "Status"], tags: ["Received", "Waiting", "Received"], people: true },
     nodes: [
       heading(0, -120, "New client"),
       block(0, 0, "Brief", "Business, goals, audience."),
@@ -111,7 +111,7 @@ export const TEMPLATES: CanvasTemplate[] = [
     title: "Brainstorm",
     description: "One topic in the middle, ideas on stickies around it.",
     tone: "#c9a227",
-    preview: { columns: ["Idea", "Author", "Priority"], tags: ["High", "Medium", "Low"] },
+    preview: { columns: ["Idea", "Author", "Priority"], tags: ["High", "Medium", "Low"], people: true },
     nodes: [
       block(300, 200, "Topic", "What are we looking for?"),
       note(0, 0, "Idea"),
