@@ -19,12 +19,12 @@ function palette(data: PageData) {
   // The darkest accent would vanish on a dark page: it turns light there.
   const accent = dark && data.accent === ACCENTS[0] ? "#efeeec" : data.accent
   return {
-    "--pg-bg": dark ? "#141312" : "#ffffff",
-    "--pg-card": dark ? "#1e1d1c" : "#ffffff",
-    "--pg-text": dark ? "#ecebea" : "#1f1e1d",
-    "--pg-muted": dark ? "rgba(236,235,234,0.62)" : "rgba(31,30,29,0.6)",
-    "--pg-border": dark ? "rgba(236,235,234,0.12)" : "rgba(31,30,29,0.12)",
-    "--pg-field": dark ? "rgba(236,235,234,0.06)" : "#f6f5f3",
+    "--pg-bg": dark ? "#191919" : "#ffffff",
+    "--pg-card": dark ? "#252525" : "#ffffff",
+    "--pg-text": dark ? "#e3e3e3" : "#1f1e1d",
+    "--pg-muted": dark ? "rgba(255,255,255,0.6)" : "rgba(31,30,29,0.6)",
+    "--pg-border": dark ? "rgba(255,255,255,0.094)" : "rgba(31,30,29,0.12)",
+    "--pg-field": dark ? "rgba(255,255,255,0.055)" : "#f6f5f3",
     "--pg-accent": accent,
     "--pg-on-accent": accent === "#efeeec" ? "#1f1e1d" : "#ffffff",
   } as React.CSSProperties

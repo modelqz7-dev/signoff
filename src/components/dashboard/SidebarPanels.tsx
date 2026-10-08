@@ -823,7 +823,7 @@ function AppearancePanel() {
 /** Tiny static mock of the app in the given theme (fixed colors on purpose). */
 function ThemePreview({ theme }: { theme: Theme }) {
   const c = theme === "dark"
-    ? { bg: "#171615", card: "#1e1d1c", line: "rgba(214,213,212,.18)", text: "rgba(214,213,212,.55)" }
+    ? { bg: "#191919", card: "#252525", line: "rgba(255,255,255,.12)", text: "rgba(255,255,255,.5)" }
     : { bg: "#f6f5f3", card: "#ffffff", line: "rgba(31,30,29,.12)", text: "rgba(31,30,29,.35)" }
   return (
     <div className="flex h-16 gap-1.5 overflow-hidden rounded-md p-1.5" style={{ backgroundColor: c.bg, boxShadow: `inset 0 0 0 1px ${c.line}` }}>
