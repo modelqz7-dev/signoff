@@ -26,7 +26,7 @@ import { openPanel, type PanelId } from "@/lib/panels"
 import { notifyPlanChanged, usePlanUsage } from "@/lib/use-plan"
 import { BillingCycleToggle, PlanPrice, UpgradeChip, UsageMeter } from "@/components/plans/PlanBits"
 
-export { OPEN_PANEL_EVENT, openPanel, type PanelId } from "@/lib/panels"
+export { OPEN_PANEL_EVENT, type PanelId } from "@/lib/panels"
 
 // Where clients and shops can reach you. Leave a field empty to hide it.
 const SUPPORT = {

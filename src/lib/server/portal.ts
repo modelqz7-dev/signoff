@@ -32,7 +32,7 @@ function safeEqual(a: string, b: string) {
 
 type PasswordFields = { password?: string | null; password_hash?: string | null }
 
-export function hasPassword(order: PasswordFields) {
+function hasPassword(order: PasswordFields) {
   return !!(order.password_hash || order.password)
 }
 
@@ -63,7 +63,7 @@ function passwordFingerprint(order: PasswordFields) {
 
 type Session = { o: string; n: string; f: string; e: number }
 
-export function sessionCookieName(orderId: string) {
+function sessionCookieName(orderId: string) {
   return `nodly_portal_${orderId.replace(/[^0-9a-f]/gi, "")}`
 }
 
@@ -86,7 +86,7 @@ export function clearSessionCookie(orderId: string) {
 }
 
 /** The client's name from a valid session cookie for this order, or null. */
-export function readSession(request: Request, orderId: string, order: PasswordFields) {
+function readSession(request: Request, orderId: string, order: PasswordFields) {
   const cookie = request.headers.get("cookie") ?? ""
   const raw = cookie.split(/;\s*/).find((c) => c.startsWith(`${sessionCookieName(orderId)}=`))?.split("=")[1]
   if (!raw) return null
@@ -123,7 +123,7 @@ function memoryHit(key: string, windowMs: number, add: boolean) {
 }
 
 /** Counts one hit for `key` in a window and returns how many there were so far. */
-export async function hitLimit(db: SupabaseClient, key: string, windowMs: number) {
+async function hitLimit(db: SupabaseClient, key: string, windowMs: number) {
   const { data, error } = await db.rpc("portal_limit_hit", { p_key: key, p_window_seconds: Math.ceil(windowMs / 1000) })
   if (!error && typeof data === "number") return data
   return memoryHit(key, windowMs, true)
@@ -174,7 +174,7 @@ export async function signedFileUrl(db: SupabaseClient, url: string | null | und
 
 // ── What the portal may see ─────────────────────────────
 
-export const ORDER_PUBLIC_FIELDS = [
+const ORDER_PUBLIC_FIELDS = [
   "id", "title", "code", "client_name", "value", "deadline", "notes", "status", "created_at",
   "version", "approved_at", "approved_by",
 ] as const

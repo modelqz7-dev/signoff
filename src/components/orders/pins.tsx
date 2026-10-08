@@ -1,10 +1,10 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { CheckIcon, ChevronRightIcon, PaperclipIcon, PencilIcon } from "lucide-react"
+import { CheckIcon, PencilIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import type { Pin, PinMessage } from "@/lib/pins"
+import type { Pin } from "@/lib/pins"
 import { useT } from "@/lib/i18n"
 
 /** Teardrop pin; the tip (bottom center) sits exactly on the commented spot. */
@@ -226,131 +226,6 @@ export function PinNumber({ n, done, className }: { n?: number; done?: boolean; 
     >
       {n ?? ""}
     </span>
-  )
-}
-
-/**
- * One comment in a list, the same for the client and the workshop: number, what was asked,
- * where, and the latest answer as a short quote. `leading` and `trailing` hold extra controls,
- * `children` whatever opens under it.
- */
-export function PinRow({
-  pin,
-  number,
-  last,
-  selected,
-  onClick,
-  leading,
-  trailing,
-  children,
-}: {
-  pin: Pin
-  number?: number
-  last?: PinMessage
-  selected?: boolean
-  onClick?: () => void
-  leading?: React.ReactNode
-  trailing?: React.ReactNode
-  children?: React.ReactNode
-}) {
-  const { t } = useT()
-  const reopened = pin.fix_status === "reopened"
-  const done = pin.resolved && !reopened
-  // Old comments carry the same words in both fields; say them once.
-  const detail = pin.description && pin.description.trim() !== pin.title.trim() ? pin.description : null
-  const who = last ? (last.author_role === "workshop" ? t("Contractor") : last.author_name) : null
-  return (
-    <div id={`pin-row-${pin.id}`} className={cn("scroll-mt-20 rounded-xl transition-colors has-[>div>button:focus-visible]:ring-2 has-[>div>button:focus-visible]:ring-ring/50", selected ? "bg-muted/70" : onClick && "hover:bg-muted/40")}>
-      <div className="flex items-start gap-3 px-3 py-3">
-        {leading}
-        <PinNumber n={number} done={done} className="mt-px" />
-        <button type="button" onClick={onClick} className={cn("flex min-w-0 flex-1 flex-col gap-1 text-left outline-none", !onClick && "cursor-default")}>
-          <span className="flex items-baseline gap-2">
-            <span className={cn("min-w-0 flex-1 text-[15px] leading-snug", done ? "text-muted-foreground" : "font-medium text-foreground")}>
-              {pin.title || <span className="font-normal text-muted-foreground italic">{t("No description yet")}</span>}
-            </span>
-            <span className="shrink-0 text-[11px] text-muted-foreground/70 tabular-nums">{t("p. {n}", { n: pin.page })}</span>
-          </span>
-          {detail && !done && <span className="line-clamp-2 text-[13px] text-muted-foreground">{detail}</span>}
-          {last && (
-            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 border-l-2 border-border pl-2 text-[13px] text-muted-foreground">
-              {last.file_url && <PaperclipIcon className="size-3 shrink-0" />}
-              <span className="truncate">
-                <span className="text-foreground/80">{who}</span>
-                {" · "}
-                {last.body || t("sent a file")}
-              </span>
-            </span>
-          )}
-          {(done || reopened) && <PinStatus pin={pin} className="mt-0.5" />}
-        </button>
-        {trailing}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-/** Open comments first; resolved ones fold under one line unless nothing else is left. */
-export function PinGroups({ pins, render }: { pins: Pin[]; render: (pin: Pin) => React.ReactNode }) {
-  const { t } = useT()
-  const open = pins.filter((p) => !p.resolved || p.fix_status === "reopened")
-  const done = pins.filter((p) => p.resolved && p.fix_status !== "reopened")
-  const [showDone, setShowDone] = useState(false)
-  const expanded = showDone || open.length === 0
-  return (
-    <div className="flex flex-col">
-      {open.map(render)}
-      {done.length > 0 && open.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowDone((v) => !v)}
-          className="mt-1 flex items-center gap-1.5 border-t border-border px-3 pt-3 pb-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <CheckIcon className="size-3" strokeWidth={3} />
-          {t("Resolved: {n}", { n: done.length })}
-          <ChevronRightIcon className={cn("size-3.5 transition-transform", expanded && "rotate-90")} />
-        </button>
-      )}
-      {expanded && done.map(render)}
-    </div>
-  )
-}
-
-export function PinList({
-  pins,
-  numbers,
-  selectedId,
-  onSelect,
-  emptyText = "No comments yet.",
-  lastMessages,
-}: {
-  pins: Pin[]
-  numbers: Map<string, number>
-  selectedId?: string | null
-  onSelect?: (pin: Pin) => void
-  emptyText?: string
-  /** The latest message in each pin, shown as one line. */
-  lastMessages?: Map<string, PinMessage>
-}) {
-  const { t } = useT()
-  if (pins.length === 0) {
-    return <p className="py-6 text-center text-xs text-muted-foreground">{t(emptyText)}</p>
-  }
-  return (
-    <PinGroups
-      pins={pins}
-      render={(pin) => (
-        <PinRow
-          key={pin.id}
-          pin={pin}
-          number={numbers.get(pin.id)}
-          last={lastMessages?.get(pin.id)}
-          selected={pin.id === selectedId}
-          onClick={onSelect ? () => onSelect(pin) : undefined}
-        />
-      )}
-    />
   )
 }
 

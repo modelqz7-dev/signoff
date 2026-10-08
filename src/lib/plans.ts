@@ -1,4 +1,4 @@
-import type { Order, Shop } from "@/components/dashboard/types"
+import type { Shop } from "@/components/dashboard/types"
 
 export type PlanId = "free" | "go" | "pro"
 
@@ -18,8 +18,6 @@ export type Plan = {
 }
 
 export const YEARLY_DISCOUNT = 0.2
-export const TRIAL_DAYS = 7
-
 // Not charged yet: plans can be switched freely in Billing during early access.
 export const PLANS: Plan[] = [
   {
@@ -91,11 +89,6 @@ export function can(shop: PlanShop, feature: Feature) {
 /** The cheapest plan that includes a feature, for "Available on Go" hints. */
 export function planFor(feature: Feature) {
   return PLANS.find((p) => p.features.includes(feature)) ?? PLANS[PLANS.length - 1]
-}
-
-/** Orders that count towards the plan limit: waiting on the client or on the shop. */
-export function isActiveOrder(order: Pick<Order, "status">) {
-  return order.status === "await" || order.status === "changes"
 }
 
 export function formatPrice(plan: Plan, yearly: boolean) {

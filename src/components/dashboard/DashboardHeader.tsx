@@ -1,18 +1,14 @@
 "use client"
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { openNav, openPanel } from "@/lib/panels"
+import { openNav } from "@/lib/panels"
 import { MenuIcon } from "lucide-react"
-import { useProfile } from "@/lib/profile"
 import { useT } from "@/lib/i18n"
-import { useFileUrl } from "@/lib/files"
 
 type DashboardHeaderProps = {
   shopName: string
   /** Replaces "Welcome back, {shop}" (the dashboard greets you in the page itself). */
   title?: string
-  avatarUrl: string
   sidebarOpen: boolean
   onToggleSidebar: () => void
 }
@@ -20,20 +16,10 @@ type DashboardHeaderProps = {
 export function DashboardHeader({
   shopName,
   title,
-  avatarUrl,
   sidebarOpen,
   onToggleSidebar,
 }: DashboardHeaderProps) {
-  const profile = useProfile()
   const { t } = useT()
-  // Older photos live in the private files bucket and need a signed link.
-  const photo = useFileUrl(avatarUrl || profile?.avatarUrl) || ""
-  const initials = shopName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 
   return (
     <header className="flex h-14 items-center justify-between gap-3 border-b px-4 sm:h-16 sm:px-6">
@@ -113,17 +99,6 @@ export function DashboardHeader({
           </svg>
         </Button>
 
-        <button
-          type="button"
-          aria-label={t("Profile")}
-          onClick={() => openPanel("profile")}
-          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarImage key={photo} src={photo} alt={shopName} />
-            <AvatarFallback>{initials || "S"}</AvatarFallback>
-          </Avatar>
-        </button>
       </div>
     </header>
   )

@@ -240,18 +240,3 @@ html.theme-fade *::after {
   transition: background-color 350ms ease, border-color 350ms ease, color 350ms ease, fill 350ms ease !important;
 }
 
-/* Switching between Orders and My page (src/lib/mode-transition.ts): the menu and the page slide sideways. */
-@keyframes mode-out-left { to { opacity: 0; transform: translateX(-24px); } }
-@keyframes mode-out-right { to { opacity: 0; transform: translateX(24px); } }
-@keyframes mode-in-left { from { opacity: 0; transform: translateX(32px); } }
-@keyframes mode-in-right { from { opacity: 0; transform: translateX(-32px); } }
-::view-transition-group(mode-side),
-::view-transition-group(mode-main) { animation-duration: 0s; }
-:active-view-transition-type(mode-forward)::view-transition-old(mode-side),
-:active-view-transition-type(mode-forward)::view-transition-old(mode-main) { animation: 160ms ease-in both mode-out-left; }
-:active-view-transition-type(mode-forward)::view-transition-new(mode-side),
-:active-view-transition-type(mode-forward)::view-transition-new(mode-main) { animation: 280ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both mode-in-left; }
-:active-view-transition-type(mode-back)::view-transition-old(mode-side),
-:active-view-transition-type(mode-back)::view-transition-old(mode-main) { animation: 160ms ease-in both mode-out-right; }
-:active-view-transition-type(mode-back)::view-transition-new(mode-side),
-:active-view-transition-type(mode-back)::view-transition-new(mode-main) { animation: 280ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both mode-in-right; }

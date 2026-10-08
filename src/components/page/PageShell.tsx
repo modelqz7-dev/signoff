@@ -51,7 +51,7 @@ export function PageShell({ activePage, title, subtitle, shopName, actions, chil
       <Sidebar open={sidebarOpen} activePage={activePage} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="lg:hidden">
-          <DashboardHeader shopName={shopName} avatarUrl="" sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <DashboardHeader shopName={shopName} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
         <div className="flex-1 px-4 pb-10 sm:px-8">
           <div className="mx-auto flex w-full max-w-[1216px] flex-col">
