@@ -7,7 +7,7 @@ import type { Order } from "@/components/dashboard/types"
 import { ProjectCanvas, type Board } from "@/components/projects/ProjectCanvas"
 import { PostsView } from "@/components/projects/PostsView"
 import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
-import { PROJECTS_CHANGED, openNav, openPanel } from "@/lib/panels"
+import { PROJECTS_CHANGED, PROJECT_RENAMED, openNav, openPanel } from "@/lib/panels"
 import { usePlanUsage } from "@/lib/use-plan"
 import { can } from "@/lib/plans"
 import { uploadOrderFile } from "@/lib/versions"
@@ -58,6 +58,18 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [project.id, load])
+
+  // renamed from the sidebar's menu
+  const projectRef = useRef(project)
+  useEffect(() => { projectRef.current = project }, [project])
+  useEffect(() => {
+    const onRenamed = (e: Event) => {
+      const { id, title } = (e as CustomEvent<{ id: string; title: string }>).detail
+      if (id === projectRef.current.id) onChange({ ...projectRef.current, title })
+    }
+    window.addEventListener(PROJECT_RENAMED, onRenamed)
+    return () => window.removeEventListener(PROJECT_RENAMED, onRenamed)
+  }, [onChange])
 
   const postsRef = useRef(posts)
   useEffect(() => { postsRef.current = posts }, [posts])
