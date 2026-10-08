@@ -1,13 +1,15 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { LayoutGridIcon, MenuIcon, PanelLeftIcon, ShapesIcon } from "lucide-react"
+import { LayoutGridIcon, LockIcon, MenuIcon, PanelLeftIcon, ShapesIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { ProjectCanvas, type Board } from "@/components/projects/ProjectCanvas"
 import { PostsView } from "@/components/projects/PostsView"
 import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
-import { PROJECTS_CHANGED, openNav } from "@/lib/panels"
+import { PROJECTS_CHANGED, openNav, openPanel } from "@/lib/panels"
+import { usePlanUsage } from "@/lib/use-plan"
+import { can } from "@/lib/plans"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -22,8 +24,13 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [start] = useState(() => readStart(project))
-  const [view, setViewState] = useState<View>(start.view)
+  const [chosen, setViewState] = useState<View>(start.view)
+  // the canvas is on paid plans: without one the project stays on its posts
+  const usage = usePlanUsage()
+  const canvasLocked = !!usage && !can(usage.shop, "canvas")
+  const view: View = canvasLocked ? "posts" : chosen
   const setView = (v: View) => {
+    if (v === "canvas" && canvasLocked) { openPanel("billing"); return }
     setViewState(v)
     try { localStorage.setItem(viewKey(project.id), v) } catch {}
   }
@@ -85,6 +92,19 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
     return added
   }
 
+  /** A planned post gets its file. */
+  async function fillPost(post: Order, file: File) {
+    setError(null)
+    try {
+      const fileUrl = await uploadOrderFile(project.shop_id, file)
+      const { error } = await supabase.from("orders").update({ file_url: fileUrl }).eq("id", post.id)
+      if (error) throw error
+      setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, file_url: fileUrl } : p)))
+    } catch (e) {
+      setError((e as Error)?.message || t("Couldn't upload the file"))
+    }
+  }
+
   async function uploadPosts(files: File[]) {
     setBusy(true)
     try { return await addPosts(files) } finally { setBusy(false) }
@@ -142,6 +162,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
             >
               <Icon className="size-3.5" />
               {label}
+              {id === "canvas" && canvasLocked && <LockIcon className="size-3 opacity-70" />}
             </button>
           ))}
         </div>
@@ -149,7 +170,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
 
       <main className={cn("relative min-h-0 flex-1")}>
         {loaded && (view === "posts"
-          ? <PostsView posts={posts} onUpload={uploadPosts} busy={busy} />
+          ? <PostsView posts={posts} onUpload={uploadPosts} onFill={fillPost} busy={busy} />
           : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} startTemplate={start.template} />)}
       </main>
     </div>

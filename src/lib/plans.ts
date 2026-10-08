@@ -3,7 +3,7 @@ import type { Shop } from "@/components/dashboard/types"
 export type PlanId = "free" | "go" | "pro"
 
 /** Paid features, checked with `can(shop, feature)`. */
-export type Feature = "versions" | "certificate" | "branding" | "reminders" | "brandKit"
+export type Feature = "versions" | "certificate" | "branding" | "reminders" | "brandKit" | "canvas"
 
 export type Plan = {
   id: PlanId
@@ -38,9 +38,10 @@ export const PLANS: Plan[] = [
     name: "Pro",
     monthly: 19,
     activeOrders: 25,
-    features: ["versions", "certificate", "branding", "reminders"],
+    features: ["versions", "certificate", "branding", "reminders", "canvas"],
     highlights: [
       "Up to 25 active orders",
+      "Free canvas with SMM templates",
       "Version history with comments per version",
       "Approval certificate (PDF)",
       "Your logo in the portal instead of Nodly's",
@@ -52,7 +53,7 @@ export const PLANS: Plan[] = [
     name: "Studio",
     monthly: 39,
     activeOrders: null,
-    features: ["versions", "certificate", "branding", "reminders", "brandKit"],
+    features: ["versions", "certificate", "branding", "reminders", "brandKit", "canvas"],
     highlights: [
       "Unlimited active orders",
       "Everything in Pro",

@@ -2,39 +2,48 @@
 
 import { useMemo, useState } from "react"
 import {
-  CalendarDaysIcon, CircleCheckIcon, FilterIcon, LayoutGridIcon, LightbulbIcon, RocketIcon, SearchIcon, SquareDashedIcon,
-  UserPlusIcon, XIcon,
+  CalendarDaysIcon, CalendarRangeIcon, CircleCheckIcon, CircleDotIcon, FilterIcon, HandshakeIcon, LayoutGridIcon, LightbulbIcon,
+  LockIcon, PercentIcon, RocketIcon, SearchIcon, SquareDashedIcon, UserPlusIcon, XIcon,
 } from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
-import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
-import { useT } from "@/lib/i18n"
+import { POST_TEMPLATES, TEMPLATES, type CanvasTemplate, type GalleryItem, type PostTemplate } from "@/components/projects/templates"
+import { useT, type T } from "@/lib/i18n"
+
+const matches = (t: T, q: string) => (item: GalleryItem) => `${t(item.title)} ${t(item.description)} ${item.title}`.toLowerCase().includes(q)
 
 /**
  * The template gallery: search on top, an empty canvas on the right, tinted cards below.
- * With onPosts it is the New project dialog: the two plain starts (post approval, empty canvas)
- * come first, as cards of their own, and the templates follow.
+ * With onPosts it is the New project dialog: post approval and an empty canvas first, then the
+ * post plans (on every plan), then the canvases (paid: with canvasLocked they show a lock and
+ * onLocked runs instead).
  */
-export function TemplatesDialog({ open, onOpenChange, onPick, onPosts }: {
+export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLocked = false, onLocked }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** null = start from an empty canvas */
   onPick: (template: CanvasTemplate | null) => void
-  /** Start with the simple posts view; only in the New project dialog. */
-  onPosts?: () => void
+  /** Start with the posts view, empty (null) or from a post plan; only in the New project dialog. */
+  onPosts?: (template: PostTemplate | null) => void
+  canvasLocked?: boolean
+  onLocked?: () => void
 }) {
   const { t } = useT()
   const [query, setQuery] = useState("")
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return TEMPLATES
-    return TEMPLATES.filter((tpl) => `${t(tpl.title)} ${t(tpl.description)} ${tpl.title}`.toLowerCase().includes(q))
-  }, [query, t])
-
-  const pick = (tpl: CanvasTemplate | null) => {
-    onPick(tpl)
-    onOpenChange(false)
-  }
+  const q = query.trim().toLowerCase()
   const isNew = !!onPosts
+  const canvases = useMemo(() => (q ? TEMPLATES.filter(matches(t, q)) : TEMPLATES), [q, t])
+  const plans = useMemo(() => (!isNew ? [] : q ? POST_TEMPLATES.filter(matches(t, q)) : POST_TEMPLATES), [isNew, q, t])
+
+  const close = () => onOpenChange(false)
+  const pick = (tpl: CanvasTemplate | null) => {
+    if (canvasLocked) { close(); onLocked?.(); return }
+    onPick(tpl)
+    close()
+  }
+  const pickPosts = (tpl: PostTemplate | null) => {
+    onPosts?.(tpl)
+    close()
+  }
 
   return (
     <Dialog
@@ -45,7 +54,7 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts }: {
     >
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-2.5 sm:px-4">
-          <button type="button" onClick={() => onOpenChange(false)} aria-label={t("Close")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground">
+          <button type="button" onClick={close} aria-label={t("Close")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground">
             <XIcon className="size-4" />
           </button>
           <p className="hidden shrink-0 text-sm font-medium text-foreground sm:block">{isNew ? t("New project") : t("Templates")}</p>
@@ -66,31 +75,37 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts }: {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
-            {isNew && !query.trim() && (
-              <>
-                <p className="mb-3 text-sm font-medium text-muted-foreground">{t("Start with")}</p>
-                <div className="mb-8 grid gap-4 sm:grid-cols-2">
-                  <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => { onPosts(); onOpenChange(false) }}>
-                    <PostsPreview />
-                  </Card>
-                  <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" onClick={() => pick(null)}>
-                    <CanvasPreview />
-                  </Card>
-                </div>
-              </>
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6">
+            {isNew && !q && (
+              <Section title={t("Start with")}>
+                <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => pickPosts(null)}>
+                  <PostsPreview />
+                </Card>
+                <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" locked={canvasLocked} onClick={() => pick(null)}>
+                  <CanvasPreview />
+                </Card>
+              </Section>
             )}
-            <p className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">{isNew ? t("Templates for SMM") : t("For SMM")}</p>
-            {shown.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">{t("Nothing found.")}</p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {shown.map((tpl) => (
-                  <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} onClick={() => pick(tpl)}>
-                    <TablePreview tpl={tpl} />
+            {plans.length > 0 && (
+              <Section title={t("Post templates")}>
+                {plans.map((tpl) => (
+                  <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} onClick={() => pickPosts(tpl)}>
+                    <TablePreview item={tpl} />
                   </Card>
                 ))}
-              </div>
+              </Section>
+            )}
+            {canvases.length > 0 && (
+              <Section title={isNew ? t("Canvas templates") : t("For SMM")} badge={isNew && canvasLocked ? <ProBadge /> : null}>
+                {canvases.map((tpl) => (
+                  <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} locked={canvasLocked} onClick={() => pick(tpl)}>
+                    <TablePreview item={tpl} />
+                  </Card>
+                ))}
+              </Section>
+            )}
+            {canvases.length === 0 && plans.length === 0 && (
+              <p className="py-10 text-center text-sm text-muted-foreground">{t("Nothing found.")}</p>
             )}
           </div>
         </div>
@@ -99,20 +114,47 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts }: {
   )
 }
 
+function Section({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section>
+      <p className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">{title}{badge}</p>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </section>
+  )
+}
+
+/** "Pro" with a lock: on a paid plan only. */
+function ProBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+      <LockIcon className="size-3" />
+      Pro
+    </span>
+  )
+}
+
 /** A gallery card: name and line on a tint, a window onto the result below. */
-function Card({ title, description, tone, onClick, children }: { title: string; description: string; tone: string; onClick: () => void; children: React.ReactNode }) {
+function Card({ title, description, tone, locked, onClick, children }: {
+  title: string
+  description: string
+  tone: string
+  locked?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="overflow-hidden rounded-2xl text-left ring-1 outline-none focus-visible:ring-2"
+      className="relative overflow-hidden rounded-2xl text-left ring-1 outline-none focus-visible:ring-2"
       style={{
         backgroundColor: `color-mix(in oklab, ${tone} 9%, var(--popover))`,
         ["--tw-ring-color" as string]: `color-mix(in oklab, ${tone} 32%, transparent)`,
       }}
     >
+      {locked && <span className="absolute top-4 right-4"><ProBadge /></span>}
       <div className="px-5 pt-5">
-        <p className="text-[15px] font-semibold text-foreground">{title}</p>
+        <p className="pr-14 text-[15px] font-semibold text-foreground">{title}</p>
         <p className="mt-1 text-sm leading-snug text-muted-foreground">{description}</p>
       </div>
       <div className="mt-4 ml-5 h-36 overflow-hidden rounded-tl-xl bg-popover ring-1" style={{ ["--tw-ring-color" as string]: `color-mix(in oklab, ${tone} 28%, transparent)` }}>
@@ -181,16 +223,22 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; style?: Re
   onboarding: UserPlusIcon,
   brainstorm: LightbulbIcon,
   funnel: FilterIcon,
+  "posts-month": CalendarDaysIcon,
+  "posts-week": CalendarRangeIcon,
+  "posts-stories": CircleDotIcon,
+  "posts-launch": RocketIcon,
+  "posts-sale": PercentIcon,
+  "posts-intro": HandshakeIcon,
 }
 
 // Tag colours for the preview rows, like Notion's select options.
 const TAG_TONES = ["#3b82f6", "#22a55a", "#e08a2e", "#a855f7", "#e05252", "#c9a227"]
 
 /** The card's window: the template's icon and name, three columns and three tagged rows. */
-function TablePreview({ tpl }: { tpl: CanvasTemplate }) {
+function TablePreview({ item: tpl }: { item: GalleryItem }) {
   const { t } = useT()
   const Icon = ICONS[tpl.id] ?? LayoutGridIcon
-  const offset = TEMPLATES.indexOf(tpl)
+  const offset = ([...POST_TEMPLATES, ...TEMPLATES] as GalleryItem[]).indexOf(tpl)
   return (
     <div className="flex h-full flex-col gap-2.5 p-4 text-[11px]">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">

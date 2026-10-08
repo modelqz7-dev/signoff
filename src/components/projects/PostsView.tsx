@@ -18,20 +18,27 @@ const ACCEPT = ".png,.jpg,.jpeg,.webp,.pdf"
 
 const portalLink = (post: Order) => `${siteOrigin()}/portal/${post.id}`
 
-export function PostsView({ posts, onUpload, busy }: {
+export function PostsView({ posts, onUpload, onFill, busy }: {
   posts: Order[]
   onUpload: (files: File[]) => Promise<unknown>
+  /** Put a file into a post that has none yet (made from a post plan). */
+  onFill: (post: Order, file: File) => Promise<unknown>
   busy: boolean
 }) {
-  const { t } = useT()
+  const { t, locale } = useT()
   const fileRef = useRef<HTMLInputElement>(null)
+  const fillRef = useRef<HTMLInputElement>(null)
+  const [filling, setFilling] = useState<Order | null>(null)
+  const [fillingId, setFillingId] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const openPins = useOpenPins(posts)
 
-  const approved = posts.filter((p) => p.status === "approved" || p.status === "prod").length
-  const changes = posts.filter((p) => p.status === "changes").length
-  const waiting = posts.length - approved - changes
+  const ready = posts.filter((p) => p.file_url)
+  const approved = ready.filter((p) => p.status === "approved" || p.status === "prod").length
+  const changes = ready.filter((p) => p.status === "changes").length
+  const waiting = ready.length - approved - changes
+  const toUpload = posts.length - ready.length
 
   async function copy(text: string, key: string) {
     try {
@@ -43,9 +50,11 @@ export function PostsView({ posts, onUpload, busy }: {
   }
 
   /** Every post's link in one message, ready to paste to the client. */
-  const allLinks = () => posts.map((p, i) => `${i + 1}. ${p.title}: ${portalLink(p)}`).join("\n")
+  const allLinks = () => ready.map((p, i) => `${i + 1}. ${p.title}: ${portalLink(p)}`).join("\n")
 
   const pick = () => fileRef.current?.click()
+  const fill = (post: Order) => { setFilling(post); fillRef.current?.click() }
+  const day = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })
   const files = (list: FileList | null) => Array.from(list ?? []).filter((f) => /\.(png|jpe?g|webp|pdf)$/i.test(f.name))
 
   return (
@@ -56,6 +65,19 @@ export function PostsView({ posts, onUpload, busy }: {
       onDrop={(e) => { e.preventDefault(); setDragging(false); const f = files(e.dataTransfer.files); if (f.length) onUpload(f) }}
     >
       <input ref={fileRef} type="file" accept={ACCEPT} multiple className="hidden" onChange={(e) => { const f = files(e.target.files); e.target.value = ""; if (f.length) onUpload(f) }} />
+      <input
+        ref={fillRef}
+        type="file"
+        accept={ACCEPT}
+        className="hidden"
+        onChange={async (e) => {
+          const [f] = files(e.target.files)
+          e.target.value = ""
+          if (!f || !filling) return
+          setFillingId(filling.id)
+          try { await onFill(filling, f) } finally { setFillingId(null) }
+        }}
+      />
 
       <div className="mx-auto w-full max-w-5xl px-4 pt-6 pb-24 sm:px-8">
         {posts.length === 0 ? (
@@ -79,9 +101,11 @@ export function PostsView({ posts, onUpload, busy }: {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex min-w-60 flex-1 flex-col gap-2">
                 <p className="text-sm text-muted-foreground">
-                  {t("{n} posts", { n: posts.length })} · <span className="text-[var(--status-approved)]">{t("{n} approved", { n: approved })}</span>
+                  {t("{n} posts", { n: posts.length })}
+                  {ready.length > 0 && <> · <span className="text-[var(--status-approved)]">{t("{n} approved", { n: approved })}</span></>}
                   {changes > 0 && <> · <span className="text-[var(--status-changes)]">{t("{n} with changes", { n: changes })}</span></>}
                   {waiting > 0 && <> · {t("{n} waiting", { n: waiting })}</>}
+                  {toUpload > 0 && <> · {t("{n} to upload", { n: toUpload })}</>}
                 </p>
                 <div className="flex h-1.5 max-w-md overflow-hidden rounded-full bg-foreground/[0.08]">
                   <span className="bg-[var(--status-approved)] transition-[width]" style={{ width: `${(approved / posts.length) * 100}%` }} />
@@ -92,7 +116,8 @@ export function PostsView({ posts, onUpload, busy }: {
                 <button
                   type="button"
                   onClick={() => copy(allLinks(), "all")}
-                  className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium ring-1 ring-border transition-colors hover:bg-hover"
+                  disabled={ready.length === 0}
+                  className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium ring-1 ring-border transition-colors hover:bg-hover disabled:opacity-50 disabled:hover:bg-transparent"
                 >
                   {copied === "all" ? <CheckIcon className="size-4 text-[var(--status-approved)]" /> : <LinkIcon className="size-4" />}
                   {copied === "all" ? t("Copied") : t("Copy links for the client")}
@@ -110,13 +135,14 @@ export function PostsView({ posts, onUpload, busy }: {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {posts.map((post) => (
+              {posts.map((post) => post.file_url ? (
                 <div key={post.id} className="flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border">
                   <Link href={`/orders/${post.id}`} className="block">
                     <Thumb url={post.file_url} className="aspect-[4/5] w-full" />
                   </Link>
                   <div className="flex flex-1 flex-col gap-2 border-t border-border p-3">
                     <Link href={`/orders/${post.id}`} className="truncate text-sm font-medium text-foreground hover:underline">{post.title}</Link>
+                    {post.publish_on && <p className="-mt-1.5 text-xs text-muted-foreground">{day(post.publish_on)}</p>}
                     <div className="flex items-center justify-between gap-2">
                       <StatusChip t={t} order={post} />
                       {(openPins.get(post.id) ?? 0) > 0 && (
@@ -144,6 +170,36 @@ export function PostsView({ posts, onUpload, busy }: {
                         {copied === post.id ? t("Copied") : t("Link")}
                       </button>
                     </div>
+                  </div>
+                </div>
+              ) : (
+                // a planned post, waiting for its file
+                <div key={post.id} className="flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border">
+                  <button
+                    type="button"
+                    onClick={() => fill(post)}
+                    disabled={fillingId !== null}
+                    className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 bg-foreground/[0.03] text-xs text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+                  >
+                    <ImagePlusIcon className="size-5" />
+                    {fillingId === post.id ? t("Uploading…") : t("Add the file")}
+                  </button>
+                  <div className="flex flex-1 flex-col gap-2 border-t border-border p-3">
+                    <Link href={`/orders/${post.id}`} className="truncate text-sm font-medium text-foreground hover:underline">{post.title}</Link>
+                    {post.publish_on && <p className="-mt-1.5 text-xs text-muted-foreground">{day(post.publish_on)}</p>}
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-md bg-foreground/[0.06] px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      <span aria-hidden="true" className="size-1.5 rounded-full border border-current" />
+                      {t("No file yet")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => fill(post)}
+                      disabled={fillingId !== null}
+                      className="mt-auto flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-medium ring-1 ring-border transition-colors hover:bg-hover disabled:opacity-60"
+                    >
+                      <UploadIcon className="size-3.5" />
+                      {t("Upload")}
+                    </button>
                   </div>
                 </div>
               ))}
