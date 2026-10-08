@@ -5,15 +5,18 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, LightbulbIcon,
-  LogOutIcon, MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
+  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
+  WaypointsIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
-import { Logo } from "@/components/Logo"
+import { Logo, LogoMark } from "@/components/Logo"
+import { setTheme, useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useProfile } from "@/lib/profile"
 import { useFileUrl } from "@/lib/files"
@@ -70,16 +73,12 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
 
   return (
     <>
-    {/* Desktop */}
+    {/* Computers: a narrow rail of icons, as in the reference design */}
     <aside
-      className="sticky top-0 self-start hidden h-screen w-[270px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
-      style={{
-        marginLeft: open ? 0 : -270,
-        opacity: open ? 1 : 0,
-        pointerEvents: open ? "auto" : "none",
-      }}
+      className="sticky top-0 z-30 hidden h-screen w-[80px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
+      style={{ marginLeft: open ? 0 : -80, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
     >
-      <SidebarContent activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} slides />
+      <Rail activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
 
     {/* Phones and tablets */}
@@ -109,11 +108,10 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   )
 }
 
-function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
+/** The phone and tablet drawer: the full list, with names. */
+function SidebarContent({ activePage, panel, onPanel, beta }: {
   activePage: string
   beta: boolean
-  /** The computer sidebar (the phone drawer is a second copy). */
-  slides?: boolean
   panel: PanelId | null
   onPanel: (id: PanelId) => void
 }) {
@@ -128,25 +126,8 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const createProject = useCreateProject()
   const [creating, setCreating] = useState(false)
   const newProject = () => setCreating(true)
-  // the home page's "New project" asks the (computer) sidebar to open its gallery
-  useEffect(() => {
-    if (!slides) return
-    const open = () => setCreating(true)
-    window.addEventListener(OPEN_NEW_PROJECT, open)
-    return () => window.removeEventListener(OPEN_NEW_PROJECT, open)
-  }, [slides])
   const usage = usePlanUsage()
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
-
-  // Ctrl/⌘+K opens search from anywhere, like Notion.
-  useEffect(() => {
-    if (!slides) return
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearching(true) }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [slides])
 
   const sub = "[&>a]:pl-9 [&>button]:pl-9"
   return (
@@ -209,6 +190,186 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
       {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
     </div>
+  )
+}
+
+/**
+ * The computer's navigation, after the reference design: a dark rail of icons with the logo on
+ * top, then the projects as coloured dots, a pink "+" for a new one, and the theme switch and the
+ * account at the bottom. Names show beside an icon on hover. It stays dark in both themes.
+ */
+function Rail({ activePage, panel, onPanel, beta }: {
+  activePage: string
+  beta: boolean
+  panel: PanelId | null
+  onPanel: (id: PanelId) => void
+}) {
+  const { t } = useT()
+  const newRequests = useNewRequestCount()
+  const projects = useProjects()
+  const createProject = useCreateProject()
+  const [creating, setCreating] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [soon, setSoon] = useState<SoonFeature | null>(null)
+  const usage = usePlanUsage()
+  const canvasLocked = !!usage && !can(usage.shop, "canvas")
+  const page = usePageSetup(activePage.startsWith("link"))
+
+  // the home page's "New project" opens the gallery here; Ctrl/⌘+K opens search, like Notion
+  useEffect(() => {
+    const open = () => setCreating(true)
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearching(true) }
+    }
+    window.addEventListener(OPEN_NEW_PROJECT, open)
+    window.addEventListener("keydown", onKey)
+    return () => { window.removeEventListener(OPEN_NEW_PROJECT, open); window.removeEventListener("keydown", onKey) }
+  }, [])
+
+  const shown = projects.slice(0, 6)
+  const more = projects.length - shown.length
+  const linkItems: { href: string; label: string }[] = [
+    { href: "/link", label: t("My page") },
+    { href: "/link/stats", label: t("Statistics") },
+    { href: "/link/qr", label: t("QR code") },
+    { href: "/link/replies", label: t("Reply templates") },
+    { href: "/link/ideas", label: t("Post ideas") },
+    ...(page?.published ? [{ href: pagePath(page.slug), label: t("Open page") }] : []),
+  ]
+
+  return (
+    <div className="flex h-full w-[70px] flex-col items-center rounded-[22px] bg-[#161616] py-4 text-[#8d8d8d] ring-1 ring-white/[0.06]">
+      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-10 items-center justify-center rounded-xl hover:bg-white/[0.06]">
+        <LogoMark surface="dark" className="size-8" />
+      </Link>
+
+      <nav className="flex flex-col items-center gap-1.5">
+        <RailItem label={t("Home")} href="/dashboard" active={activePage === "dashboard"} icon={HomeIcon} />
+        <RailItem
+          label={t("Calendar")}
+          href="/dashboard?calendar=1"
+          icon={CalendarDaysIcon}
+          onClick={(e) => { if (activePage === "dashboard") { e.preventDefault(); window.dispatchEvent(new Event(OPEN_CALENDAR_EVENT)) } }}
+        />
+        <RailItem label={t("Canvas")} href="/board" active={activePage === "board"} icon={ShapesIcon} locked={canvasLocked} />
+        <RailItem label={t("Search")} hint="Ctrl+K" icon={SearchIcon} onClick={() => setSearching(true)} />
+        {beta ? (
+          <>
+            <RailItem label={t("My page")} href="/link" active={activePage.startsWith("link")} icon={Link2Icon} menu={linkItems} />
+            <RailItem label={t("Requests")} href="/requests" active={activePage === "requests"} icon={InboxIcon} badge={newRequests} />
+          </>
+        ) : (
+          <>
+            <RailItem label={t("My page")} hint={t("soon")} icon={Link2Icon} onClick={() => setSoon("page")} />
+            <RailItem label={t("Requests")} hint={t("soon")} icon={InboxIcon} onClick={() => setSoon("requests")} />
+          </>
+        )}
+      </nav>
+
+      <div className="my-4 h-px w-8 bg-white/[0.08]" />
+
+      {/* projects as dots, newest first */}
+      <div className="flex flex-col items-center gap-2.5">
+        {shown.map((p) => <ProjectRow key={p.id} project={p} active={activePage === `project:${p.id}`} dot />)}
+        {more > 0 && (
+          <RailItem label={t("All projects")} icon={() => <span className="text-xs font-semibold">+{more}</span>} onClick={() => setSearching(true)} />
+        )}
+        <button
+          type="button"
+          onClick={() => setCreating(true)}
+          aria-label={t("New project")}
+          title={t("New project")}
+          className="mt-1 flex size-10 items-center justify-center rounded-full bg-[#ec4f9a] text-white shadow-[0_6px_20px_-6px_rgba(236,79,154,.8)] transition-transform hover:scale-105"
+        >
+          <PlusIcon className="size-5" />
+        </button>
+      </div>
+
+      <div className="mt-auto flex flex-col items-center gap-3">
+        <ThemeSwitch />
+        <AccountRow panel={panel} onPanel={onPanel} compact />
+      </div>
+
+      <TemplatesDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onPosts={(plan) => createProject("posts", null, plan)}
+        onPick={(tpl) => createProject("canvas", tpl)}
+        canvasLocked={canvasLocked}
+        onLocked={() => openPanel("billing")}
+      />
+      {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
+      {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
+    </div>
+  )
+}
+
+/** One icon of the rail, its name in a dark label on hover (or, with menu, a list of links). */
+function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locked, menu }: {
+  label: string
+  hint?: string
+  href?: string
+  icon: React.ComponentType<{ className?: string }>
+  active?: boolean
+  onClick?: (e: React.MouseEvent) => void
+  badge?: number
+  locked?: boolean
+  menu?: { href: string; label: string }[]
+}) {
+  const cls = cn(
+    "relative flex size-10 items-center justify-center rounded-xl transition-colors",
+    active ? "bg-white/[0.1] text-white" : "hover:bg-white/[0.06] hover:text-white"
+  )
+  const body = (
+    <>
+      <Icon className="size-[18px]" />
+      {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ec4f9a] px-1 text-[10px] font-bold text-white">{badge}</span>}
+      {locked && <LockIcon className="absolute right-1.5 bottom-1.5 size-2.5 text-white/70" />}
+    </>
+  )
+  return (
+    <div className="group relative">
+      {href
+        ? <Link href={href} onClick={onClick} aria-label={label} className={cls}>{body}</Link>
+        : <button type="button" onClick={onClick} aria-label={label} className={cls}>{body}</button>}
+      <div className="invisible absolute top-1/2 left-full z-40 -translate-y-1/2 pl-3 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+        {menu ? (
+          <div className="flex w-52 flex-col gap-0.5 rounded-xl bg-[#262626] p-1.5 shadow-lg ring-1 ring-white/10">
+            {menu.map((m) => (
+              <Link key={m.href} href={m.href} className="rounded-lg px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-white/85 hover:bg-white/[0.08] hover:text-white">{m.label}</Link>
+            ))}
+          </div>
+        ) : (
+          <span className="flex items-center gap-2 rounded-lg bg-[#262626] px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-white shadow-lg ring-1 ring-white/10">
+            {label}
+            {hint && <span className="text-[11px] text-white/50">{hint}</span>}
+            {locked && <span className="text-[11px] text-white/50">Pro</span>}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** The dark capsule with a moon (or a sun) that switches the theme, as in the reference. */
+function ThemeSwitch() {
+  const { t } = useT()
+  const theme = useTheme()
+  const dark = theme === "dark"
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      aria-label={t("Dark theme")}
+      title={dark ? t("Light theme") : t("Dark theme")}
+      onClick={(e) => setTheme(dark ? "light" : "dark", { x: e.clientX, y: e.clientY })}
+      className="relative h-7 w-12 rounded-full bg-[#2a2a2a] ring-1 ring-white/[0.08]"
+    >
+      <span className={cn("absolute top-0.5 flex size-6 items-center justify-center rounded-full bg-[#fdc019] text-[#1a1a1a] transition-[left] duration-300", dark ? "left-[22px]" : "left-0.5")}>
+        {dark ? <MoonIcon className="size-3.5" /> : <SunIcon className="size-3.5" />}
+      </span>
+    </button>
   )
 }
 
@@ -297,7 +458,7 @@ function WorkspaceRow({ onNewProject }: { onNewProject: () => void }) {
 }
 
 /** The bottom of the sidebar, as in Notion: who you are, with the account and help in its menu. */
-function AccountRow({ panel, onPanel }: { panel: PanelId | null; onPanel: (id: PanelId) => void }) {
+function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPanel: (id: PanelId) => void; compact?: boolean }) {
   const { t } = useT()
   const router = useRouter()
   const profile = useProfile()
@@ -326,6 +487,44 @@ function AccountRow({ panel, onPanel }: { panel: PanelId | null; onPanel: (id: P
     await supabase.auth.signOut()
     router.replace("/login")
   }
+  const menuItems = (
+    <>
+      <SectionLabel>{t("Account")}</SectionLabel>
+      {item("profile", NAV_ICONS.profile, t("Profile"))}
+      {item("billing", NAV_ICONS.billing, t("Billing"))}
+      {item("notifications", NAV_ICONS.notifications, t("Notifications"))}
+      {item("security", NAV_ICONS.security, t("Security"))}
+      {item("appearance", NAV_ICONS.appearance, t("Appearance"))}
+      <SectionLabel className="mt-1">{t("Support")}</SectionLabel>
+      {item("help", NAV_ICONS.help, t("Help Center"))}
+      {item("contact", NAV_ICONS.contact, t("Contact Us"))}
+      {item("docs", NAV_ICONS.docs, t("Documentation"))}
+      {item("status", NAV_ICONS.status, t("Status"))}
+      <div className="my-1 h-px bg-border" />
+      <NavItem icon={<LogOutIcon className="size-full" strokeWidth={1.6} />} label={t("Sign out")} onClick={signOut} />
+    </>
+  )
+  if (compact) {
+    // the rail: just the face; the menu opens beside it, with the plan on top
+    return (
+      <div ref={ref} className="relative">
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={name}
+          className="flex size-10 items-center justify-center rounded-full ring-2 ring-white/10 transition-shadow hover:ring-white/30">
+          <Avatar className="size-9">
+            <AvatarImage key={photo} src={photo} alt="" />
+            <AvatarFallback className="bg-[#f8ebcb] text-[11px] font-bold text-[#1a1a1a]">{initials}</AvatarFallback>
+          </Avatar>
+        </button>
+        {open && (
+          <div role="menu" className="absolute bottom-0 left-[calc(100%+14px)] z-40 flex w-72 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
+            <p className="truncate px-3 pt-1.5 pb-1 text-sm font-semibold">{name}</p>
+            <PlanCard className="mx-1 mb-1.5" onOpen={() => { setOpen(false); onPanel("billing") }} />
+            {menuItems}
+          </div>
+        )}
+      </div>
+    )
+  }
   return (
     <div ref={ref} className="relative flex items-center gap-1 border-t border-border/60 px-2.5 py-2">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
@@ -343,19 +542,7 @@ function AccountRow({ panel, onPanel }: { panel: PanelId | null; onPanel: (id: P
       </button>
       {open && (
         <div role="menu" className="absolute inset-x-2.5 bottom-[calc(100%+4px)] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
-          <SectionLabel>{t("Account")}</SectionLabel>
-          {item("profile", NAV_ICONS.profile, t("Profile"))}
-          {item("billing", NAV_ICONS.billing, t("Billing"))}
-          {item("notifications", NAV_ICONS.notifications, t("Notifications"))}
-          {item("security", NAV_ICONS.security, t("Security"))}
-          {item("appearance", NAV_ICONS.appearance, t("Appearance"))}
-          <SectionLabel className="mt-1">{t("Support")}</SectionLabel>
-          {item("help", NAV_ICONS.help, t("Help Center"))}
-          {item("contact", NAV_ICONS.contact, t("Contact Us"))}
-          {item("docs", NAV_ICONS.docs, t("Documentation"))}
-          {item("status", NAV_ICONS.status, t("Status"))}
-          <div className="my-1 h-px bg-border" />
-          <NavItem icon={<LogOutIcon className="size-full" strokeWidth={1.6} />} label={t("Sign out")} onClick={signOut} />
+          {menuItems}
         </div>
       )}
     </div>
@@ -562,7 +749,7 @@ function useNewRequestCount() {
 }
 
 /** Plan, trial and active-order usage at the bottom of the sidebar. */
-function PlanCard({ onOpen }: { onOpen: () => void }) {
+function PlanCard({ onOpen, className }: { onOpen: () => void; className?: string }) {
   const usage = usePlanUsage()
   const { t } = useT()
   if (!usage) return null
@@ -570,7 +757,7 @@ function PlanCard({ onOpen }: { onOpen: () => void }) {
   const nearLimit = usage.plan.activeOrders !== null && usage.activeOrders >= usage.plan.activeOrders - 1
 
   return (
-    <div className="mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10">
+    <div className={cn("mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10", className)}>
       <div className="flex items-baseline justify-between gap-2 text-xs whitespace-nowrap">
         <span className="truncate font-medium text-foreground">
           {onTrial ? t("{plan} trial", { plan: t(usage.plan.name) }) : t("{plan} plan", { plan: t(usage.plan.name) })}
