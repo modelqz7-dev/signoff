@@ -78,17 +78,23 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
         </div>
 
         {isNew && (
-          <div role="tablist" className="grid shrink-0 grid-cols-2 border-b border-border">
-            <Tab active={tab === "posts"} onClick={() => setTab("posts")} icon={LayoutGridIcon} title={t("Posts")} hint={t("Posts with dates, approved by the client")} count={plans.length + 1} />
-            <Tab active={tab === "canvas"} onClick={() => setTab("canvas")} icon={ShapesIcon} title={t("Canvas")} hint={t("A free board for plans and ideas")} count={canvases.length + 1} badge={canvasLocked ? <ProBadge /> : null} />
+          <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-5 pb-1 sm:px-6">
+            <div role="tablist" className="flex items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
+              <Tab active={tab === "posts"} onClick={() => setTab("posts")} icon={LayoutGridIcon} title={t("Posts")} count={plans.length + 1} />
+              <Tab active={tab === "canvas"} onClick={() => setTab("canvas")} icon={ShapesIcon} title={t("Canvas")} count={canvases.length + 1} locked={canvasLocked} />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {tab === "posts" ? t("Posts with dates, approved by the client") : t("A free board for plans and ideas")}
+              {tab === "canvas" && canvasLocked && <> · <span className="font-medium text-foreground">{t("on Pro")}</span></>}
+            </p>
           </div>
         )}
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6">
+          <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pb-6 sm:px-6", isNew ? "pt-4" : "pt-6")}>
             {isNew && tab === "posts" && (
               plans.length > 0 || !q ? (
-                <Section title={t("Start empty or from a template")}>
+                <Section>
                   {!q && (
                     <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => pickPosts(null)}>
                       <PostsPreview />
@@ -104,7 +110,7 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
             )}
             {(!isNew || tab === "canvas") && (
               canvases.length > 0 || (isNew && !q) ? (
-                <Section title={isNew ? t("Start empty or from a template") : t("For SMM")}>
+                <Section title={isNew ? undefined : t("For SMM")}>
                   {isNew && !q && (
                     <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" locked={canvasLocked} onClick={() => pick(null)}>
                       <CanvasPreview />
@@ -125,15 +131,14 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
   )
 }
 
-/** One of the two kinds of project, as a wide tab under the search. */
-function Tab({ active, onClick, icon: Icon, title, hint, count, badge }: {
+/** One of the two kinds of project, as a segment of the switch above the cards. */
+function Tab({ active, onClick, icon: Icon, title, count, locked }: {
   active: boolean
   onClick: () => void
   icon: React.ComponentType<{ className?: string }>
   title: string
-  hint: string
   count: number
-  badge?: React.ReactNode
+  locked?: boolean
 }) {
   return (
     <button
@@ -142,22 +147,14 @@ function Tab({ active, onClick, icon: Icon, title, hint, count, badge }: {
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "relative flex items-center gap-3 px-4 py-3 text-left transition-colors sm:px-6",
-        active ? "text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+        "flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+        active ? "bg-background text-foreground shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"
       )}
     >
-      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", active ? "bg-foreground text-background" : "bg-foreground/[0.06]")}>
-        <Icon className="size-4" />
-      </span>
-      <span className="min-w-0">
-        <span className="flex items-center gap-2 text-sm font-semibold">
-          {title}
-          <span className="text-xs font-normal text-muted-foreground tabular-nums">{count}</span>
-          {badge}
-        </span>
-        <span className="hidden truncate text-xs text-muted-foreground sm:block">{hint}</span>
-      </span>
-      {active && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-foreground" />}
+      <Icon className="size-4" />
+      {title}
+      <span className="text-xs font-normal text-muted-foreground tabular-nums">{count}</span>
+      {locked && <LockIcon className="size-3 text-muted-foreground" />}
     </button>
   )
 }
@@ -177,10 +174,10 @@ function NotFound({ other, otherLabel }: { other: (() => void) | null; otherLabe
   )
 }
 
-function Section({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
     <section>
-      <p className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">{title}{badge}</p>
+      {title && <p className="mb-3 text-sm font-medium text-muted-foreground">{title}</p>}
       <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </section>
   )
