@@ -5,8 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, HomeIcon, LayoutDashboardIcon, LightbulbIcon,
-  MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, SquarePenIcon, WaypointsIcon, XIcon,
+  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, HomeIcon, LightbulbIcon,
+  MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { supabase } from "@/lib/supabase"
@@ -145,18 +145,18 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
           <span className="flex-1 text-left">{t("Search")}</span>
           <kbd className="rounded bg-foreground/[0.06] px-1.5 py-0.5 font-sans text-[11px]">Ctrl+K</kbd>
         </button>
-        {/* Home and the two side views, as in Notion's top row */}
+        {/* Home (the dashboard), the workshop's own canvas and the calendar, as in Notion's top row */}
         <div className="flex items-center gap-1 pt-1">
           <Link
-            href="/orders"
+            href="/dashboard"
             className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
-              activePage === "orders" ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+              activePage === "dashboard" ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
             }`}
           >
             <HomeIcon className="size-4" />
             {t("Home")}
           </Link>
-          <TopIcon href="/dashboard" label={t("Dashboard")} active={activePage === "dashboard"}><LayoutDashboardIcon className="size-4" /></TopIcon>
+          <TopIcon href="/board" label={t("Canvas")} active={activePage === "board"}><ShapesIcon className="size-4" /></TopIcon>
           <TopIcon
             href="/dashboard?calendar=1"
             label={t("Calendar")}

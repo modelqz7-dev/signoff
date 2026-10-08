@@ -116,3 +116,6 @@ create or replace trigger roll_up_project_status
 -- 5. The project's free canvas (blocks, posts, notes and the paths between them), saved as one
 --    document: { nodes, edges }. Posts on it point at their post orders by id.
 alter table public.orders add column if not exists board jsonb;
+
+-- 6. The workshop's own canvas (the sidebar's "Canvas"), not tied to any project.
+alter table public.shops add column if not exists board jsonb;

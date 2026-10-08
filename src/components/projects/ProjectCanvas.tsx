@@ -9,7 +9,6 @@ import {
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react"
 import { ImageIcon, LayoutTemplateIcon, MinusIcon, PlusIcon, ScanIcon, SquareIcon, StickyNoteIcon, TypeIcon } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
@@ -18,9 +17,11 @@ import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useT, type T } from "@/lib/i18n"
 
-// The project's free canvas, edge to edge: the SMM specialist lays out whatever they need — blocks with a title
-// and a description, posts (real post orders, approved by the client), plain text, sticky notes —
-// and draws paths between them. The whole canvas is saved on the project as { nodes, edges }.
+// A free canvas, edge to edge, with nothing on it but what the user puts there: blocks with a
+// title and a description, posts (real post orders the client approves), plain text, sticky notes,
+// and paths between them. A double click or a right click opens the menu of things to add, right
+// where the pointer is. The canvas is saved as one { nodes, edges } document by whoever hosts it:
+// a project (orders.board) or the workshop's own canvas (shops.board).
 
 export type Board = { nodes: Node[]; edges: Edge[] }
 
@@ -32,12 +33,17 @@ const SAVE_DELAY = 700
 // so the saved canvas only keeps what the user wrote.
 const CanvasCtx = createContext<{ posts: Map<string, Order>; t: T; readOnly: boolean }>({ posts: new Map(), t: (s) => s, readOnly: false })
 
-export function ProjectCanvas(props: {
-  project: Order
-  posts: Order[]
-  onCreatePosts: (files: File[]) => Promise<Order[]>
+type CanvasProps = {
+  initial: Board | null | undefined
+  /** Stores the canvas; resolves to false when that failed. */
+  save: (board: Board) => Promise<boolean>
+  /** Posts that can sit on this canvas; without onCreatePosts there is no Post tool. */
+  posts?: Order[]
+  onCreatePosts?: (files: File[]) => Promise<Order[]>
   readOnly?: boolean
-}) {
+}
+
+export function ProjectCanvas(props: CanvasProps) {
   return (
     <ReactFlowProvider>
       <Canvas {...props} />
@@ -45,21 +51,20 @@ export function ProjectCanvas(props: {
   )
 }
 
-function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
-  project: Order
-  posts: Order[]
-  onCreatePosts: (files: File[]) => Promise<Order[]>
-  readOnly?: boolean
-}) {
+function Canvas({ initial: saved0, save, posts = [], onCreatePosts, readOnly = false }: CanvasProps) {
   const { t } = useT()
   const theme = useTheme()
   const flow = useReactFlow()
-  const initial = (project.board as Board | null | undefined) ?? { nodes: [], edges: [] }
+  const initial = saved0 ?? { nodes: [], edges: [] }
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  // The add menu, where the user double- or right-clicked: on screen, and on the canvas.
+  const [menu, setMenu] = useState<{ left: number; top: number; at: { x: number; y: number } } | null>(null)
+  const postsAt = useRef<{ x: number; y: number } | null>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
   const postMap = new Map(posts.map((p) => [p.id, p]))
 
   // Autosave: what the user wrote and where things stand, never selection or drag state.
@@ -73,11 +78,10 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
         nodes: nodes.map(({ id, type, position, data }) => ({ id, type, position, data })),
         edges: edges.map(({ id, source, target, sourceHandle, targetHandle, label }) => ({ id, source, target, sourceHandle, targetHandle, label })),
       }
-      const { error } = await supabase.from("orders").update({ board }).eq("id", project.id)
-      setSaved(error ? "error" : "saved")
+      setSaved((await save(board)) ? "saved" : "error")
     }, SAVE_DELAY)
     return () => window.clearTimeout(timer)
-  }, [nodes, edges, project.id, readOnly])
+  }, [nodes, edges, save, readOnly])
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge({ ...c, id: `e-${crypto.randomUUID()}` }, es)), [setEdges])
 
@@ -90,17 +94,63 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
     return { x: center.x - 120 + i * 230 + (nodes.length % 5) * 18, y: center.y - 60 + (nodes.length % 5) * 18 }
   }
 
-  function add(kind: Exclude<Kind, "post">) {
+  function add(kind: Exclude<Kind, "post">, at = spot()) {
     const data = kind === "block" ? { title: "", text: "" } : { text: "" }
-    setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { id: `n-${crypto.randomUUID()}`, type: kind, position: spot(), data, selected: true }])
+    setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { id: `n-${crypto.randomUUID()}`, type: kind, position: at, data, selected: true }])
   }
 
   async function addPosts(files: File[]) {
+    if (!onCreatePosts) return
+    const at = postsAt.current
+    postsAt.current = null
     const created = await onCreatePosts(files)
     setNodes((ns) => [
       ...ns,
-      ...created.map((post, i) => ({ id: `p-${post.id}`, type: "post", position: spot(i), data: { postId: post.id } })),
+      ...created.map((post, i) => ({
+        id: `p-${post.id}`,
+        type: "post",
+        position: at ? { x: at.x + i * 230, y: at.y } : spot(i),
+        data: { postId: post.id },
+      })),
     ])
+  }
+
+  /** Opens the add menu at the pointer, unless the click landed on something already there. */
+  function openMenu(e: React.MouseEvent | MouseEvent) {
+    const target = e.target as HTMLElement
+    if (readOnly || !target.classList.contains("react-flow__pane")) return
+    e.preventDefault()
+    const box = boxRef.current?.getBoundingClientRect()
+    if (!box) return
+    setMenu({
+      left: Math.min(e.clientX - box.left, box.width - 220),
+      top: Math.min(e.clientY - box.top, box.height - 250),
+      at: flow.screenToFlowPosition({ x: e.clientX, y: e.clientY }),
+    })
+  }
+
+  useEffect(() => {
+    if (!menu) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(null) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [menu])
+
+  type MenuItem = { id: "templates" | "block" | "post" | "text" | "note"; icon: typeof SquareIcon; label: string }
+  const menuItems: MenuItem[] = [
+    { id: "templates", icon: LayoutTemplateIcon, label: t("Templates") },
+    { id: "block", icon: SquareIcon, label: t("Block") },
+    ...(onCreatePosts ? [{ id: "post" as const, icon: ImageIcon, label: t("Post") }] : []),
+    { id: "text", icon: TypeIcon, label: t("Text") },
+    { id: "note", icon: StickyNoteIcon, label: t("Note") },
+  ]
+
+  function pick(id: MenuItem["id"]) {
+    const at = menu?.at
+    setMenu(null)
+    if (id === "templates") setTemplatesOpen(true)
+    else if (id === "post") { postsAt.current = at ?? null; fileRef.current?.click() }
+    else add(id, at)
   }
 
   /** Lays a template out around the middle of the screen, with fresh ids and the user's language. */
@@ -146,7 +196,7 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
 
   return (
     <CanvasCtx.Provider value={{ posts: postMap, t, readOnly }}>
-      <div className="relative h-full w-full">
+      <div ref={boxRef} className="relative h-full w-full" onDoubleClick={openMenu}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -154,6 +204,10 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
           onEdgesChange={readOnly ? undefined : onEdgesChange}
           onConnect={onConnect}
           onEdgeDoubleClick={renamePath}
+          onPaneContextMenu={openMenu}
+          onPaneClick={() => setMenu(null)}
+          onMoveStart={() => setMenu(null)}
+          zoomOnDoubleClick={false}
           nodeTypes={NODE_TYPES}
           connectionMode={ConnectionMode.Loose}
           defaultEdgeOptions={{ type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 }, style: { strokeWidth: 1.5 } }}
@@ -174,7 +228,7 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
           <>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
               <p className="text-sm font-medium text-foreground">{t("A blank canvas")}</p>
-              <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the tools on the left, then drag from a dot on one block to another to draw a path.")}</p>
+              <p className="max-w-xs text-xs text-muted-foreground">{t("Double-click or right-click anywhere to add a block, a post or a note. Drag from a dot on one block to another to draw a path.")}</p>
             </div>
             {/* like Notion's "Get started with" */}
             <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col gap-2">
@@ -195,25 +249,39 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
 
         <TemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onPick={(tpl) => { if (tpl) applyTemplate(tpl) }} />
 
-        {/* tools, a floating strip on the left like a design app */}
-        {!readOnly && (
-          <div className="absolute top-1/2 left-4 flex -translate-y-1/2 flex-col gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
-            <Tool icon={LayoutTemplateIcon} label={t("Templates")} onClick={() => setTemplatesOpen(true)} side />
-            <span aria-hidden="true" className="mx-1.5 my-0.5 h-px bg-border" />
-            <Tool icon={SquareIcon} label={t("Block")} onClick={() => add("block")} side />
-            <Tool icon={ImageIcon} label={t("Post")} onClick={() => fileRef.current?.click()} side />
-            <Tool icon={TypeIcon} label={t("Text")} onClick={() => add("text")} side />
-            <Tool icon={StickyNoteIcon} label={t("Note")} onClick={() => add("note")} side />
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".png,.jpg,.jpeg,.webp,.pdf"
-              multiple
-              className="hidden"
-              onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; if (files.length) addPosts(files) }}
-            />
+        {/* the add menu, where the user clicked */}
+        {menu && (
+          <div
+            role="menu"
+            className="absolute z-20 flex w-52 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] ring-1 ring-border"
+            style={{ left: menu.left, top: menu.top }}
+          >
+            {menuItems.map(({ id, icon: Icon, label }, i) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                autoFocus={i === 1}
+                onClick={() => pick(id)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-foreground/90 transition-colors outline-none hover:bg-hover focus-visible:bg-hover",
+                  i === 0 && "mb-0.5 border-b border-border pb-2"
+                )}
+              >
+                <Icon className="size-4 text-muted-foreground" />
+                {label}
+              </button>
+            ))}
           </div>
         )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".png,.jpg,.jpeg,.webp,.pdf"
+          multiple
+          className="hidden"
+          onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; if (files.length) addPosts(files) }}
+        />
 
         {/* zoom */}
         <div className="absolute right-4 bottom-4 flex items-center gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
@@ -232,25 +300,16 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
   )
 }
 
-function Tool({ icon: Icon, label, onClick, side }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; side?: boolean }) {
+function Tool({ icon: Icon, label, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title={side ? undefined : label}
+      title={label}
       aria-label={label}
-      className={cn(
-        "group/tool relative flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground",
-        side ? "size-9" : "size-8"
-      )}
+      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
     >
       <Icon className="size-4" />
-      {/* the tool's name slides out on hover, as in design apps */}
-      {side && (
-        <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 transition-opacity group-hover/tool:opacity-100">
-          {label}
-        </span>
-      )}
     </button>
   )
 }
