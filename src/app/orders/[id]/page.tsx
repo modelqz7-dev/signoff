@@ -320,9 +320,9 @@ export default function OrderPage() {
 
             {/* Header */}
             <div className="flex flex-col gap-3">
-              <Link href={project ? `/orders/${project.id}` : "/orders"} className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+              <Link href={project ? `/orders/${project.id}` : "/dashboard"} className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <ChevronLeftIcon className="size-3.5" />
-                {project ? project.title : t("Orders")}
+                {project ? project.title : t("Home")}
               </Link>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -355,7 +355,7 @@ export default function OrderPage() {
                   >
                     {t(status.label)}
                   </Badge>
-                  <DeleteOrderButton order={order} onDeleted={() => router.replace(project ? `/orders/${project.id}` : "/orders")} />
+                  <DeleteOrderButton order={order} onDeleted={() => router.replace(project ? `/orders/${project.id}` : "/dashboard")} />
                 </div>
               </div>
             </div>
