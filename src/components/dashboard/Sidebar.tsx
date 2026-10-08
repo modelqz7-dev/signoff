@@ -75,8 +75,8 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Computers: a narrow rail of icons, as in the reference design */}
     <aside
-      className="sticky top-0 z-30 hidden h-screen w-[80px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
-      style={{ marginLeft: open ? 0 : -80, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+      className="sticky top-0 z-30 hidden h-screen w-[92px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
+      style={{ marginLeft: open ? 0 : -92, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
     >
       <Rail activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
@@ -238,7 +238,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
   ]
 
   return (
-    <div className="flex h-full w-[70px] flex-col items-center rounded-[22px] bg-[#161616] py-4 text-[#8d8d8d] ring-1 ring-white/[0.06]">
+    <div className="flex h-full w-[82px] flex-col items-center rounded-[22px] bg-[#161616] py-4 text-[#8d8d8d] ring-1 ring-white/[0.06]">
       <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-10 items-center justify-center rounded-xl hover:bg-white/[0.06]">
         <LogoMark surface="dark" className="size-8" />
       </Link>
@@ -274,6 +274,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
         {more > 0 && (
           <RailItem label={t("All projects")} icon={() => <span className="text-xs font-semibold">+{more}</span>} onClick={() => setSearching(true)} />
         )}
+        <div className="mt-1"><AccountRow panel={panel} onPanel={onPanel} compact /></div>
         <button
           type="button"
           onClick={() => setCreating(true)}
@@ -287,7 +288,6 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
       <div className="mt-auto flex flex-col items-center gap-3">
         <ThemeSwitch />
-        <AccountRow panel={panel} onPanel={onPanel} compact />
       </div>
 
       <TemplatesDialog
@@ -351,25 +351,32 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   )
 }
 
-/** The dark capsule with a moon (or a sun) that switches the theme, as in the reference. */
+/** Light or dark: a capsule with a sun and a moon, the current one on yellow. */
 function ThemeSwitch() {
   const { t } = useT()
   const theme = useTheme()
   const dark = theme === "dark"
+  const pick = (next: "light" | "dark") => (e: React.MouseEvent) => setTheme(next, { x: e.clientX, y: e.clientY })
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={dark}
-      aria-label={t("Dark theme")}
-      title={dark ? t("Light theme") : t("Dark theme")}
-      onClick={(e) => setTheme(dark ? "light" : "dark", { x: e.clientX, y: e.clientY })}
-      className="relative h-7 w-12 rounded-full bg-[#2a2a2a] ring-1 ring-white/[0.08]"
-    >
-      <span className={cn("absolute top-0.5 flex size-6 items-center justify-center rounded-full bg-[#fdc019] text-[#1a1a1a] transition-[left] duration-300", dark ? "left-[22px]" : "left-0.5")}>
-        {dark ? <MoonIcon className="size-3.5" /> : <SunIcon className="size-3.5" />}
-      </span>
-    </button>
+    <div role="radiogroup" aria-label={t("Appearance")} className="flex items-center gap-0.5 rounded-full bg-[#242424] p-[3px] ring-1 ring-white/[0.06]">
+      {([["light", SunIcon, t("Light theme")], ["dark", MoonIcon, t("Dark theme")]] as const).map(([id, Icon, label]) => {
+        const on = (id === "dark") === dark
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={label}
+            title={label}
+            onClick={pick(id)}
+            className={cn("flex size-7 items-center justify-center rounded-full transition-colors", on ? "bg-[#fdc019] text-[#1a1a1a]" : "text-white/55 hover:text-white")}
+          >
+            <Icon className="size-3.5" />
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -516,7 +523,7 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
           </Avatar>
         </button>
         {open && (
-          <div role="menu" className="absolute bottom-0 left-[calc(100%+14px)] z-40 flex w-72 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
+          <div role="menu" className="absolute top-1/2 left-[calc(100%+14px)] z-40 flex w-72 -translate-y-1/2 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
             <p className="truncate px-3 pt-1.5 pb-1 text-sm font-semibold">{name}</p>
             <PlanCard className="mx-1 mb-1.5" onOpen={() => { setOpen(false); onPanel("billing") }} />
             {menuItems}
