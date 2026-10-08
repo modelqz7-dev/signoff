@@ -10,7 +10,8 @@ import {
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
-import type { CanvasTemplate } from "@/components/projects/templates"
+import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
+import { can } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -126,6 +127,8 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const createProject = useCreateProject()
   const [creating, setCreating] = useState(false)
   const newProject = () => setCreating(true)
+  const usage = usePlanUsage()
+  const canvasLocked = !!usage && !can(usage.shop, "canvas")
 
   // Ctrl/⌘+K opens search from anywhere, like Notion.
   useEffect(() => {
@@ -141,7 +144,14 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   return (
     <div className="flex flex-1 flex-col">
       <WorkspaceRow onNewProject={newProject} />
-      <TemplatesDialog open={creating} onOpenChange={setCreating} onPosts={() => createProject("posts")} onPick={(tpl) => createProject("canvas", tpl)} />
+      <TemplatesDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onPosts={(plan) => createProject("posts", null, plan)}
+        onPick={(tpl) => createProject("canvas", tpl)}
+        canvasLocked={canvasLocked}
+        onLocked={() => openPanel("billing")}
+      />
 
       <div className="flex flex-col gap-1.5 px-3 pb-2">
         <button
@@ -374,26 +384,51 @@ function useProjects() {
 function useCreateProject() {
   const { t } = useT()
   const router = useRouter()
-  /** A new project opening on its posts or its canvas, a template's canvas laid out if given. */
-  return async (view: "posts" | "canvas", template?: CanvasTemplate | null) => {
+  /**
+   * A new project opening on its posts or its canvas: a canvas template laid out on first open,
+   * or a post plan's posts made right away (no files yet, each on its day from next Monday).
+   */
+  return async (view: "posts" | "canvas", template?: CanvasTemplate | null, plan?: PostTemplate | null) => {
     const { data: shop } = await supabase.from("shops").select("id").limit(1).maybeSingle()
     if (!shop) return
     const { data, error } = await supabase.from("orders").insert({
       shop_id: shop.id,
       code: `PRJ-${Date.now().toString(36).toUpperCase()}`,
-      title: template ? t(template.title) : t("Untitled"),
+      title: template ? t(template.title) : plan ? t(plan.title) : t("Untitled"),
       client_name: "",
       status: "await",
       kind: "project",
-    }).select("id").single()
+    }).select("id, code").single()
     if (error) {
       // over the plan's limit: show the plans
       if (error.message?.includes("plan_limit")) openPanel("billing")
       return
     }
+    if (plan) {
+      const monday = nextMonday()
+      await supabase.from("orders").insert(plan.posts.map((post, i) => ({
+        shop_id: shop.id,
+        code: `${data.code}-${(i + 1).toString().padStart(2, "0")}`,
+        title: t(post.title, post.vars),
+        client_name: "",
+        status: "await",
+        kind: "post",
+        project_id: data.id,
+        position: i + 1,
+        publish_on: isoDay(addDays(monday, post.day)),
+        file_url: null,
+      })))
+    }
     window.dispatchEvent(new Event(PROJECTS_CHANGED))
     router.push(`/orders/${data.id}?start=${view}${template ? `&template=${template.id}` : ""}`)
   }
+}
+
+const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+/** The coming Monday (a week ahead when today is Monday: time to make and approve the posts). */
+function nextMonday(now = new Date()) {
+  return addDays(now, ((8 - now.getDay()) % 7) || 7)
 }
 
 /** Quick find across projects and orders (Ctrl+K). */

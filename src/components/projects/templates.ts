@@ -1,5 +1,6 @@
-// Ready-made canvases for SMM work. Each is laid out with the canvas's own pieces (blocks, text,
-// sticky notes and paths), so after it lands the user edits it like anything they drew themselves.
+// Ready-made starts for SMM work: post plans (a project's posts, laid out by date, files to come)
+// and canvases. A canvas is laid out with the canvas's own pieces (blocks, text, sticky notes
+// and paths), so after it lands the user edits it like anything they drew themselves.
 // Text is the English key; the Russian lives in i18n-ru like every other string.
 
 export type TemplateNode =
@@ -7,7 +8,8 @@ export type TemplateNode =
   | { type: "text"; x: number; y: number; text: string }
   | { type: "note"; x: number; y: number; text: string }
 
-export type CanvasTemplate = {
+/** What every gallery card needs. */
+export type GalleryItem = {
   id: string
   title: string
   description: string
@@ -15,6 +17,9 @@ export type CanvasTemplate = {
   tone: string
   /** What the gallery card shows, Notion style: three column names and a tag per row. */
   preview: { columns: [string, string, string]; tags: [string, string, string]; people?: boolean }
+}
+
+export type CanvasTemplate = GalleryItem & {
   nodes: TemplateNode[]
   /** Paths between nodes by index, with an optional label. */
   edges: [from: number, to: number, label?: string][]
@@ -146,3 +151,79 @@ export const NODE_SIZE: Record<TemplateNode["type"], { w: number; h: number }> =
   note: { w: 200, h: 80 },
   text: { w: 340, h: 44 },
 }
+
+/** A post plan: empty posts with names and publishing days, counted from the next Monday. */
+export type PostTemplate = GalleryItem & {
+  /** title is a translation key, filled with vars */
+  posts: { title: string; vars?: Record<string, number>; day: number }[]
+}
+
+const week = (w: number, days: number[]) =>
+  days.map((day, i) => ({ title: "Post {n} · week {w}", vars: { n: i + 1, w }, day: (w - 1) * 7 + day }))
+
+export const POST_TEMPLATES: PostTemplate[] = [
+  {
+    id: "posts-month",
+    title: "Month of posts",
+    description: "12 posts, three a week: Monday, Wednesday, Friday.",
+    tone: "#3f9a5b",
+    preview: { columns: ["Post", "Status", "Day"], tags: ["Monday", "Wednesday", "Friday"] },
+    posts: [1, 2, 3, 4].flatMap((n) => week(n, [0, 2, 4])),
+  },
+  {
+    id: "posts-week",
+    title: "Week of posts",
+    description: "A post every weekday, for a client who posts a lot.",
+    tone: "#3b78d8",
+    preview: { columns: ["Post", "Status", "Day"], tags: ["Monday", "Tuesday", "Wednesday"] },
+    posts: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((d, i) => ({ title: d, day: i })),
+  },
+  {
+    id: "posts-stories",
+    title: "Stories for a week",
+    description: "Seven stories, one a day, approved in one go.",
+    tone: "#d4566b",
+    preview: { columns: ["Story", "Status", "Day"], tags: ["Monday", "Tuesday", "Wednesday"] },
+    posts: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d, i) => ({ title: `Stories · ${d}`, day: i })),
+  },
+  {
+    id: "posts-launch",
+    title: "Launch posts",
+    description: "Teaser, announcement, launch day and the follow-up.",
+    tone: "#8b5cd6",
+    preview: { columns: ["Date", "Client", "Post"], tags: ["Teaser", "Announcement", "Launch day"], people: true },
+    posts: [
+      { title: "Teaser", day: 0 },
+      { title: "Announcement", day: 2 },
+      { title: "Launch day", day: 4 },
+      { title: "After the launch", day: 7 },
+    ],
+  },
+  {
+    id: "posts-sale",
+    title: "Sale campaign",
+    description: "Announce it, remind people, last day, results.",
+    tone: "#d9822b",
+    preview: { columns: ["Date", "Status", "Post"], tags: ["Announcement", "Reminder", "Last day"] },
+    posts: [
+      { title: "Sale announcement", day: 0 },
+      { title: "Reminder", day: 2 },
+      { title: "Last day", day: 4 },
+      { title: "Results and thanks", day: 6 },
+    ],
+  },
+  {
+    id: "posts-intro",
+    title: "Brand introduction",
+    description: "For a new account: who they are, the team, the product, reviews.",
+    tone: "#2a9d99",
+    preview: { columns: ["Date", "Client", "Post"], tags: ["About us", "Team", "Reviews"], people: true },
+    posts: [
+      { title: "About us", day: 0 },
+      { title: "The team", day: 2 },
+      { title: "The product", day: 4 },
+      { title: "Behind the scenes", day: 7 },
+      { title: "Reviews", day: 9 },
+    ],
+  },
+]
