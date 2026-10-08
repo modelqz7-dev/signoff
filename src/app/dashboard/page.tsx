@@ -113,7 +113,7 @@ export default function Dashboard() {
   // The sidebar stays while loading, so switching here from My page slides in one piece.
   if (loading) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-[#e9e9e7] dark:bg-[#0f0f0f]">
         <Sidebar open={sidebarOpen} activePage="dashboard" />
         <div className="flex min-h-screen min-w-0 flex-1 items-center justify-center">
           <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
@@ -123,7 +123,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#e9e9e7] dark:bg-[#0f0f0f]">
       {/* Left sidebar */}
       <Sidebar open={sidebarOpen} activePage="dashboard" />
 
