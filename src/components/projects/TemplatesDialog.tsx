@@ -34,9 +34,9 @@ export function TemplatesDialog({ open, onOpenChange, onPick }: {
       isOpen={open}
       onOpenChange={onOpenChange}
       showCloseButton={false}
-      className="h-[min(780px,calc(var(--vvh,100dvh)-2rem))] gap-0 overflow-hidden p-0 sm:max-w-4xl"
+      className="h-[min(780px,calc(var(--vvh,100dvh)-2rem))] grid-rows-[minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-4xl [&>[role=dialog]]:grid-rows-[minmax(0,1fr)] [&>[role=dialog]]:min-h-0"
     >
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-2.5 sm:px-4">
           <button type="button" onClick={() => onOpenChange(false)} aria-label={t("Close")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground">
             <XIcon className="size-4" />
@@ -70,7 +70,7 @@ export function TemplatesDialog({ open, onOpenChange, onPick }: {
                     key={tpl.id}
                     type="button"
                     onClick={() => pick(tpl)}
-                    className="group overflow-hidden rounded-2xl text-left ring-1 transition-[box-shadow,transform] outline-none hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2"
+                    className="group overflow-hidden rounded-2xl text-left ring-1 outline-none focus-visible:ring-2"
                     style={{
                       backgroundColor: `color-mix(in oklab, ${tpl.tone} 9%, var(--popover))`,
                       ["--tw-ring-color" as string]: `color-mix(in oklab, ${tpl.tone} 32%, transparent)`,
