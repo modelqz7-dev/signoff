@@ -120,7 +120,7 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
           menu && !active && "bg-hover text-foreground"
         )}
       >
-        <WaypointsIcon className={cn("size-4 shrink-0", active ? "text-primary" : "opacity-60")} strokeWidth={1.6} />
+        <WaypointsIcon className={cn("size-4 shrink-0", active ? "text-foreground" : "opacity-60")} strokeWidth={1.6} />
         <span className="truncate">{name}</span>
       </a>
       {actions}
