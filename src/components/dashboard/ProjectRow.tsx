@@ -11,13 +11,15 @@ import { deleteProject } from "@/lib/orders"
 import { PROJECTS_CHANGED, PROJECT_RENAMED } from "@/lib/panels"
 import { notifyPlanChanged } from "@/lib/use-plan"
 import { cn } from "@/lib/utils"
+import { projectColor } from "@/lib/project-color"
 import { useT } from "@/lib/i18n"
 
 /**
  * A project in the sidebar, Notion style: the name opens it, and on hover a "⋯" opens a menu to
- * rename, open in a new tab, copy the link or delete it.
+ * rename, open in a new tab, copy the link or delete it. As a "dot" (the computer's icon rail) it
+ * is a round badge in the project's colour; hovering shows its name and the "⋯" beside it.
  */
-export function ProjectRow({ project, active }: { project: { id: string; title: string }; active: boolean }) {
+export function ProjectRow({ project, active, dot }: { project: { id: string; title: string }; active: boolean; dot?: boolean }) {
   const { t } = useT()
   const router = useRouter()
   const [menu, setMenu] = useState(false)
@@ -62,8 +64,53 @@ export function ProjectRow({ project, active }: { project: { id: string; title: 
     }
   }
 
+  const color = projectColor(project.id)
+  const actions = (
+    <button
+      type="button"
+      onClick={() => { setRenaming(false); setMenu((v) => !v) }}
+      aria-label={t("Project actions")}
+      aria-haspopup="menu"
+      aria-expanded={menu}
+      className={cn(
+        "flex size-6 items-center justify-center rounded-md transition-opacity",
+        dot ? "text-white/60 hover:bg-white/10 hover:text-white" : "absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:bg-foreground/10 hover:text-foreground",
+        !dot && (menu ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100")
+      )}
+    >
+      <MoreHorizontalIcon className="size-4" />
+    </button>
+  )
+  // menus open below a row, and to the right of a dot
+  const popAt = dot ? "top-0 left-[calc(100%+12px)]" : "top-[calc(100%+2px)] left-4"
+
   return (
     <div ref={ref} className="group relative">
+      {dot ? (
+        <>
+          <a
+            href={href}
+            aria-label={name}
+            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); router.push(href) } }}
+            className={cn(
+              "flex size-10 items-center justify-center rounded-full text-[13px] font-bold text-[#1a1a1a] transition-transform hover:scale-105",
+              active && "ring-2 ring-white ring-offset-2 ring-offset-[#161616]"
+            )}
+            style={{ backgroundColor: color }}
+          >
+            {initials(name)}
+          </a>
+          {/* the name, and the menu button, beside the dot */}
+          {!menu && !renaming && (
+            <div className="invisible absolute top-1/2 left-full z-40 -translate-y-1/2 pl-3 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+              <div className="flex items-center gap-1 rounded-xl bg-[#262626] py-1.5 pr-1.5 pl-3 text-[13px] font-medium whitespace-nowrap text-white shadow-lg ring-1 ring-white/10">
+                {name}
+                {actions}
+              </div>
+            </div>
+          )}
+        </>
+      ) : <>
       <a
         href={href}
         onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); router.push(href) } }}
@@ -76,22 +123,11 @@ export function ProjectRow({ project, active }: { project: { id: string; title: 
         <WaypointsIcon className={cn("size-4 shrink-0", active ? "text-primary" : "opacity-60")} strokeWidth={1.6} />
         <span className="truncate">{name}</span>
       </a>
-      <button
-        type="button"
-        onClick={() => { setRenaming(false); setMenu((v) => !v) }}
-        aria-label={t("Project actions")}
-        aria-haspopup="menu"
-        aria-expanded={menu}
-        className={cn(
-          "absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-opacity hover:bg-foreground/10 hover:text-foreground",
-          menu ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100"
-        )}
-      >
-        <MoreHorizontalIcon className="size-4" />
-      </button>
+      {actions}
+      </>}
 
       {menu && (
-        <div role="menu" className="absolute top-[calc(100%+2px)] left-4 z-30 flex w-60 flex-col whitespace-nowrap gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
+        <div role="menu" className={cn("absolute z-40 flex w-60 flex-col gap-0.5 whitespace-nowrap rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10", popAt)}>
           <MenuItem icon={PencilIcon} label={t("Rename")} onClick={() => { settled.current = false; setMenu(false); setRenaming(true) }} />
           <MenuItem icon={ArrowUpRightIcon} label={t("Open in new tab")} onClick={() => { setMenu(false); window.open(href, "_blank", "noopener") }} />
           <MenuItem icon={copied ? CheckIcon : LinkIcon} label={copied ? t("Copied") : t("Copy link")} onClick={copyLink} />
@@ -101,7 +137,7 @@ export function ProjectRow({ project, active }: { project: { id: string; title: 
       )}
 
       {renaming && (
-        <div className="absolute top-0 right-0 left-0 z-30 rounded-lg bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
+        <div className={cn("absolute z-40 rounded-lg bg-popover p-1 shadow-lg ring-1 ring-foreground/10", dot ? "top-0 left-[calc(100%+12px)] w-60" : "top-0 right-0 left-0")}>
           <input
             autoFocus
             defaultValue={project.title}
@@ -123,6 +159,12 @@ export function ProjectRow({ project, active }: { project: { id: string; title: 
       />
     </div>
   )
+}
+
+/** One or two letters for a project's dot: "Bloom Coffee" → "BC". */
+function initials(name: string) {
+  const words = name.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean)
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "·"
 }
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; danger?: boolean }) {
