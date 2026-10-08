@@ -8,7 +8,7 @@ import {
   addEdge, useEdgesState, useNodesState, useReactFlow,
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react"
-import { LayoutTemplateIcon, MinusIcon, PlusIcon, ScanIcon } from "lucide-react"
+import { ImageIcon, LayoutTemplateIcon, MinusIcon, PlusIcon, ScanIcon, SquareIcon, StickyNoteIcon, TypeIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
@@ -24,14 +24,6 @@ import { useT, type T } from "@/lib/i18n"
 
 export type Board = { nodes: Node[]; edges: Edge[] }
 
-/** What the workspace's panel can ask the canvas to do. */
-export type CanvasActions = {
-  add: (kind: "block" | "text" | "note") => void
-  addPosts: (files: File[]) => void
-  /** Brings a post into view; false when the post isn't on the canvas. */
-  focus: (postId: string) => boolean
-  templates: () => void
-}
 
 type Kind = "block" | "post" | "text" | "note"
 const SAVE_DELAY = 700
@@ -44,7 +36,6 @@ export function ProjectCanvas(props: {
   project: Order
   posts: Order[]
   onCreatePosts: (files: File[]) => Promise<Order[]>
-  actionsRef?: React.RefObject<CanvasActions | null>
   readOnly?: boolean
 }) {
   return (
@@ -54,11 +45,10 @@ export function ProjectCanvas(props: {
   )
 }
 
-function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }: {
+function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
   project: Order
   posts: Order[]
   onCreatePosts: (files: File[]) => Promise<Order[]>
-  actionsRef?: React.RefObject<CanvasActions | null>
   readOnly?: boolean
 }) {
   const { t } = useT()
@@ -69,6 +59,7 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
   const [templatesOpen, setTemplatesOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   const postMap = new Map(posts.map((p) => [p.id, p]))
 
   // Autosave: what the user wrote and where things stand, never selection or drag state.
@@ -111,23 +102,6 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
       ...created.map((post, i) => ({ id: `p-${post.id}`, type: "post", position: spot(i), data: { postId: post.id } })),
     ])
   }
-
-  // The panel's tools act through these.
-  useEffect(() => {
-    if (!actionsRef) return
-    actionsRef.current = {
-      add,
-      addPosts,
-      focus: (postId) => {
-        const id = `p-${postId}`
-        if (!flow.getNode(id)) return false
-        flow.fitView({ nodes: [{ id }], maxZoom: 1.2, padding: 0.6, duration: 400 })
-        setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })))
-        return true
-      },
-      templates: () => setTemplatesOpen(true),
-    }
-  })
 
   /** Lays a template out around the middle of the screen, with fresh ids and the user's language. */
   function applyTemplate(tpl: CanvasTemplate) {
@@ -200,7 +174,7 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
           <>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
               <p className="text-sm font-medium text-foreground">{t("A blank canvas")}</p>
-              <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the panel on the left, then drag from a dot on one block to another to draw a path.")}</p>
+              <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the tools on the left, then drag from a dot on one block to another to draw a path.")}</p>
             </div>
             {/* like Notion's "Get started with" */}
             <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col gap-2">
@@ -221,6 +195,26 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
 
         <TemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onPick={(tpl) => { if (tpl) applyTemplate(tpl) }} />
 
+        {/* tools, a floating strip on the left like a design app */}
+        {!readOnly && (
+          <div className="absolute top-1/2 left-4 flex -translate-y-1/2 flex-col gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
+            <Tool icon={LayoutTemplateIcon} label={t("Templates")} onClick={() => setTemplatesOpen(true)} side />
+            <span aria-hidden="true" className="mx-1.5 my-0.5 h-px bg-border" />
+            <Tool icon={SquareIcon} label={t("Block")} onClick={() => add("block")} side />
+            <Tool icon={ImageIcon} label={t("Post")} onClick={() => fileRef.current?.click()} side />
+            <Tool icon={TypeIcon} label={t("Text")} onClick={() => add("text")} side />
+            <Tool icon={StickyNoteIcon} label={t("Note")} onClick={() => add("note")} side />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.webp,.pdf"
+              multiple
+              className="hidden"
+              onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; if (files.length) addPosts(files) }}
+            />
+          </div>
+        )}
+
         {/* zoom */}
         <div className="absolute right-4 bottom-4 flex items-center gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
           <Tool icon={MinusIcon} label={t("Zoom out")} onClick={() => flow.zoomOut()} />
@@ -238,16 +232,25 @@ function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }:
   )
 }
 
-function Tool({ icon: Icon, label, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
+function Tool({ icon: Icon, label, onClick, side }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; side?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title={label}
+      title={side ? undefined : label}
       aria-label={label}
-      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+      className={cn(
+        "group/tool relative flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground",
+        side ? "size-9" : "size-8"
+      )}
     >
       <Icon className="size-4" />
+      {/* the tool's name slides out on hover, as in design apps */}
+      {side && (
+        <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 transition-opacity group-hover/tool:opacity-100">
+          {label}
+        </span>
+      )}
     </button>
   )
 }

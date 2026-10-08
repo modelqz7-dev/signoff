@@ -209,8 +209,15 @@ export default function OrderPage() {
     )
   }
 
-  // A project is its own full-screen workspace, without the dashboard's menu and header.
-  if (order.kind === "project") return <ProjectView project={order} onChange={setOrder} />
+  // A project: the app's sidebar and the project page, without the dashboard header.
+  if (order.kind === "project") {
+    return (
+      <div className="flex h-dvh overflow-hidden">
+        <Sidebar open={sidebarOpen} activePage={`project:${order.id}`} />
+        <ProjectView project={order} onChange={setOrder} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      </div>
+    )
+  }
 
   const status = STATUS_MAP[order.status]
   // Link and password for the client: at the top of the right column (after the file on phones).

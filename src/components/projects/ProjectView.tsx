@@ -2,29 +2,28 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
-  AlignLeftIcon, ArrowUpRightIcon, CalendarIcon, ChevronLeftIcon, CircleDotIcon, GalleryVerticalEndIcon, ImageIcon,
-  ImagePlusIcon, LayoutTemplateIcon, MessageSquareIcon, PanelLeftIcon, PlusIcon, SearchIcon, SquareIcon, StickyNoteIcon, Table2Icon,
-  TextIcon, Trash2Icon, TypeIcon, UploadIcon, WaypointsIcon,
+  AlignLeftIcon, CalendarIcon, CircleDotIcon, GalleryVerticalEndIcon, ImagePlusIcon, MenuIcon, MessageSquareIcon,
+  PanelLeftIcon, PlusIcon, SearchIcon, Table2Icon, TextIcon, Trash2Icon, UploadIcon, WaypointsIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { STATUS_MAP, type Order } from "@/components/dashboard/types"
+import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
-import { ProjectCanvas, type CanvasActions } from "@/components/projects/ProjectCanvas"
+import { ProjectCanvas } from "@/components/projects/ProjectCanvas"
+import { PROJECTS_CHANGED, openNav } from "@/lib/panels"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
 import { useT, type T } from "@/lib/i18n"
 
-// A project is its own full-screen workspace, like a design app: a panel on the left with the
-// canvas tools, the views and the list of posts, a thin bar on top, and the rest is the canvas
-// (or the posts as a table or a gallery). Every post is an order of its own (kind = 'post'),
+// A project page, Notion style, inside the app's one sidebar: a thin bar on top with its name,
+// client, view switch, deadline and status, and the rest is the canvas (or the posts as a
+// table or a gallery). Every post is an order of its own (kind = 'post'),
 // so opening one leads to the usual order page with pins, versions and approval.
 const ACCEPT = ".png,.jpg,.jpeg,.webp,.pdf"
 
 type View = "canvas" | "table" | "gallery"
 
-export function ProjectView({ project, onChange }: { project: Order; onChange: (p: Order) => void }) {
+export function ProjectView({ project, onChange, onToggleSidebar }: { project: Order; onChange: (p: Order) => void; onToggleSidebar: () => void }) {
   const { t } = useT()
   const [posts, setPosts] = useState<Order[]>([])
   const [openPins, setOpenPins] = useState<Map<string, number>>(new Map())
@@ -35,11 +34,6 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const uploadRef = useRef<HTMLInputElement>(null)
-  const canvasFileRef = useRef<HTMLInputElement>(null)
-  const canvasRef = useRef<CanvasActions | null>(null)
-  const router = useRouter()
-  // Open by default on wide screens; on phones it slides over the canvas when asked for.
-  const [panelOpen, setPanelOpen] = useState(() => typeof window === "undefined" || window.innerWidth >= 768)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -147,6 +141,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
     onChange({ ...project, ...patch })
     const { error } = await supabase.from("orders").update(patch).eq("id", project.id)
     if (error) setError(error.message)
+    else if ("title" in patch) window.dispatchEvent(new Event(PROJECTS_CHANGED))
   }
 
   const shown = useMemo(() => {
@@ -163,144 +158,80 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
     addPosts(Array.from(e.dataTransfer.files).filter((f) => /\.(png|jpe?g|webp|pdf)$/i.test(f.name)))
   }
 
-  const tools = [
-    ["templates", LayoutTemplateIcon, t("Templates")],
-    ["block", SquareIcon, t("Block")],
-    ["post", ImageIcon, t("Post")],
-    ["text", TypeIcon, t("Text")],
-    ["note", StickyNoteIcon, t("Note")],
-  ] as const
   const views = [["canvas", WaypointsIcon, t("Canvas")], ["table", Table2Icon, t("Table")], ["gallery", GalleryVerticalEndIcon, t("Gallery")]] as const
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
-      {/* the project's own panel: tools, views and posts, like a design app */}
-      <aside
-        className={cn(
-          "w-64 shrink-0 flex-col border-r border-border bg-sidebar",
-          panelOpen ? "flex max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:shadow-2xl" : "hidden"
-        )}
-      >
-        <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
-          <Link href="/orders" className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
-            <ChevronLeftIcon className="size-3.5" />
-            Nodly
-          </Link>
-          <button type="button" onClick={() => setPanelOpen(false)} aria-label={t("Hide panel")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground">
-            <PanelLeftIcon className="size-4" />
-          </button>
-        </div>
-        <div className="px-3 pb-3">
-          <EditableText
-            value={project.title}
-            placeholder={t("Untitled")}
-            onSave={(title) => title.trim() && patchProject({ title: title.trim() })}
-            className="w-full rounded-md px-1.5 py-1 text-[15px] font-semibold hover:bg-hover"
-            ariaLabel={t("Project name")}
-          />
-          <EditableText
-            value={project.client_name ?? ""}
-            placeholder={t("Client")}
-            onSave={(v) => patchProject({ client_name: v.trim() })}
-            className="w-full rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-hover"
-            ariaLabel={t("Client")}
-          />
-        </div>
+    <div className="flex h-dvh min-w-0 flex-1 flex-col bg-background text-foreground">
+      {/* a thin top bar, Notion style: the page's name and its properties in one line */}
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 px-3">
+        <button type="button" onClick={openNav} aria-label={t("Menu")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground lg:hidden">
+          <MenuIcon className="size-4" />
+        </button>
+        <button type="button" onClick={onToggleSidebar} aria-label={t("Toggle sidebar")} className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground lg:block">
+          <PanelLeftIcon className="size-4" />
+        </button>
+        <EditableText
+          value={project.title}
+          placeholder={t("Untitled")}
+          onSave={(title) => title.trim() && patchProject({ title: title.trim() })}
+          className="field-sizing-content max-w-[40vw] min-w-16 rounded-md px-1.5 py-1 text-sm font-medium hover:bg-hover"
+          ariaLabel={t("Project name")}
+        />
+        <EditableText
+          value={project.client_name ?? ""}
+          placeholder={t("Client")}
+          onSave={(v) => patchProject({ client_name: v.trim() })}
+          className="field-sizing-content hidden max-w-[24vw] min-w-16 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-hover md:block"
+          ariaLabel={t("Client")}
+        />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 pb-3">
-          {view === "canvas" && (
-            <PanelSection title={t("Tools")}>
-              {tools.map(([kind, Icon, label]) => (
-                <PanelItem key={kind} icon={Icon} onClick={() => (kind === "post" ? canvasFileRef.current?.click() : kind === "templates" ? canvasRef.current?.templates() : canvasRef.current?.add(kind))}>
-                  {label}
-                </PanelItem>
-              ))}
-              <p className="px-2 pt-1 text-[11px] leading-snug text-muted-foreground">{t("Path: drag from a dot on one block to another.")}</p>
-            </PanelSection>
-          )}
-
-          <PanelSection title={t("Views")}>
+        <div className="ml-auto flex items-center gap-2">
+          {(busy || error) && <span className={cn("hidden text-xs sm:inline", error ? "text-destructive" : "text-muted-foreground")}>{error ?? busy}</span>}
+          <div role="tablist" className="flex items-center rounded-lg bg-foreground/[0.04] p-0.5">
             {views.map(([id, Icon, label]) => (
-              <PanelItem key={id} icon={Icon} active={view === id} onClick={() => setView(id)}>{label}</PanelItem>
+              <button
+                key={id}
+                role="tab"
+                type="button"
+                aria-selected={view === id}
+                title={label}
+                onClick={() => setView(id)}
+                className={cn(
+                  "flex h-7 items-center gap-1.5 rounded-md px-2 text-xs transition-colors",
+                  view === id ? "bg-background font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="size-3.5" />
+                <span className="hidden xl:inline">{label}</span>
+              </button>
             ))}
-          </PanelSection>
-
-          <PanelSection title={`${t("Posts")} · ${posts.length}`}>
-            {posts.length === 0 && <p className="px-2 text-xs text-muted-foreground">{t("No posts yet.")}</p>}
-            {posts.map((post) => (
-              <div key={post.id} className="group flex items-center gap-2 rounded-md pr-1 hover:bg-hover">
-                <button
-                  type="button"
-                  onClick={() => { if (view !== "canvas" || !canvasRef.current?.focus(post.id)) router.push(`/orders/${post.id}`) }}
-                  className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1 text-left text-sm"
-                >
-                  <Thumb url={post.file_url} className="size-6 shrink-0 rounded" />
-                  <span className="min-w-0 flex-1 truncate">{post.title}</span>
-                  <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: STATUS_MAP[post.status].color }} />
-                </button>
-                <Link href={`/orders/${post.id}`} aria-label={t("Open")} className="rounded p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground">
-                  <ArrowUpRightIcon className="size-3.5" />
-                </Link>
-              </div>
-            ))}
-          </PanelSection>
-        </div>
-
-        <div className="flex flex-col gap-1.5 border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between gap-2">
-            <StatusChip t={t} order={project} />
-            {posts.length > 0 && <span>{t("{n} of {total} approved", { n: approved, total: posts.length })}</span>}
           </div>
-          <label className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><CalendarIcon className="size-3.5" />{t("Deadline")}</span>
+          <label className="hidden items-center text-xs text-muted-foreground md:flex" title={t("Deadline")}>
             <input
               type="date"
               value={project.deadline ?? ""}
               onChange={(e) => patchProject({ deadline: e.target.value || null })}
-              className={cn("rounded bg-transparent text-right outline-none hover:bg-hover", !project.deadline && "text-muted-foreground/70")}
+              className="rounded bg-transparent outline-none hover:bg-hover"
+              aria-label={t("Deadline")}
             />
           </label>
+          <span className="flex items-center gap-1.5">
+            <StatusChip t={t} order={project} />
+            {posts.length > 0 && <span className="hidden text-xs text-muted-foreground sm:inline">{approved}/{posts.length}</span>}
+          </span>
         </div>
-      </aside>
+      </div>
 
       <main
-        className="relative flex min-w-0 flex-1 flex-col"
+        className="relative min-h-0 flex-1"
         onDragOver={(e) => { if (view !== "canvas" && e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDragging(true) } }}
         onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false) }}
         onDrop={onDrop}
       >
-        {/* a thin top bar, Notion style */}
-        <div className="flex h-11 shrink-0 items-center gap-2 px-3 text-sm">
-          {!panelOpen && (
-            <button type="button" onClick={() => setPanelOpen(true)} aria-label={t("Show panel")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground">
-              <PanelLeftIcon className="size-4" />
-            </button>
-          )}
-          <nav className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <Link href="/orders" className="hidden rounded px-1 hover:bg-hover hover:text-foreground sm:block">{t("Orders")}</Link>
-            <span className="hidden sm:block">/</span>
-            <span className="truncate text-foreground">{project.title || t("Untitled")}</span>
-          </nav>
-          <div className="ml-auto flex items-center gap-3">
-            {(busy || error) && <span className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>{error ?? busy}</span>}
-            <StatusChip t={t} order={project} />
-          </div>
-        </div>
-
         {view === "canvas" ? (
-          <div className="min-h-0 flex-1">
-            {loaded && <ProjectCanvas project={project} posts={posts} onCreatePosts={addPosts} actionsRef={canvasRef} />}
-            <input
-              ref={canvasFileRef}
-              type="file"
-              accept={ACCEPT}
-              multiple
-              className="hidden"
-              onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; if (files.length) canvasRef.current?.addPosts(files) }}
-            />
-          </div>
+          loaded && <ProjectCanvas project={project} posts={posts} onCreatePosts={addPosts} />
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="h-full overflow-y-auto">
             <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-24 sm:px-10">
               <div className="mb-2 flex flex-wrap items-center justify-end gap-1.5">
                 <label className="flex h-8 items-center gap-1.5 rounded-md px-2 text-muted-foreground focus-within:bg-hover hover:bg-hover">
@@ -365,31 +296,6 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
         )}
       </main>
     </div>
-  )
-}
-
-function PanelSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-0.5">
-      <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">{title}</p>
-      {children}
-    </section>
-  )
-}
-
-function PanelItem({ icon: Icon, active, onClick, children }: { icon: React.ComponentType<{ className?: string }>; active?: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-        active ? "bg-hover font-medium text-foreground" : "text-foreground/80 hover:bg-hover hover:text-foreground"
-      )}
-    >
-      <Icon className="size-4 text-muted-foreground" />
-      {children}
-    </button>
   )
 }
 
