@@ -2,12 +2,9 @@
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { LivePortal } from "@/components/landing/LivePortal"
-import { BeforeAfter } from "@/components/landing/BeforeAfter"
 import type { T } from "@/lib/i18n"
 
-// The product itself instead of illustrations: a live, self-playing client portal, a before /
-// after of the client's changes, and the approval certificate. Images live in public/landing.
+// What the client's "yes" leaves behind: the approval certificate. Images live in public/landing.
 
 const HEADLINE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.035em] text-foreground"
 
@@ -37,37 +34,11 @@ function Points({ items }: { items: string[] }) {
 export function ProductShowcase({ t }: { t: T }) {
   return (
     <>
-      {/* 01 · the client's side */}
-      <section id="product" className="scroll-mt-16 py-24">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
-          <Label no="01">{t("The client's side")}</Label>
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("They point at the post. You get exact changes.")}</h2>
-            <Points items={[t("Opens from one link, no account"), t("Pins land on the exact spot, on any page"), t("Approve or ask for changes in one tap")]} />
-          </div>
-          <LivePortal t={t} />
-        </div>
-      </section>
-
-      {/* 02 · changes the client can check */}
-      <section className="py-24">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
-          <Label no="02">{t("Changes")}</Label>
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-            <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Anna asked for three changes. Here's what we did.")}</h2>
-            <p className="max-w-md text-base text-muted-foreground lg:justify-self-end">
-              {t("With each new version the client compares every spot she commented on, so she doesn't have to take your word for it.")}
-            </p>
-          </div>
-          <BeforeAfter t={t} />
-        </div>
-      </section>
-
-      {/* 03 · the record */}
+      {/* 01 · the record */}
       <section className="py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="flex flex-col gap-6">
-            <Label no="03">{t("On record")}</Label>
+            <Label no="01">{t("On record")}</Label>
             <h2 className={cn(HEADLINE, "text-4xl leading-[1.02] sm:text-5xl")}>{t("Proof of the “yes”, when it matters.")}</h2>
             <Points items={[t("Who approved, which version and when"), t("A PDF certificate for your files"), t("Every revision kept, comments stay with theirs")]} />
           </div>

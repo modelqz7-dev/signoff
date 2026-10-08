@@ -42,8 +42,3 @@
   to { top: 100%; opacity: 0; }
 }
 
-/* The bar under the active product tab, counting down to the next one (see AppTabs). */
-@keyframes tab-progress {
-  from { width: 0; }
-  to { width: 100%; }
-}
