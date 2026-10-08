@@ -1,9 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { SearchIcon, SquareDashedIcon, XIcon } from "lucide-react"
+import {
+  CalendarDaysIcon, CircleCheckIcon, FilterIcon, LayoutGridIcon, LightbulbIcon, RocketIcon, SearchIcon, SquareDashedIcon,
+  UserPlusIcon, XIcon,
+} from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
-import { NODE_SIZE, TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
+import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
 import { useT } from "@/lib/i18n"
 
 /** The template gallery: search on top, an empty canvas on the right, tinted cards below. */
@@ -77,8 +80,8 @@ export function TemplatesDialog({ open, onOpenChange, onPick }: {
                       <p className="text-[15px] font-semibold text-foreground">{t(tpl.title)}</p>
                       <p className="mt-1 text-sm leading-snug text-muted-foreground">{t(tpl.description)}</p>
                     </div>
-                    <div className="mt-4 ml-5 h-36 overflow-hidden rounded-tl-xl bg-card ring-1 ring-border">
-                      <MiniMap tpl={tpl} />
+                    <div className="mt-4 ml-5 h-36 overflow-hidden rounded-tl-xl bg-popover ring-1" style={{ ["--tw-ring-color" as string]: `color-mix(in oklab, ${tpl.tone} 28%, transparent)` }}>
+                      <TablePreview tpl={tpl} />
                     </div>
                   </button>
                 ))}
@@ -91,33 +94,52 @@ export function TemplatesDialog({ open, onOpenChange, onPick }: {
   )
 }
 
-/** The template drawn small: its pieces as boxes and its paths as lines. */
-function MiniMap({ tpl }: { tpl: CanvasTemplate }) {
-  const boxes = tpl.nodes.map((n) => ({ ...n, ...NODE_SIZE[n.type] }))
-  const minX = Math.min(...boxes.map((b) => b.x)) - 60
-  const minY = Math.min(...boxes.map((b) => b.y)) - 60
-  const maxX = Math.max(...boxes.map((b) => b.x + b.w)) + 60
-  const maxY = Math.max(...boxes.map((b) => b.y + b.h)) + 60
-  const center = (i: number) => ({ x: boxes[i].x + boxes[i].w / 2, y: boxes[i].y + boxes[i].h / 2 })
+// One icon per template, in its tint.
+const ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  "content-month": CalendarDaysIcon,
+  launch: RocketIcon,
+  pillars: LayoutGridIcon,
+  "approval-week": CircleCheckIcon,
+  onboarding: UserPlusIcon,
+  brainstorm: LightbulbIcon,
+  funnel: FilterIcon,
+}
+
+// Tag colours for the preview rows, like Notion's select options.
+const TAG_TONES = ["#3b82f6", "#22a55a", "#e08a2e", "#a855f7", "#e05252", "#c9a227"]
+
+/** The card's window: the template's icon and name, three columns and three tagged rows. */
+function TablePreview({ tpl }: { tpl: CanvasTemplate }) {
+  const { t } = useT()
+  const Icon = ICONS[tpl.id] ?? LayoutGridIcon
+  const offset = TEMPLATES.indexOf(tpl)
   return (
-    <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} preserveAspectRatio="xMinYMin meet" className="h-full w-full" aria-hidden="true">
-      {tpl.edges.map(([a, b], i) => (
-        <line key={i} {...{ x1: center(a).x, y1: center(a).y, x2: center(b).x, y2: center(b).y }} stroke="currentColor" strokeWidth={6} className="text-foreground/20" />
-      ))}
-      {boxes.map((b, i) =>
-        b.type === "note" ? (
-          <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx={10} fill="#fdf1a8" className="dark:fill-[#5a4d17]" />
-        ) : b.type === "text" ? (
-          <rect key={i} x={b.x} y={b.y + 8} width={b.w} height={b.h - 16} rx={10} className="fill-foreground/70" />
-        ) : (
-          <g key={i}>
-            <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={18} className="fill-background stroke-border" strokeWidth={4} />
-            <rect x={b.x + 22} y={b.y + 24} width={b.w * 0.5} height={16} rx={8} className="fill-foreground/70" />
-            <rect x={b.x + 22} y={b.y + 56} width={b.w * 0.75} height={12} rx={6} className="fill-foreground/25" />
-            <rect x={b.x + 22} y={b.y + 78} width={b.w * 0.55} height={12} rx={6} className="fill-foreground/25" />
-          </g>
+    <div className="flex h-full flex-col gap-2.5 p-4 text-[11px]">
+      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
+        <Icon className="size-3.5" style={{ color: tpl.tone }} />
+        {t(tpl.title)}
+      </p>
+      <div className="grid grid-cols-[1.1fr_1fr_0.9fr] gap-x-3 text-muted-foreground">
+        {tpl.preview.columns.map((c) => <span key={c} className="truncate">{t(c)}</span>)}
+      </div>
+      {tpl.preview.tags.map((tag, i) => {
+        const tone = TAG_TONES[(offset + i) % TAG_TONES.length]
+        return (
+          <div key={i} className="grid grid-cols-[1.1fr_1fr_0.9fr] items-center gap-x-3">
+            <span className="h-1.5 w-4/5 rounded-full bg-foreground/15" />
+            <span className="flex items-center gap-1.5">
+              {i !== 1 && <span className="size-3 shrink-0 rounded-full bg-foreground/20" />}
+              <span className="h-1.5 w-3/5 rounded-full bg-foreground/10" />
+            </span>
+            <span
+              className="w-fit max-w-full truncate rounded px-1.5 py-px text-[10px] font-medium"
+              style={{ backgroundColor: `color-mix(in oklab, ${tone} 22%, transparent)`, color: `color-mix(in oklab, ${tone} 75%, var(--foreground))` }}
+            >
+              {t(tag)}
+            </span>
+          </div>
         )
-      )}
-    </svg>
+      })}
+    </div>
   )
 }
