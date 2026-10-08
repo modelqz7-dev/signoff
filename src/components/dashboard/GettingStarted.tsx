@@ -19,14 +19,15 @@ export function GettingStarted({ orders, shop, onNewOrder }: { orders: Order[]; 
   const [dismissed, setDismissed] = useState(isOnboardingDismissed)
   const [shared] = useState(wasLinkShared)
 
-  const first = orders[orders.length - 1]
-  const withFile = orders.find((o) => o.file_url)
+  const project = orders.find((o) => o.kind === "project")
+  const withFile = orders.find((o) => o.kind !== "project" && o.file_url)
+  const open = project ? `/orders/${project.id}` : undefined
   const steps: Step[] = [
-    { label: t("Create your first order"), done: orders.length > 0, onClick: onNewOrder },
-    { label: t("Upload the design (PDF or image)"), done: !!withFile, href: first ? `/orders/${first.id}` : undefined, onClick: first ? undefined : onNewOrder },
-    { label: t("Copy the portal link and send it to the client"), done: shared, href: (withFile ?? first) ? `/orders/${(withFile ?? first).id}` : undefined },
+    { label: t("Create your first project"), done: !!project, onClick: onNewOrder },
+    { label: t("Upload the posts"), done: !!withFile, href: open, onClick: open ? undefined : onNewOrder },
+    { label: t("Copy the client links and send them"), done: shared, href: open },
     { label: t("Get notified in Telegram"), done: !!shop?.telegram_chat_id, onClick: () => openPanel("notifications") },
-    { label: t("Get your first approval"), done: orders.some((o) => o.status === "approved" || o.status === "prod") },
+    { label: t("Get your first approval"), done: orders.some((o) => o.kind !== "project" && (o.status === "approved" || o.status === "prod")) },
   ]
   const doneCount = steps.filter((s) => s.done).length
 
