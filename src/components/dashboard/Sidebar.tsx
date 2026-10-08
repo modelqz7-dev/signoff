@@ -38,8 +38,14 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   const [panel, setPanel] = useState<PanelId | null>(null)
   // Checked once here: the phone drawer mounts its own copy of the menu.
   const beta = useBetaAccess()
-  // The sidebar is on every signed-in page: a good place to keep the account's language current.
+  // The sidebar is on every signed-in page: a good place to keep the account's language current,
+  // and to wear the app's look when one was reached without a full load (the head script sets it otherwise).
   useSyncAccountLang()
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add("app")
+    return () => root.classList.remove("app")
+  }, [])
   // Phones and tablets: the sidebar slides in as a drawer from the header's menu button.
   const [drawer, setDrawer] = useState(false)
 

@@ -28,7 +28,7 @@ export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
   if (href) {
     return (
       <a href={href} onClick={onClick} className={cls}>
-        <span className={`h-4 w-4 shrink-0 ${active ? "text-primary opacity-100" : "opacity-60"}`}>{icon}</span>
+        <span className={`h-4 w-4 shrink-0 ${active ? "text-foreground opacity-100" : "opacity-60"}`}>{icon}</span>
         {label}
         {tag && <span className="rounded-full px-1.5 text-[11px] font-medium leading-[18px] text-foreground ring-1 ring-foreground/40">{tag}</span>}
         {!!badge && <span className="ml-auto rounded-full bg-primary px-1.5 text-[10.5px] font-medium leading-4 text-primary-foreground tabular-nums">{badge}</span>}
@@ -38,7 +38,7 @@ export function NavItem({ icon, label, active, href, onClick, badge, tag }: {
 
   return (
     <button type="button" onClick={onClick} className={cls}>
-      <span className={`h-4 w-4 shrink-0 ${active ? "text-primary opacity-100" : "opacity-60"}`}>{icon}</span>
+      <span className={`h-4 w-4 shrink-0 ${active ? "text-foreground opacity-100" : "opacity-60"}`}>{icon}</span>
       {label}
       {tag && <span className="rounded-full px-1.5 text-[11px] font-medium leading-[18px] text-foreground ring-1 ring-foreground/40">{tag}</span>}
     </button>

@@ -151,6 +151,32 @@
   --status-prod-bg: rgba(255, 255, 255, 0.05);
 }
 
+/* The signed-in app wears the home page's look (the reference design): a deep page under
+   rounded tiles, yellow for the main action, softer corners. The landing page and the client
+   portal keep the base palette. The class is set before paint by the head script. */
+.app:not(.dark) {
+  --background: #e9e9e7;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --primary: #fdc019;
+  --primary-foreground: #151515;
+  --radius: 0.75rem;
+}
+
+.dark.app {
+  --background: #0f0f0f;
+  --card: #1c1c1c;
+  --popover: #1f1f1f;
+  --secondary: #262626;
+  --muted: #262626;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --sidebar: #161616;
+  --primary: #fdc019;
+  --primary-foreground: #151515;
+  --radius: 0.75rem;
+}
+
 /* A piece of the page that keeps one theme whatever the app's theme is, like the home page's white
    week panel (always light) and its tiles (always dark), after the reference design. */
 .surface-light {
