@@ -68,9 +68,9 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Desktop */}
     <aside
-      className="sticky top-0 self-start hidden h-screen w-[240px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
+      className="sticky top-0 self-start hidden h-screen w-[270px] shrink-0 flex-col border-r border-border/50 bg-sidebar transition-all duration-200 overflow-y-auto lg:flex"
       style={{
-        marginLeft: open ? 0 : -240,
+        marginLeft: open ? 0 : -270,
         opacity: open ? 1 : 0,
         pointerEvents: open ? "auto" : "none",
       }}
@@ -87,7 +87,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
           className="absolute inset-0 bg-black/40 animate-in fade-in-0 duration-200"
           onClick={() => setDrawer(false)}
         />
-        <aside className="absolute inset-y-0 left-0 flex w-[260px] max-w-[85vw] flex-col overflow-y-auto border-r border-border/50 bg-sidebar shadow-xl animate-in slide-in-from-left duration-200">
+        <aside className="absolute inset-y-0 left-0 flex w-[270px] max-w-[85vw] flex-col overflow-y-auto border-r border-border/50 bg-sidebar shadow-xl animate-in slide-in-from-left duration-200">
           <button
             type="button"
             aria-label="Close menu"
