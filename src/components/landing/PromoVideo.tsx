@@ -20,7 +20,7 @@ function Grip({ className }: { className?: string }) {
 
 /** The promos, each with the pair of characters peeking over the frame while it plays. */
 const CLIPS = [
-  { file: "nodly-approved", tab: "Approval", label: "From 12 comments to approved: a short video about Nodly", people: ["client-flipped", "freelancer-flipped"] },
+  { file: "nodly-approved", tab: "Revisions", label: "From 12 comments to approved: a short video about Nodly", people: ["client-flipped", "freelancer-flipped"] },
   { file: "nodly-smm", tab: "For SMM", label: "From 48 chat messages to an approved post: a short video about Nodly for SMM", people: ["smm-glasses", "brand-owner"] },
   { file: "nodly-page", tab: "My page", label: "Your page with projects, services and reviews: a short video about Nodly", people: ["owner-glasses", "visitor"] },
 ] as const
@@ -34,7 +34,7 @@ export function PromoVideo({ t }: { t: T }) {
   const ref = useRef<HTMLVideoElement>(null)
   const frame = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
-  const [progress, setProgress] = useState(0)
+  const bar = useRef<HTMLSpanElement>(null)
   const [inView, setInView] = useState(false)
   const [still, setStill] = useState(false)
 
@@ -59,10 +59,20 @@ export function PromoVideo({ t }: { t: T }) {
     else video.pause()
   }, [inView, active, still])
 
-  const pick = (i: number) => {
-    setActive(i)
-    setProgress(0)
-  }
+  // The active tab's line follows the clip every frame (timeupdate only fires ~4 times a second).
+  useEffect(() => {
+    if (still) return
+    let raf = 0
+    const tick = () => {
+      const video = ref.current
+      if (video && bar.current && video.duration) bar.current.style.width = `${(video.currentTime / video.duration) * 100}%`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [active, still])
+
+  const pick = (i: number) => setActive(i)
   const clip = CLIPS[active]
 
   return (
@@ -99,10 +109,6 @@ export function PromoVideo({ t }: { t: T }) {
             preload="metadata"
             controls={still}
             aria-label={t(clip.label)}
-            onTimeUpdate={(e) => {
-              const v = e.currentTarget
-              if (v.duration) setProgress(v.currentTime / v.duration)
-            }}
             onEnded={() => pick((active + 1) % CLIPS.length)}
             className="block aspect-video w-full bg-muted"
           >
@@ -128,8 +134,10 @@ export function PromoVideo({ t }: { t: T }) {
               {t(c.tab)}
               <span className="mt-2 block h-0.5 overflow-hidden rounded-full bg-foreground/10">
                 <span
+                  key={i === active ? clip.file : undefined}
+                  ref={i === active ? bar : undefined}
                   className="block h-full rounded-full bg-foreground"
-                  style={{ width: i === active ? `${(still ? 1 : progress) * 100}%` : "0%" }}
+                  style={{ width: i === active && still ? "100%" : "0%" }}
                 />
               </span>
             </button>

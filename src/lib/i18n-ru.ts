@@ -75,7 +75,6 @@ export const ru: Record<string, string> = {
   "Answer {n} comments": "Ответ на комментарии: {n}",
   "Answer: what you changed": "Ответ: что изменили",
   "Appearance": "Оформление",
-  "Approval": "Согласование",
   "Approval certificate": "Сертификат одобрения",
   "Approval certificate (PDF)": "Сертификат одобрения (PDF)",
   "Approval certificates are available on Pro and Studio.": "Сертификаты утверждения доступны на тарифах «Про» и «Студия».",
