@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
-  AlignLeftIcon, CalendarIcon, ChevronLeftIcon, CircleDotIcon, FileTextIcon, GalleryVerticalEndIcon,
-  ImagePlusIcon, MessageSquareIcon, PlusIcon, SearchIcon, Table2Icon, TextIcon, Trash2Icon, UploadIcon,
+  AlignLeftIcon, CalendarIcon, ChevronLeftIcon, CircleDotIcon, GalleryVerticalEndIcon,
+  ImagePlusIcon, MessageSquareIcon, PlusIcon, SearchIcon, Table2Icon, TextIcon, Trash2Icon, UploadIcon, WaypointsIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { STATUS_MAP, type Order } from "@/components/dashboard/types"
+import type { Order } from "@/components/dashboard/types"
+import { StatusChip, Thumb } from "@/components/projects/PostBits"
+import { ProjectCanvas } from "@/components/projects/ProjectCanvas"
 import { uploadOrderFile } from "@/lib/versions"
-import { useFileUrl } from "@/lib/files"
-import { cn, isPdfUrl } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { useT, type T } from "@/lib/i18n"
 
 // A project, laid out like a Notion database page: a big editable title, a few properties and
@@ -20,14 +21,14 @@ import { useT, type T } from "@/lib/i18n"
 const TITLE = "font-[family-name:var(--font-brand)] font-bold tracking-[-0.03em] text-foreground"
 const ACCEPT = ".png,.jpg,.jpeg,.webp,.pdf"
 
-type View = "table" | "gallery"
+type View = "canvas" | "table" | "gallery"
 
 export function ProjectView({ project, onChange }: { project: Order; onChange: (p: Order) => void }) {
   const { t } = useT()
   const [posts, setPosts] = useState<Order[]>([])
   const [openPins, setOpenPins] = useState<Map<string, number>>(new Map())
   const [loaded, setLoaded] = useState(false)
-  const [view, setView] = useState<View>("table")
+  const [view, setView] = useState<View>("canvas")
   const [query, setQuery] = useState("")
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,8 +85,8 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
     return data as Order
   }
 
-  async function addPosts(files: File[]) {
-    if (!files.length) return
+  async function addPosts(files: File[]): Promise<Order[]> {
+    if (!files.length) return []
     setError(null)
     let at = nextPosition()
     const added: Order[] = []
@@ -99,6 +100,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
     }
     setBusy(null)
     setPosts((prev) => [...prev, ...added.filter((a) => !prev.some((p) => p.id === a.id))])
+    return added
   }
 
   async function addEmpty() {
@@ -149,6 +151,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
   const approved = posts.filter((p) => p.status === "approved" || p.status === "prod").length
 
   function onDrop(e: React.DragEvent) {
+    if (view === "canvas") return
     e.preventDefault()
     setDragging(false)
     addPosts(Array.from(e.dataTransfer.files).filter((f) => /\.(png|jpe?g|webp|pdf)$/i.test(f.name)))
@@ -156,12 +159,12 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
 
   return (
     <div
-      className="relative mx-auto w-full max-w-6xl px-4 pt-6 pb-24 sm:px-10 sm:pt-10"
-      onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDragging(true) } }}
+      className={cn("relative mx-auto w-full max-w-6xl px-4 pt-6 sm:px-10 sm:pt-8", view === "canvas" ? "flex h-full flex-col pb-4" : "pb-24")}
+      onDragOver={(e) => { if (view !== "canvas" && e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDragging(true) } }}
       onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false) }}
       onDrop={onDrop}
     >
-      <Link href="/orders" className="mb-6 flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+      <Link href="/orders" className="mb-4 flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
         <ChevronLeftIcon className="size-3.5" />
         {t("Orders")}
       </Link>
@@ -171,12 +174,12 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
         value={project.title}
         placeholder={t("Untitled")}
         onSave={(title) => title.trim() && patchProject({ title: title.trim() })}
-        className={cn(TITLE, "w-full text-3xl leading-tight sm:text-[40px]")}
+        className={cn(TITLE, "w-full text-3xl leading-tight sm:text-4xl")}
         ariaLabel={t("Project name")}
       />
 
       {/* properties, Notion style */}
-      <dl className="mt-5 grid max-w-xl grid-cols-[140px_1fr] items-center gap-x-2 gap-y-1 text-sm">
+      <dl className="mt-4 grid max-w-xl grid-cols-[140px_1fr] items-center gap-x-2 gap-y-1 text-sm">
         <Property icon={TextIcon} label={t("Client")}>
           <EditableText
             value={project.client_name ?? ""}
@@ -204,9 +207,9 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
       </dl>
 
       {/* views and actions */}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-b border-border">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-border">
         <div role="tablist" className="-mb-px flex gap-1">
-          {([["table", Table2Icon, t("Table")], ["gallery", GalleryVerticalEndIcon, t("Gallery")]] as const).map(([id, Icon, label]) => (
+          {([["canvas", WaypointsIcon, t("Canvas")], ["table", Table2Icon, t("Table")], ["gallery", GalleryVerticalEndIcon, t("Gallery")]] as const).map(([id, Icon, label]) => (
             <button
               key={id}
               role="tab"
@@ -223,7 +226,7 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
             </button>
           ))}
         </div>
-        <div className="mb-2 flex items-center gap-1.5">
+        <div className={cn("mb-2 flex items-center gap-1.5", view === "canvas" && "invisible")}>
           <label className="flex h-8 items-center gap-1.5 rounded-md px-2 text-muted-foreground focus-within:bg-hover hover:bg-hover">
             <SearchIcon className="size-4 shrink-0" />
             <input
@@ -264,7 +267,13 @@ export function ProjectView({ project, onChange }: { project: Order; onChange: (
         <p className={cn("mt-3 text-sm", error ? "text-destructive" : "text-muted-foreground")}>{error ?? busy}</p>
       )}
 
-      {!loaded ? (
+      {view === "canvas" ? (
+        loaded && (
+          <div className="mt-4 min-h-[440px] flex-1 overflow-hidden rounded-xl bg-foreground/[0.015] ring-1 ring-border">
+            <ProjectCanvas project={project} posts={posts} onCreatePosts={addPosts} />
+          </div>
+        )
+      ) : !loaded ? (
         <p className="py-10 text-sm text-muted-foreground">{t("Loading...")}</p>
       ) : posts.length === 0 ? (
         <button
@@ -450,39 +459,6 @@ function Property({ icon: Icon, label, children }: { icon: React.ComponentType<{
       </dt>
       <dd className="min-w-0">{children}</dd>
     </>
-  )
-}
-
-function StatusChip({ t, order }: { t: T; order: Order }) {
-  const s = STATUS_MAP[order.status]
-  return (
-    <span className="inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap" style={{ backgroundColor: s.bg, color: s.color }}>
-      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-      {t(s.label)}
-    </span>
-  )
-}
-
-/** The post's file in small: the image itself, a PDF mark, or an empty "add" tile. */
-function Thumb({ url, className }: { url: string | null; className?: string }) {
-  const src = useFileUrl(url)
-  if (!url) {
-    return (
-      <span className={cn("flex items-center justify-center bg-foreground/[0.04] text-muted-foreground ring-1 ring-border ring-inset", className)}>
-        <ImagePlusIcon className="size-4" />
-      </span>
-    )
-  }
-  if (isPdfUrl(url)) {
-    return (
-      <span className={cn("flex items-center justify-center bg-foreground/[0.04] text-muted-foreground", className)}>
-        <FileTextIcon className="size-4" />
-      </span>
-    )
-  }
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- private files come through short-lived signed links
-    <img src={src ?? undefined} alt="" className={cn("bg-foreground/[0.04] object-cover", className)} />
   )
 }
 
