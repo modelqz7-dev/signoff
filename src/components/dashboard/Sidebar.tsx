@@ -279,7 +279,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
           onClick={() => setCreating(true)}
           aria-label={t("New project")}
           title={t("New project")}
-          className="mt-1 flex size-10 items-center justify-center rounded-full bg-[#ec4f9a] text-white shadow-[0_6px_20px_-6px_rgba(236,79,154,.8)] transition-transform hover:scale-105"
+          className="mt-1 flex size-10 items-center justify-center rounded-full bg-[#ec4f9a] text-white transition-transform hover:scale-105"
         >
           <PlusIcon className="size-5" />
         </button>
