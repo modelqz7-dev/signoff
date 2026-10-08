@@ -1,13 +1,14 @@
 "use client"
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, LightbulbIcon, MessageSquareTextIcon, QrCodeIcon, XIcon,
+  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronDownIcon, ExternalLinkIcon, HomeIcon, LayoutDashboardIcon, LightbulbIcon,
+  MessageSquareTextIcon, PlusIcon, QrCodeIcon, SearchIcon, SquarePenIcon, WaypointsIcon, XIcon,
 } from "lucide-react"
-import { OPEN_NAV_EVENT } from "@/lib/panels"
+import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { supabase } from "@/lib/supabase"
 import { Logo } from "@/components/Logo"
 import { SidebarPanel, OPEN_PANEL_EVENT, type PanelId } from "@/components/dashboard/SidebarPanels"
@@ -17,7 +18,6 @@ import { usePlanUsage } from "@/lib/use-plan"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
-import { switchMode } from "@/lib/mode-transition"
 
 type SidebarProps = {
   open: boolean
@@ -105,7 +105,7 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
 function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   activePage: string
   beta: boolean
-  /** The computer sidebar: its menu slides when switching between Orders and My page. */
+  /** The computer sidebar (the phone drawer is a second copy). */
   slides?: boolean
   panel: PanelId | null
   onPanel: (id: PanelId) => void
@@ -113,104 +113,126 @@ function SidebarContent({ activePage, panel, onPanel, beta, slides }: {
   const { t } = useT()
   const setPanel = onPanel
   const newRequests = useNewRequestCount()
-  const mode = useMode(activePage)
+  const onPage = activePage.startsWith("link")
   const [soon, setSoon] = useState<SoonFeature | null>(null)
-  const page = usePageSetup(mode === "page")
-  const router = useRouter()
-  return (
-    <div className="flex flex-1 flex-col" style={slides ? { viewTransitionName: "mode-side" } : undefined}>
-      <ModeSwitcher mode={mode} beta={beta} onSoon={() => setSoon("page")} />
+  const page = usePageSetup(onPage)
+  const projects = useProjects()
+  const [searching, setSearching] = useState(false)
+  const createProject = useCreateProject()
 
-      {/* A touch larger than the landing page's copy: 15px labels, 18px icons. */}
-      <nav className="flex-1 px-3 pt-1 pb-4 [&>a]:gap-3 [&>a]:py-2 [&>a]:text-[15px] [&>button]:gap-3 [&>button]:py-2 [&>button]:text-[15px] [&>*>span:first-child]:size-[18px]">
-        {mode === "page" ? (
+  // Ctrl/⌘+K opens search from anywhere, like Notion.
+  useEffect(() => {
+    if (!slides) return
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearching(true) }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [slides])
+
+  const sub = "[&>a]:pl-9 [&>button]:pl-9"
+  return (
+    <div className="flex flex-1 flex-col">
+      <WorkspaceRow panel={panel} onPanel={setPanel} onNewProject={createProject} />
+
+      <div className="flex flex-col gap-1.5 px-3 pb-2">
+        <button
+          type="button"
+          onClick={() => setSearching(true)}
+          className="flex h-9 items-center gap-2 rounded-lg bg-foreground/[0.04] px-2.5 text-sm text-muted-foreground ring-1 ring-border transition-colors hover:bg-hover"
+        >
+          <SearchIcon className="size-4" />
+          <span className="flex-1 text-left">{t("Search")}</span>
+          <kbd className="rounded bg-foreground/[0.06] px-1.5 py-0.5 font-sans text-[11px]">Ctrl+K</kbd>
+        </button>
+        {/* Home and the two side views, as in Notion's top row */}
+        <div className="flex items-center gap-1 pt-1">
+          <Link
+            href="/orders"
+            className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
+              activePage === "orders" ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+            }`}
+          >
+            <HomeIcon className="size-4" />
+            {t("Home")}
+          </Link>
+          <TopIcon href="/dashboard" label={t("Dashboard")} active={activePage === "dashboard"}><LayoutDashboardIcon className="size-4" /></TopIcon>
+          <TopIcon
+            href="/dashboard?calendar=1"
+            label={t("Calendar")}
+            onClick={(e) => { if (activePage === "dashboard") { e.preventDefault(); window.dispatchEvent(new Event(OPEN_CALENDAR_EVENT)) } }}
+          >
+            <CalendarDaysIcon className="size-4" />
+          </TopIcon>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 pt-2 pb-4">
+        <SectionLabel>{t("Projects")}</SectionLabel>
+        {projects.map((p) => (
+          <NavItem
+            key={p.id}
+            icon={<WaypointsIcon className="size-full" strokeWidth={1.6} />}
+            label={p.title || t("Untitled")}
+            active={activePage === `project:${p.id}`}
+            href={`/orders/${p.id}`}
+          />
+        ))}
+        <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={t("New project")} onClick={createProject} />
+
+        <SectionLabel className="mt-5">{t("Page")}</SectionLabel>
+        {beta ? (
           <>
             <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
-            <NavItem icon={<ChartColumnIcon className="size-full" strokeWidth={1.6} />} label={t("Statistics")} active={activePage === "link-stats"} href="/link/stats" />
-            {page?.published && (
-              <NavItem icon={<ExternalLinkIcon className="size-full" strokeWidth={1.6} />} label={t("Open page")} href={pagePath(page.slug)} />
+            {onPage && (
+              <div className={sub}>
+                <NavItem icon={<ChartColumnIcon className="size-full" strokeWidth={1.6} />} label={t("Statistics")} active={activePage === "link-stats"} href="/link/stats" />
+                <NavItem icon={<QrCodeIcon className="size-full" strokeWidth={1.6} />} label={t("QR code")} active={activePage === "link-qr"} href="/link/qr" />
+                <NavItem icon={<MessageSquareTextIcon className="size-full" strokeWidth={1.6} />} label={t("Reply templates")} active={activePage === "link-replies"} href="/link/replies" />
+                <NavItem icon={<LightbulbIcon className="size-full" strokeWidth={1.6} />} label={t("Post ideas")} active={activePage === "link-ideas"} href="/link/ideas" />
+                {page?.published && <NavItem icon={<ExternalLinkIcon className="size-full" strokeWidth={1.6} />} label={t("Open page")} href={pagePath(page.slug)} />}
+              </div>
             )}
-
-            <SectionLabel className="mt-5">{t("Tools")}</SectionLabel>
-            <NavItem icon={<QrCodeIcon className="size-full" strokeWidth={1.6} />} label={t("QR code")} tag={t("new")} active={activePage === "link-qr"} href="/link/qr" />
-            <NavItem icon={<MessageSquareTextIcon className="size-full" strokeWidth={1.6} />} label={t("Reply templates")} active={activePage === "link-replies"} href="/link/replies" />
-            <NavItem icon={<LightbulbIcon className="size-full" strokeWidth={1.6} />} label={t("Post ideas")} active={activePage === "link-ideas"} href="/link/ideas" />
+            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
           </>
         ) : (
           <>
-            <SectionLabel>{t("General")}</SectionLabel>
-            <NavItem icon={NAV_ICONS.dashboard} label={t("Dashboard")} active={activePage === "dashboard"} href="/dashboard" />
-            <NavItem icon={NAV_ICONS.orders} label={t("Orders")} active={activePage === "orders"} href="/orders" />
-            {beta ? (
-              <>
-                <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
-                <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link"
-                  onClick={(e) => switchMode(e, router.push, "/link", "page")} />
-              </>
-            ) : (
-              <>
-                <NavItem icon={NAV_ICONS.requests} label={t("Requests")} tag={t("soon")} onClick={() => setSoon("requests")} />
-                <NavItem icon={NAV_ICONS.page} label={t("My page")} tag={t("soon")} onClick={() => setSoon("page")} />
-              </>
-            )}
-          </>
-        )}
-
-        {/* My page keeps its own short menu; the account lives in the orders side. */}
-        {mode === "orders" && (
-          <>
-            <SectionLabel className="mt-5">{t("Account")}</SectionLabel>
-            <NavItem icon={NAV_ICONS.profile} label={t("Profile")} active={panel === "profile"} onClick={() => setPanel("profile")} />
-            <NavItem icon={NAV_ICONS.billing} label={t("Billing")} active={panel === "billing"} onClick={() => setPanel("billing")} />
-            <NavItem icon={NAV_ICONS.notifications} label={t("Notifications")} active={panel === "notifications"} onClick={() => setPanel("notifications")} />
-            <NavItem icon={NAV_ICONS.security} label={t("Security")} active={panel === "security"} onClick={() => setPanel("security")} />
-            <NavItem icon={NAV_ICONS.appearance} label={t("Appearance")} active={panel === "appearance"} onClick={() => setPanel("appearance")} />
-
-            <SectionLabel className="mt-5">{t("Support")}</SectionLabel>
-            <NavItem icon={NAV_ICONS.help} label={t("Help Center")} active={panel === "help"} onClick={() => setPanel("help")} />
-            <NavItem icon={NAV_ICONS.contact} label={t("Contact Us")} active={panel === "contact"} onClick={() => setPanel("contact")} />
-            <NavItem icon={NAV_ICONS.docs} label={t("Documentation")} active={panel === "docs"} onClick={() => setPanel("docs")} />
-            <NavItem icon={NAV_ICONS.status} label={t("Status")} active={panel === "status"} onClick={() => setPanel("status")} />
+            <NavItem icon={NAV_ICONS.page} label={t("My page")} tag={t("soon")} onClick={() => setSoon("page")} />
+            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} tag={t("soon")} onClick={() => setSoon("requests")} />
           </>
         )}
       </nav>
 
-      {mode === "page" && page && page.done < page.steps.length
+      {onPage && page && page.done < page.steps.length
         ? <SetupChecklist steps={page.steps} done={page.done} />
         : <PlanCard onOpen={() => setPanel("billing")} />}
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
+      {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
     </div>
   )
 }
 
-type Mode = "orders" | "page"
-const MODE_KEY = "nodly-mode"
-const MODE_EVENT = "nodly-mode"
-
-/**
- * Which half of the app the sidebar shows: orders and approvals, or the public page.
- * Orders pages and /link decide it; shared pages (Requests) keep the last one.
- */
-function useMode(activePage: string): Mode {
-  const forced: Mode | null = activePage.startsWith("link") ? "page" : activePage === "dashboard" || activePage === "orders" ? "orders" : null
-  const stored = useSyncExternalStore(
-    (cb) => { window.addEventListener(MODE_EVENT, cb); return () => window.removeEventListener(MODE_EVENT, cb) },
-    () => { try { return localStorage.getItem(MODE_KEY) === "page" ? "page" : "orders" } catch { return "orders" } },
-    () => "orders" as Mode,
+function TopIcon({ href, label, active, onClick, children }: { href: string; label: string; active?: boolean; onClick?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className={`flex size-8 items-center justify-center rounded-lg transition-colors ${
+        active ? "bg-hover-strong text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground"
+      }`}
+    >
+      {children}
+    </Link>
   )
-  useEffect(() => {
-    if (!forced) return
-    try { localStorage.setItem(MODE_KEY, forced) } catch {}
-  }, [forced])
-  return forced ?? stored
 }
 
-/** The top of the sidebar: Nodly or My page, with a menu to switch. */
-function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoon: () => void }) {
+/** The top of the sidebar: the workspace, with the account and help in its menu, and "new project". */
+function WorkspaceRow({ panel, onPanel, onNewProject }: { panel: PanelId | null; onPanel: (id: PanelId) => void; onNewProject: () => void }) {
   const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const router = useRouter()
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
@@ -219,40 +241,124 @@ function ModeSwitcher({ mode, beta, onSoon }: { mode: Mode; beta: boolean; onSoo
     document.addEventListener("keydown", onKey)
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey) }
   }, [open])
-  const options: { id: Mode; href: string; title: string; hint: string; icon: React.ReactNode }[] = [
-    { id: "orders", href: "/dashboard", title: t("Orders"), hint: t("Designs, approvals, clients"), icon: <span className="size-[18px]">{NAV_ICONS.orders}</span> },
-    { id: "page", href: "/link", title: t("My page"), hint: t("Link for Instagram and requests"), icon: <span className="size-[18px]">{NAV_ICONS.page}</span> },
-  ]
+  const item = (id: PanelId, icon: React.ReactNode, label: string) => (
+    <NavItem key={id} icon={icon} label={label} active={panel === id} onClick={() => { setOpen(false); onPanel(id) }} />
+  )
   return (
-    <div ref={ref} className="relative px-3 pt-3 pb-2 max-lg:pr-12">
+    <div ref={ref} className="relative flex items-center gap-1 px-3 pt-3 pb-2 max-lg:pr-12">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
-        className="flex h-12 w-full items-center gap-2.5 rounded-xl px-2.5 text-left hover:bg-hover">
-        {mode === "page"
-          ? <><span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground [&_svg]:size-4">{NAV_ICONS.page}</span><span className="flex-1 truncate text-[15px] font-semibold">{t("My page")}</span></>
-          : <span className="flex-1"><Logo /></span>}
-        <ChevronDownIcon className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left hover:bg-hover">
+        <span className="min-w-0 flex-1"><Logo /></span>
+        <ChevronDownIcon className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      <button type="button" onClick={onNewProject} title={t("New project")} aria-label={t("New project")}
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground">
+        <SquarePenIcon className="size-4" />
       </button>
       {open && (
-        <div role="menu" className="absolute inset-x-3 top-[60px] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
-          {options.map((o) => (
-            <Link key={o.id} href={o.href} role="menuitem"
-              onClick={(e) => {
-                setOpen(false)
-                if (o.id === "page" && !beta) { e.preventDefault(); onSoon(); return }
-                if (o.id !== mode) switchMode(e, router.push, o.href, o.id)
-              }}
-              className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-hover">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">{o.icon}</span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-medium">{o.title}</span>
-                <span className="truncate text-xs text-muted-foreground">{o.hint}</span>
-              </span>
-              {mode === o.id && <CheckIcon className="size-4 shrink-0" />}
-            </Link>
-          ))}
+        <div role="menu" className="absolute inset-x-3 top-[54px] z-30 flex flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
+          <SectionLabel>{t("Account")}</SectionLabel>
+          {item("profile", NAV_ICONS.profile, t("Profile"))}
+          {item("billing", NAV_ICONS.billing, t("Billing"))}
+          {item("notifications", NAV_ICONS.notifications, t("Notifications"))}
+          {item("security", NAV_ICONS.security, t("Security"))}
+          {item("appearance", NAV_ICONS.appearance, t("Appearance"))}
+          <SectionLabel className="mt-1">{t("Support")}</SectionLabel>
+          {item("help", NAV_ICONS.help, t("Help Center"))}
+          {item("contact", NAV_ICONS.contact, t("Contact Us"))}
+          {item("docs", NAV_ICONS.docs, t("Documentation"))}
+          {item("status", NAV_ICONS.status, t("Status"))}
         </div>
       )}
     </div>
+  )
+}
+
+type ProjectLink = { id: string; title: string; client_name: string | null }
+
+/** The shop's projects for the sidebar, newest first. */
+function useProjects() {
+  const [rows, setRows] = useState<ProjectLink[]>([])
+  useEffect(() => {
+    let cancelled = false
+    const load = () => supabase.from("orders").select("id, title, client_name").eq("kind", "project")
+      .order("created_at", { ascending: false }).limit(50)
+      .then(({ data, error }) => { if (!cancelled && !error) setRows((data as ProjectLink[]) ?? []) })
+    load()
+    // a project renamed or created elsewhere shows up here too
+    window.addEventListener(PROJECTS_CHANGED, load)
+    return () => { cancelled = true; window.removeEventListener(PROJECTS_CHANGED, load) }
+  }, [])
+  return rows
+}
+
+/** Starts an empty project and opens it, like Notion's new page. */
+function useCreateProject() {
+  const { t } = useT()
+  const router = useRouter()
+  return async () => {
+    const { data: shop } = await supabase.from("shops").select("id").limit(1).maybeSingle()
+    if (!shop) return
+    const { data, error } = await supabase.from("orders").insert({
+      shop_id: shop.id,
+      code: `PRJ-${Date.now().toString(36).toUpperCase()}`,
+      title: t("Untitled"),
+      client_name: "",
+      status: "await",
+      kind: "project",
+    }).select("id").single()
+    if (error) {
+      // over the plan's limit: show the plans
+      if (error.message?.includes("plan_limit")) openPanel("billing")
+      return
+    }
+    window.dispatchEvent(new Event(PROJECTS_CHANGED))
+    router.push(`/orders/${data.id}`)
+  }
+}
+
+/** Quick find across projects and orders (Ctrl+K). */
+function SearchDialog({ projects, onClose }: { projects: ProjectLink[]; onClose: () => void }) {
+  const { t } = useT()
+  const [query, setQuery] = useState("")
+  const [orders, setOrders] = useState<(ProjectLink & { kind: string })[]>([])
+  useEffect(() => {
+    supabase.from("orders").select("id, title, client_name, kind").neq("kind", "post")
+      .order("created_at", { ascending: false }).limit(200)
+      .then(({ data }) => setOrders((data as (ProjectLink & { kind: string })[]) ?? []))
+  }, [])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+  const q = query.trim().toLowerCase()
+  const all = orders.length ? orders : projects.map((p) => ({ ...p, kind: "project" }))
+  const found = (q ? all.filter((o) => `${o.title} ${o.client_name ?? ""}`.toLowerCase().includes(q)) : all).slice(0, 12)
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-4 pt-[12vh]" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={t("Search")} onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg overflow-hidden rounded-xl bg-popover shadow-2xl ring-1 ring-foreground/10">
+        <label className="flex items-center gap-2 border-b border-border px-4">
+          <SearchIcon className="size-4 text-muted-foreground" />
+          <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search projects and orders")}
+            className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+        </label>
+        <div className="max-h-[50vh] overflow-y-auto p-1.5">
+          {found.length === 0 && <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Nothing found.")}</p>}
+          {found.map((o) => (
+            <Link key={o.id} href={`/orders/${o.id}`} onClick={onClose} className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm hover:bg-hover">
+              <span className="size-4 shrink-0 text-muted-foreground">
+                {o.kind === "project" ? <WaypointsIcon className="size-4" /> : NAV_ICONS.orders}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{o.title || t("Untitled")}</span>
+              {o.client_name && <span className="truncate text-xs text-muted-foreground">{o.client_name}</span>}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -381,10 +487,16 @@ function PlanCard({ onOpen }: { onOpen: () => void }) {
  * Requests and My page are still being finished: only addresses in NEXT_PUBLIC_BETA_EMAILS
  * (comma-separated) see them; everyone else gets a "coming soon" note.
  */
+// Kept between pages, so the menu doesn't flash "soon" while the next page asks again.
+let knownEmail: string | null = null
+
 function useBetaAccess() {
-  const [email, setEmail] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(knownEmail)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email?.toLowerCase() ?? null))
+    supabase.auth.getSession().then(({ data }) => {
+      knownEmail = data.session?.user.email?.toLowerCase() ?? null
+      setEmail(knownEmail)
+    })
   }, [])
   const list = (process.env.NEXT_PUBLIC_BETA_EMAILS ?? "").toLowerCase().split(",").map((x) => x.trim()).filter(Boolean)
   return !!email && list.includes(email)

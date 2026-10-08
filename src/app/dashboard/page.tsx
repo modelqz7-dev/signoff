@@ -15,6 +15,7 @@ import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { modeMain } from "@/lib/mode-transition"
+import { OPEN_CALENDAR_EVENT } from "@/lib/panels"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -61,10 +62,22 @@ export default function Dashboard() {
 
       setOrders((ordersData as Order[]) || [])
       setLoading(false)
+      // the sidebar's calendar button lands here with ?calendar=1
+      if (new URLSearchParams(window.location.search).get("calendar")) {
+        setCalendarOpen(true)
+        window.history.replaceState(null, "", "/dashboard")
+      }
     }
 
     init()
   }, [router])
+
+  // ...or asks for it directly when the dashboard is already open.
+  useEffect(() => {
+    const open = () => setCalendarOpen(true)
+    window.addEventListener(OPEN_CALENDAR_EVENT, open)
+    return () => window.removeEventListener(OPEN_CALENDAR_EVENT, open)
+  }, [])
 
   // Status changes made by clients in the portal show up without a reload.
   const shopId = shop?.id
