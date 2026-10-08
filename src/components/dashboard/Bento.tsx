@@ -67,7 +67,9 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   }, [visible, home.open])
 
   return (
-    <div className="grid gap-2.5 p-2.5 lg:h-dvh lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_252px]">
+    // fills the screen, but no wider than 1680px (tiles stretched across a big monitor go flat) and
+    // no shorter than its content needs: a low screen scrolls instead of squashing the tiles
+    <div className="mx-auto grid w-full max-w-[1680px] gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(560px,1fr)_minmax(260px,auto)]">
       {/* left: the month, and the one thing to do now */}
       <div className="flex min-h-0 flex-col gap-2.5">
         <MonthTile
@@ -184,7 +186,7 @@ function MonthTile({ items, projects, project, onProject, today, lane, onPickDay
         ))}
       </div>
 
-      <div className="mt-auto pt-4">
+      <div className="flex flex-1 flex-col pt-4">
         <div className="grid grid-cols-7 gap-1.5 text-center">
           {weekdays.map((w, i) => <span key={i} className="pb-1 text-[10.5px] font-semibold text-white/75 uppercase">{w}</span>)}
           {cells.map((n, i) => {
@@ -211,7 +213,7 @@ function MonthTile({ items, projects, project, onProject, today, lane, onPickDay
             )
           })}
         </div>
-        <div className="mt-4 flex items-center justify-between text-sm font-semibold">
+        <div className="mt-auto flex items-center justify-between pt-4 text-sm font-semibold">
           <button type="button" aria-label={t("Previous month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="rounded-full p-1 hover:bg-white/10"><ArrowLeftIcon className="size-4" /></button>
           <span className="first-letter:uppercase">{month.toLocaleDateString(locale, { month: "long", year: "numeric" })}</span>
           <button type="button" aria-label={t("Next month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="rounded-full p-1 hover:bg-white/10"><ArrowRightIcon className="size-4" /></button>
@@ -427,9 +429,10 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
   const [hover, setHover] = useState<number | null>(null)
   const at = hover ?? todayIndex
   // an even scale: 0, step, 2·step, 3·step
-  const step = Math.max(1, Math.ceil(Math.max(...data.map((x) => Math.max(x.approved, x.uploaded))) / 3))
-  const top = step * 3
-  const ticks = [top, step * 2, step, 0]
+  // an even scale in four steps, tight above the highest bar
+  const step = Math.max(1, Math.ceil(Math.max(...data.map((x) => Math.max(x.approved, x.uploaded))) / 4))
+  const top = step * 4
+  const ticks = [top, step * 3, step * 2, step, 0]
   const total = data.reduce((s, x) => s + x.approved, 0)
 
   return (
@@ -450,7 +453,7 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
             return (
               <div key={i} className="relative flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
                 {/* a thin cap on a body; the picked day turns yellow over orange stripes */}
-                <div className="flex w-full flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
+                <div className="mx-auto flex w-full max-w-14 flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
                   <div className={cn("h-1 shrink-0", on ? "bg-[#ebb216]" : "bg-[#3a3a3a]")} />
                   <div className={cn("flex-1", on ? "bg-[repeating-linear-gradient(-45deg,#e56019_0_4px,#f08139_4px_8px)]" : "bg-[#2c2c2c]")} />
                 </div>
@@ -462,7 +465,7 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
                     className={cn(
                       "absolute z-10 w-40 rounded-lg bg-[#2b2b2b] p-2.5 text-[10.5px] text-white/75 shadow-xl ring-1 ring-white/10",
                       // above a short bar; beside a tall one, so it stays inside the tile
-                      h <= 55 ? "left-1/2 -translate-x-1/2" : i < 4 ? "top-0 left-[calc(100%+8px)]" : "top-0 right-[calc(100%+8px)]"
+                      h <= 55 ? "left-1/2 -translate-x-1/2" : i < 4 ? "top-0 left-[calc(50%+36px)]" : "top-0 right-[calc(50%+36px)]"
                     )}
                     style={h <= 55 ? { bottom: `calc(${h}% + 8px)` } : undefined}
                   >
