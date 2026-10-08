@@ -8,7 +8,7 @@ import {
   addEdge, useEdgesState, useNodesState, useReactFlow,
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react"
-import { ImageIcon, MinusIcon, PlusIcon, ScanIcon, SquareIcon, StickyNoteIcon, TypeIcon } from "lucide-react"
+import { MinusIcon, PlusIcon, ScanIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
@@ -16,14 +16,21 @@ import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useT, type T } from "@/lib/i18n"
 
-// The project's free canvas: the SMM specialist lays out whatever they need — blocks with a title
+// The project's free canvas, edge to edge: the SMM specialist lays out whatever they need — blocks with a title
 // and a description, posts (real post orders, approved by the client), plain text, sticky notes —
 // and draws paths between them. The whole canvas is saved on the project as { nodes, edges }.
 
 export type Board = { nodes: Node[]; edges: Edge[] }
 
+/** What the workspace's panel can ask the canvas to do. */
+export type CanvasActions = {
+  add: (kind: "block" | "text" | "note") => void
+  addPosts: (files: File[]) => void
+  /** Brings a post into view; false when the post isn't on the canvas. */
+  focus: (postId: string) => boolean
+}
+
 type Kind = "block" | "post" | "text" | "note"
-const ACCEPT = ".png,.jpg,.jpeg,.webp,.pdf"
 const SAVE_DELAY = 700
 
 // Nodes read the project's posts and the translator from here rather than from their data,
@@ -34,6 +41,7 @@ export function ProjectCanvas(props: {
   project: Order
   posts: Order[]
   onCreatePosts: (files: File[]) => Promise<Order[]>
+  actionsRef?: React.RefObject<CanvasActions | null>
   readOnly?: boolean
 }) {
   return (
@@ -43,10 +51,11 @@ export function ProjectCanvas(props: {
   )
 }
 
-function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
+function Canvas({ project, posts, onCreatePosts, actionsRef, readOnly = false }: {
   project: Order
   posts: Order[]
   onCreatePosts: (files: File[]) => Promise<Order[]>
+  actionsRef?: React.RefObject<CanvasActions | null>
   readOnly?: boolean
 }) {
   const { t } = useT()
@@ -56,7 +65,6 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges)
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved")
-  const fileRef = useRef<HTMLInputElement>(null)
   const postMap = new Map(posts.map((p) => [p.id, p]))
 
   // Autosave: what the user wrote and where things stand, never selection or drag state.
@@ -100,6 +108,22 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
     ])
   }
 
+  // The panel's tools act through these.
+  useEffect(() => {
+    if (!actionsRef) return
+    actionsRef.current = {
+      add,
+      addPosts,
+      focus: (postId) => {
+        const id = `p-${postId}`
+        if (!flow.getNode(id)) return false
+        flow.fitView({ nodes: [{ id }], maxZoom: 1.2, padding: 0.6, duration: 400 })
+        setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })))
+        return true
+      },
+    }
+  })
+
   function renamePath(_: React.MouseEvent, edge: Edge) {
     if (readOnly) return
     const label = window.prompt(t("Text on the path"), typeof edge.label === "string" ? edge.label : "")
@@ -138,31 +162,16 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
         {nodes.length === 0 && !readOnly && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
             <p className="text-sm font-medium text-foreground">{t("A blank canvas")}</p>
-            <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes below, then drag from a dot on one block to another to draw a path.")}</p>
+            <p className="max-w-xs text-xs text-muted-foreground">{t("Add blocks, posts and notes from the panel on the left, then drag from a dot on one block to another to draw a path.")}</p>
           </div>
         )}
 
-        {/* tools */}
-        {!readOnly && (
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
-            <Tool icon={SquareIcon} label={t("Block")} onClick={() => add("block")} />
-            <Tool icon={ImageIcon} label={t("Post")} onClick={() => fileRef.current?.click()} />
-            <Tool icon={TypeIcon} label={t("Text")} onClick={() => add("text")} />
-            <Tool icon={StickyNoteIcon} label={t("Note")} onClick={() => add("note")} />
-            <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
-            <Tool icon={MinusIcon} label={t("Zoom out")} onClick={() => flow.zoomOut()} compact />
-            <Tool icon={PlusIcon} label={t("Zoom in")} onClick={() => flow.zoomIn()} compact />
-            <Tool icon={ScanIcon} label={t("Fit to screen")} onClick={() => flow.fitView({ maxZoom: 1, padding: 0.3, duration: 300 })} compact />
-            <input
-              ref={fileRef}
-              type="file"
-              accept={ACCEPT}
-              multiple
-              className="hidden"
-              onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; if (files.length) addPosts(files) }}
-            />
-          </div>
-        )}
+        {/* zoom */}
+        <div className="absolute right-4 bottom-4 flex items-center gap-0.5 rounded-xl bg-card p-1 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.35)] ring-1 ring-border">
+          <Tool icon={MinusIcon} label={t("Zoom out")} onClick={() => flow.zoomOut()} />
+          <Tool icon={PlusIcon} label={t("Zoom in")} onClick={() => flow.zoomIn()} />
+          <Tool icon={ScanIcon} label={t("Fit to screen")} onClick={() => flow.fitView({ maxZoom: 1, padding: 0.3, duration: 300 })} />
+        </div>
 
         {!readOnly && (
           <p className="pointer-events-none absolute top-3 right-4 text-[11px] text-muted-foreground">
@@ -174,20 +183,16 @@ function Canvas({ project, posts, onCreatePosts, readOnly = false }: {
   )
 }
 
-function Tool({ icon: Icon, label, onClick, compact }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; compact?: boolean }) {
+function Tool({ icon: Icon, label, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={cn(
-        "flex h-9 items-center gap-1.5 rounded-lg text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground",
-        compact ? "w-9 justify-center" : "px-3"
-      )}
+      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
     >
       <Icon className="size-4" />
-      {!compact && <span className="hidden sm:inline">{label}</span>}
     </button>
   )
 }
