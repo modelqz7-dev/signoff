@@ -305,3 +305,9 @@ html.theme-fade *::after {
   transition: background-color 350ms ease, border-color 350ms ease, color 350ms ease, fill 350ms ease !important;
 }
 
+
+/* The line joining picked days in the home page's month draws itself from one day to the next. */
+@keyframes draw-line {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}

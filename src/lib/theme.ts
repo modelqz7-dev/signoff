@@ -26,7 +26,8 @@ function apply(theme: Theme) {
 
 /**
  * Switches the theme. With View Transitions the new theme is revealed as a circle
- * growing from `origin` (e.g. the clicked button); otherwise colors cross-fade.
+ * growing from `origin` (e.g. the clicked button), or fades in over the old one when
+ * there is no origin; without them colors cross-fade.
  * Respects prefers-reduced-motion.
  */
 export function setTheme(theme: Theme, origin?: { x: number; y: number }) {
@@ -47,8 +48,19 @@ export function setTheme(theme: Theme, origin?: { x: number; y: number }) {
     return
   }
 
-  const x = origin?.x ?? window.innerWidth / 2
-  const y = origin?.y ?? window.innerHeight / 2
+  // no origin: the whole page cross-fades into the new theme
+  if (!origin) {
+    doc.startViewTransition(() => apply(theme)).ready.then(() => {
+      document.documentElement.animate(
+        { opacity: [0, 1] },
+        { duration: 420, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
+      )
+    }).catch(() => {})
+    return
+  }
+
+  const x = origin.x
+  const y = origin.y
   const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
 
   doc.startViewTransition(() => apply(theme)).ready.then(() => {
