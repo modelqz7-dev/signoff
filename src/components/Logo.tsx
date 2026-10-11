@@ -20,16 +20,26 @@ export function LogoMark({ className, surface = "auto" }: { className?: string; 
   )
 }
 
-/** My page's mark: the same keycap as Nodly's, an L (for Link) in place of the N. */
+/** Nodly's keycap seen straight on, for the app's rail (beside My page's mark). */
+export function FlatLogoMark({ className }: { className?: string }) {
+  return <KeyPair light="/brand/nodly-key-flat-light.png" dark="/brand/nodly-key-flat-dark.png" className={className} />
+}
+
+/** My page's mark: the same keycap seen straight on, an L (for Link) in place of the N. */
 export function LinkMark({ className }: { className?: string }) {
+  return <KeyPair light="/brand/link-key-light.png" dark="/brand/link-key-dark.png" className={className} />
+}
+
+/** A keycap image in its light-page and dark-page versions. */
+function KeyPair({ light, dark, className }: { light: string; dark: string; className?: string }) {
   const img = (src: string, extra?: string) => (
     // eslint-disable-next-line @next/next/no-img-element -- tiny static PNG, no optimisation needed
     <img src={src} alt="" aria-hidden="true" draggable={false} className={cn("size-7 shrink-0 select-none object-contain", extra, className)} />
   )
   return (
     <>
-      {img("/brand/link-key-light.png", "dark:hidden")}
-      {img("/brand/link-key-dark.png", "hidden dark:block")}
+      {img(light, "dark:hidden")}
+      {img(dark, "hidden dark:block")}
     </>
   )
 }
