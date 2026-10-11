@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, BarChart3Icon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
-  ImagePlusIcon, PencilIcon, PlusIcon, ZapIcon,
+  ArrowUpRightIcon, CheckCircle2Icon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon,
 } from "lucide-react"
 import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
@@ -13,10 +12,10 @@ import { projectColor } from "@/lib/project-color"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
-// The home page as a bento, after the reference design the user chose: dark tiles around one big
-// white panel. Left, the month and the one thing to do now; right, the week of posts by where each
+// The home page, after Apple's Human Interface Guidelines: grouped cards on a quiet page, content
+// before decoration, one blue accent for actions and Apple's system colours for states. Left, the
+// month (like Apple Calendar) and the one thing to do now; right, the week of posts by where each
 // one stands; below, the statuses (they filter the week), approvals this week and the projects.
-// The tiles stay dark and the panel stays white in both themes.
 
 const DAY = 86_400_000
 const isDone = (o: Order) => o.status === "approved" || o.status === "prod"
@@ -30,6 +29,10 @@ const itemDay = (o: Order) => (o.publish_on || o.deadline || "").slice(0, 10) ||
 type Lane = "changes" | "waiting" | "nofile" | "approved"
 const LANES: Lane[] = ["changes", "waiting", "nofile", "approved"]
 const LANE_LABEL: Record<Lane, string> = { changes: "With changes", waiting: "Waiting on the client", nofile: "No file yet", approved: "Approved posts" }
+/** Apple's system colours for the stages. */
+const LANE_COLOR: Record<Lane, string> = { changes: "#ff9500", waiting: "#8e8e93", nofile: "#c7c7cc", approved: "#34c759" }
+/** Apple Calendar marks today in red. */
+const TODAY_RED = "#ff3b30"
 type View = "week" | "projects" | "list"
 
 export function BentoHome({ home, projects, items, projectName, onNewProject, onCalendar, intro }: {
@@ -62,12 +65,12 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   }, [visible, home.open])
 
   return (
-    // starts right at the rail and keeps the reference's proportions: no wider than 1600px (a very
-    // wide screen keeps the spare room on the right), and a low screen scrolls instead of squashing
-    <div className="grid w-full max-w-[1600px] gap-2.5 p-2.5 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(290px,auto)]">
+    // starts right at the rail, no wider than 1600px (a very wide screen keeps the spare room on the
+    // right), and a low screen scrolls instead of squashing the cards
+    <div className="grid w-full max-w-[1600px] gap-3 p-3 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(280px,auto)]">
       {/* left: the month, and the one thing to do now */}
-      <div className="flex min-h-0 flex-col gap-2.5">
-        <MonthTile
+      <div className="flex min-h-0 flex-col gap-3">
+        <MonthCard
           items={visible}
           projects={projects}
           project={project}
@@ -80,95 +83,104 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         <NowCard home={home} projectName={projectName} onNewProject={onNewProject} />
       </div>
 
-      {/* right: the week, always on a white sheet */}
-      <section className="surface-light flex min-h-[520px] min-w-0 flex-col rounded-[22px] bg-white p-4 text-[#151515] sm:p-5 lg:col-span-2 lg:min-h-0">
-        {/* as in the reference: the month left, the switch in the middle, the clients right; then
-            the week's arrows and the yellow button */}
+      {/* right: the week */}
+      <Card className="flex min-h-[520px] flex-col p-5 lg:col-span-2 lg:min-h-0">
         <div className="grid grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
-          <h1 className="font-[family-name:var(--font-brand)] text-[24px] font-extrabold tracking-[-0.035em]">
-            {monthTitle(addDays(week, 3), locale)}
-          </h1>
-          <div role="tablist" className="order-last col-span-2 flex justify-self-center rounded-full bg-[#f1f1f1] p-[3px] sm:order-none sm:col-span-1">
-            {(["week", "projects", "list"] as View[]).map((v) => (
-              <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)}
-                className={cn("rounded-full px-5 py-1.5 text-xs font-semibold transition-colors", view === v ? "bg-[#121212] text-white" : "text-[#3a3a3a] hover:text-black")}>
-                {v === "week" ? t("Week") : v === "projects" ? t("Projects") : t("List")}
-              </button>
-            ))}
+          <h1 className="text-[26px] leading-tight font-bold tracking-[-0.02em]">{monthTitle(addDays(week, 3), locale)}</h1>
+          <Segmented
+            className="order-last col-span-2 justify-self-center sm:order-none sm:col-span-1"
+            value={view}
+            onChange={setView}
+            options={[["week", t("Week")], ["projects", t("Projects")], ["list", t("List")]]}
+          />
+          <div className="flex items-center justify-self-end gap-1">
+            <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-5" /></button>
+            <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2.5 py-1 text-[13px] font-medium text-primary hover:bg-hover">{t("Today")}</button>
+            <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-5" /></button>
+            <button type="button" onClick={onNewProject} className="ml-2 flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
+              <PlusIcon className="size-4" />{t("New project")}
+            </button>
           </div>
-          <Clients projects={projects} />
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1 rounded-full bg-[#f4f4f4] p-[3px]">
-            <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-7 items-center justify-center rounded-full hover:bg-white"><ChevronLeftIcon className="size-4" /></button>
-            <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2.5 py-1 text-xs font-semibold hover:bg-white">{t("This week")}</button>
-            <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-7 items-center justify-center rounded-full hover:bg-white"><ChevronRightIcon className="size-4" /></button>
-          </div>
-          <button type="button" onClick={onNewProject} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#fdc019] px-4 text-xs font-bold text-[#151515] transition-transform hover:scale-[1.03]">
-            <PlusIcon className="size-3.5" />{t("New project")}
-          </button>
         </div>
 
-        <div className="mt-3 min-h-0 flex-1 overflow-auto">
+        <div className="mt-4 min-h-0 flex-1 overflow-auto">
           {view === "week" && <WeekGrid week={week} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} />}
-          {view === "projects" && <div className="pt-1"><ProjectCards home={home} onNewProject={onNewProject} /></div>}
+          {view === "projects" && <ProjectCards home={home} onNewProject={onNewProject} />}
           {view === "list" && (
-            <div className="surface-light grid gap-6 pt-1 xl:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               {intro && <div className="xl:col-span-2">{intro}</div>}
               <YourMoveList home={home} projectName={projectName} />
               <WaitingList home={home} projectName={projectName} />
             </div>
           )}
         </div>
-      </section>
+      </Card>
 
-      {/* bottom: statuses (they filter the week), approvals this week, projects */}
-      {/* on computers these three join the page grid: under the month, under the week (two thirds), and the rest */}
-      <div className="grid gap-2.5 lg:contents">
-        <StatusTile counts={counts} lanes={lanes} onLanes={setLanes} onNewProject={onNewProject} />
-        <ApprovalsTile items={items} today={today} />
-        <ProjectsTile home={home} />
+      {/* bottom: statuses (they filter the week), approvals this week, projects; on computers they
+          join the page grid under the month, under the week (two thirds) and the rest */}
+      <div className="grid gap-3 lg:contents">
+        <StatusCard counts={counts} lanes={lanes} onLanes={setLanes} />
+        <ApprovalsCard items={items} today={today} />
+        <ProjectsCard home={home} onNewProject={onNewProject} />
       </div>
     </div>
   )
 }
 
-/** "October, 2026", as the reference writes its month. */
+/** "October 2026" (with a capital, as a title). */
 function monthTitle(d: Date, locale: string) {
   const month = d.toLocaleDateString(locale, { month: "long" })
-  return `${month.charAt(0).toUpperCase()}${month.slice(1)}, ${d.getFullYear()}`
+  return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${d.getFullYear()}`
 }
 
-/** The clients' faces, overlapping, top right: one circle per project in its colour. */
-function Clients({ projects }: { projects: Order[] }) {
-  const { t } = useT()
-  const shown = projects.slice(0, 4)
-  if (!shown.length) return <span />
+/** A grouped card: white on the grey page (dark grey on black), no decoration. */
+function Card({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className="flex justify-self-end">
-      {shown.map((p, i) => {
-        const name = p.client_name || p.title || t("Untitled")
-        const letters = name.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
-        return (
-          <Link key={p.id} href={`/orders/${p.id}`} title={name} style={{ backgroundColor: projectColor(p.id), zIndex: shown.length - i }}
-            className={cn("flex size-8 items-center justify-center rounded-full text-[11px] font-bold text-[#1a1a1a] ring-2 ring-white transition-transform hover:-translate-y-0.5", i > 0 && "-ml-2.5")}>
-            {letters || "·"}
-          </Link>
-        )
-      })}
-      {projects.length > shown.length && (
-        <span className="-ml-2.5 flex size-8 items-center justify-center rounded-full bg-[#151515] text-[10px] font-bold text-white ring-2 ring-white">+{projects.length - shown.length}</span>
-      )}
+    <section className={cn("min-w-0 rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]", className)}>
+      {children}
+    </section>
+  )
+}
+
+function CardTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="text-[15px] font-semibold tracking-[-0.01em]">{children}</h2>
+      {action}
     </div>
   )
 }
 
-function Tile({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <section className={cn("surface-dark min-w-0 rounded-[22px] bg-[#1c1c1c] p-4 text-[#f2f2f2] ring-1 ring-white/[0.06]", className)}>{children}</section>
+/** Apple's segmented control. */
+function Segmented<V extends string>({ value, onChange, options, className }: {
+  value: V
+  onChange: (v: V) => void
+  options: [V, string][]
+  className?: string
+}) {
+  return (
+    <div role="tablist" className={cn("flex rounded-[9px] bg-muted p-0.5", className)}>
+      {options.map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          role="tab"
+          aria-selected={value === v}
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded-[7px] px-4 py-1 text-[13px] font-medium transition-colors",
+            value === v ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
-/** The month as round days: cream in the month, pink where posts go out, today ringed. */
-function MonthTile({ items, projects, project, onProject, today, lane, onPickDay, onExpand }: {
+/** The month, as in Apple Calendar: plain numbers, today in a red circle, a dot under days with posts. */
+function MonthCard({ items, projects, project, onProject, today, lane, onPickDay, onExpand }: {
   items: Order[]
   projects: Order[]
   project: string | null
@@ -191,125 +203,94 @@ function MonthTile({ items, projects, project, onProject, today, lane, onPickDay
   const weekdays = Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i).toLocaleDateString(locale, { weekday: "narrow" }))
 
   return (
-    <Tile className="flex flex-1 flex-col">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-9 items-center justify-center rounded-full bg-[#f8ebcb] text-[#ec4f9a]"><ZapIcon className="size-4 fill-current" /></span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">{t("Calendar")}</p>
-          <p className="text-xs text-white/50">{t("Publishing days")}</p>
+    <Card className="flex flex-1 flex-col">
+      <div className="flex items-center gap-1">
+        <h2 className="flex-1 text-[15px] font-semibold tracking-[-0.01em]">{monthTitle(month, locale)}</h2>
+        <button type="button" aria-label={t("Previous month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
+        <button type="button" aria-label={t("Next month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
+        <button type="button" onClick={onExpand} aria-label={t("Open the calendar")} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"><ArrowUpRightIcon className="size-4" /></button>
+      </div>
+
+      {projects.length > 0 && (
+        <div className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none]">
+          {[{ id: null as string | null, label: t("All") }, ...projects.slice(0, 8).map((p) => ({ id: p.id as string | null, label: p.client_name || p.title || t("Untitled") }))].map((c) => (
+            <button key={c.id ?? "all"} type="button" onClick={() => onProject(c.id)}
+              className={cn("shrink-0 rounded-full px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors",
+                project === c.id ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-hover-strong")}>
+              {c.label}
+            </button>
+          ))}
         </div>
-        <button type="button" onClick={onExpand} aria-label={t("Open the calendar")} className="ml-auto rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white"><ArrowUpRightIcon className="size-4" /></button>
-      </div>
+      )}
 
-      <div className="-mx-4 mt-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-        {[{ id: null as string | null, label: t("All") }, ...projects.slice(0, 8).map((p) => ({ id: p.id as string | null, label: p.client_name || p.title || t("Untitled") }))].map((c) => (
-          <button key={c.id ?? "all"} type="button" onClick={() => onProject(c.id)}
-            className={cn("shrink-0 rounded-full px-3.5 py-1.5 text-xs whitespace-nowrap ring-1 transition-colors",
-              project === c.id ? "bg-[#f8ebcb] font-semibold text-[#1a1a1a] ring-[#f8ebcb]" : "text-white/80 ring-white/15 hover:ring-white/30")}>
-            {c.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-1 flex-col pt-4">
-        <div className="grid grid-cols-7 gap-1.5 text-center">
-          {weekdays.map((w, i) => <span key={i} className="pb-1 text-[10.5px] font-semibold text-white/75 uppercase">{w}</span>)}
-          {cells.map((n, i) => {
-            if (n < 1 || n > days) return <span key={i} className="aspect-square rounded-full border-[1.4px] border-dashed border-white/20" />
-            const d = new Date(month.getFullYear(), month.getMonth(), n)
-            const list = byDay.get(dayKey(d)) ?? []
-            const isToday = d.getTime() === today.getTime()
-            const changes = list.some((o) => lane(o) === "changes")
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onPickDay(d)}
-                title={list.length ? t("{n} posts", { n: list.length }) : undefined}
-                className={cn(
-                  "relative flex aspect-square items-center justify-center rounded-full text-[11.5px] font-semibold transition-transform hover:scale-110",
-                  list.length ? "bg-[#ec4f9a] text-white" : "bg-[#f8ebcb] text-[#1a1a1a]",
-                  isToday && "ring-2 ring-white ring-offset-2 ring-offset-[#1c1c1c]"
-                )}
+      <div className="mt-3 grid grid-cols-7 text-center">
+        {weekdays.map((w, i) => <span key={i} className="pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase">{w}</span>)}
+        {cells.map((n, i) => {
+          if (n < 1 || n > days) return <span key={i} />
+          const d = new Date(month.getFullYear(), month.getMonth(), n)
+          const list = byDay.get(dayKey(d)) ?? []
+          const isToday = d.getTime() === today.getTime()
+          const changes = list.some((o) => lane(o) === "changes")
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onPickDay(d)}
+              title={list.length ? t("{n} posts", { n: list.length }) : undefined}
+              className="group flex flex-col items-center py-0.5"
+            >
+              <span
+                className={cn("flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-colors", isToday ? "font-semibold text-white" : "group-hover:bg-hover")}
+                style={isToday ? { backgroundColor: TODAY_RED } : undefined}
               >
                 {n}
-                {changes && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-[#fdc019] ring-2 ring-[#1c1c1c]" />}
-              </button>
-            )
-          })}
-        </div>
-        <div className="mt-auto flex items-center justify-between pt-4 text-sm font-semibold">
-          <button type="button" aria-label={t("Previous month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="rounded-full p-1 hover:bg-white/10"><ArrowLeftIcon className="size-4" /></button>
-          <span className="first-letter:uppercase">{month.toLocaleDateString(locale, { month: "long", year: "numeric" })}</span>
-          <button type="button" aria-label={t("Next month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="rounded-full p-1 hover:bg-white/10"><ArrowRightIcon className="size-4" /></button>
-        </div>
+              </span>
+              <span className="mt-0.5 size-1 rounded-full" style={{ backgroundColor: list.length ? (changes ? LANE_COLOR.changes : "var(--muted-foreground)") : "transparent" }} />
+            </button>
+          )
+        })}
       </div>
-    </Tile>
+    </Card>
   )
 }
 
-/** The yellow card: the one thing to do now, or a nudge to start. */
+/** The one thing to do now, or a quiet "all done". */
 function NowCard({ home, projectName, onNewProject }: { home: Home; projectName: (o: Order) => string; onNewProject: () => void }) {
   const { t, locale } = useT()
   const [skip, setSkip] = useState(0)
   const next = home.move[skip % Math.max(1, home.move.length)]
+  if (!next) {
+    return (
+      <Card>
+        <p className="flex items-center gap-1.5 text-[13px] font-medium" style={{ color: LANE_COLOR.approved }}><CheckCircle2Icon className="size-4" />{t("All quiet")}</p>
+        <p className="mt-1.5 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{t("Nothing needs you. Start the next client?")}</p>
+        <button type="button" onClick={onNewProject} className="mt-3 rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:opacity-90">{t("New project")}</button>
+      </Card>
+    )
+  }
+  const label = next.kind === "upload" ? t("No file") : next.kind === "overdue" ? t("Overdue") : next.pins.length > 1 ? t("{n} comments", { n: next.pins.length }) : t("Changes")
   return (
-    <section className="relative overflow-hidden rounded-[22px] bg-[#fdc019] p-4 text-[#1a1a1a]">
-      {next ? (
-        <>
-          <div className="flex items-center justify-between gap-2 text-[11.5px] font-bold">
-            <span className="truncate">{projectName(next.item)}</span>
-            <span className="shrink-0 rounded-full border border-[#f0a400] bg-[#fff3d1] px-2 py-0.5 text-[11px] text-[#c94d00]">
-              {next.kind === "upload" ? t("No file") : next.kind === "overdue" ? t("Overdue")
-                : `● ${next.pins.length > 1 ? t("{n} comments", { n: next.pins.length }) : t("Changes")}`}
-            </span>
-          </div>
-          <h2 className="mt-3 mb-1 max-w-[190px] font-[family-name:var(--font-brand)] text-[19px] leading-[1.1] font-bold tracking-[-0.03em]">
-            {next.kind === "upload"
-              ? t("“{title}” goes out {day}", { title: next.item.title, day: new Date(next.when ?? 0).toLocaleDateString(locale, { weekday: "short", day: "numeric" }) })
-              : next.kind === "overdue" ? t("“{title}” is past its deadline", { title: next.item.title })
-              : t("Changes asked in “{title}”", { title: next.item.title })}
-          </h2>
-          {next.pins[0] && <p className="max-w-[170px] truncate text-xs opacity-75">«{next.pins[0].title}»</p>}
-          <div className="mt-3 flex gap-1.5">
-            <Link href={`/orders/${next.item.project_id ?? next.item.id}`} className="rounded-lg bg-[#f4661b] px-3.5 py-1.5 text-xs font-semibold text-white">{t("Open")}</Link>
-            {home.move.length > 1 && <button type="button" onClick={() => setSkip((n) => n + 1)} className="rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-black/5">{t("Later")}</button>}
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="text-[11.5px] font-bold">{t("All quiet")}</p>
-          <h2 className="mt-3 mb-3 max-w-[190px] font-[family-name:var(--font-brand)] text-[19px] leading-[1.1] font-bold tracking-[-0.03em]">{t("Nothing needs you. Start the next client?")}</h2>
-          <button type="button" onClick={onNewProject} className="rounded-lg bg-[#f4661b] px-3.5 py-1.5 text-xs font-semibold text-white">{t("New project")}</button>
-        </>
-      )}
-      <Sticker count={next?.pins.length || (next ? 1 : 0)} />
-    </section>
+    <Card>
+      <p className="flex items-center justify-between gap-2 text-[13px]">
+        <span className="font-medium" style={{ color: next.kind === "overdue" ? TODAY_RED : LANE_COLOR.changes }}>{label}</span>
+        <span className="truncate text-muted-foreground">{projectName(next.item)}</span>
+      </p>
+      <p className="mt-1.5 text-[17px] leading-snug font-semibold tracking-[-0.01em]">
+        {next.kind === "upload"
+          ? t("“{title}” goes out {day}", { title: next.item.title, day: new Date(next.when ?? 0).toLocaleDateString(locale, { weekday: "short", day: "numeric" }) })
+          : next.kind === "overdue" ? t("“{title}” is past its deadline", { title: next.item.title })
+          : t("Changes asked in “{title}”", { title: next.item.title })}
+      </p>
+      {next.pins[0] && <p className="mt-1 truncate text-[13px] text-muted-foreground">«{next.pins[0].title}»</p>}
+      <div className="mt-3 flex items-center gap-3">
+        <Link href={`/orders/${next.item.project_id ?? next.item.id}`} className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:opacity-90">{t("Open")}</Link>
+        {home.move.length > 1 && <button type="button" onClick={() => setSkip((n) => n + 1)} className="text-[13px] font-medium text-primary hover:opacity-80">{t("Later")}</button>}
+      </div>
+    </Card>
   )
 }
 
-/** A drawn post with a comment bubble, for the yellow card. */
-function Sticker({ count }: { count: number }) {
-  return (
-    <svg viewBox="0 0 118 96" aria-hidden className="pointer-events-none absolute -right-1.5 -bottom-1 h-24 w-[118px]">
-      <g transform="rotate(-12 60 50)">
-        <rect x="22" y="14" width="74" height="70" rx="8" fill="#fff" stroke="#151515" strokeWidth="2.5" />
-        <rect x="30" y="22" width="58" height="36" rx="4" fill="#f4661b" stroke="#151515" strokeWidth="2" />
-        <path d="M34 54 l14 -14 l10 10 l8 -8 l18 16" fill="none" stroke="#151515" strokeWidth="2" />
-        <rect x="30" y="64" width="40" height="4" rx="2" fill="#151515" />
-        <rect x="30" y="72" width="26" height="4" rx="2" fill="#151515" opacity=".4" />
-      </g>
-      {count > 0 && (
-        <g transform="translate(70 4)">
-          <path d="M14 0 a14 14 0 1 1 -10 24 l-4 6 l1 -9 a14 14 0 0 1 13 -21z" fill="#ec4f9a" stroke="#151515" strokeWidth="2.2" />
-          <text x="14" y="19" fontWeight="700" fontSize="13" textAnchor="middle" fill="#fff">{count > 9 ? "9+" : count}</text>
-        </g>
-      )}
-    </svg>
-  )
-}
-
-/** The week: a column per day, a row per stage, every post as a card in its project's colour. */
+/** The week: a column per day, a row per stage, every post as a small card. */
 function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   week: Date
   today: Date
@@ -331,23 +312,29 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   const empty = days.every((d) => shown.every((l) => !cell.get(`${dayKey(d)}|${l}`)?.length))
 
   return (
-    <div className="min-w-[760px]">
-      <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] gap-x-2.5">
+    <div className="min-w-[800px]">
+      <div className="grid grid-cols-[96px_repeat(7,minmax(0,1fr))] gap-x-2">
         <span />
         {days.map((d) => {
           const isToday = d.getTime() === today.getTime()
           return (
-            <p key={d.getTime()} className={cn("pb-3 font-[family-name:var(--font-brand)] text-[21px] leading-none font-extrabold tracking-[-0.04em]", isToday ? "text-[#ec4f9a]" : "text-[#151515]")}>
-              {d.getDate()}<span className="ml-0.5 font-sans text-[12px] font-medium tracking-normal text-[#b0b0b0]">/{d.toLocaleDateString(locale, { weekday: "short" })}</span>
-            </p>
+            <div key={d.getTime()} className="flex flex-col items-center pb-2.5">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase">{d.toLocaleDateString(locale, { weekday: "short" })}</span>
+              <span
+                className={cn("mt-1 flex size-8 items-center justify-center rounded-full text-[17px] tabular-nums", isToday ? "font-semibold text-white" : "font-medium")}
+                style={isToday ? { backgroundColor: TODAY_RED } : undefined}
+              >
+                {d.getDate()}
+              </span>
+            </div>
           )
         })}
         {shown.map((l) => (
-          <Row key={l} label={t(LANE_LABEL[l])}>
+          <Row key={l} lane={l} label={t(LANE_LABEL[l])}>
             {days.map((d) => {
               const list = cell.get(`${dayKey(d)}|${l}`) ?? []
               return (
-                <div key={d.getTime()} className="flex min-w-0 flex-col gap-2 border-t border-dashed border-[#e3e3e3] py-2.5">
+                <div key={d.getTime()} className="flex min-w-0 flex-col gap-2 border-t border-border py-2.5">
                   {list.map((o) => <PostCard key={o.id} item={o} lane={l} projectName={projectName(o)} />)}
                 </div>
               )
@@ -355,48 +342,50 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
           </Row>
         ))}
       </div>
-      {/* a quiet line, not a banner: an empty week is normal */}
-      {empty && <p className="pt-6 text-center text-xs text-[#a9a9a9]">{t("Nothing goes out this week. Posts show up here on their publishing day.")}</p>}
+      {empty && <p className="pt-6 text-center text-[13px] text-muted-foreground">{t("Nothing goes out this week. Posts show up here on their publishing day.")}</p>}
     </div>
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ lane, label, children }: { lane: Lane; label: string; children: React.ReactNode }) {
   return (
     <>
-      <span className="border-t border-dashed border-[#e3e3e3] pt-2.5 text-[10.5px] font-medium text-[#a9a9a9]">{label}</span>
+      <span className="flex items-start gap-1.5 border-t border-border pt-3 text-[11px] leading-tight font-medium text-muted-foreground">
+        <span className="mt-[3px] size-1.5 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[lane] }} />
+        {label}
+      </span>
       {children}
     </>
   )
 }
 
-/** A post on the week: its picture on top, a plate in its project's colour below. */
+/** A post on the week: its picture, its project as a coloured dot, its title. */
 function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projectName: string }) {
   const { t } = useT()
-  const color = item.project_id ? projectColor(item.project_id) : "#c19af5"
+  const color = item.project_id ? projectColor(item.project_id) : "#8e8e93"
   const href = `/orders/${lane === "nofile" && item.project_id ? item.project_id : item.id}`
   return (
-    <Link href={href} className="block overflow-hidden rounded-xl text-[#151515] transition-transform hover:-translate-y-0.5" style={{ backgroundColor: color }}>
+    <Link href={href} className="block overflow-hidden rounded-xl bg-background transition-colors hover:bg-hover-strong">
       {lane === "nofile" ? (
-        <span className="m-1.5 flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg border-[1.5px] border-dashed border-black/25 text-[10.5px] font-semibold">
-          <ImagePlusIcon className="size-3.5" />{t("Add the file")}
+        <span className="m-1.5 flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-[11px] text-muted-foreground">
+          <ImagePlusIcon className="size-4" />{t("Add the file")}
         </span>
       ) : (
         <Thumb url={item.file_url} className="h-16 w-full" />
       )}
-      <span className="block px-2.5 pt-1.5 pb-2.5">
-        <span className="block truncate text-[10px] font-semibold opacity-70">{projectName}</span>
-        <span className="line-clamp-2 font-[family-name:var(--font-brand)] text-[12.5px] leading-[1.15] font-bold tracking-[-0.02em]">{item.title}</span>
-        {lane === "changes" && <span className="mt-2 flex items-center justify-center gap-1 rounded-md bg-white py-1 text-[10.5px] font-bold"><PencilIcon className="size-3" />{t("Open the changes")}</span>}
-        {lane === "approved" && <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#151515] px-2 py-0.5 text-[10px] font-bold text-white"><CheckIcon className="size-3" />{t("Approved")}</span>}
-        {lane === "waiting" && <span className="mt-2 inline-flex rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-bold">{t("With the client")}</span>}
+      <span className="block px-2.5 pt-1.5 pb-2">
+        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+          <span className="truncate">{projectName}</span>
+        </span>
+        <span className="mt-0.5 line-clamp-2 text-[13px] leading-snug font-semibold">{item.title}</span>
       </span>
     </Link>
   )
 }
 
-/** The stages with how many posts sit in each; unticking one hides its row of the week. */
-function StatusTile({ counts, lanes, onLanes, onNewProject }: { counts: Record<Lane, number>; lanes: Set<Lane>; onLanes: (l: Set<Lane>) => void; onNewProject: () => void }) {
+/** The stages as an Apple list: a coloured dot, the name, the count, a checkmark when shown. */
+function StatusCard({ counts, lanes, onLanes }: { counts: Record<Lane, number>; lanes: Set<Lane>; onLanes: (l: Set<Lane>) => void }) {
   const { t } = useT()
   const toggle = (l: Lane) => {
     const next = new Set(lanes)
@@ -405,32 +394,31 @@ function StatusTile({ counts, lanes, onLanes, onNewProject }: { counts: Record<L
     if (next.size) onLanes(next)
   }
   return (
-    <Tile className="flex flex-col">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold">{t("Statuses")}</p>
-        <ChevronDownIcon className="size-4 text-white/70" />
-      </div>
-      <div className="mt-3 flex flex-col">
+    <Card className="flex flex-col">
+      <CardTitle>{t("Statuses")}</CardTitle>
+      <div className="mt-2 flex flex-col">
         {LANES.map((l) => (
-          <label key={l} className="flex cursor-pointer items-center gap-2.5 py-1.5 text-[13px] text-white/90">
-            <input type="checkbox" checked={lanes.has(l)} onChange={() => toggle(l)} className="peer sr-only" />
-            <span className={cn("flex size-[15px] items-center justify-center rounded-[4px] border-[1.5px] peer-focus-visible:ring-2 peer-focus-visible:ring-white/40", lanes.has(l) ? "border-white bg-white text-[#151515]" : "border-white/60")}>
-              {lanes.has(l) && <CheckIcon className="size-2.5" strokeWidth={3} />}
-            </span>
-            {t(LANE_LABEL[l])}
-            {counts[l] > 0 && <span className={cn("flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white", l === "approved" ? "bg-[#2fc76b]" : "bg-[#ec4f9a]")}>{counts[l]}</span>}
-          </label>
+          <button
+            key={l}
+            type="button"
+            role="checkbox"
+            aria-checked={lanes.has(l)}
+            onClick={() => toggle(l)}
+            className="flex items-center gap-2.5 border-b border-border py-2.5 text-left text-[14px] last:border-b-0"
+          >
+            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[l] }} />
+            <span className="flex-1">{t(LANE_LABEL[l])}</span>
+            <span className="text-muted-foreground tabular-nums">{counts[l]}</span>
+            <CheckIcon className={cn("size-4 text-primary", !lanes.has(l) && "invisible")} strokeWidth={2.5} />
+          </button>
         ))}
       </div>
-      <button type="button" onClick={onNewProject} className="mt-auto flex items-center gap-2 pt-3 text-[13px] font-semibold hover:text-white/80">
-        <PlusIcon className="size-4" />{t("New project")}
-      </button>
-    </Tile>
+    </Card>
   )
 }
 
-/** Approvals per day this week; a hovered (or today's) bar turns orange and tells the numbers. */
-function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
+/** Approvals per day this week, as in Apple's Health charts: the picked day in blue, the rest grey. */
+function ApprovalsCard({ items, today }: { items: Order[]; today: Date }) {
   const { t, locale } = useT()
   const week = mondayOf(today)
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i))
@@ -445,82 +433,69 @@ function ApprovalsTile({ items, today }: { items: Order[]; today: Date }) {
   const todayIndex = Math.round((today.getTime() - week.getTime()) / DAY)
   const [hover, setHover] = useState<number | null>(null)
   const at = hover ?? todayIndex
-  // an even scale: 0, step, 2·step, 3·step
   // an even scale in four steps, tight above the highest bar
   const step = Math.max(1, Math.ceil(Math.max(...data.map((x) => Math.max(x.approved, x.uploaded))) / 4))
   const top = step * 4
   const ticks = [top, step * 3, step * 2, step, 0]
   const total = data.reduce((s, x) => s + x.approved, 0)
+  const picked = data[at]
 
   return (
-    <Tile className="flex min-h-[240px] flex-col">
-      <div className="flex items-start gap-3">
-        <div>
-          <p className="text-sm font-semibold">{t("Approvals this week")}</p>
-          <p className="text-xs text-white/50">{t("Approved so far:")} <span className="text-white">{total}</span></p>
-        </div>
-        <span className="ml-auto flex size-8 items-center justify-center rounded-lg bg-white/[0.07]"><BarChart3Icon className="size-4 text-white/80" /></span>
-      </div>
-      <div className="mt-3 grid min-h-0 flex-1 grid-cols-[22px_minmax(0,1fr)] gap-2">
-        <div className="flex flex-col justify-between pb-5 text-[10.5px] leading-none text-white/45">{ticks.map((v, i) => <span key={i} className="-translate-y-1/2 first:translate-y-0 last:translate-y-0">{v}</span>)}</div>
+    <Card className="flex min-h-[240px] flex-col">
+      <CardTitle>{t("Approvals this week")}</CardTitle>
+      <p className="mt-0.5 text-[13px] text-muted-foreground">
+        {picked ? <>{picked.d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}: {t("{n} approved", { n: picked.approved })} · {t("{n} uploaded", { n: picked.uploaded })}</> : null}
+        <span className="float-right">{t("Total")}: <span className="font-semibold text-foreground">{total}</span></span>
+      </p>
+      <div className="mt-3 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_22px] gap-2">
         <div className="relative flex items-end gap-2 pb-5" onMouseLeave={() => setHover(null)}>
-          {/* dashed lines at the scale's steps, as in the reference */}
           {ticks.map((_, i) => (
-            <span key={i} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-dashed border-white/[0.07]" style={{ bottom: `calc(20px + ${(1 - i / (ticks.length - 1)) * 100}% - ${(1 - i / (ticks.length - 1)) * 20}px)` }} />
+            <span key={i} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-border" style={{ bottom: `calc(20px + ${(1 - i / (ticks.length - 1)) * 100}% - ${(1 - i / (ticks.length - 1)) * 20}px)` }} />
           ))}
           {data.map((x, i) => {
             const on = i === at
-            const h = Math.max(6, (Math.max(x.approved, x.uploaded) / top) * 100)
+            const h = Math.max(3, (x.uploaded / top) * 100)
+            const ah = x.uploaded ? (Math.min(x.approved, x.uploaded) / x.uploaded) * 100 : 0
             return (
               <div key={i} className="relative flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
-                {/* a thin cap on a body; the picked day turns yellow over orange stripes */}
-                <div className="relative mx-auto flex w-[82%] max-w-24 flex-col overflow-hidden rounded-t-[6px]" style={{ height: `${h}%` }}>
-                  <div className={cn("h-[18%] min-h-1 shrink-0", on ? "bg-[#ebb216]" : "bg-[#3a3a3a]")} />
-                  <div className={cn("flex-1", on ? "bg-[repeating-linear-gradient(-45deg,#e56019_0_4px,#f08139_4px_8px)]" : "bg-[#2c2c2c]")} />
+                {/* the bar is what was uploaded that day; its solid lower part, what got approved */}
+                <div className={cn("relative mx-auto w-[70%] max-w-12 overflow-hidden rounded-[5px] transition-colors", on ? "bg-primary/30" : "bg-foreground/[0.08]")} style={{ height: `${h}%` }}>
+                  <div className={cn("absolute inset-x-0 bottom-0", on ? "bg-primary" : "bg-foreground/25")} style={{ height: `${ah}%` }} />
                 </div>
-                <span className={cn("absolute -bottom-5 inset-x-0 text-center text-[10.5px] capitalize", on ? "font-semibold text-white" : "text-white/50")}>
-                  {x.d.toLocaleDateString(locale, { weekday: "short" })}
+                <span className={cn("absolute inset-x-0 -bottom-5 text-center text-[11px]", on ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                  {x.d.toLocaleDateString(locale, { weekday: "narrow" })}
                 </span>
-                {on && (
-                  <div
-                    className={cn(
-                      "absolute z-10 w-40 rounded-lg bg-[#2b2b2b] p-2.5 text-[10.5px] text-white/75 shadow-xl ring-1 ring-white/10",
-                      // above a short bar; beside a tall one, so it stays inside the tile
-                      h <= 55 ? "left-1/2 -translate-x-1/2" : i < 4 ? "top-0 left-[calc(50%+36px)]" : "top-0 right-[calc(50%+36px)]"
-                    )}
-                    style={h <= 55 ? { bottom: `calc(${h}% + 8px)` } : undefined}
-                  >
-                    {x.d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
-                    <p className="mt-1.5 flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#f4661b]" />{t("Approved posts")}<b className="ml-auto text-white">{x.approved}</b></p>
-                    <p className="mt-1 flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#fdc019]" />{t("Uploaded")}<b className="ml-auto text-white">{x.uploaded}</b></p>
-                  </div>
-                )}
               </div>
             )
           })}
         </div>
+        <div className="flex flex-col justify-between pb-5 text-right text-[11px] leading-none text-muted-foreground">
+          {ticks.map((v, i) => <span key={i} className="-translate-y-1/2 first:translate-y-0 last:translate-y-0">{v}</span>)}
+        </div>
       </div>
-    </Tile>
+    </Card>
   )
 }
 
-/** The projects as a short list, like the reference's archive; each opens on a click. */
-function ProjectsTile({ home }: { home: Home }) {
+/** The projects as an Apple list: a coloured dot, the name, approved of all, a chevron. */
+function ProjectsCard({ home, onNewProject }: { home: Home; onNewProject: () => void }) {
   const { t } = useT()
   return (
-    <Tile className="flex flex-col">
-      <p className="text-sm font-semibold">{t("Projects")}</p>
-      <div className="mt-2 -mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {home.summaries.length === 0 && <p className="px-2 py-3 text-sm text-white/50">{t("No projects yet.")}</p>}
+    <Card className="flex flex-col">
+      <CardTitle action={<button type="button" onClick={onNewProject} aria-label={t("New project")} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><PlusIcon className="size-5" /></button>}>
+        {t("Projects")}
+      </CardTitle>
+      <div className="mt-1 flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {home.summaries.length === 0 && <p className="py-3 text-[14px] text-muted-foreground">{t("No projects yet.")}</p>}
         {home.summaries.map(({ project, posts, approved }) => (
-          <Link key={project.id} href={`/orders/${project.id}`} className="group flex items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-semibold hover:bg-white/[0.07]">
-            <span className="size-4 shrink-0 rounded-[5px]" style={{ backgroundColor: projectColor(project.id) }} />
-            <span className="truncate">{project.title || t("Untitled")}</span>
-            <span className="shrink-0 font-medium text-white/45">·{approved}/{posts.length}</span>
-            <ArrowUpRightIcon className="ml-auto size-3.5 shrink-0 text-white/70 opacity-0 transition-opacity group-hover:opacity-100" />
+          <Link key={project.id} href={`/orders/${project.id}`} className="flex items-center gap-2.5 border-b border-border py-2.5 text-[14px] last:border-b-0 hover:opacity-80">
+            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: projectColor(project.id) }} />
+            <span className="flex-1 truncate">{project.title || t("Untitled")}</span>
+            <span className="shrink-0 text-muted-foreground tabular-nums">{approved}/{posts.length}</span>
+            <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground/60" />
           </Link>
         ))}
       </div>
-    </Tile>
+    </Card>
   )
 }
