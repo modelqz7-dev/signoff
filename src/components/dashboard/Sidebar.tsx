@@ -14,7 +14,7 @@ import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
-import { Logo, LogoMark } from "@/components/Logo"
+import { LinkMark, Logo, LogoMark } from "@/components/Logo"
 import { setTheme, useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -360,8 +360,8 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
 }
 
 /**
- * The logo: opens the switch between Nodly's two sides, the projects (approvals) and My page (the
- * public link page with its requests), like switching workspaces in Notion.
+ * The logo: opens, straight down, the switch between Nodly's two sides as two keycaps (no words, the
+ * name shows on hover): the projects (approvals) and My page (the public link page and its requests).
  */
 function AppSwitcher({ linkMode, beta, onSoon }: { linkMode: boolean; beta: boolean; onSoon: () => void }) {
   const { t } = useT()
@@ -378,28 +378,27 @@ function AppSwitcher({ linkMode, beta, onSoon }: { linkMode: boolean; beta: bool
   }, [open])
   const go = (href: string | null) => { setOpen(false); if (href) router.push(href); else onSoon() }
   const sides = [
-    { id: "projects", on: !linkMode, href: "/dashboard", title: "Nodly", line: t("Projects and client approvals"), icon: <LogoMark className="size-8" /> },
-    { id: "link", on: linkMode, href: beta ? "/link" : null, title: t("My page"), line: beta ? t("Your link page and requests") : t("soon"),
-      icon: <span className="flex size-8 items-center justify-center rounded-[9px] bg-foreground text-background"><Link2Icon className="size-[18px]" strokeWidth={2} /></span> },
+    { id: "projects", on: !linkMode, href: "/dashboard", label: "Nodly", mark: <LogoMark className="size-9" /> },
+    { id: "link", on: linkMode, href: beta ? "/link" : null, label: beta ? t("My page") : `${t("My page")} · ${t("soon")}`, mark: <LinkMark className="size-9" /> },
   ]
   return (
     <div ref={ref} className="relative mb-5">
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Nodly" aria-haspopup="menu" aria-expanded={open}
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label={linkMode ? t("My page") : "Nodly"} aria-haspopup="menu" aria-expanded={open}
         className={cn("flex size-12 items-center justify-center rounded-2xl transition-colors hover:bg-hover", open && "bg-hover")}>
-        {linkMode ? sides[1].icon : <LogoMark className="size-9" />}
+        {linkMode ? <LinkMark className="size-9" /> : <LogoMark className="size-9" />}
       </button>
       {open && (
-        <div role="menu" className="absolute top-0 left-[calc(100%+14px)] z-40 flex w-80 flex-col gap-0.5 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lg ring-1 ring-border animate-in fade-in zoom-in-95 duration-150">
+        <div role="menu" className="absolute top-[calc(100%+8px)] left-1/2 z-40 flex -translate-x-1/2 flex-col gap-1 rounded-2xl bg-popover p-1.5 shadow-lg ring-1 ring-border animate-in fade-in slide-in-from-top-1 duration-150">
           {sides.map((s) => (
-            <button key={s.id} type="button" role="menuitemradio" aria-checked={s.on} onClick={() => go(s.href)}
-              className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover">
-              {s.icon}
-              <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-semibold">{s.title}</span>
-                <span className="block truncate text-[12px] text-muted-foreground">{s.line}</span>
+            <div key={s.id} className="group relative">
+              <button type="button" role="menuitemradio" aria-checked={s.on} aria-label={s.label} onClick={() => go(s.href)}
+                className={cn("flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-hover", s.on && "bg-hover-strong")}>
+                {s.mark}
+              </button>
+              <span className="pointer-events-none invisible absolute top-1/2 left-full z-40 ml-3 -translate-y-1/2 rounded-lg bg-popover px-2.5 py-1 text-[12.5px] font-medium whitespace-nowrap text-popover-foreground opacity-0 shadow-lg ring-1 ring-border transition-opacity group-hover:visible group-hover:opacity-100">
+                {s.label}
               </span>
-              {s.on && <CheckIcon className="size-4 shrink-0" />}
-            </button>
+            </div>
           ))}
         </div>
       )}

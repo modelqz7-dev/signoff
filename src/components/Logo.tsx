@@ -20,6 +20,20 @@ export function LogoMark({ className, surface = "auto" }: { className?: string; 
   )
 }
 
+/** My page's mark: the same keycap as Nodly's, with a link on it instead of the N. */
+export function LinkMark({ className }: { className?: string }) {
+  const img = (src: string, extra?: string) => (
+    // eslint-disable-next-line @next/next/no-img-element -- tiny static PNG, no optimisation needed
+    <img src={src} alt="" aria-hidden="true" draggable={false} className={cn("size-7 shrink-0 select-none object-contain", extra, className)} />
+  )
+  return (
+    <>
+      {img("/brand/link-key-light.png", "dark:hidden")}
+      {img("/brand/link-key-dark.png", "hidden dark:block")}
+    </>
+  )
+}
+
 export function Logo({ className, markClassName }: { className?: string; markClassName?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 text-foreground", className)}>
