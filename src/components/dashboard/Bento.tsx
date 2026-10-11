@@ -448,7 +448,7 @@ function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projec
   const { t } = useT()
   const href = `/orders/${lane === "nofile" && item.project_id ? item.project_id : item.id}`
   return (
-    <Link href={href} className="block overflow-hidden rounded-xl bg-background transition-colors hover:bg-hover-strong">
+    <Link href={href} className="block overflow-hidden rounded-xl bg-muted transition-colors hover:bg-foreground/[0.12]">
       {lane === "nofile" ? (
         <span className="m-1.5 flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-[11px] text-muted-foreground">
           <ImagePlusIcon className="size-4" />{t("Add the file")}
