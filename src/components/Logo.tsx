@@ -20,7 +20,7 @@ export function LogoMark({ className, surface = "auto" }: { className?: string; 
   )
 }
 
-/** My page's mark: the same keycap as Nodly's, with a link on it instead of the N. */
+/** My page's mark: the same keycap as Nodly's, an L (for Link) in place of the N. */
 export function LinkMark({ className }: { className?: string }) {
   const img = (src: string, extra?: string) => (
     // eslint-disable-next-line @next/next/no-img-element -- tiny static PNG, no optimisation needed
