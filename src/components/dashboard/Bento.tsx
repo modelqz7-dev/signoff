@@ -67,7 +67,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   return (
     // starts right at the rail, no wider than 1600px (a very wide screen keeps the spare room on the
     // right), and a low screen scrolls instead of squashing the cards
-    <div className="grid w-full max-w-[1600px] gap-3 p-3 lg:min-h-dvh lg:grid-cols-[300px_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(280px,auto)]">
+    <div className="grid w-full gap-3 p-3 lg:min-h-dvh lg:grid-cols-[clamp(280px,18vw,360px)_minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[minmax(540px,1fr)_minmax(300px,34vh)]">
       {/* left: the month, and the one thing to do now */}
       <div className="flex min-h-0 flex-col gap-3">
         <MonthCard
