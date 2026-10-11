@@ -288,7 +288,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
           title={t("New project")}
           className="mt-1 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
         >
-          <PlusIcon className="size-6" strokeWidth={2.4} />
+          <PlusIcon className="size-6" strokeWidth={1.8} />
         </button>
       </div>
 
@@ -328,8 +328,8 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   )
   const body = (
     <>
-      <Icon className="size-[22px]" strokeWidth={2.2} />
-      {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-bold text-white">{badge}</span>}
+      <Icon className="size-[22px]" strokeWidth={1.6} />
+      {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-bold text-background">{badge}</span>}
       {locked && <LockIcon className="absolute right-1.5 bottom-1.5 size-2.5 text-muted-foreground" />}
     </>
   )
@@ -378,7 +378,7 @@ function ThemeSwitch() {
             onClick={pick(id)}
             className={cn("flex size-8 items-center justify-center rounded-full transition-colors", on ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}
           >
-            <Icon className="size-4" strokeWidth={2.2} />
+            <Icon className="size-4" strokeWidth={1.8} />
           </button>
         )
       })}
