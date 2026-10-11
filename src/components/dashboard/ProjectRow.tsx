@@ -93,7 +93,7 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
             aria-label={name}
             onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); router.push(href) } }}
             className={cn(
-              "flex size-10 items-center justify-center rounded-full text-[13px] font-semibold text-white transition-transform hover:scale-105",
+              "flex size-12 items-center justify-center rounded-full text-[14px] font-semibold text-white transition-transform hover:scale-105",
               active && "ring-2 ring-primary ring-offset-2 ring-offset-card"
             )}
             style={{ backgroundColor: color }}
