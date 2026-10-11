@@ -27,6 +27,7 @@ import { usePlanUsage } from "@/lib/use-plan"
 import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { ProjectRow } from "@/components/dashboard/ProjectRow"
+import { ProjectAvatar } from "@/components/ProjectAvatar"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
 
 type SidebarProps = {
@@ -216,6 +217,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
   const createProject = useCreateProject()
   const [creating, setCreating] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [allOpen, setAllOpen] = useState(false)
   const [soon, setSoon] = useState<SoonFeature | null>(null)
   const usage = usePlanUsage()
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
@@ -232,7 +234,11 @@ function Rail({ activePage, panel, onPanel, beta }: {
     return () => { window.removeEventListener(OPEN_NEW_PROJECT, open); window.removeEventListener("keydown", onKey) }
   }, [])
 
-  const shown = projects.slice(0, 6)
+  // three faces at most, so the avatar and "+" below never move; the open project always among them
+  const activeProject = projects.find((p) => activePage === `project:${p.id}`)
+  const shown = activeProject && !projects.slice(0, RAIL_PROJECTS).includes(activeProject)
+    ? [...projects.slice(0, RAIL_PROJECTS - 1), activeProject]
+    : projects.slice(0, RAIL_PROJECTS)
   const more = projects.length - shown.length
   const linkItems: { href: string; label: string }[] = [
     { href: "/link", label: t("My page") },
@@ -278,7 +284,10 @@ function Rail({ activePage, panel, onPanel, beta }: {
       <div className="flex flex-col items-center gap-2.5">
         {shown.map((p) => <ProjectRow key={p.id} project={p} active={activePage === `project:${p.id}`} dot />)}
         {more > 0 && (
-          <RailItem label={t("All projects")} icon={() => <span className="text-xs font-semibold">+{more}</span>} onClick={() => setSearching(true)} />
+          <button type="button" onClick={() => setAllOpen(true)} aria-label={t("All projects")} title={t("All projects")}
+            className="flex size-12 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-foreground transition-colors hover:bg-hover-strong">
+            +{more}
+          </button>
         )}
         <div className="mt-1"><AccountRow panel={panel} onPanel={onPanel} compact /></div>
         <button
@@ -306,6 +315,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
       />
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
       {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
+      {allOpen && <AllProjectsDialog projects={projects} activePage={activePage} onClose={() => setAllOpen(false)} />}
     </div>
   )
 }
@@ -559,6 +569,41 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
 }
 
 type ProjectLink = { id: string; title: string; client_name: string | null }
+
+/** How many project faces the rail shows before "+N". */
+const RAIL_PROJECTS = 3
+
+/** Every project as a face and a name, from the rail's "+N". */
+function AllProjectsDialog({ projects, activePage, onClose }: { projects: ProjectLink[]; activePage: string; onClose: () => void }) {
+  const { t } = useT()
+  const router = useRouter()
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-4 pt-[12vh] animate-in fade-in duration-150" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={t("All projects")} onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg rounded-2xl bg-popover p-5 text-popover-foreground shadow-2xl ring-1 ring-border animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between">
+          <p className="text-[15px] font-semibold">{t("All projects")} <span className="font-medium text-muted-foreground">{projects.length}</span></p>
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8 items-center justify-center rounded-full hover:bg-hover"><XIcon className="size-4" /></button>
+        </div>
+        <div className="mt-4 grid max-h-[60vh] grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
+          {projects.map((p) => (
+            <button key={p.id} type="button" onClick={() => { onClose(); router.push(`/orders/${p.id}`) }}
+              className={cn("flex flex-col items-center gap-2 rounded-xl px-2 py-3 transition-colors hover:bg-hover", activePage === `project:${p.id}` && "bg-hover-strong")}>
+              <ProjectAvatar id={p.id} className="size-14" />
+              <span className="w-full truncate text-center text-[12.5px] font-medium">{p.title || t("Untitled")}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
 
 /** The shop's projects for the sidebar, newest first. */
 function useProjects() {
