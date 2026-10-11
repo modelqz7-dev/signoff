@@ -31,8 +31,6 @@ const LANES: Lane[] = ["changes", "waiting", "nofile", "approved"]
 const LANE_LABEL: Record<Lane, string> = { changes: "With changes", waiting: "Waiting on the client", nofile: "No file yet", approved: "Approved posts" }
 /** Apple's system colours for the stages. */
 const LANE_COLOR: Record<Lane, string> = { changes: "#ff9500", waiting: "#8e8e93", nofile: "#c7c7cc", approved: "#34c759" }
-/** Apple Calendar marks today in red. */
-const TODAY_RED = "#ff3b30"
 type View = "week" | "projects" | "list"
 
 export function BentoHome({ home, projects, items, projectName, onNewProject, onCalendar, intro }: {
@@ -179,7 +177,7 @@ function Segmented<V extends string>({ value, onChange, options, className }: {
   )
 }
 
-/** The month, as in Apple Calendar: plain numbers, today in a red circle, a dot under days with posts. */
+/** The month, as in Apple Calendar: plain numbers, today in a solid circle, a dot under days with posts. */
 function MonthCard({ items, projects, project, onProject, today, lane, onPickDay, onExpand }: {
   items: Order[]
   projects: Order[]
@@ -240,8 +238,7 @@ function MonthCard({ items, projects, project, onProject, today, lane, onPickDay
               className="group flex flex-col items-center py-0.5"
             >
               <span
-                className={cn("flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-colors", isToday ? "font-semibold text-white" : "group-hover:bg-hover")}
-                style={isToday ? { backgroundColor: TODAY_RED } : undefined}
+                className={cn("flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-colors", isToday ? "bg-foreground font-semibold text-background" : "group-hover:bg-hover")}
               >
                 {n}
               </span>
@@ -272,7 +269,7 @@ function NowCard({ home, projectName, onNewProject }: { home: Home; projectName:
   return (
     <Card>
       <p className="flex items-center justify-between gap-2 text-[13px]">
-        <span className="font-medium" style={{ color: next.kind === "overdue" ? TODAY_RED : LANE_COLOR.changes }}>{label}</span>
+        <span className="font-medium" style={{ color: next.kind === "overdue" ? "var(--foreground)" : LANE_COLOR.changes }}>{label}</span>
         <span className="truncate text-muted-foreground">{projectName(next.item)}</span>
       </p>
       <p className="mt-1.5 text-[17px] leading-snug font-semibold tracking-[-0.01em]">
@@ -323,8 +320,7 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
             <div key={d.getTime()} className="flex flex-col items-center pb-2.5">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase">{d.toLocaleDateString(locale, { weekday: "short" })}</span>
               <span
-                className={cn("mt-1 flex size-8 items-center justify-center rounded-full text-[17px] tabular-nums", isToday ? "font-semibold text-white" : "font-medium")}
-                style={isToday ? { backgroundColor: TODAY_RED } : undefined}
+                className={cn("mt-1 flex size-8 items-center justify-center rounded-full text-[17px] tabular-nums", isToday ? "bg-foreground font-semibold text-background" : "font-medium")}
               >
                 {d.getDate()}
               </span>
