@@ -11,6 +11,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@dicebear/core": "^9.4.2",
+    "@dicebear/notionists": "^9.4.2",
     "@supabase/supabase-js": "^2.117.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",

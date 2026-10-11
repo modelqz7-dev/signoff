@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowUpRightIcon, CheckIcon, LinkIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon, WaypointsIcon } from "lucide-react"
+import { ArrowUpRightIcon, CheckIcon, LinkIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { Order } from "@/components/dashboard/types"
@@ -11,13 +11,13 @@ import { deleteProject } from "@/lib/orders"
 import { PROJECTS_CHANGED, PROJECT_RENAMED } from "@/lib/panels"
 import { notifyPlanChanged } from "@/lib/use-plan"
 import { cn } from "@/lib/utils"
-import { projectColor } from "@/lib/project-color"
+import { ProjectAvatar } from "@/components/ProjectAvatar"
 import { useT } from "@/lib/i18n"
 
 /**
  * A project in the sidebar, Notion style: the name opens it, and on hover a "⋯" opens a menu to
  * rename, open in a new tab, copy the link or delete it. As a "dot" (the computer's icon rail) it
- * is a round badge in the project's colour; hovering shows its name and the "⋯" beside it.
+ * is the project's generated face; hovering shows its name and the "⋯" beside it.
  */
 export function ProjectRow({ project, active, dot }: { project: { id: string; title: string }; active: boolean; dot?: boolean }) {
   const { t } = useT()
@@ -64,7 +64,6 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
     }
   }
 
-  const color = projectColor(project.id)
   const actions = (
     <button
       type="button"
@@ -93,12 +92,11 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
             aria-label={name}
             onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); router.push(href) } }}
             className={cn(
-              "flex size-12 items-center justify-center rounded-full text-[14px] font-semibold text-white transition-transform hover:scale-105",
+              "flex size-12 items-center justify-center rounded-full transition-transform hover:scale-105",
               active && "ring-2 ring-primary ring-offset-2 ring-offset-card"
             )}
-            style={{ backgroundColor: color }}
           >
-            {initials(name)}
+            <ProjectAvatar id={project.id} className="size-12" />
           </a>
           {/* the name, and the menu button, beside the dot */}
           {!menu && !renaming && (
@@ -120,7 +118,7 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
           menu && !active && "bg-hover text-foreground"
         )}
       >
-        <WaypointsIcon className={cn("size-4 shrink-0", active ? "text-foreground" : "opacity-60")} strokeWidth={1.6} />
+        <ProjectAvatar id={project.id} className="size-5" />
         <span className="truncate">{name}</span>
       </a>
       {actions}
@@ -159,12 +157,6 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
       />
     </div>
   )
-}
-
-/** One or two letters for a project's dot: "Bloom Coffee" → "BC". */
-function initials(name: string) {
-  const words = name.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean)
-  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "·"
 }
 
 function MenuItem({ icon: Icon, label, onClick, danger }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; danger?: boolean }) {
