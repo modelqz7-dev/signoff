@@ -8,7 +8,7 @@ import {
 import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
 import type { Order } from "@/components/dashboard/types"
-import { projectColor } from "@/lib/project-color"
+import { ProjectAvatar } from "@/components/ProjectAvatar"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
@@ -301,7 +301,7 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
 }) {
   const { t, locale } = useT()
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i))
-  const shown = LANES.filter((l) => lanes.has(l))
+  const picked = LANES.filter((l) => lanes.has(l))
   const cell = new Map<string, Order[]>()
   for (const o of items) {
     const d = itemDay(o)
@@ -309,12 +309,14 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
     const k = `${d}|${lane(o)}`
     cell.set(k, [...(cell.get(k) ?? []), o])
   }
-  const empty = days.every((d) => shown.every((l) => !cell.get(`${dayKey(d)}|${l}`)?.length))
+  // a stage shows only when it has posts this week, so the week isn't a stack of empty strips
+  const count = (l: Lane) => days.reduce((n, d) => n + (cell.get(`${dayKey(d)}|${l}`)?.length ?? 0), 0)
+  const shown = picked.filter((l) => count(l) > 0)
+  const empty = shown.length === 0
 
   return (
     <div className="min-w-[800px]">
-      <div className="grid grid-cols-[96px_repeat(7,minmax(0,1fr))] gap-x-2">
-        <span />
+      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] gap-x-2">
         {days.map((d) => {
           const isToday = d.getTime() === today.getTime()
           return (
@@ -330,11 +332,11 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
           )
         })}
         {shown.map((l) => (
-          <Row key={l} lane={l} label={t(LANE_LABEL[l])}>
+          <Row key={l} lane={l} label={t(LANE_LABEL[l])} count={count(l)}>
             {days.map((d) => {
               const list = cell.get(`${dayKey(d)}|${l}`) ?? []
               return (
-                <div key={d.getTime()} className="flex min-w-0 flex-col gap-2 border-t border-border py-2.5">
+                <div key={d.getTime()} className="flex min-w-0 flex-col gap-2 pb-1">
                   {list.map((o) => <PostCard key={o.id} item={o} lane={l} projectName={projectName(o)} />)}
                 </div>
               )
@@ -347,22 +349,23 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   )
 }
 
-function Row({ lane, label, children }: { lane: Lane; label: string; children: React.ReactNode }) {
+/** A stage of the week: its name over the whole width, like a section in Apple's lists, then the days. */
+function Row({ lane, label, count, children }: { lane: Lane; label: string; count: number; children: React.ReactNode }) {
   return (
     <>
-      <span className="flex items-start gap-1.5 border-t border-border pt-3 text-[11px] leading-tight font-medium text-muted-foreground">
-        <span className="mt-[3px] size-1.5 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[lane] }} />
+      <div className="col-span-full flex items-center gap-2 border-t border-border pt-3 pb-2 text-[12px] font-semibold whitespace-nowrap">
+        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[lane] }} />
         {label}
-      </span>
+        <span className="font-medium text-muted-foreground tabular-nums">{count}</span>
+      </div>
       {children}
     </>
   )
 }
 
-/** A post on the week: its picture, its project as a coloured dot, its title. */
+/** A post on the week: its picture, its project's face, its title. */
 function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projectName: string }) {
   const { t } = useT()
-  const color = item.project_id ? projectColor(item.project_id) : "#8e8e93"
   const href = `/orders/${lane === "nofile" && item.project_id ? item.project_id : item.id}`
   return (
     <Link href={href} className="block overflow-hidden rounded-xl bg-background transition-colors hover:bg-hover-strong">
@@ -375,7 +378,7 @@ function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projec
       )}
       <span className="block px-2.5 pt-1.5 pb-2">
         <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-          <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+          {item.project_id && <ProjectAvatar id={item.project_id} className="size-4" />}
           <span className="truncate">{projectName}</span>
         </span>
         <span className="mt-0.5 line-clamp-2 text-[13px] leading-snug font-semibold">{item.title}</span>
@@ -477,7 +480,7 @@ function ApprovalsCard({ items, today }: { items: Order[]; today: Date }) {
   )
 }
 
-/** The projects as an Apple list: a coloured dot, the name, approved of all, a chevron. */
+/** The projects as an Apple list: its face, the name, approved of all, a chevron. */
 function ProjectsCard({ home, onNewProject }: { home: Home; onNewProject: () => void }) {
   const { t } = useT()
   return (
@@ -489,7 +492,7 @@ function ProjectsCard({ home, onNewProject }: { home: Home; onNewProject: () => 
         {home.summaries.length === 0 && <p className="py-3 text-[14px] text-muted-foreground">{t("No projects yet.")}</p>}
         {home.summaries.map(({ project, posts, approved }) => (
           <Link key={project.id} href={`/orders/${project.id}`} className="flex items-center gap-2.5 border-b border-border py-2.5 text-[14px] last:border-b-0 hover:opacity-80">
-            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: projectColor(project.id) }} />
+            <ProjectAvatar id={project.id} className="size-7" />
             <span className="flex-1 truncate">{project.title || t("Untitled")}</span>
             <span className="shrink-0 text-muted-foreground tabular-nums">{approved}/{posts.length}</span>
             <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground/60" />
