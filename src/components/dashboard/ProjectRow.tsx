@@ -74,7 +74,7 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
       aria-expanded={menu}
       className={cn(
         "flex size-6 items-center justify-center rounded-md transition-opacity",
-        dot ? "text-white/60 hover:bg-white/10 hover:text-white" : "absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:bg-foreground/10 hover:text-foreground",
+        dot ? "text-muted-foreground hover:bg-hover hover:text-foreground" : "absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:bg-foreground/10 hover:text-foreground",
         !dot && (menu ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100")
       )}
     >
@@ -93,8 +93,8 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
             aria-label={name}
             onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); router.push(href) } }}
             className={cn(
-              "flex size-10 items-center justify-center rounded-full text-[13px] font-bold text-[#1a1a1a] transition-transform hover:scale-105",
-              active && "ring-2 ring-white ring-offset-2 ring-offset-[#161616]"
+              "flex size-10 items-center justify-center rounded-full text-[13px] font-semibold text-white transition-transform hover:scale-105",
+              active && "ring-2 ring-primary ring-offset-2 ring-offset-card"
             )}
             style={{ backgroundColor: color }}
           >
@@ -103,7 +103,7 @@ export function ProjectRow({ project, active, dot }: { project: { id: string; ti
           {/* the name, and the menu button, beside the dot */}
           {!menu && !renaming && (
             <div className="invisible absolute top-1/2 left-full z-40 -translate-y-1/2 pl-3 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
-              <div className="flex items-center gap-1 rounded-xl bg-[#262626] py-1.5 pr-1.5 pl-3 text-[13px] font-medium whitespace-nowrap text-white shadow-lg ring-1 ring-white/10">
+              <div className="flex items-center gap-1 rounded-xl bg-popover py-1.5 pr-1.5 pl-3 text-[13px] font-medium whitespace-nowrap text-popover-foreground shadow-lg ring-1 ring-border">
                 {name}
                 {actions}
               </div>

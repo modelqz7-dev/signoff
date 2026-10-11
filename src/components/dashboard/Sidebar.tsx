@@ -244,9 +244,9 @@ function Rail({ activePage, panel, onPanel, beta }: {
   ]
 
   return (
-    <div className="flex h-full w-[82px] flex-col items-center rounded-[22px] bg-[#161616] py-4 text-[#8d8d8d] ring-1 ring-white/[0.06]">
-      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-10 items-center justify-center rounded-xl hover:bg-white/[0.06]">
-        <LogoMark surface="dark" className="size-8" />
+    <div className="flex h-full w-[82px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-10 items-center justify-center rounded-xl hover:bg-hover">
+        <LogoMark className="size-8" />
       </Link>
 
       <nav className="flex flex-col items-center gap-1.5">
@@ -272,7 +272,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
         )}
       </nav>
 
-      <div className="my-4 h-px w-8 bg-white/[0.08]" />
+      <div className="my-4 h-px w-8 bg-border" />
 
       {/* projects as dots, newest first */}
       <div className="flex flex-col items-center gap-2.5">
@@ -286,7 +286,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
           onClick={() => setCreating(true)}
           aria-label={t("New project")}
           title={t("New project")}
-          className="mt-1 flex size-10 items-center justify-center rounded-full bg-[#ec4f9a] text-white transition-transform hover:scale-105"
+          className="mt-1 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
         >
           <PlusIcon className="size-5" />
         </button>
@@ -324,13 +324,13 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
 }) {
   const cls = cn(
     "relative flex size-10 items-center justify-center rounded-xl transition-colors",
-    active ? "bg-white/[0.1] text-white" : "hover:bg-white/[0.06] hover:text-white"
+    active ? "bg-hover-strong text-primary" : "hover:bg-hover hover:text-foreground"
   )
   const body = (
     <>
       <Icon className="size-[18px]" />
-      {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ec4f9a] px-1 text-[10px] font-bold text-white">{badge}</span>}
-      {locked && <LockIcon className="absolute right-1.5 bottom-1.5 size-2.5 text-white/70" />}
+      {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-bold text-white">{badge}</span>}
+      {locked && <LockIcon className="absolute right-1.5 bottom-1.5 size-2.5 text-muted-foreground" />}
     </>
   )
   return (
@@ -340,16 +340,16 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
         : <button type="button" onClick={onClick} aria-label={label} className={cls}>{body}</button>}
       <div className="invisible absolute top-1/2 left-full z-40 -translate-y-1/2 pl-3 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
         {menu ? (
-          <div className="flex w-52 flex-col gap-0.5 rounded-xl bg-[#262626] p-1.5 shadow-lg ring-1 ring-white/10">
+          <div className="flex w-52 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-border">
             {menu.map((m) => (
-              <Link key={m.href} href={m.href} className="rounded-lg px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-white/85 hover:bg-white/[0.08] hover:text-white">{m.label}</Link>
+              <Link key={m.href} href={m.href} className="rounded-lg px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-popover-foreground hover:bg-hover">{m.label}</Link>
             ))}
           </div>
         ) : (
-          <span className="flex items-center gap-2 rounded-lg bg-[#262626] px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-white shadow-lg ring-1 ring-white/10">
+          <span className="flex items-center gap-2 rounded-lg bg-popover px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap text-popover-foreground shadow-lg ring-1 ring-border">
             {label}
-            {hint && <span className="text-[11px] text-white/50">{hint}</span>}
-            {locked && <span className="text-[11px] text-white/50">Pro</span>}
+            {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
+            {locked && <span className="text-[11px] text-muted-foreground">Pro</span>}
           </span>
         )}
       </div>
@@ -357,14 +357,14 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   )
 }
 
-/** Light or dark: a capsule with a sun and a moon, the current one on yellow. */
+/** Light or dark, as an Apple segmented control with a sun and a moon. */
 function ThemeSwitch() {
   const { t } = useT()
   const theme = useTheme()
   const dark = theme === "dark"
   const pick = (next: "light" | "dark") => (e: React.MouseEvent) => setTheme(next, { x: e.clientX, y: e.clientY })
   return (
-    <div role="radiogroup" aria-label={t("Appearance")} className="flex items-center gap-0.5 rounded-full bg-[#242424] p-[3px] ring-1 ring-white/[0.06]">
+    <div role="radiogroup" aria-label={t("Appearance")} className="flex items-center gap-0.5 rounded-full bg-muted p-0.5">
       {([["light", SunIcon, t("Light theme")], ["dark", MoonIcon, t("Dark theme")]] as const).map(([id, Icon, label]) => {
         const on = (id === "dark") === dark
         return (
@@ -376,7 +376,7 @@ function ThemeSwitch() {
             aria-label={label}
             title={label}
             onClick={pick(id)}
-            className={cn("flex size-7 items-center justify-center rounded-full transition-colors", on ? "bg-[#fdc019] text-[#1a1a1a]" : "text-white/55 hover:text-white")}
+            className={cn("flex size-7 items-center justify-center rounded-full transition-colors", on ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}
           >
             <Icon className="size-3.5" />
           </button>
@@ -522,10 +522,10 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
     return (
       <div ref={ref} className="relative">
         <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={name}
-          className="flex size-10 items-center justify-center rounded-full ring-2 ring-white/10 transition-shadow hover:ring-white/30">
+          className="flex size-10 items-center justify-center rounded-full ring-2 ring-border transition-shadow hover:ring-foreground/20">
           <Avatar className="size-9">
             <AvatarImage key={photo} src={photo} alt="" />
-            <AvatarFallback className="bg-[#f8ebcb] text-[11px] font-bold text-[#1a1a1a]">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">{initials}</AvatarFallback>
           </Avatar>
         </button>
         {open && (
