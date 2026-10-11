@@ -251,9 +251,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
   return (
     <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
-      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-12 items-center justify-center rounded-2xl hover:bg-hover">
-        <LogoMark className="size-9" />
-      </Link>
+      <AppSwitcher linkMode={activePage.startsWith("link")} beta={beta || activePage.startsWith("link")} onSoon={() => setSoon("page")} />
 
       <nav className="flex flex-col items-center gap-1.5">
         <RailItem label={t("Home")} href="/dashboard" active={activePage === "dashboard"} icon={HomeIcon} />
@@ -357,6 +355,54 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
           </span>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * The logo: opens the switch between Nodly's two sides, the projects (approvals) and My page (the
+ * public link page with its requests), like switching workspaces in Notion.
+ */
+function AppSwitcher({ linkMode, beta, onSoon }: { linkMode: boolean; beta: boolean; onSoon: () => void }) {
+  const { t } = useT()
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
+    document.addEventListener("mousedown", onDown)
+    document.addEventListener("keydown", onKey)
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey) }
+  }, [open])
+  const go = (href: string | null) => { setOpen(false); if (href) router.push(href); else onSoon() }
+  const sides = [
+    { id: "projects", on: !linkMode, href: "/dashboard", title: "Nodly", line: t("Projects and client approvals"), icon: <LogoMark className="size-8" /> },
+    { id: "link", on: linkMode, href: beta ? "/link" : null, title: t("My page"), line: beta ? t("Your link page and requests") : t("soon"),
+      icon: <span className="flex size-8 items-center justify-center rounded-[9px] bg-foreground text-background"><Link2Icon className="size-[18px]" strokeWidth={2} /></span> },
+  ]
+  return (
+    <div ref={ref} className="relative mb-5">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Nodly" aria-haspopup="menu" aria-expanded={open}
+        className={cn("flex size-12 items-center justify-center rounded-2xl transition-colors hover:bg-hover", open && "bg-hover")}>
+        {linkMode ? sides[1].icon : <LogoMark className="size-9" />}
+      </button>
+      {open && (
+        <div role="menu" className="absolute top-0 left-[calc(100%+14px)] z-40 flex w-80 flex-col gap-0.5 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lg ring-1 ring-border animate-in fade-in zoom-in-95 duration-150">
+          {sides.map((s) => (
+            <button key={s.id} type="button" role="menuitemradio" aria-checked={s.on} onClick={() => go(s.href)}
+              className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover">
+              {s.icon}
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-semibold">{s.title}</span>
+                <span className="block truncate text-[12px] text-muted-foreground">{s.line}</span>
+              </span>
+              {s.on && <CheckIcon className="size-4 shrink-0" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
