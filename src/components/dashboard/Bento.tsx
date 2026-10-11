@@ -9,6 +9,7 @@ import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
 import type { Order } from "@/components/dashboard/types"
 import { ProjectAvatar } from "@/components/ProjectAvatar"
+import { PlanPosts } from "@/components/dashboard/PlanPosts"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
@@ -37,7 +38,7 @@ const LANE_LABEL: Record<Lane, string> = { changes: "With changes", waiting: "Wa
 const LANE_COLOR: Record<Lane, string> = { changes: "#ff9500", waiting: "#8e8e93", nofile: "#c7c7cc", approved: "#34c759" }
 type View = "week" | "projects" | "list"
 
-export function BentoHome({ home, projects, items, projectName, onNewProject, onCalendar, intro }: {
+export function BentoHome({ home, projects, items, projectName, onNewProject, onCalendar, onPlanned, intro }: {
   home: Home
   /** Shown on top of the list view: the getting-started steps. */
   intro?: React.ReactNode
@@ -46,6 +47,8 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   projectName: (o: Order) => string
   onNewProject: () => void
   onCalendar: () => void
+  /** Posts (and maybe their new project) just planned on the picked days. */
+  onPlanned: (rows: Order[]) => void
 }) {
   const { t, locale } = useT()
   const today = startOfDay(new Date(home.now))
@@ -108,18 +111,22 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
             options={[["week", t("Week")], ["projects", t("Projects")], ["list", t("List")]]}
           />
           <div className="flex items-center justify-self-end gap-1">
-            {picked.length > 0 ? (
+            {picked.length > 0 ? (<>
+              <PlanPosts days={pickedDays} projects={projects} items={items} onPlanned={onPlanned} />
               <button type="button" onClick={() => setPicked([])} className="flex h-8 items-center gap-1.5 rounded-full bg-muted pr-2.5 pl-3 text-[13px] font-medium hover:bg-hover-strong">
                 {t("{n} days picked", { n: picked.length })}<XIcon className="size-3.5 text-muted-foreground" />
               </button>
-            ) : <>
+            </>) : <>
             <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-5" /></button>
             <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2.5 py-1 text-[13px] font-medium text-primary hover:bg-hover">{t("Today")}</button>
             <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-5" /></button>
             </>}
-            <button type="button" onClick={onNewProject} className="ml-2 flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
-              <PlusIcon className="size-4" />{t("New project")}
-            </button>
+            {/* while days are picked, "Plan posts" takes the one primary spot */}
+            {!picked.length && (
+              <button type="button" onClick={onNewProject} className="ml-2 flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
+                <PlusIcon className="size-4" />{t("New project")}
+              </button>
+            )}
           </div>
         </div>
 
