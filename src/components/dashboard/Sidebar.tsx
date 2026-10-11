@@ -81,8 +81,8 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Computers: a narrow rail of icons, as in the reference design */}
     <aside
-      className="sticky top-0 z-30 hidden h-screen w-[92px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
-      style={{ marginLeft: open ? 0 : -92, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+      className="sticky top-0 z-30 hidden h-screen w-[108px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
+      style={{ marginLeft: open ? 0 : -108, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
     >
       <Rail activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
@@ -244,9 +244,9 @@ function Rail({ activePage, panel, onPanel, beta }: {
   ]
 
   return (
-    <div className="flex h-full w-[82px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
-      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-10 items-center justify-center rounded-xl hover:bg-hover">
-        <LogoMark className="size-8" />
+    <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+      <Link href="/dashboard" aria-label="Nodly" className="mb-5 flex size-12 items-center justify-center rounded-2xl hover:bg-hover">
+        <LogoMark className="size-9" />
       </Link>
 
       <nav className="flex flex-col items-center gap-1.5">
@@ -272,7 +272,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
         )}
       </nav>
 
-      <div className="my-4 h-px w-8 bg-border" />
+      <div className="my-4 h-px w-10 bg-border" />
 
       {/* projects as dots, newest first */}
       <div className="flex flex-col items-center gap-2.5">
@@ -286,9 +286,9 @@ function Rail({ activePage, panel, onPanel, beta }: {
           onClick={() => setCreating(true)}
           aria-label={t("New project")}
           title={t("New project")}
-          className="mt-1 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+          className="mt-1 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90"
         >
-          <PlusIcon className="size-5" />
+          <PlusIcon className="size-6" strokeWidth={2.4} />
         </button>
       </div>
 
@@ -315,7 +315,7 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   label: string
   hint?: string
   href?: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
   active?: boolean
   onClick?: (e: React.MouseEvent) => void
   badge?: number
@@ -323,12 +323,12 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   menu?: { href: string; label: string }[]
 }) {
   const cls = cn(
-    "relative flex size-10 items-center justify-center rounded-xl transition-colors",
+    "relative flex size-12 items-center justify-center rounded-2xl transition-colors",
     active ? "bg-hover-strong text-primary" : "hover:bg-hover hover:text-foreground"
   )
   const body = (
     <>
-      <Icon className="size-[18px]" />
+      <Icon className="size-[22px]" strokeWidth={2.2} />
       {!!badge && <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-bold text-white">{badge}</span>}
       {locked && <LockIcon className="absolute right-1.5 bottom-1.5 size-2.5 text-muted-foreground" />}
     </>
@@ -376,9 +376,9 @@ function ThemeSwitch() {
             aria-label={label}
             title={label}
             onClick={pick(id)}
-            className={cn("flex size-7 items-center justify-center rounded-full transition-colors", on ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}
+            className={cn("flex size-8 items-center justify-center rounded-full transition-colors", on ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-4" strokeWidth={2.2} />
           </button>
         )
       })}
@@ -522,8 +522,8 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
     return (
       <div ref={ref} className="relative">
         <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={name}
-          className="flex size-10 items-center justify-center rounded-full ring-2 ring-border transition-shadow hover:ring-foreground/20">
-          <Avatar className="size-9">
+          className="flex size-12 items-center justify-center rounded-full ring-2 ring-border transition-shadow hover:ring-foreground/20">
+          <Avatar className="size-11">
             <AvatarImage key={photo} src={photo} alt="" />
             <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">{initials}</AvatarFallback>
           </Avatar>
