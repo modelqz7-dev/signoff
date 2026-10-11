@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 const matches = (t: T, q: string) => (item: GalleryItem) => `${t(item.title)} ${t(item.description)} ${item.title}`.toLowerCase().includes(q)
 
 /**
- * The template gallery: search on top, an empty canvas on the right, tinted cards below.
+ * The template gallery: search on top, an empty canvas on the right, monochrome cards below.
  * With onPosts it is the New project dialog, in two tabs: Posts (an empty post-approval project
  * or a post plan, on every plan) and Canvas (an empty canvas or a canvas template; paid: with
  * canvasLocked they show a lock and onLocked runs instead).
@@ -96,12 +96,12 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
               plans.length > 0 || !q ? (
                 <Section>
                   {!q && (
-                    <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} tone="#3f9a5b" onClick={() => pickPosts(null)}>
+                    <Card title={t("Post approval")} description={t("Upload the posts, send the client a link, collect the approvals.")} onClick={() => pickPosts(null)}>
                       <PostsPreview />
                     </Card>
                   )}
                   {plans.map((tpl) => (
-                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} onClick={() => pickPosts(tpl)}>
+                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} onClick={() => pickPosts(tpl)}>
                       <TablePreview item={tpl} />
                     </Card>
                   ))}
@@ -112,12 +112,12 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
               canvases.length > 0 || (isNew && !q) ? (
                 <Section title={isNew ? undefined : t("For SMM")}>
                   {isNew && !q && (
-                    <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} tone="#3b78d8" locked={canvasLocked} onClick={() => pick(null)}>
+                    <Card title={t("Empty canvas")} description={t("A blank board: blocks, posts, notes and paths, laid out your way.")} locked={canvasLocked} onClick={() => pick(null)}>
                       <CanvasPreview />
                     </Card>
                   )}
                   {canvases.map((tpl) => (
-                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} tone={tpl.tone} locked={canvasLocked} onClick={() => pick(tpl)}>
+                    <Card key={tpl.id} title={t(tpl.title)} description={t(tpl.description)} locked={canvasLocked} onClick={() => pick(tpl)}>
                       <TablePreview item={tpl} />
                     </Card>
                   ))}
@@ -193,11 +193,10 @@ function ProBadge() {
   )
 }
 
-/** A gallery card: name and line on a tint, a window onto the result below. */
-function Card({ title, description, tone, locked, onClick, children }: {
+/** A gallery card: name and line on a soft grey, a window onto the result below. */
+function Card({ title, description, locked, onClick, children }: {
   title: string
   description: string
-  tone: string
   locked?: boolean
   onClick: () => void
   children: React.ReactNode
@@ -206,18 +205,14 @@ function Card({ title, description, tone, locked, onClick, children }: {
     <button
       type="button"
       onClick={onClick}
-      className="relative overflow-hidden rounded-2xl text-left ring-1 outline-none focus-visible:ring-2"
-      style={{
-        backgroundColor: `color-mix(in oklab, ${tone} 9%, var(--popover))`,
-        ["--tw-ring-color" as string]: `color-mix(in oklab, ${tone} 32%, transparent)`,
-      }}
+      className="relative overflow-hidden rounded-2xl bg-foreground/[0.04] text-left ring-1 ring-border outline-none transition-colors hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring"
     >
       {locked && <span className="absolute top-4 right-4"><ProBadge /></span>}
       <div className="px-5 pt-5">
         <p className="pr-14 text-[15px] font-semibold text-foreground">{title}</p>
         <p className="mt-1 text-sm leading-snug text-muted-foreground">{description}</p>
       </div>
-      <div className="mt-4 ml-5 h-36 overflow-hidden rounded-tl-xl bg-popover ring-1" style={{ ["--tw-ring-color" as string]: `color-mix(in oklab, ${tone} 28%, transparent)` }}>
+      <div className="mt-4 ml-5 h-36 overflow-hidden rounded-tl-xl bg-popover ring-1 ring-border">
         {children}
       </div>
     </button>
@@ -227,17 +222,17 @@ function Card({ title, description, tone, locked, onClick, children }: {
 /** Post approval: the posts as a table, the client's face and where each one stands. */
 function PostsPreview() {
   const { t } = useT()
-  const rows: [string, string][] = [["Approved", "#22a55a"], ["Changes", "#e08a2e"], ["Awaiting", "#9b9b9b"]]
+  const rows = ["Approved", "Changes", "Awaiting"]
   return (
     <div className="flex h-full flex-col gap-2.5 p-4 text-[11px]">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
-        <CircleCheckIcon className="size-3.5" style={{ color: "#3f9a5b" }} />
+        <CircleCheckIcon className="size-3.5" />
         {t("Post approval")}
       </p>
       <div className="grid grid-cols-[1.1fr_1fr_0.9fr] gap-x-3 text-muted-foreground">
         <span className="truncate">{t("Post")}</span><span className="truncate">{t("Client")}</span><span className="truncate">{t("Status")}</span>
       </div>
-      {rows.map(([label, tone], i) => (
+      {rows.map((label, i) => (
         <div key={label} className="grid grid-cols-[1.1fr_1fr_0.9fr] items-center gap-x-3">
           <span className="flex items-center gap-1.5">
             <span className="size-4 shrink-0 rounded-[3px] bg-foreground/10" />
@@ -248,12 +243,7 @@ function PostsPreview() {
             <img src={`/avatars/person-${i + 4}.svg`} alt="" className="size-4 shrink-0 rounded-full ring-1 ring-foreground/10" />
             <span className="h-1.5 w-3/5 rounded-full bg-foreground/10" />
           </span>
-          <span
-            className="w-fit max-w-full truncate rounded px-1.5 py-px text-[10px] font-medium"
-            style={{ backgroundColor: `color-mix(in oklab, ${tone} 22%, transparent)`, color: `color-mix(in oklab, ${tone} 75%, var(--foreground))` }}
-          >
-            {t(label)}
-          </span>
+          <Tag>{t(label)}</Tag>
         </div>
       ))}
     </div>
@@ -266,16 +256,16 @@ function CanvasPreview() {
     <div className="relative h-full">
       <span className="absolute top-8 left-6 h-9 w-24 rounded-lg bg-foreground/[0.06] ring-1 ring-foreground/10" />
       <span className="absolute top-20 left-44 h-9 w-24 rounded-lg bg-foreground/[0.06] ring-1 ring-foreground/10" />
-      <span className="absolute top-6 left-52 h-7 w-16 rounded-sm bg-[#fdf1a8] dark:bg-[#5a4d17]" />
-      <svg className="absolute inset-0 size-full" aria-hidden>
-        <path d="M120 50 C 150 50, 140 98, 176 98" fill="none" stroke="#3b78d8" strokeWidth="1.5" />
+      <span className="absolute top-6 left-52 h-7 w-16 rounded-sm bg-foreground/[0.12]" />
+      <svg className="absolute inset-0 size-full text-foreground/35" aria-hidden>
+        <path d="M120 50 C 150 50, 140 98, 176 98" fill="none" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     </div>
   )
 }
 
-// One icon per template, in its tint.
-const ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+// One icon per template.
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "content-month": CalendarDaysIcon,
   launch: RocketIcon,
   pillars: LayoutGridIcon,
@@ -291,8 +281,10 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; style?: Re
   "posts-intro": HandshakeIcon,
 }
 
-// Tag colours for the preview rows, like Notion's select options.
-const TAG_TONES = ["#3b82f6", "#22a55a", "#e08a2e", "#a855f7", "#e05252", "#c9a227"]
+/** A select option in a preview row, Notion style but in grey. */
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="w-fit max-w-full truncate rounded bg-foreground/[0.08] px-1.5 py-px text-[10px] font-medium text-foreground/75">{children}</span>
+}
 
 /** The card's window: the template's icon and name, three columns and three tagged rows. */
 function TablePreview({ item: tpl }: { item: GalleryItem }) {
@@ -302,14 +294,13 @@ function TablePreview({ item: tpl }: { item: GalleryItem }) {
   return (
     <div className="flex h-full flex-col gap-2.5 p-4 text-[11px]">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
-        <Icon className="size-3.5" style={{ color: tpl.tone }} />
+        <Icon className="size-3.5" />
         {t(tpl.title)}
       </p>
       <div className="grid grid-cols-[1.1fr_1fr_0.9fr] gap-x-3 text-muted-foreground">
         {tpl.preview.columns.map((c) => <span key={c} className="truncate">{t(c)}</span>)}
       </div>
       {tpl.preview.tags.map((tag, i) => {
-        const tone = TAG_TONES[(offset + i) % TAG_TONES.length]
         return (
           <div key={i} className="grid grid-cols-[1.1fr_1fr_0.9fr] items-center gap-x-3">
             <span className="h-1.5 w-4/5 rounded-full bg-foreground/15" />
@@ -321,12 +312,7 @@ function TablePreview({ item: tpl }: { item: GalleryItem }) {
               )}
               <span className="h-1.5 w-3/5 rounded-full bg-foreground/10" />
             </span>
-            <span
-              className="w-fit max-w-full truncate rounded px-1.5 py-px text-[10px] font-medium"
-              style={{ backgroundColor: `color-mix(in oklab, ${tone} 22%, transparent)`, color: `color-mix(in oklab, ${tone} 75%, var(--foreground))` }}
-            >
-              {t(tag)}
-            </span>
+            <Tag>{t(tag)}</Tag>
           </div>
         )
       })}

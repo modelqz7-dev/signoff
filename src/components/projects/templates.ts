@@ -13,8 +13,6 @@ export type GalleryItem = {
   id: string
   title: string
   description: string
-  /** Card tint, any CSS colour. */
-  tone: string
   /** What the gallery card shows, Notion style: three column names and a tag per row. */
   preview: { columns: [string, string, string]; tags: [string, string, string]; people?: boolean }
 }
@@ -34,7 +32,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "content-month",
     title: "Content plan for a month",
     description: "A brief, four weeks and the dates to keep in mind.",
-    tone: "#3f9a5b",
     preview: { columns: ["Week", "Theme", "Format"], tags: ["Post", "Stories", "Reel"] },
     nodes: [
       heading(0, -120, "Content plan for the month"),
@@ -51,7 +48,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "launch",
     title: "Product launch",
     description: "Teaser, announcement, launch day and the follow-up.",
-    tone: "#3b78d8",
     preview: { columns: ["Stage", "What we post", "When"], tags: ["Teaser", "Announcement", "Launch day"] },
     nodes: [
       block(0, 0, "Teaser", "2–3 days before: a hint, no details."),
@@ -66,7 +62,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "pillars",
     title: "Content pillars",
     description: "What the account posts about, around one centre.",
-    tone: "#d9822b",
     preview: { columns: ["Pillar", "Examples", "Share of posts"], tags: ["Useful", "Selling", "Fun"] },
     nodes: [
       block(330, 230, "Content pillars", "What we post about, and how often."),
@@ -82,7 +77,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "approval-week",
     title: "Weekly approval cycle",
     description: "From ideas to published, with the client's yes in the middle.",
-    tone: "#8b5cd6",
     preview: { columns: ["Step", "Owner", "Status"], tags: ["Ideas", "In review", "Approved"], people: true },
     nodes: [
       block(0, 0, "Ideas", "Topics for the week."),
@@ -98,7 +92,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "onboarding",
     title: "Client onboarding",
     description: "Everything to collect before the first post.",
-    tone: "#d4566b",
     preview: { columns: ["Item", "From the client", "Status"], tags: ["Received", "Waiting", "Received"], people: true },
     nodes: [
       heading(0, -120, "New client"),
@@ -115,7 +108,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "brainstorm",
     title: "Brainstorm",
     description: "One topic in the middle, ideas on stickies around it.",
-    tone: "#c9a227",
     preview: { columns: ["Idea", "Author", "Priority"], tags: ["High", "Medium", "Low"], people: true },
     nodes: [
       block(300, 200, "Topic", "What are we looking for?"),
@@ -132,7 +124,6 @@ export const TEMPLATES: CanvasTemplate[] = [
     id: "funnel",
     title: "Content funnel",
     description: "Reach, engagement, request: what each piece of content does.",
-    tone: "#2a9d99",
     preview: { columns: ["Stage", "Content", "Goal"], tags: ["Reach", "Engagement", "Sale"] },
     nodes: [
       block(0, 0, "Reach", "Reels and trends that bring new people."),
@@ -166,7 +157,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-month",
     title: "Month of posts",
     description: "12 posts, three a week: Monday, Wednesday, Friday.",
-    tone: "#3f9a5b",
     preview: { columns: ["Post", "Status", "Day"], tags: ["Monday", "Wednesday", "Friday"] },
     posts: [1, 2, 3, 4].flatMap((n) => week(n, [0, 2, 4])),
   },
@@ -174,7 +164,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-week",
     title: "Week of posts",
     description: "A post every weekday, for a client who posts a lot.",
-    tone: "#3b78d8",
     preview: { columns: ["Post", "Status", "Day"], tags: ["Monday", "Tuesday", "Wednesday"] },
     posts: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((d, i) => ({ title: d, day: i })),
   },
@@ -182,7 +171,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-stories",
     title: "Stories for a week",
     description: "Seven stories, one a day, approved in one go.",
-    tone: "#d4566b",
     preview: { columns: ["Story", "Status", "Day"], tags: ["Monday", "Tuesday", "Wednesday"] },
     posts: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d, i) => ({ title: `Stories · ${d}`, day: i })),
   },
@@ -190,7 +178,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-launch",
     title: "Launch posts",
     description: "Teaser, announcement, launch day and the follow-up.",
-    tone: "#8b5cd6",
     preview: { columns: ["Date", "Client", "Post"], tags: ["Teaser", "Announcement", "Launch day"], people: true },
     posts: [
       { title: "Teaser", day: 0 },
@@ -203,7 +190,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-sale",
     title: "Sale campaign",
     description: "Announce it, remind people, last day, results.",
-    tone: "#d9822b",
     preview: { columns: ["Date", "Status", "Post"], tags: ["Announcement", "Reminder", "Last day"] },
     posts: [
       { title: "Sale announcement", day: 0 },
@@ -216,7 +202,6 @@ export const POST_TEMPLATES: PostTemplate[] = [
     id: "posts-intro",
     title: "Brand introduction",
     description: "For a new account: who they are, the team, the product, reviews.",
-    tone: "#2a9d99",
     preview: { columns: ["Date", "Client", "Post"], tags: ["About us", "Team", "Reviews"], people: true },
     posts: [
       { title: "About us", day: 0 },
