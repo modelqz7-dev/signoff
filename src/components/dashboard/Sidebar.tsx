@@ -357,32 +357,28 @@ function RailItem({ label, hint, href, icon: Icon, active, onClick, badge, locke
   )
 }
 
-/** Light or dark, as an Apple segmented control with a sun and a moon. */
+/** Light or dark as one switch: a knob carrying the sun or the moon slides across, the page fades over. */
 function ThemeSwitch() {
   const { t } = useT()
-  const theme = useTheme()
-  const dark = theme === "dark"
-  const pick = (next: "light" | "dark") => (e: React.MouseEvent) => setTheme(next, { x: e.clientX, y: e.clientY })
+  const dark = useTheme() === "dark"
   return (
-    <div role="radiogroup" aria-label={t("Appearance")} className="flex items-center gap-0.5 rounded-full bg-muted p-0.5">
-      {([["light", SunIcon, t("Light theme")], ["dark", MoonIcon, t("Dark theme")]] as const).map(([id, Icon, label]) => {
-        const on = (id === "dark") === dark
-        return (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            aria-label={label}
-            title={label}
-            onClick={pick(id)}
-            className={cn("flex size-8 items-center justify-center rounded-full transition-colors", on ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}
-          >
-            <Icon className="size-4" strokeWidth={1.8} />
-          </button>
-        )
-      })}
-    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      aria-label={t("Dark theme")}
+      title={dark ? t("Light theme") : t("Dark theme")}
+      onClick={() => setTheme(dark ? "light" : "dark")}
+      className="relative h-8 w-[60px] rounded-full bg-muted p-0.5 transition-colors hover:bg-hover-strong"
+    >
+      <span
+        className="relative flex size-7 items-center justify-center rounded-full bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] dark:bg-[#636366]"
+        style={{ transform: `translateX(${dark ? 28 : 0}px)` }}
+      >
+        <SunIcon className={cn("absolute size-4 transition-all duration-500", dark ? "scale-50 -rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} strokeWidth={1.8} />
+        <MoonIcon className={cn("absolute size-4 transition-all duration-500", dark ? "scale-100 rotate-0 opacity-100" : "scale-50 rotate-90 opacity-0")} strokeWidth={1.8} />
+      </span>
+    </button>
   )
 }
 

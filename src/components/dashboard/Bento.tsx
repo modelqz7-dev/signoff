@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowUpRightIcon, CheckCircle2Icon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon,
+  ArrowUpRightIcon, CheckCircle2Icon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon, XIcon,
 } from "lucide-react"
 import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
 // The home page, after Apple's Human Interface Guidelines: grouped cards on a quiet page, content
-// before decoration, one blue accent for actions and Apple's system colours for states. Left, the
+// before decoration, one monochrome accent for actions and Apple's system colours for states. Left, the
 // month (like Apple Calendar) and the one thing to do now; right, the week of posts by where each
 // one stands; below, the statuses (they filter the week), approvals this week and the projects.
 
@@ -24,6 +24,10 @@ const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDat
 const mondayOf = (d: Date) => { const s = startOfDay(d); return new Date(s.getFullYear(), s.getMonth(), s.getDate() - ((s.getDay() + 6) % 7)) }
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
 /** The day an item is for: a post's publishing day, a file's deadline. */
+const fromKey = (k: string) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d) }
+const MAX_PICKED = 7
+/** Height of a day in the month, so the line between picked days can find their circles. */
+const ROW = 42
 const itemDay = (o: Order) => (o.publish_on || o.deadline || "").slice(0, 10) || null
 
 type Lane = "changes" | "waiting" | "nofile" | "approved"
@@ -49,6 +53,16 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   const [project, setProject] = useState<string | null>(null)
   const [lanes, setLanes] = useState<Set<Lane>>(() => new Set(LANES))
   const [view, setView] = useState<View>("week")
+  // days picked in the month, in the order they were tapped (at most a week's worth); while there are
+  // any, the big card shows just those days side by side
+  const [picked, setPicked] = useState<string[]>([])
+  const pickedDays = [...picked].sort().map(fromKey)
+  const shownDays = pickedDays.length ? pickedDays : Array.from({ length: 7 }, (_, i) => addDays(week, i))
+  const toggleDay = (d: Date) => {
+    const k = dayKey(d)
+    setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k].slice(-MAX_PICKED)))
+    setView("week")
+  }
 
   const lane = (o: Order): Lane =>
     !o.file_url ? "nofile" : o.status === "changes" || (home.open.get(o.id)?.length && !isDone(o)) ? "changes" : isDone(o) ? "approved" : "waiting"
@@ -75,7 +89,8 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
           onProject={setProject}
           today={today}
           lane={lane}
-          onPickDay={(d) => { setWeek(mondayOf(d)); setView("week") }}
+          picked={picked}
+          onPickDay={toggleDay}
           onExpand={onCalendar}
         />
         <NowCard home={home} projectName={projectName} onNewProject={onNewProject} />
@@ -84,7 +99,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
       {/* right: the week */}
       <Card className="flex min-h-[520px] flex-col p-5 lg:col-span-2 lg:min-h-0">
         <div className="grid grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
-          <h1 className="text-[26px] leading-tight font-bold tracking-[-0.02em]">{monthTitle(addDays(week, 3), locale)}</h1>
+          <h1 className="text-[26px] leading-tight font-bold tracking-[-0.02em]">{monthTitle(pickedDays[0] ?? addDays(week, 3), locale)}</h1>
           <Segmented
             className="order-last col-span-2 justify-self-center sm:order-none sm:col-span-1"
             value={view}
@@ -92,9 +107,15 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
             options={[["week", t("Week")], ["projects", t("Projects")], ["list", t("List")]]}
           />
           <div className="flex items-center justify-self-end gap-1">
+            {picked.length > 0 ? (
+              <button type="button" onClick={() => setPicked([])} className="flex h-8 items-center gap-1.5 rounded-full bg-muted pr-2.5 pl-3 text-[13px] font-medium hover:bg-hover-strong">
+                {t("{n} days picked", { n: picked.length })}<XIcon className="size-3.5 text-muted-foreground" />
+              </button>
+            ) : <>
             <button type="button" aria-label={t("Previous week")} onClick={() => setWeek(addDays(week, -7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-5" /></button>
             <button type="button" onClick={() => setWeek(mondayOf(today))} className="rounded-full px-2.5 py-1 text-[13px] font-medium text-primary hover:bg-hover">{t("Today")}</button>
             <button type="button" aria-label={t("Next week")} onClick={() => setWeek(addDays(week, 7))} className="flex size-8 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-5" /></button>
+            </>}
             <button type="button" onClick={onNewProject} className="ml-2 flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
               <PlusIcon className="size-4" />{t("New project")}
             </button>
@@ -102,7 +123,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         </div>
 
         <div className="mt-4 min-h-0 flex-1 overflow-auto">
-          {view === "week" && <WeekGrid week={week} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} />}
+          {view === "week" && <WeekGrid days={shownDays} isWeek={!pickedDays.length} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} />}
           {view === "projects" && <ProjectCards home={home} onNewProject={onNewProject} />}
           {view === "list" && (
             <div className="grid gap-6 xl:grid-cols-2">
@@ -177,14 +198,19 @@ function Segmented<V extends string>({ value, onChange, options, className }: {
   )
 }
 
-/** The month, as in Apple Calendar: plain numbers, today in a solid circle, a dot under days with posts. */
-function MonthCard({ items, projects, project, onProject, today, lane, onPickDay, onExpand }: {
+/**
+ * The month, as in Apple Calendar: plain numbers, today ringed, a dot under days with posts. Tapping
+ * days picks them: each fills in, and the picked days are joined in date order by a thick line drawn
+ * from one to the next.
+ */
+function MonthCard({ items, projects, project, onProject, today, lane, picked, onPickDay, onExpand }: {
   items: Order[]
   projects: Order[]
   project: string | null
   onProject: (id: string | null) => void
   today: Date
   lane: (o: Order) => Lane
+  picked: string[]
   onPickDay: (d: Date) => void
   onExpand: () => void
 }) {
@@ -199,6 +225,11 @@ function MonthCard({ items, projects, project, onProject, today, lane, onPickDay
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
   const cells = Array.from({ length: Math.ceil((lead + days) / 7) * 7 }, (_, i) => i - lead + 1)
   const weekdays = Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i).toLocaleDateString(locale, { weekday: "narrow" }))
+  // the cells of the picked days in this month, in date order, joined pairwise
+  const at = [...picked].sort().map(fromKey)
+    .filter((d) => d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth())
+    .map((d) => d.getDate() - 1 + lead)
+  const links = at.slice(1).map((b, i) => [at[i], b] as const)
 
   return (
     <Card className="flex flex-1 flex-col">
@@ -223,26 +254,47 @@ function MonthCard({ items, projects, project, onProject, today, lane, onPickDay
 
       <div className="mt-3 grid grid-cols-7 text-center">
         {weekdays.map((w, i) => <span key={i} className="pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase">{w}</span>)}
+      </div>
+      <div className="relative grid grid-cols-7 text-center">
+        {/* the line joining picked days, under the numbers: each cell is ROW px tall, its circle centred 18px down */}
+        <svg className="pointer-events-none absolute inset-0 size-full text-foreground" aria-hidden>
+          {links.map(([a, b]) => (
+            <line
+              key={`${a}-${b}`}
+              x1={`${((a % 7) + 0.5) * (100 / 7)}%`} y1={Math.floor(a / 7) * ROW + 18}
+              x2={`${((b % 7) + 0.5) * (100 / 7)}%`} y2={Math.floor(b / 7) * ROW + 18}
+              stroke="currentColor" strokeWidth={14} strokeLinecap="round" pathLength={1}
+              className="animate-[draw-line_320ms_cubic-bezier(0.4,0,0.2,1)_both] [stroke-dasharray:1]"
+            />
+          ))}
+        </svg>
         {cells.map((n, i) => {
           if (n < 1 || n > days) return <span key={i} />
           const d = new Date(month.getFullYear(), month.getMonth(), n)
           const list = byDay.get(dayKey(d)) ?? []
           const isToday = d.getTime() === today.getTime()
+          const on = picked.includes(dayKey(d))
           const changes = list.some((o) => lane(o) === "changes")
           return (
             <button
               key={i}
               type="button"
               onClick={() => onPickDay(d)}
+              aria-pressed={on}
               title={list.length ? t("{n} posts", { n: list.length }) : undefined}
-              className="group flex flex-col items-center py-0.5"
+              className="group relative flex flex-col items-center pt-0.5"
+              style={{ height: ROW }}
             >
               <span
-                className={cn("flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-colors", isToday ? "bg-foreground font-semibold text-background" : "group-hover:bg-hover")}
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-[background-color,color,transform] duration-200",
+                  // unpicked days are opaque, so the line passes under them
+                  on ? "scale-105 bg-foreground font-semibold text-background" : cn("bg-card group-hover:bg-muted", isToday && "font-semibold ring-[1.5px] ring-foreground ring-inset")
+                )}
               >
                 {n}
               </span>
-              <span className="mt-0.5 size-1 rounded-full" style={{ backgroundColor: list.length ? (changes ? LANE_COLOR.changes : "var(--muted-foreground)") : "transparent" }} />
+              <span className="mt-0.5 size-1 rounded-full" style={{ backgroundColor: list.length && !on ? (changes ? LANE_COLOR.changes : "var(--muted-foreground)") : "transparent" }} />
             </button>
           )
         })}
@@ -288,8 +340,10 @@ function NowCard({ home, projectName, onNewProject }: { home: Home; projectName:
 }
 
 /** The week: a column per day, a row per stage, every post as a small card. */
-function WeekGrid({ week, today, items, lanes, lane, projectName }: {
-  week: Date
+function WeekGrid({ days, isWeek, today, items, lanes, lane, projectName }: {
+  days: Date[]
+  /** A whole week, rather than days picked in the month. */
+  isWeek: boolean
   today: Date
   items: Order[]
   lanes: Set<Lane>
@@ -297,7 +351,6 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   projectName: (o: Order) => string
 }) {
   const { t, locale } = useT()
-  const days = Array.from({ length: 7 }, (_, i) => addDays(week, i))
   const picked = LANES.filter((l) => lanes.has(l))
   const cell = new Map<string, Order[]>()
   for (const o of items) {
@@ -312,8 +365,8 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
   const empty = shown.length === 0
 
   return (
-    <div className="min-w-[800px]">
-      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] gap-x-2">
+    <div style={{ minWidth: days.length * 112 }}>
+      <div className="grid gap-x-2" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
         {days.map((d) => {
           const isToday = d.getTime() === today.getTime()
           return (
@@ -340,7 +393,7 @@ function WeekGrid({ week, today, items, lanes, lane, projectName }: {
           </Row>
         ))}
       </div>
-      {empty && <p className="pt-6 text-center text-[13px] text-muted-foreground">{t("Nothing goes out this week. Posts show up here on their publishing day.")}</p>}
+      {empty && <p className="pt-6 text-center text-[13px] text-muted-foreground">{isWeek ? t("Nothing goes out this week. Posts show up here on their publishing day.") : t("No posts on these days.")}</p>}
     </div>
   )
 }
