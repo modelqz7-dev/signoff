@@ -14,7 +14,7 @@ import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
-import { FlatLogoMark, LinkMark, Logo } from "@/components/Logo"
+import { LinkMark, Logo, LogoMark } from "@/components/Logo"
 import { setTheme, useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -378,14 +378,14 @@ function AppSwitcher({ linkMode, beta, onSoon }: { linkMode: boolean; beta: bool
   }, [open])
   const go = (href: string | null) => { setOpen(false); if (href) router.push(href); else onSoon() }
   const sides = [
-    { id: "projects", on: !linkMode, href: "/dashboard", label: "Nodly", mark: <FlatLogoMark className="size-9" /> },
+    { id: "projects", on: !linkMode, href: "/dashboard", label: "Nodly", mark: <LogoMark className="size-9" /> },
     { id: "link", on: linkMode, href: beta ? "/link" : null, label: beta ? t("My page") : `${t("My page")} · ${t("soon")}`, mark: <LinkMark className="size-9" /> },
   ]
   return (
     <div ref={ref} className="relative mb-5">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-label={linkMode ? t("My page") : "Nodly"} aria-haspopup="menu" aria-expanded={open}
         className={cn("flex size-12 items-center justify-center rounded-2xl transition-colors hover:bg-hover", open && "bg-hover")}>
-        {linkMode ? <LinkMark className="size-9" /> : <FlatLogoMark className="size-9" />}
+        {linkMode ? <LinkMark className="size-9" /> : <LogoMark className="size-9" />}
       </button>
       {open && (
         <div role="menu" className="absolute top-[calc(100%+8px)] left-1/2 z-40 flex -translate-x-1/2 flex-col gap-1 rounded-2xl bg-popover p-1.5 shadow-lg ring-1 ring-border animate-in fade-in slide-in-from-top-1 duration-150">

@@ -20,12 +20,7 @@ export function LogoMark({ className, surface = "auto" }: { className?: string; 
   )
 }
 
-/** Nodly's keycap seen straight on, for the app's rail (beside My page's mark). */
-export function FlatLogoMark({ className }: { className?: string }) {
-  return <KeyPair light="/brand/nodly-key-flat-light.png" dark="/brand/nodly-key-flat-dark.png" className={className} />
-}
-
-/** My page's mark: the same keycap seen straight on, an L (for Link) in place of the N. */
+/** My page's mark: Nodly's keycap at the same angle, an L (for Link) in place of the N. */
 export function LinkMark({ className }: { className?: string }) {
   return <KeyPair light="/brand/link-key-light.png" dark="/brand/link-key-dark.png" className={className} />
 }
