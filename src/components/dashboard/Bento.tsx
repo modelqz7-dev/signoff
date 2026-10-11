@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowUpRightIcon, CheckCircle2Icon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon, XIcon,
+  CheckCircle2Icon, ChevronDownIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon, XIcon,
 } from "lucide-react"
 import { Thumb } from "@/components/projects/PostBits"
 import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components/dashboard/Home"
@@ -38,7 +38,7 @@ const LANE_LABEL: Record<Lane, string> = { changes: "With changes", waiting: "Wa
 const LANE_COLOR: Record<Lane, string> = { changes: "#ff9500", waiting: "#8e8e93", nofile: "#c7c7cc", approved: "#34c759" }
 type View = "week" | "projects" | "list"
 
-export function BentoHome({ home, projects, items, projectName, onNewProject, onCalendar, onPlanned, intro }: {
+export function BentoHome({ home, projects, items, projectName, onNewProject, onPlanned, intro }: {
   home: Home
   /** Shown on top of the list view: the getting-started steps. */
   intro?: React.ReactNode
@@ -46,14 +46,12 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   items: Order[]
   projectName: (o: Order) => string
   onNewProject: () => void
-  onCalendar: () => void
   /** Posts (and maybe their new project) just planned on the picked days. */
   onPlanned: (rows: Order[]) => void
 }) {
   const { t, locale } = useT()
   const today = startOfDay(new Date(home.now))
   const [week, setWeek] = useState(() => mondayOf(today))
-  const [project, setProject] = useState<string | null>(null)
   const [lanes, setLanes] = useState<Set<Lane>>(() => new Set(LANES))
   const [view, setView] = useState<View>("week")
   // days picked in the month, in the order they were tapped (at most a week's worth); while there are
@@ -71,7 +69,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   const lane = (o: Order): Lane =>
     !o.file_url ? "nofile" : o.status === "changes" || (home.open.get(o.id)?.length && !isDone(o)) ? "changes" : isDone(o) ? "approved" : "waiting"
 
-  const visible = useMemo(() => items.filter((o) => !project || o.project_id === project), [items, project])
+  const visible = items
 
   const counts = useMemo(() => {
     const c: Record<Lane, number> = { changes: 0, waiting: 0, nofile: 0, approved: 0 }
@@ -88,14 +86,10 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
       <div className="flex min-h-0 flex-col gap-3">
         <MonthCard
           items={visible}
-          projects={projects}
-          project={project}
-          onProject={setProject}
           today={today}
           lane={lane}
           picked={picked}
           onPickDay={pickDay}
-          onExpand={onCalendar}
         />
         <NowCard home={home} projectName={projectName} onNewProject={onNewProject} />
       </div>
@@ -212,16 +206,12 @@ function Segmented<V extends string>({ value, onChange, options, className }: {
  * shape, blobs joined in the order they were picked, melting into each other (an SVG "goo" filter:
  * blur, then a hard alpha threshold).
  */
-function MonthCard({ items, projects, project, onProject, today, lane, picked, onPickDay, onExpand }: {
+function MonthCard({ items, today, lane, picked, onPickDay }: {
   items: Order[]
-  projects: Order[]
-  project: string | null
-  onProject: (id: string | null) => void
   today: Date
   lane: (o: Order) => Lane
   picked: string[]
   onPickDay: (d: Date, on?: boolean) => void
-  onExpand: () => void
 }) {
   const { t, locale } = useT()
   const goo = useId()
@@ -239,6 +229,7 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
     if (k && picked.includes(k) !== drag.current) onPickDay(fromKey(k), drag.current)
   }
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
+  const [choosing, setChoosing] = useState(false)
   const byDay = useMemo(() => {
     const m = new Map<string, Order[]>()
     for (const o of items) { const d = itemDay(o); if (d) m.set(d, [...(m.get(d) ?? []), o]) }
@@ -257,24 +248,36 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
   return (
     <Card className="flex flex-1 flex-col">
       <div className="flex items-center gap-1">
-        <h2 className="flex-1 text-[15px] font-semibold tracking-[-0.01em]">{monthTitle(month, locale)}</h2>
-        <button type="button" aria-label={t("Previous month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
-        <button type="button" aria-label={t("Next month")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
-        <button type="button" onClick={onExpand} aria-label={t("Open the calendar")} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"><ArrowUpRightIcon className="size-4" /></button>
+        {/* the title opens a month and year picker in place of the days */}
+        <button type="button" onClick={() => setChoosing((v) => !v)} aria-expanded={choosing}
+          className="-ml-1.5 flex flex-1 items-center gap-1 rounded-lg px-1.5 py-0.5 text-left text-[15px] font-semibold tracking-[-0.01em] hover:bg-hover">
+          {choosing ? month.getFullYear() : monthTitle(month, locale)}
+          <ChevronDownIcon className={cn("size-4 text-muted-foreground transition-transform duration-200", choosing && "rotate-180")} />
+        </button>
+        <button type="button" aria-label={choosing ? t("Previous year") : t("Previous month")} onClick={() => setMonth(new Date(month.getFullYear() - (choosing ? 1 : 0), month.getMonth() - (choosing ? 0 : 1), 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
+        <button type="button" aria-label={choosing ? t("Next year") : t("Next month")} onClick={() => setMonth(new Date(month.getFullYear() + (choosing ? 1 : 0), month.getMonth() + (choosing ? 0 : 1), 1))} className="flex size-7 items-center justify-center rounded-full text-primary hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
       </div>
 
-      {projects.length > 0 && (
-        <div className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none]">
-          {[{ id: null as string | null, label: t("All") }, ...projects.slice(0, 8).map((p) => ({ id: p.id as string | null, label: p.client_name || p.title || t("Untitled") }))].map((c) => (
-            <button key={c.id ?? "all"} type="button" onClick={() => onProject(c.id)}
-              className={cn("shrink-0 rounded-full px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors",
-                project === c.id ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-hover-strong")}>
-              {c.label}
-            </button>
-          ))}
+      {choosing ? (
+        <div className="mt-4 grid grid-cols-3 gap-1.5 animate-in fade-in zoom-in-95 duration-150">
+          {Array.from({ length: 12 }, (_, m) => {
+            const d = new Date(month.getFullYear(), m, 1)
+            const on = m === month.getMonth()
+            const now = m === today.getMonth() && month.getFullYear() === today.getFullYear()
+            return (
+              <button key={m} type="button" onClick={() => { setMonth(d); setChoosing(false) }}
+                className={cn("rounded-xl py-3 text-[13.5px] font-medium capitalize transition-colors",
+                  on ? "bg-foreground text-background" : cn("hover:bg-hover", now && "ring-[1.5px] ring-foreground ring-inset"))}>
+                {d.toLocaleDateString(locale, { month: "short" }).replace(".", "")}
+              </button>
+            )
+          })}
+          <button type="button" onClick={() => { setMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setChoosing(false) }}
+            className="col-span-3 mt-1 rounded-xl py-2 text-[13px] font-medium text-muted-foreground hover:bg-hover hover:text-foreground">
+            {t("Today")}
+          </button>
         </div>
-      )}
-
+      ) : <>
       <div className="mt-3 grid grid-cols-7 text-center">
         {weekdays.map((w, i) => <span key={i} className="pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase">{w}</span>)}
       </div>
@@ -337,6 +340,7 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
           )
         })}
       </div>
+      </>}
     </Card>
   )
 }

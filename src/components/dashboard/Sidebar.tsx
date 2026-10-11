@@ -7,7 +7,7 @@ import { createPortal } from "react-dom"
 import {
   CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
-  WaypointsIcon, XIcon,
+  XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
@@ -257,12 +257,6 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
       <nav className="flex flex-col items-center gap-1.5">
         <RailItem label={t("Home")} href="/dashboard" active={activePage === "dashboard"} icon={HomeIcon} />
-        <RailItem
-          label={t("Calendar")}
-          href="/dashboard?calendar=1"
-          icon={CalendarDaysIcon}
-          onClick={(e) => { if (activePage === "dashboard") { e.preventDefault(); window.dispatchEvent(new Event(OPEN_CALENDAR_EVENT)) } }}
-        />
         <RailItem label={t("Canvas")} href="/board" active={activePage === "board"} icon={ShapesIcon} locked={canvasLocked} />
         <RailItem label={t("Search")} hint="Ctrl+K" icon={SearchIcon} onClick={() => setSearching(true)} />
         {beta ? (
@@ -691,23 +685,29 @@ function SearchDialog({ projects, onClose }: { projects: ProjectLink[]; onClose:
   const all = orders.length ? orders : projects.map((p) => ({ ...p, kind: "project" }))
   const found = (q ? all.filter((o) => `${o.title} ${o.client_name ?? ""}`.toLowerCase().includes(q)) : all).slice(0, 12)
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-4 pt-[12vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-4 pt-[12vh] animate-in fade-in duration-150" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={t("Search")} onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg overflow-hidden rounded-xl bg-popover shadow-2xl ring-1 ring-foreground/10">
-        <label className="flex items-center gap-2 border-b border-border px-4">
-          <SearchIcon className="size-4 text-muted-foreground" />
+        className="w-full max-w-lg rounded-2xl bg-popover p-5 text-popover-foreground shadow-2xl ring-1 ring-border animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between">
+          <p className="text-[15px] font-semibold">{t("Search")}</p>
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-8 items-center justify-center rounded-full hover:bg-hover"><XIcon className="size-4" /></button>
+        </div>
+        <label className="mt-4 flex h-11 items-center gap-2.5 rounded-full bg-muted px-4 ring-1 ring-transparent focus-within:ring-foreground/20">
+          <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
           <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search projects and orders")}
-            className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+            className="w-full bg-transparent text-[14px] outline-none placeholder:text-muted-foreground" />
         </label>
-        <div className="max-h-[50vh] overflow-y-auto p-1.5">
-          {found.length === 0 && <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Nothing found.")}</p>}
+        <div className="-mx-2 mt-3 max-h-[50vh] overflow-y-auto">
+          {found.length === 0 && <p className="px-3 py-8 text-center text-[13px] text-muted-foreground">{t("Nothing found.")}</p>}
           {found.map((o) => (
-            <Link key={o.id} href={`/orders/${o.id}`} onClick={onClose} className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm hover:bg-hover">
-              <span className="size-4 shrink-0 text-muted-foreground">
-                {o.kind === "project" ? <WaypointsIcon className="size-4" /> : NAV_ICONS.orders}
+            <Link key={o.id} href={`/orders/${o.id}`} onClick={onClose} className="flex items-center gap-3 rounded-xl px-2 py-2 text-[14px] transition-colors hover:bg-hover">
+              {o.kind === "project"
+                ? <ProjectAvatar id={o.id} className="size-9" />
+                : <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground [&_svg]:size-4">{NAV_ICONS.orders}</span>}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{o.title || t("Untitled")}</span>
+                {o.client_name && <span className="block truncate text-[12px] text-muted-foreground">{o.client_name}</span>}
               </span>
-              <span className="min-w-0 flex-1 truncate">{o.title || t("Untitled")}</span>
-              {o.client_name && <span className="truncate text-xs text-muted-foreground">{o.client_name}</span>}
             </Link>
           ))}
         </div>

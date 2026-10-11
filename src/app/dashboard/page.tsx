@@ -143,7 +143,6 @@ export default function Dashboard() {
           items={items}
           projectName={projectName}
           onNewProject={newProject}
-          onCalendar={() => setCalendarOpen(true)}
           onPlanned={(rows) => setOrders((prev) => [...rows.filter((r) => !prev.some((o) => o.id === r.id)), ...prev])}
           intro={<GettingStarted orders={orders} shop={shop} onNewOrder={newProject} />}
         />
