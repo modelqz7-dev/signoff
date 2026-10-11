@@ -375,8 +375,8 @@ function ThemeSwitch() {
         className="relative flex size-7 items-center justify-center rounded-full bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] dark:bg-[#636366]"
         style={{ transform: `translateX(${dark ? 28 : 0}px)` }}
       >
-        <SunIcon className={cn("absolute size-4 transition-all duration-500", dark ? "scale-50 -rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} strokeWidth={1.8} />
-        <MoonIcon className={cn("absolute size-4 transition-all duration-500", dark ? "scale-100 rotate-0 opacity-100" : "scale-50 rotate-90 opacity-0")} strokeWidth={1.8} />
+        <SunIcon className={cn("absolute size-4 fill-[#ff9f0a] text-[#ff9f0a] transition-all duration-500", dark ? "scale-50 -rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} strokeWidth={1.8} />
+        <MoonIcon className={cn("absolute size-4 fill-[#ffd60a] text-[#ffd60a] transition-all duration-500", dark ? "scale-100 rotate-0 opacity-100" : "scale-50 rotate-90 opacity-0")} strokeWidth={1.8} />
       </span>
     </button>
   )

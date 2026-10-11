@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   ArrowUpRightIcon, CheckCircle2Icon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, PlusIcon, XIcon,
@@ -58,9 +58,10 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   const [picked, setPicked] = useState<string[]>([])
   const pickedDays = [...picked].sort().map(fromKey)
   const shownDays = pickedDays.length ? pickedDays : Array.from({ length: 7 }, (_, i) => addDays(week, i))
-  const toggleDay = (d: Date) => {
+  // pick (on), unpick (off) or flip a day
+  const pickDay = (d: Date, on?: boolean) => {
     const k = dayKey(d)
-    setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k].slice(-MAX_PICKED)))
+    setPicked((p) => ((on ?? !p.includes(k)) ? (p.includes(k) ? p : [...p, k].slice(-MAX_PICKED)) : p.filter((x) => x !== k)))
     setView("week")
   }
 
@@ -90,7 +91,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
           today={today}
           lane={lane}
           picked={picked}
-          onPickDay={toggleDay}
+          onPickDay={pickDay}
           onExpand={onCalendar}
         />
         <NowCard home={home} projectName={projectName} onNewProject={onNewProject} />
@@ -200,8 +201,9 @@ function Segmented<V extends string>({ value, onChange, options, className }: {
 
 /**
  * The month, as in Apple Calendar: plain numbers, today ringed, a dot under days with posts. Tapping
- * days picks them: each fills in, and the picked days are joined in date order by a thick line drawn
- * from one to the next.
+ * days, or pressing and dragging across them, picks them: the picked days are drawn as one liquid
+ * shape, blobs joined in the order they were picked, melting into each other (an SVG "goo" filter:
+ * blur, then a hard alpha threshold).
  */
 function MonthCard({ items, projects, project, onProject, today, lane, picked, onPickDay, onExpand }: {
   items: Order[]
@@ -211,10 +213,24 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
   today: Date
   lane: (o: Order) => Lane
   picked: string[]
-  onPickDay: (d: Date) => void
+  onPickDay: (d: Date, on?: boolean) => void
   onExpand: () => void
 }) {
   const { t, locale } = useT()
+  const goo = useId()
+  // while the pointer is down: true picks the days it passes over, false unpicks them
+  const drag = useRef<boolean | null>(null)
+  useEffect(() => {
+    const stop = () => { drag.current = null }
+    window.addEventListener("pointerup", stop)
+    window.addEventListener("pointercancel", stop)
+    return () => { window.removeEventListener("pointerup", stop); window.removeEventListener("pointercancel", stop) }
+  }, [])
+  const dragOver = (e: React.PointerEvent) => {
+    if (drag.current === null) return
+    const k = (document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-day]") as HTMLElement | null)?.dataset.day
+    if (k && picked.includes(k) !== drag.current) onPickDay(fromKey(k), drag.current)
+  }
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const byDay = useMemo(() => {
     const m = new Map<string, Order[]>()
@@ -225,8 +241,8 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
   const cells = Array.from({ length: Math.ceil((lead + days) / 7) * 7 }, (_, i) => i - lead + 1)
   const weekdays = Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i).toLocaleDateString(locale, { weekday: "narrow" }))
-  // the cells of the picked days in this month, in date order, joined pairwise
-  const at = [...picked].sort().map(fromKey)
+  // the cells of the picked days in this month, in the order they were picked, joined pairwise
+  const at = picked.map(fromKey)
     .filter((d) => d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth())
     .map((d) => d.getDate() - 1 + lead)
   const links = at.slice(1).map((b, i) => [at[i], b] as const)
@@ -255,18 +271,31 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
       <div className="mt-3 grid grid-cols-7 text-center">
         {weekdays.map((w, i) => <span key={i} className="pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase">{w}</span>)}
       </div>
-      <div className="relative grid grid-cols-7 text-center">
-        {/* the line joining picked days, under the numbers: each cell is ROW px tall, its circle centred 18px down */}
-        <svg className="pointer-events-none absolute inset-0 size-full text-foreground" aria-hidden>
-          {links.map(([a, b]) => (
-            <line
-              key={`${a}-${b}`}
-              x1={`${((a % 7) + 0.5) * (100 / 7)}%`} y1={Math.floor(a / 7) * ROW + 18}
-              x2={`${((b % 7) + 0.5) * (100 / 7)}%`} y2={Math.floor(b / 7) * ROW + 18}
-              stroke="currentColor" strokeWidth={14} strokeLinecap="round" pathLength={1}
-              className="animate-[draw-line_320ms_cubic-bezier(0.4,0,0.2,1)_both] [stroke-dasharray:1]"
-            />
-          ))}
+      <div className="relative grid touch-none grid-cols-7 text-center select-none" onPointerMove={dragOver}>
+        {/* the picked days as one liquid shape, under the numbers: each cell is ROW px tall, its circle
+            centred 18px down; the line between two days grows, and the blur and threshold melt it in */}
+        <svg className="pointer-events-none absolute inset-0 size-full overflow-visible text-foreground" aria-hidden>
+          <defs>
+            <filter id={goo} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+              <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" />
+            </filter>
+          </defs>
+          <g filter={`url(#${goo})`} fill="currentColor">
+            {links.map(([a, b]) => (
+              <line
+                key={`${a}-${b}`}
+                x1={`${((a % 7) + 0.5) * (100 / 7)}%`} y1={Math.floor(a / 7) * ROW + 18}
+                x2={`${((b % 7) + 0.5) * (100 / 7)}%`} y2={Math.floor(b / 7) * ROW + 18}
+                stroke="currentColor" strokeWidth={12} strokeLinecap="round" pathLength={1}
+                className="animate-[draw-line_380ms_cubic-bezier(0.4,0,0.2,1)_both] [stroke-dasharray:1]"
+              />
+            ))}
+            {at.map((a) => (
+              <circle key={a} cx={`${((a % 7) + 0.5) * (100 / 7)}%`} cy={Math.floor(a / 7) * ROW + 18} r={18}
+                className="origin-center animate-[goo-pop_300ms_cubic-bezier(0.34,1.56,0.64,1)_both] [transform-box:fill-box]" />
+            ))}
+          </g>
         </svg>
         {cells.map((n, i) => {
           if (n < 1 || n > days) return <span key={i} />
@@ -279,7 +308,9 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
             <button
               key={i}
               type="button"
-              onClick={() => onPickDay(d)}
+              data-day={dayKey(d)}
+              onPointerDown={(e) => { if (e.button !== 0) return; drag.current = !on; onPickDay(d, !on) }}
+              onClick={(e) => { if (e.detail === 0) onPickDay(d) }}
               aria-pressed={on}
               title={list.length ? t("{n} posts", { n: list.length }) : undefined}
               className="group relative flex flex-col items-center pt-0.5"
@@ -289,7 +320,7 @@ function MonthCard({ items, projects, project, onProject, today, lane, picked, o
                 className={cn(
                   "flex size-8 items-center justify-center rounded-full text-[14px] tabular-nums transition-[background-color,color,transform] duration-200",
                   // unpicked days are opaque, so the line passes under them
-                  on ? "scale-105 bg-foreground font-semibold text-background" : cn("bg-card group-hover:bg-muted", isToday && "font-semibold ring-[1.5px] ring-foreground ring-inset")
+                  on ? "font-semibold text-background" : cn("bg-card group-hover:bg-muted", isToday && "font-semibold ring-[1.5px] ring-foreground ring-inset")
                 )}
               >
                 {n}

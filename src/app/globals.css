@@ -311,3 +311,9 @@ html.theme-fade *::after {
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
+
+/* A picked day in the home page's month swells in, then settles. */
+@keyframes goo-pop {
+  from { transform: scale(0.2); }
+  to { transform: scale(1); }
+}
