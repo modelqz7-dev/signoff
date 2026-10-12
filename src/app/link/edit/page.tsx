@@ -261,7 +261,8 @@ export default function PageEditor() {
         </div>
         <div className="relative">
           <button type="button" onClick={() => setShareOpen((v) => !v)}
-            className="flex h-10 items-center gap-2 rounded-full bg-muted px-4 text-[15px] font-medium hover:bg-hover-strong"><Share2Icon className="size-4" />{t("Share")}</button>
+            aria-label={t("Share")}
+            className="flex h-10 items-center gap-2 rounded-full bg-muted px-3 text-[15px] font-medium hover:bg-hover-strong sm:px-4"><Share2Icon className="size-4" /><span className="hidden sm:inline">{t("Share")}</span></button>
           {shareOpen && (
             <div className="absolute right-0 top-12 z-40 flex w-80 flex-col gap-3 rounded-2xl bg-popover p-4 shadow-xl ring-1 ring-foreground/10">
               {published && savedSlug ? (
@@ -338,10 +339,10 @@ export default function PageEditor() {
                   </div>
                 </div>
 
-                <div className="flex gap-5 border-b border-border text-sm">
+                <div className="-mx-3 flex gap-5 overflow-x-auto border-b border-border px-3 text-sm whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:px-0">
                   {([["projects", t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][]).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
-                      className={`-mb-px border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                      className={`-mb-px shrink-0 border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
                       {label}
                     </button>
                   ))}

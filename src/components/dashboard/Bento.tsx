@@ -114,7 +114,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
       {/* right: the week */}
       <Card className="flex min-h-[520px] flex-col p-5 lg:col-span-2 lg:min-h-0">
         <div className="grid grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
-          <h1 className="text-[26px] leading-tight font-bold tracking-[-0.02em]">{monthTitle(pickedDays[0] ?? addDays(week, 3), locale)}</h1>
+          <h1 className="text-[22px] leading-tight font-bold tracking-[-0.02em] sm:text-[26px]">{monthTitle(pickedDays[0] ?? addDays(week, 3), locale)}</h1>
           <Segmented
             className="order-last col-span-2 justify-self-center sm:order-none sm:col-span-1"
             value={view}
@@ -134,8 +134,8 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
             </>}
             {/* while days are picked, "Plan posts" takes the one primary spot */}
             {!picked.length && (
-              <button type="button" onClick={onNewProject} className="ml-2 flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90">
-                <PlusIcon className="size-4" />{t("New project")}
+              <button type="button" onClick={onNewProject} aria-label={t("New project")} className="ml-1 flex size-8 shrink-0 items-center justify-center gap-1 rounded-full bg-primary text-[13px] font-medium text-primary-foreground transition-opacity hover:opacity-90 sm:ml-2 sm:w-auto sm:px-3.5">
+                <PlusIcon className="size-4" /><span className="hidden sm:inline">{t("New project")}</span>
               </button>
             )}
           </div>

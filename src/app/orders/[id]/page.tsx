@@ -310,13 +310,16 @@ export default function OrderPage() {
       <Sidebar open={sidebarOpen} activePage="orders" />
 
       <div className="flex flex-1 flex-col min-w-0">
-        <DashboardHeader
-          shopName={shop?.name || ""}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
+        {/* on a computer the page sits in one card beside the rail, like the rest of the app */}
+        <div className="lg:hidden">
+          <DashboardHeader
+            shopName={shop?.name || ""}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <div className="app-panel flex-1 overflow-y-auto p-4 sm:p-8 lg:m-3 lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
 
             {/* Header */}
@@ -522,8 +525,10 @@ export default function OrderPage() {
                       <Row label={t("Client")} value={order.client_name || "—"} />
                       {order.client_email && <Row label={t("Email")} value={order.client_email} />}
                       {order.client_contact && <Row label={t("Contact")} value={order.client_contact} />}
-                      <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
-                      <Row label={t("Deadline")} value={deadline.text} color={deadline.late ? "var(--destructive)" : undefined} />
+                      {/* only what's set: a post has no price, and its day stands in for a deadline */}
+                      {order.value > 0 && <Row label={t("Price")} value={`$${order.value.toLocaleString()}`} />}
+                      {order.publish_on && <Row label={t("Publishing day")} value={formatDate(`${order.publish_on.slice(0, 10)}T00:00:00`)} />}
+                      {order.deadline && <Row label={t("Deadline")} value={deadline.text} color={deadline.late ? "var(--destructive)" : undefined} />}
                       <Row label={t("Created")} value={formatDate(order.created_at)} />
                       {order.approved_at && (
                         <Row label={t("Approved")} value={`${formatDate(order.approved_at)}${order.approved_by ? ` · ${order.approved_by}` : ""}`} />
