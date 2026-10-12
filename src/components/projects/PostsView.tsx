@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { CheckIcon, CopyIcon, ImagePlusIcon, LinkIcon, MessageSquareIcon, PlusIcon, UploadIcon } from "lucide-react"
+import { CheckIcon, CopyIcon, ExternalLinkIcon, ImagePlusIcon, LinkIcon, MessageSquareIcon, PlusIcon, UploadIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { StatusChip, Thumb } from "@/components/projects/PostBits"
@@ -19,8 +19,10 @@ const ACCEPT = ".png,.jpg,.jpeg,.webp,.pdf"
 
 const portalLink = (post: Order) => `${siteOrigin()}/portal/${post.id}`
 
-export function PostsView({ posts, onUpload, onFill, onCreate, onChanged, onDeleted, busy }: {
+export function PostsView({ posts, planLink, onUpload, onFill, onCreate, onChanged, onDeleted, busy }: {
   posts: Order[]
+  /** The client's one link to the whole content plan. */
+  planLink: string
   onUpload: (files: File[]) => Promise<unknown>
   /** A post made from the "New post" dialog, with or without its file. */
   onCreate: (draft: PostDraft, file: File | null) => Promise<unknown>
@@ -58,8 +60,6 @@ export function PostsView({ posts, onUpload, onFill, onCreate, onChanged, onDele
     } catch {}
   }
 
-  /** Every post's link in one message, ready to paste to the client. */
-  const allLinks = () => ready.map((p, i) => `${i + 1}. ${p.title}: ${portalLink(p)}`).join("\n")
 
   const pick = () => fileRef.current?.click()
   const fill = (post: Order) => { setFilling(post); fillRef.current?.click() }
@@ -127,15 +127,21 @@ export function PostsView({ posts, onUpload, onFill, onCreate, onChanged, onDele
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => copy(allLinks(), "all")}
-                  disabled={ready.length === 0}
-                  className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium ring-1 ring-border transition-colors hover:bg-hover disabled:opacity-50 disabled:hover:bg-transparent"
-                >
-                  {copied === "all" ? <CheckIcon className="size-4 text-[var(--status-approved)]" /> : <LinkIcon className="size-4" />}
-                  {copied === "all" ? t("Copied") : t("Copy links for the client")}
-                </button>
+                <div className="flex h-9 items-center rounded-lg ring-1 ring-border">
+                  <button
+                    type="button"
+                    onClick={() => copy(planLink, "all")}
+                    title={t("One link to the whole content plan: the client sees every post and approves them")}
+                    className="flex h-full items-center gap-2 rounded-l-lg px-3 text-sm font-medium transition-colors hover:bg-hover"
+                  >
+                    {copied === "all" ? <CheckIcon className="size-4" /> : <LinkIcon className="size-4" />}
+                    {copied === "all" ? t("Copied") : t("Link for the client")}
+                  </button>
+                  <a href={planLink} target="_blank" rel="noopener" title={t("See it as the client")} aria-label={t("See it as the client")}
+                    className="flex h-full items-center border-l border-border px-2.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+                    <ExternalLinkIcon className="size-4" />
+                  </a>
+                </div>
                 <button
                   type="button"
                   onClick={pick}

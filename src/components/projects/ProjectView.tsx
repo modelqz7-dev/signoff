@@ -13,6 +13,7 @@ import { usePlanUsage } from "@/lib/use-plan"
 import { can } from "@/lib/plans"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
+import { siteOrigin } from "@/lib/site"
 import { useT } from "@/lib/i18n"
 
 // A project page, Notion style, inside the app's one sidebar: a thin bar on top with its name and
@@ -206,6 +207,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
         {loaded && (view === "posts"
           ? <PostsView
               posts={posts}
+              planLink={`${siteOrigin()}/plan/${project.id}`}
               onUpload={uploadPosts}
               onFill={fillPost}
               onCreate={createPost}

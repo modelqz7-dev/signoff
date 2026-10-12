@@ -9,7 +9,7 @@ import { fileKey } from "@/lib/storage-path"
 export type PortalOrder = Pick<
   Order,
   "id" | "title" | "code" | "client_name" | "value" | "deadline" | "notes" | "status" | "created_at" | "file_url"
-> & Partial<Pick<Order, "version" | "approved_at" | "approved_by" | "caption" | "publish_on" | "format">>
+> & Partial<Pick<Order, "version" | "approved_at" | "approved_by" | "caption" | "publish_on" | "format" | "project_id">>
 
 type Phase = "loading" | "auth" | "view" | "missing"
 
