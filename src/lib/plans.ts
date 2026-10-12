@@ -30,7 +30,7 @@ export const PLANS: Plan[] = [
     highlights: [
       "Up to 3 active projects",
       "Client portal with pinned comments",
-      "Telegram and email notifications",
+      FEATURES.email ? "Telegram and email notifications" : "Telegram notifications",
       "Nodly logo in the portal header",
     ],
   },
@@ -46,7 +46,7 @@ export const PLANS: Plan[] = [
       "Version history with comments per version",
       "Approval certificate (PDF)",
       "Your logo in the portal instead of Nodly's",
-      "Automatic reminders to clients",
+      ...(FEATURES.email ? ["Automatic reminders to clients"] : []),
     ],
   },
   {

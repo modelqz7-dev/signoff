@@ -23,6 +23,7 @@ import { setTheme, useTheme, type Theme } from "@/lib/theme"
 import { useT } from "@/lib/i18n"
 import { cleanContacts, type PortalContacts } from "@/lib/brand"
 import { openPanel, type PanelId } from "@/lib/panels"
+import { FEATURES } from "@/lib/features"
 import { notifyPlanChanged, usePlanUsage } from "@/lib/use-plan"
 import { BillingCycleToggle, PlanPrice, UpgradeChip, UsageMeter } from "@/components/plans/PlanBits"
 
@@ -633,7 +634,7 @@ function NotificationsPanel() {
   return (
     <div className="flex flex-col gap-3">
       <div className="divide-y divide-border border-y border-border">
-        <div className="flex items-center justify-between gap-4 py-3">
+        {FEATURES.email && <div className="flex items-center justify-between gap-4 py-3">
           <div className="min-w-0">
             <p className="text-foreground">{t("Email")}</p>
             <p className="truncate text-xs text-muted-foreground">{email}</p>
@@ -644,7 +645,7 @@ function NotificationsPanel() {
             disabled={!shop}
             onChange={(v) => save({ notify_email: v })}
           />
-        </div>
+        </div>}
 
         <div className="flex items-center justify-between gap-4 py-3">
           <div className="min-w-0">
@@ -980,7 +981,7 @@ function StatusPanel() {
     { name: "Live updates", state: "checking" },
     { name: "Server", state: "checking" },
     { name: "Telegram notifications", state: "checking" },
-    { name: "Email notifications", state: "checking" },
+    ...(FEATURES.email ? [{ name: "Email notifications", state: "checking" as const }] : []),
   ])
 
   useEffect(() => {

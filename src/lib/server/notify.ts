@@ -1,6 +1,7 @@
 // Server-only helpers for Telegram and email notifications. Never import from client code:
 // they use the Supabase service-role key and the bot / email API keys.
 import { createClient } from "@supabase/supabase-js"
+import { FEATURES } from "@/lib/features"
 
 export type NotifyShop = {
   id: string
@@ -155,7 +156,7 @@ export async function notifyShop(shop: NotifyShop, event: NotifyEvent, orderUrl:
   if (shop.notify_telegram !== false && shop.telegram_chat_id) {
     results.telegram = await sendTelegram(shop.telegram_chat_id, msg.telegram)
   }
-  if (shop.notify_email !== false) {
+  if (FEATURES.email && shop.notify_email !== false) {
     try {
       const { data, error } = await adminClient().auth.admin.getUserById(shop.user_id)
       const email = data.user?.email

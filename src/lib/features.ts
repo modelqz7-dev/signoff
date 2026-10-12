@@ -10,6 +10,11 @@ export const FEATURES = {
    * the logo's switch and the drawer open a "coming soon" note about it instead.
    */
   myPage: false,
+  /**
+   * Emails sent by Nodly through Resend: the owner's email notifications and the reminders to
+   * clients. Off while the Resend limits are too tight; notifications go to Telegram.
+   */
+  email: false,
 }
 
 /** The post plans offered for a new project (see POST_TEMPLATES); the others stay in the code. */

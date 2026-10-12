@@ -1,4 +1,5 @@
 import { adminClient, renderPlanReminder, renderReminder, secretMatches, sendEmail } from "@/lib/server/notify"
+import { FEATURES } from "@/lib/features"
 import { can } from "@/lib/plans"
 
 const DAY = 86_400_000
@@ -17,6 +18,8 @@ export async function GET(request: Request) {
   if (!secret || !secretMatches(auth, secret)) {
     return Response.json({ error: secret ? "unauthorized" : "CRON_SECRET is not configured" }, { status: 401 })
   }
+
+  if (!FEATURES.email) return Response.json({ sent: 0, skipped: "email is off" })
 
   const db = adminClient()
   const cutoff = new Date(Date.now() - WAIT_DAYS * DAY).toISOString()
