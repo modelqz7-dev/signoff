@@ -4,6 +4,11 @@
 export const FEATURES = {
   /** The free canvas: the rail's Canvas, a project's Canvas view and the canvas templates. */
   canvas: false,
+  /**
+   * My page (the link page for the bio) and its screens. While false the rail doesn't show it, and
+   * the logo's switch and the drawer open a "coming soon" note about it instead.
+   */
+  myPage: false,
 }
 
 /** The post plans offered for a new project (see POST_TEMPLATES); the others stay in the code. */

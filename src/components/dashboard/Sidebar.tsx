@@ -171,8 +171,10 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
         <SectionLabel className="mt-5">{t("Page")}</SectionLabel>
         {beta ? (
           <>
-            <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
-            {onPage && (
+            {FEATURES.myPage
+              ? <NavItem icon={NAV_ICONS.page} label={t("My page")} active={activePage === "link"} href="/link" />
+              : <NavItem icon={NAV_ICONS.page} label={t("My page")} tag={t("soon")} onClick={() => setSoon("page")} />}
+            {FEATURES.myPage && onPage && (
               <div className={sub}>
                 <NavItem icon={<ChartColumnIcon className="size-full" strokeWidth={1.6} />} label={t("Statistics")} active={activePage === "link-stats"} href="/link/stats" />
                 <NavItem icon={<QrCodeIcon className="size-full" strokeWidth={1.6} />} label={t("QR code")} active={activePage === "link-qr"} href="/link/qr" />
@@ -252,7 +254,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
   return (
     <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
-      <AppSwitcher linkMode={activePage.startsWith("link")} beta={beta || activePage.startsWith("link")} onSoon={() => setSoon("page")} />
+      <AppSwitcher linkMode={activePage.startsWith("link")} beta={FEATURES.myPage && (beta || activePage.startsWith("link"))} onSoon={() => setSoon("page")} />
 
       <nav className="flex flex-col items-center gap-1.5">
         <RailItem label={t("Home")} href="/dashboard" active={activePage === "dashboard"} icon={HomeIcon} />
@@ -260,12 +262,11 @@ function Rail({ activePage, panel, onPanel, beta }: {
         <RailItem label={t("Search")} hint="Ctrl+K" icon={SearchIcon} onClick={() => setSearching(true)} />
         {beta ? (
           <>
-            <RailItem label={t("My page")} href="/link" active={activePage.startsWith("link")} icon={Link2Icon} menu={linkItems} />
+            {FEATURES.myPage && <RailItem label={t("My page")} href="/link" active={activePage.startsWith("link")} icon={Link2Icon} menu={linkItems} />}
             <RailItem label={t("Requests")} href="/requests" active={activePage === "requests"} icon={InboxIcon} badge={newRequests} />
           </>
         ) : (
           <>
-            <RailItem label={t("My page")} hint={t("soon")} icon={Link2Icon} onClick={() => setSoon("page")} />
             <RailItem label={t("Requests")} hint={t("soon")} icon={InboxIcon} onClick={() => setSoon("requests")} />
           </>
         )}
@@ -947,14 +948,30 @@ function ComingSoon({ feature, onClose }: { feature: SoonFeature; onClose: () =>
         className="relative flex w-full max-w-[420px] flex-col items-center gap-4 rounded-t-[28px] bg-card px-6 pt-8 pb-6 text-center shadow-2xl sm:rounded-[28px]">
         <button type="button" aria-label={t("Close")} onClick={onClose}
           className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full hover:bg-hover"><XIcon className="size-5" /></button>
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary [&_svg]:size-7">
-          {feature === "page" ? NAV_ICONS.page : NAV_ICONS.requests}
-        </span>
+        {feature === "page" ? <LinkMark className="size-16" /> : (
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary [&_svg]:size-7">{NAV_ICONS.requests}</span>
+        )}
         <div className="flex flex-col gap-1.5">
           <span className="mx-auto rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">{t("Coming soon")}</span>
           <h2 className="text-lg font-bold">{feature === "page" ? t("My page") : t("Requests")}</h2>
           <p className="text-sm text-muted-foreground">{text}</p>
         </div>
+        {feature === "page" && (
+          <ul className="flex w-full flex-col gap-2 rounded-2xl bg-foreground/[0.04] p-4 text-left">
+            {[
+              [t("Your work"), t("Cases and posts you're proud of, as a gallery")],
+              [t("Services and prices"), t("What you do and what it costs, so the client knows before writing")],
+              [t("Reviews"), t("What your clients say, with their names")],
+              [t("A request button"), t("A client leaves a request, and it becomes a project in Nodly in one tap")],
+              [t("Statistics and QR"), t("How many people visit, and a QR code for print and stories")],
+            ].map(([title, line]) => (
+              <li key={title} className="flex gap-2.5">
+                <CheckIcon className="mt-0.5 size-4 shrink-0" />
+                <span className="text-[13.5px] leading-snug"><span className="font-semibold">{title}.</span> <span className="text-muted-foreground">{line}</span></span>
+              </li>
+            ))}
+          </ul>
+        )}
         <button type="button" onClick={onClose} className="mt-2 h-11 w-full rounded-full bg-primary text-sm font-medium text-primary-foreground hover:opacity-90">{t("Got it")}</button>
       </div>
     </div>,
