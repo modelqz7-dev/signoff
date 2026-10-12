@@ -10,6 +10,7 @@ import {
 } from "@/lib/crm"
 import type { NicheConfig } from "@/lib/niches"
 import { cn } from "@/lib/utils"
+import { DatePicker, Picker, TimePicker } from "@/components/crm/Pickers"
 import { useT } from "@/lib/i18n"
 
 /** Where a new booking starts: a time slot, a day, a client. */
@@ -240,21 +241,20 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
 
         {/* when */}
         <div className={cn("grid gap-3", isOrder ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
-          <label className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <span className={LABEL}>{isOrder ? t("Needed on") : t("Day")}</span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={cn(FIELD, "[color-scheme:light] dark:[color-scheme:dark]")} />
-          </label>
-          <label className="flex flex-col gap-1.5">
+            <DatePicker value={date} onChange={setDate} label={isOrder ? t("Needed on") : t("Day")} />
+          </div>
+          <div className="flex flex-col gap-1.5">
             <span className={LABEL}>{isOrder ? t("By what time") : t("Time")}</span>
-            <input type="time" step={300} value={time} onChange={(e) => setTime(e.target.value)} className={cn(FIELD, "[color-scheme:light] dark:[color-scheme:dark]")} />
-          </label>
+            <TimePicker value={time} onChange={setTime} label={isOrder ? t("By what time") : t("Time")} clearable={isOrder} placeholder={isOrder ? t("any time") : undefined} />
+          </div>
           {!isOrder && (
-            <label className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+            <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
               <span className={LABEL}>{t("Takes")}</span>
-              <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className={FIELD}>
-                {[...new Set([...DURATIONS, duration])].sort((a, b) => a - b).map((d) => <option key={d} value={d}>{durationLabel(d, t)}</option>)}
-              </select>
-            </label>
+              <Picker value={duration} onChange={setDuration} label={t("Takes")}
+                options={[...new Set([...DURATIONS, duration])].sort((a, b) => a - b).map((d) => ({ value: d, label: durationLabel(d, t) }))} />
+            </div>
           )}
         </div>
         {clash && (
@@ -302,11 +302,19 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
           ) : (
             <label className="flex flex-col gap-1.5">
               <span className={LABEL}>{t(config.staffWord)} <span className="font-normal">· {t("optional")}</span></span>
-              <input value={staff} onChange={(e) => setStaff(e.target.value)} list="crm-staff" maxLength={80} className={FIELD} />
-              <datalist id="crm-staff">{staffNames.map((s) => <option key={s} value={s} />)}</datalist>
+              <input value={staff} onChange={(e) => setStaff(e.target.value)} maxLength={80} className={FIELD} />
             </label>
           )}
         </div>
+
+        {!isOrder && staffNames.length > 0 && (
+          <div className="-mt-2 flex flex-wrap justify-end gap-1.5">
+            {staffNames.map((s) => (
+              <button key={s} type="button" onClick={() => setStaff(staff === s ? "" : s)}
+                className={cn("rounded-full px-2.5 py-1 text-[12px] font-medium ring-1 transition-colors", staff === s ? "bg-foreground text-background ring-foreground" : "ring-border hover:bg-hover")}>{s}</button>
+            ))}
+          </div>
+        )}
 
         <label className="flex flex-col gap-1.5">
           <span className={LABEL}>{t("Notes")}</span>
