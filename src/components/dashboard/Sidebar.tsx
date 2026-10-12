@@ -183,12 +183,12 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
                 {page?.published && <NavItem icon={<ExternalLinkIcon className="size-full" strokeWidth={1.6} />} label={t("Open page")} href={pagePath(page.slug)} />}
               </div>
             )}
-            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />
+            {FEATURES.myPage && <NavItem icon={NAV_ICONS.requests} label={t("Requests")} active={activePage === "requests"} href="/requests" badge={newRequests} />}
           </>
         ) : (
           <>
             <NavItem icon={NAV_ICONS.page} label={t("My page")} tag={t("soon")} onClick={() => setSoon("page")} />
-            <NavItem icon={NAV_ICONS.requests} label={t("Requests")} tag={t("soon")} onClick={() => setSoon("requests")} />
+            {FEATURES.myPage && <NavItem icon={NAV_ICONS.requests} label={t("Requests")} tag={t("soon")} onClick={() => setSoon("requests")} />}
           </>
         )}
       </nav>
@@ -263,11 +263,12 @@ function Rail({ activePage, panel, onPanel, beta }: {
         {beta ? (
           <>
             {FEATURES.myPage && <RailItem label={t("My page")} href="/link" active={activePage.startsWith("link")} icon={Link2Icon} menu={linkItems} />}
-            <RailItem label={t("Requests")} href="/requests" active={activePage === "requests"} icon={InboxIcon} badge={newRequests} />
+            {/* requests come from My page: they go and come back with it */}
+            {FEATURES.myPage && <RailItem label={t("Requests")} href="/requests" active={activePage === "requests"} icon={InboxIcon} badge={newRequests} />}
           </>
         ) : (
           <>
-            <RailItem label={t("Requests")} hint={t("soon")} icon={InboxIcon} onClick={() => setSoon("requests")} />
+            {FEATURES.myPage && <RailItem label={t("Requests")} hint={t("soon")} icon={InboxIcon} onClick={() => setSoon("requests")} />}
           </>
         )}
       </nav>
