@@ -174,10 +174,12 @@
   --destructive: #ff3b30;
   --hover: rgba(0, 0, 0, 0.04);
   --hover-strong: rgba(0, 0, 0, 0.07);
-  --status-changes: #c26a00;
-  --status-changes-bg: rgba(255, 149, 0, 0.14);
-  --status-approved: #248a3d;
-  --status-approved-bg: rgba(52, 199, 89, 0.14);
+  /* states in grey, as the rest: done reads strongest, changes a step back */
+  --status-changes: #6e6e73;
+  --status-changes-bg: rgba(0, 0, 0, 0.06);
+  --status-approved: #1d1d1f;
+  --status-approved-bg: rgba(0, 0, 0, 0.08);
+  --surface: #ffffff;
   --radius: 0.75rem;
 }
 
@@ -200,10 +202,11 @@
   --sidebar: #1c1c1e;
   --hover: rgba(255, 255, 255, 0.06);
   --hover-strong: rgba(255, 255, 255, 0.1);
-  --status-changes: #ff9f0a;
-  --status-changes-bg: rgba(255, 159, 10, 0.16);
-  --status-approved: #30d158;
-  --status-approved-bg: rgba(48, 209, 88, 0.16);
+  --status-changes: #98989d;
+  --status-changes-bg: rgba(255, 255, 255, 0.08);
+  --status-approved: #f5f5f7;
+  --status-approved-bg: rgba(255, 255, 255, 0.1);
+  --surface: #1c1c1e;
   --radius: 0.75rem;
 }
 
@@ -316,4 +319,14 @@ html.theme-fade *::after {
 @keyframes goo-pop {
   from { transform: scale(0.2); }
   to { transform: scale(1); }
+}
+
+/* On a computer, the pages beside the rail sit in one big card, like the home page's cards; inside
+   it the cards and the page colour step down a shade so they still read. */
+@media (min-width: 64rem) {
+  .app .app-panel {
+    background-color: var(--surface);
+    --background: var(--surface);
+    --card: var(--muted);
+  }
 }
