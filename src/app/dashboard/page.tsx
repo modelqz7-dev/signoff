@@ -73,11 +73,7 @@ export default function Dashboard() {
 
       setOrders((ordersData as Order[]) || [])
       // without the niche column (supabase/crm.sql not run yet) everyone stays on content plans
-      if (!shopData.niche && "niche" in shopData) {
-        // accounts from before the niches already work with content plans
-        if (ordersData?.length) await supabase.from("shops").update({ niche: "smm" }).eq("id", shopData.id)
-        else setNeedsNiche(true)
-      }
+      if (!shopData.niche && "niche" in shopData) setNeedsNiche(true)
       setLoading(false)
       // the sidebar's calendar button lands here with ?calendar=1
       if (new URLSearchParams(window.location.search).get("calendar")) {
