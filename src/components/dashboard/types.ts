@@ -53,6 +53,8 @@ export type Shop = {
   name: string
   plan: string
   created_at: string
+  /** What the business does; picks its dashboard (see supabase/crm.sql and lib/niches). */
+  niche?: string | null
   // Notification settings (see supabase/notifications.sql)
   notify_email?: boolean
   notify_telegram?: boolean

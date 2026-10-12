@@ -2,7 +2,7 @@
 export const THEME_STORAGE_KEY = "signoff-theme"
 
 /** The signed-in app's pages, which wear the home page's look (the `app` class, see globals.css). */
-export const APP_PATHS = "^/(dashboard|board|orders|link|requests|plan|portal)(/|$)"
+export const APP_PATHS = "^/(dashboard|board|orders|link|requests|plan|portal|clients|services)(/|$)"
 
 /** Pages clients open from a link: light unless they picked dark themselves. */
 export const CLIENT_PATHS = "^/(plan|portal)(/|$)"

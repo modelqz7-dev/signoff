@@ -14,6 +14,9 @@ import { useShopPins } from "@/lib/pins"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { OPEN_CALENDAR_EVENT, OPEN_NEW_PROJECT } from "@/lib/panels"
+import { isCrmNiche } from "@/lib/niches"
+import { CrmApp } from "@/components/crm/CrmApp"
+import { NichePicker } from "@/components/crm/NichePicker"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -23,6 +26,8 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  // a new account first says what it does
+  const [needsNiche, setNeedsNiche] = useState(false)
   const { t } = useT()
   const projects = useMemo(() => orders.filter((o) => o.kind === "project"), [orders])
   const items = useMemo(() => orders.filter((o) => o.kind !== "project"), [orders])
@@ -57,6 +62,8 @@ export default function Dashboard() {
       }
 
       setShop(shopData as Shop)
+      // the CRM niches have their own screens and data
+      if (isCrmNiche(shopData.niche)) { setLoading(false); return }
 
       const { data: ordersData } = await supabase
         .from("orders")
@@ -65,6 +72,12 @@ export default function Dashboard() {
         .order("created_at", { ascending: false })
 
       setOrders((ordersData as Order[]) || [])
+      // without the niche column (supabase/crm.sql not run yet) everyone stays on content plans
+      if (!shopData.niche && "niche" in shopData) {
+        // accounts from before the niches already work with content plans
+        if (ordersData?.length) await supabase.from("shops").update({ niche: "smm" }).eq("id", shopData.id)
+        else setNeedsNiche(true)
+      }
       setLoading(false)
       // the sidebar's calendar button lands here with ?calendar=1
       if (new URLSearchParams(window.location.search).get("calendar")) {
@@ -118,6 +131,15 @@ export default function Dashboard() {
         <div className="flex min-h-screen min-w-0 flex-1 items-center justify-center">
           <p className="text-muted-foreground text-sm">{t("Loading...")}</p>
         </div>
+      </div>
+    )
+  }
+
+  if (shop && isCrmNiche(shop.niche)) return <CrmApp shop={shop} page="home" />
+  if (shop && needsNiche) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <NichePicker shopId={shop.id} onChosen={(niche) => { setShop({ ...shop, niche }); setNeedsNiche(false) }} />
       </div>
     )
   }
