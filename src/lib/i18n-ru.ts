@@ -1071,6 +1071,7 @@ export const ru: Record<string, string> = {
   "This design is approved": "Этот пост утверждён",
   "This is your address": "Это ваш адрес",
   "This link doesn't open anything. Ask for a new one.": "По этой ссылке ничего нет. Попросите новую.",
+  "This post has its own password. Open it to see it.": "У этого поста свой пароль. Откройте его, чтобы посмотреть.",
   "This post was deleted.": "Этот пост удалён.",
   "This reset link is invalid or has already been used.": "Ссылка недействительна или уже использована.",
   "This version already has the maximum number of pins.": "В этой версии уже максимум пинов.",
