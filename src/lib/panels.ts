@@ -25,3 +25,6 @@ export const OPEN_NEW_PROJECT = "signoff:open-new-project"
 
 /** Opens the dashboard's calendar when the dashboard is already on screen. */
 export const OPEN_CALENDAR_EVENT = "signoff:open-calendar"
+
+/** Opens the CRM's new appointment or order dialog (it lives on every CRM screen), e.g. from the rail's "+". */
+export const OPEN_NEW_BOOKING = "nodly:new-booking"

@@ -5,15 +5,16 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
   SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
-import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
+import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_BOOKING, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
 import { FEATURES } from "@/lib/features"
+import { nicheConfig, type NicheConfig } from "@/lib/niches"
 import { supabase } from "@/lib/supabase"
 import { LinkMark, Logo, LogoMark } from "@/components/Logo"
 import { setTheme, useTheme } from "@/lib/theme"
@@ -55,11 +56,14 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
   useEffect(() => {
     function onOpen(e: Event) { setPanel((e as CustomEvent<PanelId>).detail); setDrawer(false) }
     function onNav() { setDrawer(true) }
+    function onBooking() { setDrawer(false) }
     window.addEventListener(OPEN_PANEL_EVENT, onOpen)
     window.addEventListener(OPEN_NAV_EVENT, onNav)
+    window.addEventListener(OPEN_NEW_BOOKING, onBooking)
     return () => {
       window.removeEventListener(OPEN_PANEL_EVENT, onOpen)
       window.removeEventListener(OPEN_NAV_EVENT, onNav)
+      window.removeEventListener(OPEN_NEW_BOOKING, onBooking)
     }
   }, [])
 
@@ -138,6 +142,21 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
 
   const sub = "[&>a]:pl-9 [&>button]:pl-9"
+  const crm = nicheConfig(usage?.shop.niche)
+  if (crm) {
+    const items = crmNav(crm, t)
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="px-4 pt-4 pb-2"><Link href="/dashboard" className="text-[15px] font-semibold">{usage?.shop.name || "Nodly"}</Link></div>
+        <nav className="flex-1 px-3 pt-2 pb-4">
+          {items.map((i) => <NavItem key={i.href} icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={activePage === i.page} href={i.href} />)}
+          <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={crm.kind === "order" ? t("New order") : t("New appointment")} onClick={newBooking} />
+        </nav>
+        <PlanCard onOpen={() => setPanel("billing")} />
+        <AccountRow panel={panel} onPanel={setPanel} />
+      </div>
+    )
+  }
   return (
     <div className="flex flex-1 flex-col">
       <WorkspaceRow onNewProject={newProject} />
@@ -252,6 +271,27 @@ function Rail({ activePage, panel, onPanel, beta }: {
     ...(page?.published ? [{ href: pagePath(page.slug), label: t("Open page") }] : []),
   ]
 
+  const crm = nicheConfig(usage?.shop.niche)
+  if (crm) {
+    return (
+      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+        <Link href="/dashboard" aria-label="Nodly" className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></Link>
+        <nav className="flex flex-col items-center gap-1.5">
+          {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={activePage === i.page} icon={i.icon} />)}
+        </nav>
+        <div className="my-4 h-px w-10 bg-border" />
+        <div className="flex flex-col items-center gap-2.5">
+          <AccountRow panel={panel} onPanel={onPanel} compact />
+          <button type="button" onClick={newBooking} aria-label={crm.kind === "order" ? t("New order") : t("New appointment")} title={crm.kind === "order" ? t("New order") : t("New appointment")}
+            className="mt-1 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90">
+            <PlusIcon className="size-6" strokeWidth={1.8} />
+          </button>
+        </div>
+        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
       <AppSwitcher linkMode={activePage.startsWith("link")} beta={FEATURES.myPage && (beta || activePage.startsWith("link"))} onSoon={() => setSoon("page")} />
@@ -313,6 +353,21 @@ function Rail({ activePage, panel, onPanel, beta }: {
       {allOpen && <AllProjectsDialog projects={projects} activePage={activePage} onClose={() => setAllOpen(false)} />}
     </div>
   )
+}
+
+/** The CRM's screens: bookings (the home), clients and what the business offers. */
+function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
+  const offerIcon = crm.id === "cakes" ? CakeIcon : crm.id === "barber" ? ScissorsIcon : SparklesIcon
+  return [
+    { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
+    { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
+    { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
+  ]
+}
+
+/** A new appointment or order: the CRM screen on show opens its dialog. */
+function newBooking() {
+  window.dispatchEvent(new Event(OPEN_NEW_BOOKING))
 }
 
 /** One icon of the rail, its name in a dark label on hover (or, with menu, a list of links). */
