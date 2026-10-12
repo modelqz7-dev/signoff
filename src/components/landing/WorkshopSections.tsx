@@ -53,7 +53,7 @@ export function Pricing({ t }: { t: T }) {
   return (
     <section id="pricing" className="scroll-mt-16 py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="04" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
+        <SectionHeading no="02" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
         <div className="mb-8">
           <BillingCycleToggle yearly={yearly} onChange={setYearly} />
         </div>
@@ -102,7 +102,6 @@ export function Questions({ t }: { t: T }) {
     [t("What does the client see?"), t("The whole content plan behind one link: every post with its picture, day, format and caption, and the grid as it will look in the feed. They approve one post or all at once.")],
     [t("Which files can I upload?"), t("PNG, JPG and WebP images, and PDF files with any number of pages, for carousels too.")],
     [t("Can a client see my other clients?"), t("No. A client's link opens only their own content plan.")],
-    [t("Where do new clients come from?"), t("Your page: a link for your bio with your work, prices and reviews. A request from it becomes a project in a tap.")],
     [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Pro and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
@@ -111,7 +110,7 @@ export function Questions({ t }: { t: T }) {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            <span className="tabular-nums">05</span>
+            <span className="tabular-nums">03</span>
             <span aria-hidden="true">·</span>
             <span>{t("FAQ")}</span>
           </div>
