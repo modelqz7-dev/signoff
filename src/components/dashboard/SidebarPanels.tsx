@@ -46,20 +46,41 @@ const TITLES: Record<PanelId, { title: string; description: string }> = {
   status: { title: "Status", description: "Live check of the services Nodly depends on." },
 }
 
+// The account menu opens two windows with tabs, Settings and Help; Profile stands alone.
+const GROUPS: { panels: PanelId[]; title: string; tabs: Partial<Record<PanelId, string>> }[] = [
+  { panels: ["notifications", "security", "appearance", "billing"], title: "Settings", tabs: { notifications: "Notifications", security: "Security", appearance: "Appearance", billing: "Plan" } },
+  { panels: ["help", "contact", "docs", "status"], title: "Help", tabs: { help: "Guide", contact: "Contact", docs: "Docs", status: "Status" } },
+]
+
 export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClose: () => void }) {
   // Keep the last panel rendered while the dialog animates out.
   const [shown, setShown] = useState<PanelId | null>(panel)
   if (panel && panel !== shown) setShown(panel)
   const meta = shown ? TITLES[shown] : null
+  const group = shown ? GROUPS.find((g) => g.panels.includes(shown)) : undefined
   const { t } = useT()
 
   return (
-    <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="sm:max-w-md">
+    <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="rounded-2xl p-5 sm:max-w-lg">
       {meta && (
         <DialogHeader>
-          <DialogTitle>{t(meta.title)}</DialogTitle>
-          <DialogDescription>{t(meta.description)}</DialogDescription>
+          <DialogTitle className="text-[17px]">{t(group ? group.title : meta.title)}</DialogTitle>
+          {!group && <DialogDescription>{t(meta.description)}</DialogDescription>}
         </DialogHeader>
+      )}
+      {group && shown && (
+        <div className="flex flex-col gap-2">
+          <div role="tablist" className="grid rounded-[9px] bg-foreground/[0.06] p-0.5" style={{ gridTemplateColumns: `repeat(${group.panels.length}, minmax(0, 1fr))` }}>
+            {group.panels.map((id) => (
+              <button key={id} type="button" role="tab" aria-selected={shown === id} onClick={() => openPanel(id)}
+                className={cn("truncate rounded-[7px] px-2 py-1.5 text-[13px] font-medium transition-colors",
+                  shown === id ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366]" : "text-muted-foreground hover:text-foreground")}>
+                {t(group.tabs[id] ?? TITLES[id].title)}
+              </button>
+            ))}
+          </div>
+          <p className="text-[13px] text-muted-foreground">{t(TITLES[shown].description)}</p>
+        </div>
       )}
       {shown === "profile" && <ProfilePanel />}
       {shown === "billing" && <BillingPanel />}

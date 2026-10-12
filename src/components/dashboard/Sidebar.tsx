@@ -7,7 +7,7 @@ import { createPortal } from "react-dom"
 import {
   CalendarDaysIcon, ChartColumnIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
-  XIcon,
+  SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
 import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED, openPanel } from "@/lib/panels"
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
@@ -538,28 +538,32 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
   }, [open])
   const name = shop?.name || profile?.email || ""
   const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) || "N"
-  const item = (id: PanelId, icon: React.ReactNode, label: string) => (
-    <NavItem key={id} icon={icon} label={label} active={panel === id} onClick={() => { setOpen(false); onPanel(id) }} />
-  )
+  const go = (id: PanelId) => { setOpen(false); onPanel(id) }
+  const row = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[14px] text-foreground/90 transition-colors hover:bg-hover [&_svg]:size-[18px] [&_svg]:text-muted-foreground"
   async function signOut() {
     await supabase.auth.signOut()
     router.replace("/login")
   }
+  // you, your plan in one line, then three places and signing out, Apple style
   const menuItems = (
     <>
-      <SectionLabel>{t("Account")}</SectionLabel>
-      {item("profile", NAV_ICONS.profile, t("Profile"))}
-      {item("billing", NAV_ICONS.billing, t("Billing"))}
-      {item("notifications", NAV_ICONS.notifications, t("Notifications"))}
-      {item("security", NAV_ICONS.security, t("Security"))}
-      {item("appearance", NAV_ICONS.appearance, t("Appearance"))}
-      <SectionLabel className="mt-1">{t("Support")}</SectionLabel>
-      {item("help", NAV_ICONS.help, t("Help Center"))}
-      {item("contact", NAV_ICONS.contact, t("Contact Us"))}
-      {item("docs", NAV_ICONS.docs, t("Documentation"))}
-      {item("status", NAV_ICONS.status, t("Status"))}
-      <div className="my-1 h-px bg-border" />
-      <NavItem icon={<LogOutIcon className="size-full" strokeWidth={1.6} />} label={t("Sign out")} onClick={signOut} />
+      <div className="flex items-center gap-3 px-2.5 pt-2 pb-2.5">
+        <Avatar className="size-10 shrink-0">
+          <AvatarImage key={photo} src={photo} alt="" />
+          <AvatarFallback className="bg-foreground/[0.08] text-[12px] font-semibold text-foreground">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] font-semibold">{name}</span>
+          {profile?.email && profile.email !== name && <span className="block truncate text-[12.5px] text-muted-foreground">{profile.email}</span>}
+        </span>
+      </div>
+      <PlanLine onOpen={() => go("billing")} />
+      <div className="my-1.5 h-px bg-border" />
+      <button type="button" role="menuitem" onClick={() => go("profile")} className={row}><UserRoundIcon />{t("Profile")}</button>
+      <button type="button" role="menuitem" onClick={() => go("notifications")} className={cn(row, SETTINGS_PANELS.includes(panel as PanelId) && "bg-hover")}><SettingsIcon />{t("Settings")}</button>
+      <button type="button" role="menuitem" onClick={() => go("help")} className={cn(row, HELP_PANELS.includes(panel as PanelId) && "bg-hover")}><CircleHelpIcon />{t("Help")}</button>
+      <div className="my-1.5 h-px bg-border" />
+      <button type="button" role="menuitem" onClick={signOut} className={row}><LogOutIcon />{t("Sign out")}</button>
     </>
   )
   if (compact) {
@@ -574,9 +578,7 @@ function AccountRow({ panel, onPanel, compact }: { panel: PanelId | null; onPane
           </Avatar>
         </button>
         {open && (
-          <div role="menu" className="absolute top-1/2 left-[calc(100%+14px)] z-40 flex w-72 -translate-y-1/2 flex-col gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-foreground/10">
-            <p className="truncate px-3 pt-1.5 pb-1 text-sm font-semibold">{name}</p>
-            <PlanCard className="mx-1 mb-1.5" onOpen={() => { setOpen(false); onPanel("billing") }} />
+          <div role="menu" className="absolute bottom-0 left-[calc(100%+14px)] z-40 flex w-72 flex-col rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lg ring-1 ring-border animate-in fade-in zoom-in-95 duration-150">
             {menuItems}
           </div>
         )}
@@ -848,6 +850,29 @@ function useNewRequestCount() {
 }
 
 /** Plan, trial and active-order usage at the bottom of the sidebar. */
+/** The plan in one line, with the one thing to do about it. */
+function PlanLine({ onOpen }: { onOpen: () => void }) {
+  const usage = usePlanUsage()
+  const { t } = useT()
+  if (!usage) return null
+  const onTrial = usage.trialDays > 0 && usage.chosen.id === "free"
+  const action = onTrial ? t("Choose a plan") : usage.chosen.id !== "pro" ? t("Upgrade") : null
+  return (
+    <button type="button" onClick={onOpen} className="mx-1 flex items-center gap-2 rounded-xl bg-foreground/[0.06] px-3 py-2.5 text-left transition-colors hover:bg-foreground/[0.1]">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-medium">
+          {onTrial ? t("{plan} trial", { plan: t(usage.plan.name) }) : t("{plan} plan", { plan: t(usage.plan.name) })}
+        </span>
+        {onTrial && <span className="block text-[12px] text-muted-foreground">{t("{n} days left", { n: usage.trialDays })}</span>}
+      </span>
+      {action && <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[12px] font-medium text-primary-foreground">{action}</span>}
+    </button>
+  )
+}
+
+const SETTINGS_PANELS: PanelId[] = ["notifications", "security", "appearance", "billing"]
+const HELP_PANELS: PanelId[] = ["help", "contact", "docs", "status"]
+
 function PlanCard({ onOpen, className }: { onOpen: () => void; className?: string }) {
   const usage = usePlanUsage()
   const { t } = useT()
