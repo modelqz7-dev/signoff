@@ -1,5 +1,5 @@
 import { adminClient } from "@/lib/server/notify"
-import { isUuid, overLimit, planContext, publicOrder } from "@/lib/server/portal"
+import { clientIp, isUuid, overLimit, planContext, publicOrder } from "@/lib/server/portal"
 
 /**
  * The client's decision on posts of the plan: approve them (one, or every ready one at once) or ask
@@ -9,7 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params
   const ctx = await planContext(request, id, adminClient())
   if (ctx instanceof Response) return ctx
-  const limited = await overLimit(ctx.db, `plan-decision:${id}`, 120, 60 * 60_000)
+  const limited = await overLimit(ctx.db, `plan-decision:${clientIp(request)}:${id}`, 120, 60 * 60_000)
   if (limited) return limited
 
   const body = (await request.json().catch(() => ({}))) as { postIds?: unknown; status?: unknown }
@@ -18,7 +18,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!postIds.length || (body.status === "changes" && postIds.length !== 1)) return Response.json({ error: "invalid" }, { status: 400 })
 
   const { data: rows } = await ctx.db.from("orders").select("*").eq("project_id", id).in("id", postIds)
-  const movable = (rows ?? []).filter((r) => r.file_url && r.status !== "prod" && r.status !== body.status)
+  // a post with its own password is decided in its own portal, behind that password
+  const movable = (rows ?? []).filter((r) => r.file_url && !r.password && !r.password_hash && r.status !== "prod" && r.status !== body.status)
   const updated = []
   for (const row of movable) {
     const patch: Record<string, unknown> = { status: body.status }

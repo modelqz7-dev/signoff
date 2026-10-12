@@ -14,7 +14,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     console.error("Plan posts load error:", error)
     return Response.json({ error: "unavailable" }, { status: 503 })
   }
-  const posts = await Promise.all((rows ?? []).map((row) => publicOrder(ctx.db, row)))
+  // A post with a password of its own stays closed here: only its name, day, format and status
+  // show, and its picture and caption open in its portal, behind that password.
+  const posts = await Promise.all((rows ?? []).map(async (row) => {
+    if (row.password || row.password_hash) {
+      return { id: row.id, title: row.title, status: row.status, publish_on: row.publish_on, format: row.format, file_url: null, caption: "", locked: true }
+    }
+    return publicOrder(ctx.db, row)
+  }))
 
   const ids = (rows ?? []).map((r) => r.id as string)
   const open: Record<string, number> = {}

@@ -64,8 +64,9 @@ function passwordFingerprint(order: PasswordFields) {
 type Session = { o: string; n: string; f: string; e: number }
 
 /**
- * Where a session holds: "portal" for one order's portal (/api/portal/<id>), "plan" for a project's
- * whole content plan (/api/plan/<id>). Each has its own cookie, sent only to its own API.
+ * Where a session holds: "portal" for one order's portal (sent only to /api/portal/<id>), "plan" for
+ * a project's whole content plan. A plan's cookie goes to all of /api, because the portals of the
+ * project's posts read it too (see portalContext), so one sign-in opens the plan and its posts.
  */
 type Scope = "portal" | "plan"
 
@@ -79,7 +80,7 @@ export function createSessionCookie(orderId: string, name: string, order: Passwo
   const sig = createHmac("sha256", secret()).update(body).digest("base64url")
   return [
     `${sessionCookieName(orderId, scope)}=${body}.${sig}`,
-    `Path=/api/${scope}/${orderId}`,
+    `Path=${scope === "plan" ? "/api" : `/api/portal/${orderId}`}`,
     `Max-Age=${SESSION_DAYS * 86_400}`,
     "HttpOnly",
     "SameSite=Lax",
@@ -88,7 +89,7 @@ export function createSessionCookie(orderId: string, name: string, order: Passwo
 }
 
 export function clearSessionCookie(orderId: string, scope: Scope = "portal") {
-  return `${sessionCookieName(orderId, scope)}=; Path=/api/${scope}/${orderId}; Max-Age=0; HttpOnly; SameSite=Lax`
+  return `${sessionCookieName(orderId, scope)}=; Path=${scope === "plan" ? "/api" : `/api/portal/${orderId}`}; Max-Age=0; HttpOnly; SameSite=Lax`
 }
 
 /** The client's name from a valid session cookie for this order, or null. */
@@ -220,7 +221,12 @@ export async function portalContext(
     return Response.json({ error: "unavailable" }, { status: 503 })
   }
   if (!order) return Response.json({ error: "not_found" }, { status: 404 })
-  const name = readSession(request, orderId, order)
+  let name = readSession(request, orderId, order)
+  // A post without a password of its own also opens for whoever is signed in to its project's plan.
+  if (!name && order.project_id && !hasPassword(order)) {
+    const { data: project } = await db.from("orders").select("id, password, password_hash").eq("id", order.project_id).eq("kind", "project").maybeSingle()
+    if (project) name = readSession(request, project.id, project, "plan")
+  }
   if (!name) return Response.json({ error: "unauthorized", hasPassword: hasPassword(order) }, { status: 401 })
   return { db, order, name }
 }

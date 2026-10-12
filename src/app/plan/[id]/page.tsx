@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { ArrowRightIcon, CheckIcon, FileTextIcon, Grid3x3Icon, ImageIcon, LayoutListIcon, MessageSquareIcon } from "lucide-react"
+import { ArrowRightIcon, CheckIcon, FileTextIcon, Grid3x3Icon, ImageIcon, LayoutListIcon, LockIcon, MessageSquareIcon } from "lucide-react"
 import type { PortalOrder } from "@/lib/portal-client"
 import { isPdfUrl, cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -15,7 +15,8 @@ import { POST_FORMATS } from "@/components/projects/PostTools"
 // with its picture, caption, day and format, approve them one by one or all at once, and open a
 // post to leave comments right on the picture. Everything goes through /api/plan/[id]/*.
 
-type Post = PortalOrder
+/** A plan's post; `locked` when it has a password of its own and opens only in its portal. */
+type Post = PortalOrder & { locked?: boolean }
 type Plan = { project: { id: string; title: string; client_name: string }; posts: Post[]; open: Record<string, number>; viewer: string }
 type Phase = "loading" | "auth" | "view" | "missing"
 
@@ -68,6 +69,7 @@ export default function PlanPage() {
   if (phase === "auth" || !plan) return <SignIn id={id} brand={brand} hasPassword={hasPassword} onDone={load} />
 
   const ready = plan.posts.filter((p) => p.file_url)
+  const making = plan.posts.filter((p) => !p.file_url && !p.locked).length
   const approved = ready.filter(isDone)
   const toApprove = ready.filter((p) => !isDone(p))
   const day = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "long" })
@@ -91,7 +93,7 @@ export default function PlanPage() {
           <div className="flex min-w-56 flex-1 flex-col gap-2">
             <p className="text-[14px]">
               <span className="font-semibold">{t("{n} of {m} approved", { n: approved.length, m: ready.length })}</span>
-              {plan.posts.length > ready.length && <span className="text-muted-foreground"> · {t("{n} still being made", { n: plan.posts.length - ready.length })}</span>}
+              {making > 0 && <span className="text-muted-foreground"> · {t("{n} still being made", { n: making })}</span>}
             </p>
             <div className="h-1.5 max-w-sm overflow-hidden rounded-full bg-foreground/[0.08]">
               <div className="h-full rounded-full bg-foreground transition-[width] duration-500" style={{ width: `${ready.length ? (approved.length / ready.length) * 100 : 0}%` }} />
@@ -176,6 +178,10 @@ function PostCard({ post, open, day, busy, onApprove }: { post: Post; open: numb
           )}
           {done && <span className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-[12px] font-semibold backdrop-blur"><CheckIcon className="size-3.5" />{t("Approved")}</span>}
         </a>
+      ) : post.locked ? (
+        <a href={href} className="flex aspect-[4/5] flex-col items-center justify-center gap-2 bg-foreground/[0.04] px-6 text-center text-[13px] text-muted-foreground hover:bg-foreground/[0.07]">
+          <LockIcon className="size-7" />{t("This post has its own password. Open it to see it.")}
+        </a>
       ) : (
         <div className="flex aspect-[4/5] flex-col items-center justify-center gap-2 bg-foreground/[0.04] text-[13px] text-muted-foreground">
           <ImageIcon className="size-7" />{t("Being made")}
@@ -193,6 +199,9 @@ function PostCard({ post, open, day, busy, onApprove }: { post: Post; open: numb
           </button>
         )}
         {open > 0 && <p className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground"><MessageSquareIcon className="size-3.5" />{t("{n} open comments", { n: open })}</p>}
+        {post.locked && (
+          <a href={href} className="mt-auto flex h-10 items-center justify-center gap-1.5 rounded-full bg-foreground/[0.06] text-[14px] font-medium hover:bg-foreground/[0.1]">{t("Open")}<ArrowRightIcon className="size-4" /></a>
+        )}
         {post.file_url && (
           <div className="mt-auto flex gap-2 pt-2">
             {done ? (
@@ -221,11 +230,11 @@ function Feed({ posts }: { posts: Post[] }) {
     <div className="mx-auto mt-6 max-w-[480px] overflow-hidden rounded-2xl bg-card ring-1 ring-border">
       <div className="grid grid-cols-3 gap-0.5">
         {shown.map((post) => (
-          <a key={post.id} href={post.file_url ? `/portal/${post.id}` : undefined} className="relative aspect-square overflow-hidden bg-foreground/[0.05]">
+          <a key={post.id} href={post.file_url || post.locked ? `/portal/${post.id}` : undefined} className="relative aspect-square overflow-hidden bg-foreground/[0.05]">
             {post.file_url && !isPdfUrl(post.file_url)
               // eslint-disable-next-line @next/next/no-img-element -- signed, short-lived links
               ? <img src={post.file_url} alt={post.title} className="size-full object-cover" loading="lazy" />
-              : <span className="flex size-full items-center justify-center p-2 text-center text-[11px] text-muted-foreground">{post.file_url ? "PDF" : t("Being made")}</span>}
+              : <span className="flex size-full items-center justify-center p-2 text-center text-[11px] text-muted-foreground">{post.file_url ? "PDF" : post.locked ? <LockIcon className="size-4" /> : t("Being made")}</span>}
             {isDone(post) && <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-background/90"><CheckIcon className="size-3" strokeWidth={3} /></span>}
           </a>
         ))}

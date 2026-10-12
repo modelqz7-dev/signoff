@@ -7,8 +7,8 @@ type Params = { params: Promise<{ id: string }> }
 
 /**
  * Enter a project's content plan: checks the name (and the project's password, if it has one),
- * then signs the client in to the plan and to the portal of each of its posts that has no password
- * of its own, so opening a post to comment on it doesn't ask for the name again.
+ * then signs the client in with one cookie that the portals of the project's posts without a
+ * password of their own accept too, so opening a post to comment on it doesn't ask again.
  */
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
@@ -31,14 +31,10 @@ export async function POST(request: Request, { params }: Params) {
     return Response.json({ error: "wrong_password" }, { status: 401 })
   }
 
-  const headers = new Headers({ "Cache-Control": "no-store" })
-  headers.append("Set-Cookie", createSessionCookie(id, name, project, "plan"))
-  const { data: posts } = await db.from("orders").select("id, password, password_hash").eq("project_id", id)
-  for (const post of posts ?? []) {
-    if (post.password || post.password_hash) continue
-    headers.append("Set-Cookie", createSessionCookie(post.id, name, post))
-  }
-  return Response.json({ ok: true, name }, { headers })
+  return Response.json(
+    { ok: true, name },
+    { headers: { "Set-Cookie": createSessionCookie(id, name, project, "plan"), "Cache-Control": "no-store" } },
+  )
 }
 
 /** Leave the plan. */
