@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PDFViewer } from "@/components/ui/pdf-viewer"
@@ -293,6 +293,12 @@ export default function PortalPage() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
           {/* the order, set like a title page */}
           <div className="flex flex-col gap-1.5">
+            {/* a post of a content plan leads back to the whole plan */}
+            {order.project_id && (
+              <a href={`/plan/${order.project_id}`} className="mb-1 flex w-fit items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+                <ArrowLeftIcon className="size-4" />{t("The whole content plan")}
+              </a>
+            )}
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
               {order.code}
             </p>

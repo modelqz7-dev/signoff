@@ -63,17 +63,23 @@ function passwordFingerprint(order: PasswordFields) {
 
 type Session = { o: string; n: string; f: string; e: number }
 
-function sessionCookieName(orderId: string) {
-  return `nodly_portal_${orderId.replace(/[^0-9a-f]/gi, "")}`
+/**
+ * Where a session holds: "portal" for one order's portal (/api/portal/<id>), "plan" for a project's
+ * whole content plan (/api/plan/<id>). Each has its own cookie, sent only to its own API.
+ */
+type Scope = "portal" | "plan"
+
+function sessionCookieName(orderId: string, scope: Scope = "portal") {
+  return `nodly_${scope}_${orderId.replace(/[^0-9a-f]/gi, "")}`
 }
 
-export function createSessionCookie(orderId: string, name: string, order: PasswordFields) {
+export function createSessionCookie(orderId: string, name: string, order: PasswordFields, scope: Scope = "portal") {
   const session: Session = { o: orderId, n: name, f: passwordFingerprint(order), e: Date.now() + SESSION_DAYS * 86_400_000 }
   const body = Buffer.from(JSON.stringify(session)).toString("base64url")
   const sig = createHmac("sha256", secret()).update(body).digest("base64url")
   return [
-    `${sessionCookieName(orderId)}=${body}.${sig}`,
-    `Path=/api/portal/${orderId}`,
+    `${sessionCookieName(orderId, scope)}=${body}.${sig}`,
+    `Path=/api/${scope}/${orderId}`,
     `Max-Age=${SESSION_DAYS * 86_400}`,
     "HttpOnly",
     "SameSite=Lax",
@@ -81,14 +87,14 @@ export function createSessionCookie(orderId: string, name: string, order: Passwo
   ].join("; ")
 }
 
-export function clearSessionCookie(orderId: string) {
-  return `${sessionCookieName(orderId)}=; Path=/api/portal/${orderId}; Max-Age=0; HttpOnly; SameSite=Lax`
+export function clearSessionCookie(orderId: string, scope: Scope = "portal") {
+  return `${sessionCookieName(orderId, scope)}=; Path=/api/${scope}/${orderId}; Max-Age=0; HttpOnly; SameSite=Lax`
 }
 
 /** The client's name from a valid session cookie for this order, or null. */
-function readSession(request: Request, orderId: string, order: PasswordFields) {
+function readSession(request: Request, orderId: string, order: PasswordFields, scope: Scope = "portal") {
   const cookie = request.headers.get("cookie") ?? ""
-  const raw = cookie.split(/;\s*/).find((c) => c.startsWith(`${sessionCookieName(orderId)}=`))?.split("=")[1]
+  const raw = cookie.split(/;\s*/).find((c) => c.startsWith(`${sessionCookieName(orderId, scope)}=`))?.split("=")[1]
   if (!raw) return null
   const [body, sig] = raw.split(".")
   if (!body || !sig) return null
@@ -179,6 +185,8 @@ const ORDER_PUBLIC_FIELDS = [
   "version", "approved_at", "approved_by",
   // a post's caption, day and format, which the client approves with the picture
   "caption", "publish_on", "format",
+  // a post knows its project, so its portal can lead back to the whole plan
+  "project_id",
 ] as const
 
 export async function publicOrder(db: SupabaseClient, order: Record<string, unknown>) {
@@ -216,3 +224,24 @@ export async function portalContext(
   if (!name) return Response.json({ error: "unauthorized", hasPassword: hasPassword(order) }, { status: 401 })
   return { db, order, name }
 }
+
+export type PlanContext = { db: SupabaseClient; project: Record<string, unknown> & PasswordFields; name: string }
+
+/**
+ * Loads the project behind a content-plan request and checks the plan's session cookie.
+ * Returns the context, or a ready error Response (404 not a project, 401 not signed in).
+ */
+export async function planContext(request: Request, projectId: string, db: SupabaseClient): Promise<PlanContext | Response> {
+  if (!isUuid(projectId)) return Response.json({ error: "not_found" }, { status: 404 })
+  const { data: project, error } = await db.from("orders").select("*").eq("id", projectId).eq("kind", "project").maybeSingle()
+  if (error) {
+    console.error("Plan load error:", error)
+    return Response.json({ error: "unavailable" }, { status: 503 })
+  }
+  if (!project) return Response.json({ error: "not_found" }, { status: 404 })
+  const name = readSession(request, projectId, project, "plan")
+  if (!name) return Response.json({ error: "unauthorized", hasPassword: hasPassword(project) }, { status: 401 })
+  return { db, project, name }
+}
+
+export { hasPassword }
