@@ -10,6 +10,7 @@ import { getOrCreateShop } from "@/lib/shop"
 import { openNav, openPanel } from "@/lib/panels"
 import { usePlanUsage } from "@/lib/use-plan"
 import { can } from "@/lib/plans"
+import { FEATURES } from "@/lib/features"
 import { useT } from "@/lib/i18n"
 
 /** The workshop's own canvas (the sidebar's "Canvas"): notes and schemes not tied to a project. */
@@ -23,6 +24,8 @@ export default function BoardPage() {
 
   useEffect(() => {
     async function init() {
+      // the canvas is put aside for now (see lib/features): this address leads home
+      if (!FEATURES.canvas) { router.replace("/dashboard"); return }
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { router.replace("/login"); return }
       const { data } = await getOrCreateShop(session.user)

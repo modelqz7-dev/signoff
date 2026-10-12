@@ -1,3 +1,4 @@
+import { FEATURES } from "@/lib/features"
 import type { Shop } from "@/components/dashboard/types"
 
 export type PlanId = "free" | "go" | "pro"
@@ -41,7 +42,7 @@ export const PLANS: Plan[] = [
     features: ["versions", "certificate", "branding", "reminders", "canvas"],
     highlights: [
       "Up to 25 active orders",
-      "Free canvas with SMM templates",
+      ...(FEATURES.canvas ? ["Free canvas with SMM templates"] : []),
       "Version history with comments per version",
       "Approval certificate (PDF)",
       "Your logo in the portal instead of Nodly's",

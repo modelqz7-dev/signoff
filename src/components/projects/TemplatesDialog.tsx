@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/dialog"
 import { POST_TEMPLATES, TEMPLATES, type CanvasTemplate, type GalleryItem, type PostTemplate } from "@/components/projects/templates"
 import { useT, type T } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { FEATURES, SHOWN_POST_TEMPLATES } from "@/lib/features"
 
 const matches = (t: T, q: string) => (item: GalleryItem) => `${t(item.title)} ${t(item.description)} ${item.title}`.toLowerCase().includes(q)
 
@@ -35,7 +36,11 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
   const q = query.trim().toLowerCase()
   const isNew = !!onPosts
   const canvases = useMemo(() => (q ? TEMPLATES.filter(matches(t, q)) : TEMPLATES), [q, t])
-  const plans = useMemo(() => (!isNew ? [] : q ? POST_TEMPLATES.filter(matches(t, q)) : POST_TEMPLATES), [isNew, q, t])
+  const plans = useMemo(() => {
+    if (!isNew) return []
+    const shown = POST_TEMPLATES.filter((tpl) => SHOWN_POST_TEMPLATES.includes(tpl.id))
+    return q ? shown.filter(matches(t, q)) : shown
+  }, [isNew, q, t])
 
   const close = () => onOpenChange(false)
   const pick = (tpl: CanvasTemplate | null) => {
@@ -77,7 +82,8 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
           </button>
         </div>
 
-        {isNew && (
+        {/* with the canvas put aside (see lib/features) a new project is posts only: no switch */}
+        {isNew && FEATURES.canvas && (
           <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-5 pb-1 sm:px-6">
             <div role="tablist" className="flex items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
               <Tab active={tab === "posts"} onClick={() => setTab("posts")} icon={LayoutGridIcon} title={t("Posts")} count={plans.length + 1} />
@@ -106,7 +112,7 @@ export function TemplatesDialog({ open, onOpenChange, onPick, onPosts, canvasLoc
                     </Card>
                   ))}
                 </Section>
-              ) : <NotFound other={canvases.length > 0 ? () => setTab("canvas") : null} otherLabel={t("Canvas")} />
+              ) : <NotFound other={FEATURES.canvas && canvases.length > 0 ? () => setTab("canvas") : null} otherLabel={t("Canvas")} />
             )}
             {(!isNew || tab === "canvas") && (
               canvases.length > 0 || (isNew && !q) ? (
