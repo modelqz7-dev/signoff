@@ -94,7 +94,7 @@ export default function RequestsPage() {
     }).select().single()
     if (error || !order) {
       setBusy(null)
-      if (isPlanLimitError(error)) { setError(t("You've reached your plan's limit of active orders.")); openPanel("billing"); return }
+      if (isPlanLimitError(error)) { setError(t("You've reached your plan's limit of active projects.")); openPanel("billing"); return }
       setError(error?.message || t("Couldn't create the order"))
       return
     }

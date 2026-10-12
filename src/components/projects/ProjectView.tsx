@@ -182,6 +182,19 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
           className="field-sizing-content hidden max-w-[30vw] min-w-16 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-hover sm:block"
           ariaLabel={t("Client")}
         />
+        {/* where the reminders about posts waiting for a decision go */}
+        <EditableText
+          value={project.client_email ?? ""}
+          placeholder={t("Client's email for reminders")}
+          onSave={(v) => {
+            const email = v.trim()
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError(t("Check the email address")); return }
+            setError(null)
+            patchProject({ client_email: email })
+          }}
+          className="field-sizing-content hidden max-w-[28vw] min-w-16 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-hover md:block"
+          ariaLabel={t("Client's email for reminders")}
+        />
         {error && <span className="truncate text-xs text-destructive">{error}</span>}
         {FEATURES.canvas && <div role="tablist" className="ml-auto flex shrink-0 items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
           {([["posts", LayoutGridIcon, t("Posts")], ["canvas", ShapesIcon, t("Canvas")]] as const).map(([id, Icon, label]) => (

@@ -127,8 +127,8 @@ export function NextStep({ order, pins, unanswered, copied, uploading, certifica
       )
     }
   } else {
-    title = t("In implementation")
-    text = t("Approved and being built. The approval stays on record with the certificate.")
+    title = t("Published")
+    text = t("Approved and published. The approval stays on record with the certificate.")
   }
 
   const tint = tone === "neutral" ? undefined : { backgroundColor: STATUS_MAP[tone].bg }

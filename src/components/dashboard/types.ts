@@ -92,7 +92,7 @@ export const STATUS_MAP: Record<
     bg: "var(--status-approved-bg)",
   },
   prod: {
-    label: "Implementation",
+    label: "Published",
     color: "var(--status-prod)",
     bg: "var(--status-prod-bg)",
   },

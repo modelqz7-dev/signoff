@@ -11,7 +11,7 @@ export type Plan = {
   name: string
   /** Monthly price in USD; yearly billing is 20% off. */
   monthly: number
-  /** Active orders at once (awaiting review or changes requested); null = unlimited. */
+  /** Active projects at once (awaiting review or changes requested); null = unlimited. */
   activeOrders: number | null
   features: Feature[]
   /** Selling points shown on the plan card, in English (translated with t()). */
@@ -28,7 +28,7 @@ export const PLANS: Plan[] = [
     activeOrders: 3,
     features: [],
     highlights: [
-      "Up to 3 active orders",
+      "Up to 3 active projects",
       "Client portal with pinned comments",
       "Telegram and email notifications",
       "Nodly logo in the portal header",
@@ -41,7 +41,7 @@ export const PLANS: Plan[] = [
     activeOrders: 25,
     features: ["versions", "certificate", "branding", "reminders", "canvas"],
     highlights: [
-      "Up to 25 active orders",
+      "Up to 25 active projects",
       ...(FEATURES.canvas ? ["Free canvas with SMM templates"] : []),
       "Version history with comments per version",
       "Approval certificate (PDF)",
@@ -56,7 +56,7 @@ export const PLANS: Plan[] = [
     activeOrders: null,
     features: ["versions", "certificate", "branding", "reminders", "brandKit", "canvas"],
     highlights: [
-      "Unlimited active orders",
+      "Unlimited active projects",
       "Everything in Pro",
       "Your welcome message and contacts in the portal",
       "Priority support",
