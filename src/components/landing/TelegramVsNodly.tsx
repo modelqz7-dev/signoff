@@ -50,7 +50,7 @@ export function TelegramVsNodly({ t }: { t: T }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mb-14 flex flex-col gap-6">
           <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            <span className="tabular-nums">03</span>
+            <span className="tabular-nums">01</span>
             <span aria-hidden="true">·</span>
             <span>{t("Telegram or Nodly")}</span>
           </div>
