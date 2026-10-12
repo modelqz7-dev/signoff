@@ -157,7 +157,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
   }
 
   return (
-    <div className="flex h-dvh min-w-0 flex-1 flex-col bg-background text-foreground">
+    <div className="app-panel flex h-dvh min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground lg:m-3 lg:h-[calc(100dvh-24px)] lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
       {/* a thin top bar, Notion style */}
       <div className="flex h-12 shrink-0 items-center gap-2 px-3">
         <button type="button" onClick={openNav} aria-label={t("Menu")} className="rounded-md p-1.5 text-muted-foreground hover:bg-hover hover:text-foreground lg:hidden">
