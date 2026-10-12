@@ -99,7 +99,7 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 p-4 sm:p-6">
       {/* day and week */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="w-full min-w-0 sm:w-auto sm:flex-1">

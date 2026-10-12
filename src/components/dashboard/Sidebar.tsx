@@ -927,7 +927,7 @@ function PlanCard({ onOpen, className }: { onOpen: () => void; className?: strin
   const { t } = useT()
   if (!usage) return null
   const onTrial = usage.trialDays > 0 && usage.chosen.id === "free"
-  const nearLimit = usage.plan.activeOrders !== null && usage.activeOrders >= usage.plan.activeOrders - 1
+  const nearLimit = !nicheConfig(usage.shop.niche) && usage.plan.activeOrders !== null && usage.activeOrders >= usage.plan.activeOrders - 1
 
   return (
     <div className={cn("mx-2.5 mb-3 flex flex-col gap-2.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10", className)}>
@@ -939,7 +939,7 @@ function PlanCard({ onOpen, className }: { onOpen: () => void; className?: strin
           <span className="text-[11px] text-muted-foreground">{t("{n}d left", { n: usage.trialDays })}</span>
         )}
       </div>
-      <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />
+      {!nicheConfig(usage.shop.niche) && <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />}
       {(onTrial || usage.chosen.id !== "pro") && (
         <button
           type="button"

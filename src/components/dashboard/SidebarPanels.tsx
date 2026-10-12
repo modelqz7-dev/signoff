@@ -15,9 +15,9 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
-import { NICHES, isCrmNiche, nicheConfig } from "@/lib/niches"
+import { NICHES, isCrmNiche, nicheConfig, type NicheConfig } from "@/lib/niches"
 import { chooseNiche } from "@/lib/crm"
-import { PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
+import { planHighlights, PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
 import { uploadPublicAsset, useFileUrl } from "@/lib/files"
@@ -49,6 +49,12 @@ const TITLES: Record<PanelId, { title: string; description: string }> = {
   status: { title: "Status", description: "Live check of the services Nodly depends on." },
 }
 
+/** The tabs' lines for the CRM niches, where the content-plan wording doesn't fit. */
+const CRM_DESCRIPTIONS: Partial<Record<PanelId, string>> = {
+  help: "How online booking works, step by step.",
+  docs: "What the statuses mean.",
+}
+
 // The account menu opens two windows with tabs, Settings and Help; Profile stands alone.
 const GROUPS: { panels: PanelId[]; title: string; tabs: Partial<Record<PanelId, string>> }[] = [
   { panels: ["notifications", "security", "appearance", "billing"], title: "Settings", tabs: { notifications: "Notifications", security: "Security", appearance: "Appearance", billing: "Plan" } },
@@ -62,6 +68,8 @@ export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClos
   const meta = shown ? TITLES[shown] : null
   const group = shown ? GROUPS.find((g) => g.panels.includes(shown)) : undefined
   const { t } = useT()
+  const usage = usePlanUsage()
+  const crm = isCrmNiche(usage?.shop.niche)
 
   return (
     <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="rounded-2xl p-5 sm:max-w-lg">
@@ -82,7 +90,7 @@ export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClos
               </button>
             ))}
           </div>
-          <p className="text-[13px] text-muted-foreground">{t(TITLES[shown].description)}</p>
+          <p className="text-[13px] text-muted-foreground">{t((crm && CRM_DESCRIPTIONS[shown]) || TITLES[shown].description)}</p>
         </div>
       )}
       {shown === "profile" && <ProfilePanel />}
@@ -250,7 +258,7 @@ function ProfilePanel() {
         <div className="flex flex-col gap-2">
           <Label>{t("What do you do?")}</Label>
           <div className="flex flex-wrap gap-1.5">
-            {[...NICHES.map((n) => [n.id, `${n.emoji} ${t(n.name)}`] as const), ["smm", t("SMM: content plans")] as const].map(([id, label]) => {
+            {NICHES.map((n) => [n.id, `${n.emoji} ${t(n.name)}`] as const).map(([id, label]) => {
               const active = shop.niche === id
               return (
                 <button
@@ -479,7 +487,7 @@ function BillingPanel() {
         </div>
       )}
 
-      <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />
+      {!isCrmNiche(shop?.niche) && <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />}
 
       <div className="flex justify-center pt-1">
         <BillingCycleToggle yearly={yearly} onChange={setYearly} />
@@ -504,7 +512,7 @@ function BillingPanel() {
                   <PlanPrice plan={plan} yearly={yearly} className="text-xs text-muted-foreground" />
                 </div>
                 <ul className="mt-1 flex flex-col gap-0.5">
-                  {plan.highlights.map((f) => (
+                  {planHighlights(plan, shop?.niche).map((f) => (
                     <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CheckIcon className="size-3 shrink-0 text-accent" />
                       {t(f)}
@@ -667,10 +675,12 @@ function NotificationsPanel() {
           )}
         </div>
 
-        <Row label={t("Live updates on the order page")}><span className="text-chart-4">{t("On")}</span></Row>
+        {!isCrmNiche(shop?.niche) && <Row label={t("Live updates on the order page")}><span className="text-chart-4">{t("On")}</span></Row>}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Note>{t("You'll be notified when a client leaves a comment, approves a design or asks for changes. Messages come in the language you use Nodly in.")}</Note>
+      <Note>{isCrmNiche(shop?.niche)
+        ? t("You'll get a message in Telegram when a client books or places an order through your link. Messages come in the language you use Nodly in.")
+        : t("You'll be notified when a client leaves a comment, approves a design or asks for changes. Messages come in the language you use Nodly in.")}</Note>
     </div>
   )
 }
@@ -856,6 +866,8 @@ function ThemePreview({ theme }: { theme: Theme }) {
 
 function HelpPanel() {
   const { t } = useT()
+  const { shop } = useAccount()
+  const crm = nicheConfig(shop?.niche)
   const steps = [
     ["Create an order", "Orders → New Order. Add the client and deadline."],
     ["Upload the file", "Attach the PDF or image on the order page."],
@@ -863,6 +875,7 @@ function HelpPanel() {
     ["Collect comments", "The client clicks on the file to pin comments; you see them live."],
     ["Get approval", "The client presses Approve or Request Changes; the status updates instantly."],
   ]
+  if (crm) return <CrmDocs niche={crm} part="guide" />
   return (
     <ol className="flex flex-col gap-3">
       {steps.map(([title, text], i) => (
@@ -913,8 +926,50 @@ function ContactPanel() {
   )
 }
 
+/** Help for the CRM niches: how booking works and what the statuses mean. */
+function CrmDocs({ niche, part }: { niche: NicheConfig; part: "guide" | "docs" }) {
+  const { t } = useT()
+  const isOrder = niche.kind === "order"
+  const steps = isOrder
+    ? ["Online booking → create your link and choose the days you take orders.", "Put the link in your Instagram bio.", "A client picks a product and a day and fills in the details.", "The order lands in New and you get a message in Telegram."]
+    : ["Online booking → create your link and set your working hours.", "Put the link in your Instagram bio.", "A client picks a service and a free time.", "The appointment lands in the calendar and you get a message in Telegram."]
+  const statuses: [string, string][] = isOrder
+    ? [["New order", "Just came in: check the details and the price."], ["Confirmed", "Agreed with the client."], ["In the making", "You're working on it."], ["Ready", "Waiting to be picked up or delivered."], ["Handed over", "Done; it counts in the client's spend."]]
+    : [["Booked", "The client is coming."], ["Came", "The visit happened; it counts in the takings."], ["Didn't come", "A no-show; the time is free again."], ["Cancelled", "Called off; the time is free again."]]
+  if (part === "docs") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-medium text-muted-foreground">{t("Statuses")}</p>
+        {statuses.map(([name, help]) => (
+          <div key={name} className="flex items-center gap-3 text-xs">
+            <span className="w-28 shrink-0 rounded-md bg-muted px-2 py-0.5 text-center">{t(name)}</span>
+            <span className="text-muted-foreground">{t(help)}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-medium text-muted-foreground">{t("How clients book")}</p>
+        {steps.map((s, i) => (
+          <div key={s} className="flex gap-2.5 text-xs"><span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted font-medium">{i + 1}</span><span className="pt-0.5 text-muted-foreground">{t(s)}</span></div>
+        ))}
+      </div>
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-medium text-muted-foreground">{t("Booking by hand")}</p>
+        <p className="text-xs text-muted-foreground">{isOrder ? t("For an order by phone, use “Add by hand” at the bottom of the New column.") : t("For a booking by phone, click a free time in the calendar.")}</p>
+      </div>
+    </div>
+  )
+}
+
 function DocsPanel() {
   const { t } = useT()
+  const { shop } = useAccount()
+  const crm = nicheConfig(shop?.niche)
+  if (crm) return <CrmDocs niche={crm} part="docs" />
   const statusHelp: Record<OrderStatus, string> = {
     await: "Waiting for the client to review.",
     changes: "The client asked for changes.",

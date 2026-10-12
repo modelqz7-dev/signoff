@@ -103,3 +103,17 @@ export function formatPrice(plan: Plan, yearly: boolean) {
 export function isPlanLimitError(error: { message?: string } | null | undefined) {
   return !!error?.message?.includes("plan_limit")
 }
+
+/**
+ * What each plan offers a CRM niche (nails, barbershop, cakes): their own words, since the
+ * content-plan features above don't apply to them. Not limited per plan yet.
+ */
+const CRM_HIGHLIGHTS: Record<string, string[]> = {
+  free: ["Online booking through your link", "Client base with visit history", "Telegram notifications", "“Booking by Nodly” on your page"],
+  go: ["Everything in Start", "Several masters in one calendar", "Priority support"],
+  pro: ["Everything in Pro", "For salons and studios with a team", "Help with setting up"],
+}
+
+export function planHighlights(plan: Plan, niche: string | null | undefined) {
+  return niche && niche !== "smm" && CRM_HIGHLIGHTS[plan.id] ? CRM_HIGHLIGHTS[plan.id] : plan.highlights
+}

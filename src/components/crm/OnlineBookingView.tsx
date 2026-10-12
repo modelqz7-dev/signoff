@@ -68,7 +68,7 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
   const weekdayName = (d: number) => new Date(2024, 0, 7 + d).toLocaleDateString(locale, { weekday: "short" })
 
   return (
-    <div className="flex max-w-2xl flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 sm:p-6">
       <div>
         <h1 className="text-[24px] font-semibold tracking-tight">{t("Online booking")}</h1>
         <p className="text-[13.5px] text-muted-foreground">{isOrder ? t("Clients order through your link and the order lands on the board at once.") : t("Clients book through your link and the appointment lands in the calendar at once.")}</p>
