@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import type { Order } from "@/components/dashboard/types"
 import { ProjectCanvas, type Board } from "@/components/projects/ProjectCanvas"
 import { PostsView } from "@/components/projects/PostsView"
+import { defaultPostTitle, nameFromFile, type PostDraft } from "@/components/projects/PostTools"
 import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
 import { PROJECTS_CHANGED, PROJECT_RENAMED, openNav, openPanel } from "@/lib/panels"
 import { usePlanUsage } from "@/lib/use-plan"
@@ -19,7 +20,7 @@ import { useT } from "@/lib/i18n"
 // (kind = 'post'), so opening one leads to the usual order page with pins, versions and approval.
 
 export function ProjectView({ project, onChange, onToggleSidebar }: { project: Order; onChange: (p: Order) => void; onToggleSidebar: () => void }) {
-  const { t } = useT()
+  const { t, locale } = useT()
   const [posts, setPosts] = useState<Order[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +86,8 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
         const { data, error } = await supabase.from("orders").insert({
           shop_id: project.shop_id,
           code: `${project.code}-${Date.now().toString(36).toUpperCase().slice(-4)}`,
-          title: file.name.replace(/\.[^.]+$/, ""),
+          // a file's own name if it means something, else "Post 7"
+          title: nameFromFile(file.name) ?? defaultPostTitle(t, locale, null, at),
           client_name: project.client_name,
           client_email: project.client_email,
           status: "await",
@@ -115,6 +117,26 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
     } catch (e) {
       setError((e as Error)?.message || t("Couldn't upload the file"))
     }
+  }
+
+  /** A post made from the dialog: its details, and its file if one was picked. */
+  async function createPost(draft: PostDraft, file: File | null) {
+    const at = postsRef.current.length ? Math.max(...postsRef.current.map((p) => p.position ?? 0)) + 1 : 1
+    const fileUrl = file ? await uploadOrderFile(project.shop_id, file) : null
+    const { data, error } = await supabase.from("orders").insert({
+      shop_id: project.shop_id,
+      code: `${project.code}-${Date.now().toString(36).toUpperCase().slice(-4)}`,
+      ...draft,
+      client_name: project.client_name,
+      client_email: project.client_email,
+      status: "await",
+      kind: "post",
+      project_id: project.id,
+      position: at,
+      file_url: fileUrl,
+    }).select().single()
+    if (error) throw error
+    setPosts((prev) => (prev.some((p) => p.id === data.id) ? prev : [...prev, data as Order]))
   }
 
   async function uploadPosts(files: File[]) {
@@ -182,7 +204,15 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
 
       <main className={cn("relative min-h-0 flex-1")}>
         {loaded && (view === "posts"
-          ? <PostsView posts={posts} onUpload={uploadPosts} onFill={fillPost} busy={busy} />
+          ? <PostsView
+              posts={posts}
+              onUpload={uploadPosts}
+              onFill={fillPost}
+              onCreate={createPost}
+              onChanged={(post) => setPosts((prev) => prev.map((p) => (p.id === post.id ? post : p)))}
+              onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+              busy={busy}
+            />
           : <ProjectCanvas initial={project.board as Board | null} save={save} posts={posts} onCreatePosts={addPosts} startTemplate={start.template} />)}
       </main>
     </div>

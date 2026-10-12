@@ -177,6 +177,8 @@ export async function signedFileUrl(db: SupabaseClient, url: string | null | und
 const ORDER_PUBLIC_FIELDS = [
   "id", "title", "code", "client_name", "value", "deadline", "notes", "status", "created_at",
   "version", "approved_at", "approved_by",
+  // a post's caption, day and format, which the client approves with the picture
+  "caption", "publish_on", "format",
 ] as const
 
 export async function publicOrder(db: SupabaseClient, order: Record<string, unknown>) {

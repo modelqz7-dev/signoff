@@ -10,6 +10,7 @@ import { ProjectCards, WaitingList, YourMoveList, type Home } from "@/components
 import type { Order } from "@/components/dashboard/types"
 import { ProjectAvatar } from "@/components/ProjectAvatar"
 import { PlanPosts } from "@/components/dashboard/PlanPosts"
+import { PostDialog, PostMenu, updatePost } from "@/components/projects/PostTools"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
@@ -50,7 +51,7 @@ function LaneMark({ lane, className }: { lane: Lane; className?: string }) {
 }
 type View = "week" | "projects" | "list"
 
-export function BentoHome({ home, projects, items, projectName, onNewProject, onPlanned, intro }: {
+export function BentoHome({ home, projects, items, projectName, onNewProject, onPlanned, onPostChanged, onPostDeleted, intro }: {
   home: Home
   /** Shown on top of the list view: the getting-started steps. */
   intro?: React.ReactNode
@@ -60,6 +61,9 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   onNewProject: () => void
   /** Posts (and maybe their new project) just planned on the picked days. */
   onPlanned: (rows: Order[]) => void
+  /** A post edited or deleted from its "⋯" on the week. */
+  onPostChanged: (post: Order) => void
+  onPostDeleted: (id: string) => void
 }) {
   const { t, locale } = useT()
   const today = startOfDay(new Date(home.now))
@@ -69,6 +73,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
   // days picked in the month, in the order they were tapped (at most a week's worth); while there are
   // any, the big card shows just those days side by side
   const [picked, setPicked] = useState<string[]>([])
+  const [editing, setEditing] = useState<Order | null>(null)
   const pickedDays = [...picked].sort().map(fromKey)
   const shownDays = pickedDays.length ? pickedDays : Array.from({ length: 7 }, (_, i) => addDays(week, i))
   // pick (on), unpick (off) or flip a day
@@ -137,7 +142,7 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         </div>
 
         <div className="mt-4 min-h-0 flex-1 overflow-auto">
-          {view === "week" && <WeekGrid days={shownDays} isWeek={!pickedDays.length} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} />}
+          {view === "week" && <WeekGrid days={shownDays} isWeek={!pickedDays.length} today={today} items={visible} lanes={lanes} lane={lane} projectName={projectName} onEdit={setEditing} onDeleted={onPostDeleted} />}
           {view === "projects" && <ProjectCards home={home} onNewProject={onNewProject} />}
           {view === "list" && (
             <div className="grid gap-6 xl:grid-cols-2">
@@ -156,6 +161,9 @@ export function BentoHome({ home, projects, items, projectName, onNewProject, on
         <ApprovalsCard items={items} today={today} />
         <ProjectsCard home={home} onNewProject={onNewProject} />
       </div>
+
+      <PostDialog open={!!editing} post={editing} number={1} onClose={() => setEditing(null)}
+        onSave={async (draft) => { if (editing) { await updatePost(editing, draft); onPostChanged({ ...editing, ...draft }) } }} />
     </div>
   )
 }
@@ -394,7 +402,9 @@ function NowCard({ home, projectName, onNewProject }: { home: Home; projectName:
 }
 
 /** The week: a column per day, a row per stage, every post as a small card. */
-function WeekGrid({ days, isWeek, today, items, lanes, lane, projectName }: {
+function WeekGrid({ days, isWeek, today, items, lanes, lane, projectName, onEdit, onDeleted }: {
+  onEdit: (post: Order) => void
+  onDeleted: (id: string) => void
   days: Date[]
   /** A whole week, rather than days picked in the month. */
   isWeek: boolean
@@ -440,7 +450,7 @@ function WeekGrid({ days, isWeek, today, items, lanes, lane, projectName }: {
               const list = cell.get(`${dayKey(d)}|${l}`) ?? []
               return (
                 <div key={d.getTime()} className="flex min-w-0 flex-col gap-2 pb-1">
-                  {list.map((o) => <PostCard key={o.id} item={o} lane={l} projectName={projectName(o)} />)}
+                  {list.map((o) => <PostCard key={o.id} item={o} lane={l} projectName={projectName(o)} onEdit={() => onEdit(o)} onDeleted={() => onDeleted(o.id)} />)}
                 </div>
               )
             })}
@@ -467,10 +477,13 @@ function Row({ lane, label, count, children }: { lane: Lane; label: string; coun
 }
 
 /** A post on the week: its picture, its project's face, its title. */
-function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projectName: string }) {
+function PostCard({ item, lane, projectName, onEdit, onDeleted }: { item: Order; lane: Lane; projectName: string; onEdit: () => void; onDeleted: () => void }) {
   const { t } = useT()
   const href = `/orders/${lane === "nofile" && item.project_id ? item.project_id : item.id}`
   return (
+    <div className="group relative">
+    <PostMenu post={item} onEdit={onEdit} onDeleted={onDeleted}
+      className="!absolute top-1.5 right-1.5 z-10 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-[[aria-expanded=true]]:opacity-100 max-lg:opacity-100" />
     <Link href={href} className="block overflow-hidden rounded-xl bg-muted transition-colors hover:bg-foreground/[0.12]">
       {lane === "nofile" ? (
         <span className="m-1.5 flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-[11px] text-muted-foreground">
@@ -487,6 +500,7 @@ function PostCard({ item, lane, projectName }: { item: Order; lane: Lane; projec
         <span className="mt-0.5 line-clamp-2 text-[13px] leading-snug font-semibold">{item.title}</span>
       </span>
     </Link>
+    </div>
   )
 }
 

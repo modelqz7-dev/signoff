@@ -358,6 +358,17 @@ export default function PortalPage() {
             </div>
 
             <aside className="flex min-w-0 flex-col gap-6">
+              {/* a post's caption: the client approves the words with the picture */}
+              {order.caption && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t("Caption")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{order.caption}</p>
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">{t("Details")}</CardTitle>
@@ -366,6 +377,8 @@ export default function PortalPage() {
                   <dl className="flex flex-col divide-y divide-border/50 text-sm">
                     <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
                     <Row label={t("Deadline")} value={formatDate(order.deadline)} />
+                    {order.publish_on && <Row label={t("Publishing day")} value={formatDate(`${order.publish_on.slice(0, 10)}T00:00:00`)} />}
+                    {order.format && order.format !== "post" && <Row label={t("Format")} value={t(order.format === "carousel" ? "Carousel" : order.format === "reels" ? "Reels" : "Stories")} />}
                   </dl>
                 </CardContent>
               </Card>

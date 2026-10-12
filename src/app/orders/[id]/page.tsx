@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
-import { AwardIcon, ChevronLeftIcon, LockIcon } from "lucide-react"
+import { AwardIcon, ChevronLeftIcon, LockIcon, PencilIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -33,6 +33,7 @@ import { fileKey } from "@/lib/storage-path"
 import { isPdfUrl } from "@/lib/utils"
 import { getOrCreateShop } from "@/lib/shop"
 import { ProjectView } from "@/components/projects/ProjectView"
+import { FormatTag, PostDialog, updatePost } from "@/components/projects/PostTools"
 import { useT } from "@/lib/i18n"
 import { siteOrigin } from "@/lib/site"
 
@@ -44,6 +45,7 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true)
   const [shop, setShop] = useState<Shop | null>(null)
   const [order, setOrder] = useState<Order | null>(null)
+  const [editingPost, setEditingPost] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -326,7 +328,12 @@ export default function OrderPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h1 className="font-[family-name:var(--font-brand)] text-2xl leading-tight font-bold tracking-[-0.03em] text-foreground sm:text-3xl">{order.title}</h1>
-                  <p className="mt-1 text-sm text-muted-foreground">{order.client_name || "—"} · {order.code}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+                    {order.client_name || "—"} · {order.code}
+                    {order.publish_on && <> · {new Date(`${order.publish_on.slice(0, 10)}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}</>}
+                    <FormatTag format={order.format} />
+                  </p>
+                  {order.caption && <p className="mt-3 max-w-2xl text-[14px] leading-relaxed whitespace-pre-line text-foreground/85">{order.caption}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {(order.status === "approved" || order.status === "prod") && (
@@ -354,6 +361,12 @@ export default function OrderPage() {
                   >
                     {t(status.label)}
                   </Badge>
+                  <button type="button" onClick={() => setEditingPost(true)} aria-label={t("Edit details")} title={t("Edit details")}
+                    className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+                    <PencilIcon className="size-4" />
+                  </button>
+                  <PostDialog open={editingPost} post={order} number={1} onClose={() => setEditingPost(false)}
+                    onSave={async (draft) => { await updatePost(order, draft); setOrder({ ...order, ...draft }) }} />
                   <DeleteOrderButton order={order} onDeleted={() => router.replace(project ? `/orders/${project.id}` : "/dashboard")} />
                 </div>
               </div>
