@@ -8,6 +8,7 @@ import { deleteService, saveService, type CrmData, type CrmService } from "@/lib
 import type { NicheConfig } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
+import { Picker, Toggle } from "@/components/crm/Pickers"
 
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240]
 
@@ -60,14 +61,10 @@ export function ServicesView({ data, config, shopId }: { data: CrmData; config: 
           <div key={s.id} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-2xl bg-card p-2.5 ring-1 ring-border sm:grid-cols-[1fr_150px_150px_auto]">
             <TextCell value={s.title} onSave={(title) => title.trim() && change(s, { title: title.trim() })} label={t("Name")} className="col-span-2 sm:col-span-1" />
             {isOrder ? (
-              <label className="flex h-10 items-center gap-2 rounded-lg bg-foreground/[0.06] px-3 text-[13px] text-muted-foreground">
-                <input type="checkbox" checked={s.price_from} onChange={(e) => change(s, { price_from: e.target.checked })} className="accent-foreground" />
-                {t("price “from”")}
-              </label>
+              <Toggle checked={s.price_from} onChange={(v) => change(s, { price_from: v })} className="h-10 rounded-lg bg-foreground/[0.06] px-3 text-[13px] text-muted-foreground">{t("price “from”")}</Toggle>
             ) : (
-              <select aria-label={t("Takes")} value={s.duration_min ?? 60} onChange={(e) => change(s, { duration_min: Number(e.target.value) })} className={FIELD}>
-                {[...new Set([...DURATIONS, s.duration_min ?? 60])].sort((a, b) => a - b).map((d) => <option key={d} value={d}>{durationLabel(d, t)}</option>)}
-              </select>
+              <Picker value={s.duration_min ?? 60} onChange={(v) => change(s, { duration_min: v })} label={t("Takes")}
+                options={[...new Set([...DURATIONS, s.duration_min ?? 60])].sort((a, b) => a - b).map((d) => ({ value: d, label: durationLabel(d, t) }))} />
             )}
             <div className="flex items-center gap-1.5">
               <TextCell value={s.price != null ? String(s.price) : ""} inputMode="decimal" placeholder={t("Price, ₴")} label={t("Price, ₴")}

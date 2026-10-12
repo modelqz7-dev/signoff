@@ -330,3 +330,23 @@ html.theme-fade *::after {
     --card: var(--muted);
   }
 }
+
+/* Lists inside the pickers: a slim scrollbar that only shows while you scroll or hover. */
+.nice-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  overscroll-behavior: contain;
+}
+.nice-scroll:hover {
+  scrollbar-color: var(--scrollbar) transparent;
+}
+.nice-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.nice-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+.nice-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+}

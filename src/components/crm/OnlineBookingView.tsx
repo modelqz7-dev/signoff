@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase"
 import { siteOrigin } from "@/lib/site"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
+import { Picker, TimePicker, Toggle } from "@/components/crm/Pickers"
 
 const LABEL = "text-[12.5px] font-medium text-muted-foreground"
 /** Monday first, as people in Ukraine read a week; values are JavaScript's (0 = Sunday). */
@@ -95,36 +96,31 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
 
         {!isOrder && (
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("From")}</span>
-              <input type="time" step={900} value={settings.from} onChange={(e) => set("from", e.target.value)} className={cn(FIELD, "[color-scheme:light] dark:[color-scheme:dark]")} /></label>
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Until")}</span>
-              <input type="time" step={900} value={settings.to} onChange={(e) => set("to", e.target.value)} className={cn(FIELD, "[color-scheme:light] dark:[color-scheme:dark]")} /></label>
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Times every")}</span>
-              <select value={settings.step} onChange={(e) => set("step", Number(e.target.value))} className={FIELD}>
-                {[15, 20, 30, 45, 60].map((m) => <option key={m} value={m}>{t("{m} min", { m })}</option>)}
-              </select></label>
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Booking closes")}</span>
-              <select value={settings.notice} onChange={(e) => set("notice", Number(e.target.value))} className={FIELD}>
-                {[0, 1, 2, 3, 6, 12, 24, 48].map((h) => <option key={h} value={h}>{h ? t("{n} h before", { n: h }) : t("when it starts")}</option>)}
-              </select></label>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("From")}</span>
+              <TimePicker value={settings.from} onChange={(v) => v && set("from", v)} label={t("From")} step={15} /></div>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Until")}</span>
+              <TimePicker value={settings.to} onChange={(v) => v && set("to", v)} label={t("Until")} step={15} /></div>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Times every")}</span>
+              <Picker value={settings.step} onChange={(v) => set("step", v)} label={t("Times every")}
+                options={[15, 20, 30, 45, 60].map((m) => ({ value: m, label: t("{m} min", { m }) }))} /></div>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Booking closes")}</span>
+              <Picker value={settings.notice} onChange={(v) => set("notice", v)} label={t("Booking closes")}
+                options={[0, 1, 2, 3, 6, 12, 24, 48].map((h) => ({ value: h, label: h ? t("{n} h before", { n: h }) : t("when it starts") }))} /></div>
           </div>
         )}
         {isOrder && (
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Earliest")}</span>
-              <select value={settings.lead} onChange={(e) => set("lead", Number(e.target.value))} className={FIELD}>
-                {[0, 1, 2, 3, 4, 5, 7, 10, 14].map((d) => <option key={d} value={d}>{d ? t("in {n} days", { n: d }) : t("the same day")}</option>)}
-              </select></label>
-            <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Orders a day, at most")}</span>
-              <select value={settings.perDay} onChange={(e) => set("perDay", Number(e.target.value))} className={FIELD}>
-                {[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}
-              </select></label>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Earliest")}</span>
+              <Picker value={settings.lead} onChange={(v) => set("lead", v)} label={t("Earliest")}
+                options={[0, 1, 2, 3, 4, 5, 7, 10, 14].map((d) => ({ value: d, label: d ? t("in {n} days", { n: d }) : t("the same day") }))} /></div>
+            <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Orders a day, at most")}</span>
+              <Picker value={settings.perDay} onChange={(v) => set("perDay", v)} label={t("Orders a day, at most")}
+                options={[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => ({ value: n, label: String(n) }))} /></div>
           </div>
         )}
-        <label className="flex flex-col gap-1.5"><span className={LABEL}>{t("Booking open for")}</span>
-          <select value={settings.ahead} onChange={(e) => set("ahead", Number(e.target.value))} className={cn(FIELD, "sm:max-w-60")}>
-            {[7, 14, 30, 60, 90].map((d) => <option key={d} value={d}>{t("{n} days ahead", { n: d })}</option>)}
-          </select></label>
+        <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Booking open for")}</span>
+          <Picker value={settings.ahead} onChange={(v) => set("ahead", v)} label={t("Booking open for")} className="sm:max-w-60"
+            options={[7, 14, 30, 60, 90].map((d) => ({ value: d, label: t("{n} days ahead", { n: d }) }))} /></div>
       </section>
 
       <section className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
@@ -200,10 +196,9 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
             <Button onPress={copy} isDisabled={!page.published} className="h-10 gap-1.5 rounded-full px-4">{copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}</Button>
             <a href={url} target="_blank" rel="noreferrer" aria-label={t("Open")} className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ExternalLinkIcon className="size-4" /></a>
           </div>
-          <label className="flex items-center gap-2 text-[13.5px]">
-            <input type="checkbox" checked={page.published} onChange={toggle} className="size-4 accent-foreground" />
+          <Toggle checked={page.published} onChange={toggle}>
             {page.published ? t("Booking is open") : t("Booking is closed: the link shows nothing")}
-          </label>
+          </Toggle>
           <p className="text-[12.5px] text-muted-foreground">{t("Put it in your Instagram bio and send it to clients in messages.")}</p>
         </>
       ) : (
