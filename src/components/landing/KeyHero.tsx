@@ -49,12 +49,12 @@ export function KeyHero({ t, signedIn }: { t: T; signedIn: boolean }) {
           </span>
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-          {t("Send one link. The client marks changes right on the post and approves with a tap, and the approval stays on record.")}
+          {t("Plan the month's posts and send the client one link. They see the whole plan as it will look in the feed, mark changes right on the picture and approve with a tap.")}
         </p>
 
         {/* the key */}
         <div className="relative mt-8 w-[260px] sm:w-[340px]">
-          <ApproveKey onPress={press} label={approved ? t("Undo approval") : t("Approve the design")} />
+          <ApproveKey onPress={press} label={approved ? t("Undo approval") : t("Approve the posts")} />
           {approved && (
             <div key={stampKey} className="pointer-events-none absolute inset-0">
               {/* a green "Approved" sticker slapped on the key's corner, same pill as the headline */}

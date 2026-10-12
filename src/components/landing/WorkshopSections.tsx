@@ -53,7 +53,7 @@ export function Pricing({ t }: { t: T }) {
   return (
     <section id="pricing" className="scroll-mt-16 py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading no="02" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
+        <SectionHeading no="04" label={t("Pricing")} title={t("Priced like a tool, not a project.")} note={t("7 days of Studio free, no card")} />
         <div className="mb-8">
           <BillingCycleToggle yearly={yearly} onChange={setYearly} />
         </div>
@@ -99,8 +99,10 @@ export function Questions({ t }: { t: T }) {
   const [open, setOpen] = useState<number | null>(0)
   const items = [
     [t("Do my clients need an account?"), t("No. They open the link, enter their name and, if you set one, the password.")],
-    [t("Which files can I upload?"), t("PDF files with any number of pages, and PNG or JPG images.")],
-    [t("Can a client see my other orders?"), t("No. Each link opens exactly one order.")],
+    [t("What does the client see?"), t("The whole content plan behind one link: every post with its picture, day, format and caption, and the grid as it will look in the feed. They approve one post or all at once.")],
+    [t("Which files can I upload?"), t("PNG, JPG and WebP images, and PDF files with any number of pages, for carousels too.")],
+    [t("Can a client see my other clients?"), t("No. A client's link opens only their own content plan.")],
+    [t("Where do new clients come from?"), t("Your page: a link for your bio with your work, prices and reviews. A request from it becomes a project in a tap.")],
     [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Pro and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
@@ -164,7 +166,7 @@ export function Closing({ t, signedIn }: { t: T; signedIn: boolean }) {
             {signedIn ? t("Open dashboard") : t("Start free")}
             <ArrowRightIcon className="size-4" />
           </Link>
-          <p className="text-xs text-muted-foreground">{t("set up your first order in 2 minutes")}</p>
+          <p className="text-xs text-muted-foreground">{t("your first content plan in 2 minutes")}</p>
         </div>
       </div>
     </section>
