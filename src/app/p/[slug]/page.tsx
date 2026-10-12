@@ -4,6 +4,9 @@ import { notFound } from "next/navigation"
 import { PageView } from "@/components/page/PageView"
 import { loadPageReviews, loadPublicPage } from "@/lib/server/page"
 import { adminClient } from "@/lib/server/notify"
+import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
+import { cleanBooking } from "@/lib/booking"
+import { nicheConfig } from "@/lib/niches"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -31,6 +34,20 @@ export default async function PublicPage({ params }: Props) {
   const agent = (await headers()).get("user-agent") ?? ""
   if (!/bot|crawl|spider|preview|facebookexternalhit|whatsapp|telegram|slack|discord/i.test(agent)) {
     await adminClient().rpc("page_view_hit", { p_shop: page.shopId }).then(() => {}, () => {})
+  }
+  // businesses with a CRM niche take bookings here instead of showing the portfolio page
+  const db = adminClient()
+  const { data: shop } = await db.from("shops").select("name, niche, booking").eq("id", page.shopId).maybeSingle()
+  const config = nicheConfig(shop?.niche)
+  if (shop && config) {
+    const { data: services } = await db.from("crm_services").select("id, title, duration_min, price, price_from, unit")
+      .eq("shop_id", page.shopId).eq("archived", false).eq("kind", config.kind).order("position", { ascending: true })
+    return (
+      <main className="min-h-dvh bg-background text-foreground">
+        <PublicBooking slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
+          about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} />
+      </main>
+    )
   }
   const reviews = await loadPageReviews(page.shopId)
   return (

@@ -150,7 +150,6 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
         <div className="px-4 pt-4 pb-2"><Link href="/dashboard" className="text-[15px] font-semibold">{usage?.shop.name || "Nodly"}</Link></div>
         <nav className="flex-1 px-3 pt-2 pb-4">
           {items.map((i) => <NavItem key={i.href} icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={activePage === i.page} href={i.href} />)}
-          <NavItem icon={<PlusIcon className="size-full" strokeWidth={1.6} />} label={crm.kind === "order" ? t("New order") : t("New appointment")} onClick={newBooking} />
         </nav>
         <PlanCard onOpen={() => setPanel("billing")} />
         <AccountRow panel={panel} onPanel={setPanel} />
@@ -282,10 +281,6 @@ function Rail({ activePage, panel, onPanel, beta }: {
         <div className="my-4 h-px w-10 bg-border" />
         <div className="flex flex-col items-center gap-2.5">
           <AccountRow panel={panel} onPanel={onPanel} compact />
-          <button type="button" onClick={newBooking} aria-label={crm.kind === "order" ? t("New order") : t("New appointment")} title={crm.kind === "order" ? t("New order") : t("New appointment")}
-            className="mt-1 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90">
-            <PlusIcon className="size-6" strokeWidth={1.8} />
-          </button>
         </div>
         <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
       </div>
@@ -362,12 +357,8 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
     { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
+    { page: "online", href: "/online", label: t("Online booking"), icon: Link2Icon },
   ]
-}
-
-/** A new appointment or order: the CRM screen on show opens its dialog. */
-function newBooking() {
-  window.dispatchEvent(new Event(OPEN_NEW_BOOKING))
 }
 
 /** One icon of the rail, its name in a dark label on hover (or, with menu, a list of links). */

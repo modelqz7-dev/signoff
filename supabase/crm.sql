@@ -13,6 +13,10 @@ $$;
 -- What the business does; picks its dashboard. Empty until chosen; 'smm' for the approvals side.
 alter table public.shops
   add column if not exists niche text check (niche in ('smm', 'nails', 'barber', 'cakes'));
+-- Online booking: working days and hours, slot step, how far ahead clients can book (lib/booking.ts).
+-- Clients book on the shop's public page (/@name); the site's server checks the time and saves it.
+alter table public.shops
+  add column if not exists booking jsonb not null default '{}'::jsonb;
 
 create table if not exists public.crm_services (
   id           uuid primary key default gen_random_uuid(),

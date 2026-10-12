@@ -10,6 +10,7 @@ import { AppointmentsHome } from "@/components/crm/AppointmentsHome"
 import { OrdersHome } from "@/components/crm/OrdersHome"
 import { ClientsView } from "@/components/crm/ClientsView"
 import { ServicesView } from "@/components/crm/ServicesView"
+import { BookingLinkButton, OnlineBookingView } from "@/components/crm/OnlineBookingView"
 import { useCrmData, type CrmBooking } from "@/lib/crm"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { getOrCreateShop } from "@/lib/shop"
@@ -17,7 +18,7 @@ import { supabase } from "@/lib/supabase"
 import { useT } from "@/lib/i18n"
 import { OPEN_NEW_BOOKING } from "@/lib/panels"
 
-export type CrmPage = "home" | "clients" | "services"
+export type CrmPage = "home" | "clients" | "services" | "online"
 
 /** The signed-in user's shop for the CRM pages; sends visitors without an account to sign in. */
 export function useCrmShop() {
@@ -37,7 +38,8 @@ export function useCrmShop() {
 }
 
 /** One CRM screen: the menu, the page and the booking dialog every screen can open. */
-export function CrmApp({ shop, page }: { shop: Shop; page: CrmPage }) {
+export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage }) {
+  const [shop, setShop] = useState(initialShop)
   const { t } = useT()
   const config = nicheConfig(shop.niche as CrmNiche)!
   const data = useCrmData(shop.id)
@@ -57,7 +59,7 @@ export function CrmApp({ shop, page }: { shop: Shop; page: CrmPage }) {
   const openBooking = (booking: CrmBooking) => setDialog({ booking })
   const replace = (b: CrmBooking) => data.setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]))
 
-  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services") }
+  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("Online booking") }
   const activePage = page === "home" ? "dashboard" : page
 
   return (
@@ -77,10 +79,12 @@ export function CrmApp({ shop, page }: { shop: Shop; page: CrmPage }) {
             </div>
           ) : page === "home" ? (
             config.kind === "order"
-              ? <OrdersHome data={data} onNew={newBooking} onOpen={openBooking} onChanged={replace} />
-              : <AppointmentsHome data={data} onNew={newBooking} onOpen={openBooking} />
+              ? <OrdersHome data={data} onNew={newBooking} onOpen={openBooking} onChanged={replace} cta={<BookingLinkButton shopId={shop.id} />} />
+              : <AppointmentsHome data={data} onNew={newBooking} onOpen={openBooking} cta={<BookingLinkButton shopId={shop.id} />} />
           ) : page === "clients" ? (
             <ClientsView data={data} config={config} shopId={shop.id} onNew={newBooking} onOpen={openBooking} />
+          ) : page === "online" ? (
+            <OnlineBookingView shop={shop} config={config} onShopChanged={setShop} />
           ) : (
             <ServicesView data={data} config={config} shopId={shop.id} />
           )}
