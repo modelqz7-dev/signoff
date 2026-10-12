@@ -83,28 +83,40 @@ const TEXT = {
   en: {
     comment: (who: string, order: string) => `💬 ${who} left a comment on “${order}”`,
     approved: (order: string) => `✅ The client approved “${order}”`,
+    approvedMany: (who: string, n: number, project: string) => `✅ ${who || "The client"} approved ${n} posts in “${project}”`,
     changes: (order: string) => `✏️ The client requested changes on “${order}”`,
     request: (who: string) => `📩 New request from ${who}`,
     openRequests: "Open requests",
-    open: "Open order",
+    open: "Open",
     page: (n: number) => `page ${n}`,
     footer: "You get this because notifications are on in Nodly → Notifications.",
   },
   ru: {
     comment: (who: string, order: string) => `💬 ${who} оставил(а) комментарий к «${order}»`,
     approved: (order: string) => `✅ Клиент утвердил «${order}»`,
+    approvedMany: (who: string, n: number, project: string) => `✅ ${who || "Клиент"} утвердил(а) ${n} ${ruPosts(n)} в «${project}»`,
     changes: (order: string) => `✏️ Клиент попросил правки по «${order}»`,
     request: (who: string) => `📩 Новая заявка от ${who}`,
     openRequests: "Открыть заявки",
-    open: "Открыть заказ",
+    open: "Открыть",
     page: (n: number) => `стр. ${n}`,
     footer: "Вы получили это письмо, потому что уведомления включены в Nodly → Уведомления.",
   },
 }
 
+/** "пост", "поста", "постов" for a count. */
+function ruPosts(n: number) {
+  const d = n % 10, h = n % 100
+  if (d === 1 && h !== 11) return "пост"
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return "поста"
+  return "постов"
+}
+
 export type NotifyEvent =
   | { kind: "comment"; orderTitle: string; author: string; title: string; description: string | null; page: number }
   | { kind: "approved" | "changes"; orderTitle: string }
+  /** Several posts of one project approved together ("Approve all" in the content plan). */
+  | { kind: "approvedMany"; orderTitle: string; count: number; by: string }
   | { kind: "request"; name: string; contact: string; message: string }
 
 /** Builds the Telegram text and the email subject/body for an event. */
@@ -115,6 +127,7 @@ function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
     event.kind === "request" ? L.request(escapeHtml(event.name))
     : event.kind === "comment" ? L.comment(escapeHtml(event.author), order)
     : event.kind === "approved" ? L.approved(order)
+    : event.kind === "approvedMany" ? L.approvedMany(escapeHtml(event.by), event.count, order)
     : L.changes(order)
   const details = event.kind === "comment"
     ? `<b>${escapeHtml(event.title)}</b>${event.description ? `\n${escapeHtml(event.description)}` : ""}\n<i>${L.page(event.page)}</i>`
@@ -160,17 +173,45 @@ const REMINDER = {
   en: {
     subject: (order: string) => `Reminder: “${order}” is waiting for your review`,
     body: (shop: string, order: string, name: string) =>
-      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your feedback on “${order}”. Open the design, leave comments right on it, or approve it in one click.`,
-    open: "Review the design",
+      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your feedback on “${order}”. Open it, leave comments right on the picture, or approve it in one click.`,
+    open: "Review it",
     footer: (shop: string) => `Sent by Nodly on behalf of ${shop}. Reply to this email to reach them.`,
   },
   ru: {
     subject: (order: string) => `Напоминание: «${order}» ждёт вашего ответа`,
     body: (shop: string, order: string, name: string) =>
-      `${name ? `Здравствуйте, ${name}!` : "Здравствуйте!"}<br><br>${shop} ждёт вашего ответа по «${order}». Откройте макет, оставьте комментарии прямо на нём или утвердите одной кнопкой.`,
-    open: "Посмотреть макет",
+      `${name ? `Здравствуйте, ${name}!` : "Здравствуйте!"}<br><br>${shop} ждёт вашего ответа по «${order}». Откройте, оставьте комментарии прямо на картинке или утвердите одной кнопкой.`,
+    open: "Посмотреть",
     footer: (shop: string) => `Письмо отправлено через Nodly от имени «${shop}». Чтобы связаться с ними, просто ответьте на него.`,
   },
+}
+
+const PLAN_REMINDER = {
+  en: {
+    subject: (n: number, project: string) => `Reminder: ${n} posts in “${project}” are waiting for you`,
+    body: (shop: string, n: number, project: string, name: string) =>
+      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your decision on ${n} posts in “${project}”. Open the content plan, leave comments right on the pictures, or approve them all in one click.`,
+    open: "Open the content plan",
+  },
+  ru: {
+    subject: (n: number, project: string) => `Напоминание: ${n} ${ruPosts(n)} в «${project}» ждут вашего решения`,
+    body: (shop: string, n: number, project: string, name: string) =>
+      `${name ? `Здравствуйте, ${name}!` : "Здравствуйте!"}<br><br>${shop} ждёт вашего решения: ${n} ${ruPosts(n)} в «${project}». Откройте контент-план, оставьте комментарии прямо на картинках или утвердите всё одной кнопкой.`,
+    open: "Открыть контент-план",
+  },
+}
+
+/** Email to a client whose content plan has posts waiting for a decision. */
+export function renderPlanReminder(lang: Lang, shopName: string, projectTitle: string, clientName: string, count: number, planUrl: string) {
+  const L = PLAN_REMINDER[lang]
+  const shop = escapeHtml(shopName)
+  const project = escapeHtml(projectTitle)
+  const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f1e1d">
+<p style="margin:0 0 20px">${L.body(shop, count, project, escapeHtml(clientName))}</p>
+<p style="margin:0 0 24px"><a href="${planUrl}" style="display:inline-block;background:#1f1e1d;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">${L.open}</a></p>
+<p style="margin:0;font-size:12px;color:#8a8987">${REMINDER[lang].footer(shop)}</p>
+</div>`
+  return { subject: L.subject(count, projectTitle), html }
 }
 
 /** Email to a client who hasn't reviewed a design yet. */

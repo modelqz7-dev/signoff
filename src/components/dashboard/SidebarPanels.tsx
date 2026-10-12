@@ -926,8 +926,8 @@ function DocsPanel() {
   const statusHelp: Record<OrderStatus, string> = {
     await: "Waiting for the client to review.",
     changes: "The client asked for changes.",
-    approved: "The client approved the design.",
-    prod: "In implementation.",
+    approved: "The client approved it.",
+    prod: "Published.",
   }
   const shortcuts = [
     ["← →", "Previous / next page"],

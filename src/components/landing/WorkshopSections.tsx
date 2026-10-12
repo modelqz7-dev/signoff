@@ -102,7 +102,7 @@ export function Questions({ t }: { t: T }) {
     [t("What does the client see?"), t("The whole content plan behind one link: every post with its picture, day, format and caption, and the grid as it will look in the feed. They approve one post or all at once.")],
     [t("Which files can I upload?"), t("PNG, JPG and WebP images, and PDF files with any number of pages, for carousels too.")],
     [t("Can a client see my other clients?"), t("No. A client's link opens only their own content plan.")],
-    [t("How much does it cost?"), t("There is a free Start plan with up to 3 active orders, and Pro and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
+    [t("How much does it cost?"), t("There is a free Start plan with up to 3 active projects, and Pro and Studio for more. New accounts get 7 days of Studio for free, no card needed. Payments are processed by Paddle; cancel any time, and you can get a refund within 14 days of a payment.")],
     [t("Does it work in Russian?"), t("Yes. Both you and your clients can switch between Russian and English at any time.")],
   ]
   return (
