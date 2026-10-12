@@ -113,8 +113,10 @@ export default function RequestsPage() {
     <div className="flex min-h-screen">
       <Sidebar open={sidebarOpen} activePage="requests" />
       <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader shopName={shop?.name || ""} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex-1 p-4 sm:p-8">
+        <div className="lg:hidden">
+          <DashboardHeader shopName={shop?.name || ""} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        </div>
+        <div className="app-panel flex-1 p-4 sm:p-8 lg:m-3 lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
           <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col gap-1">

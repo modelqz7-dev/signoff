@@ -164,9 +164,9 @@ export default function PortalPage() {
                 ? <BrandMark brand={brand} className="mb-2" />
                 : <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">{brand?.shopName || t("Order Portal")}</p>}
               <h1 className="font-[family-name:var(--font-brand)] text-3xl leading-tight font-bold tracking-[-0.03em] text-foreground">
-                {t("Your design is ready")}
+                {t("Ready for your review")}
               </h1>
-              <p className="text-sm text-muted-foreground">{t("Enter your name to view it, leave comments on the spot and approve.")}</p>
+              <p className="text-sm text-muted-foreground">{t("Enter your name to open it, leave comments right on the picture and approve.")}</p>
             </div>
             {brand?.welcome && <PortalWelcome brand={brand} className="border-l-2 border-foreground/30 bg-transparent px-3 py-0.5 text-muted-foreground" />}
             <form onSubmit={handleAuth} className="flex flex-col gap-4">
@@ -198,7 +198,7 @@ export default function PortalPage() {
               )}
               {authError && <p className="text-sm text-destructive">{authError}</p>}
               <Button type="submit" size="lg" isDisabled={loading} className="h-10">
-                {loading ? t("Loading...") : t("View Order")}
+                {loading ? t("Loading...") : t("Open")}
                 {!loading && <ArrowRightIcon />}
               </Button>
             </form>
@@ -369,19 +369,21 @@ export default function PortalPage() {
                   </CardContent>
                 </Card>
               )}
+              {(order.value > 0 || order.deadline || order.publish_on || (order.format && order.format !== "post")) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">{t("Details")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <dl className="flex flex-col divide-y divide-border/50 text-sm">
-                    <Row label={t("Price")} value={order.value > 0 ? `$${order.value.toLocaleString()}` : "—"} />
-                    <Row label={t("Deadline")} value={formatDate(order.deadline)} />
+                    {order.value > 0 && <Row label={t("Price")} value={`$${order.value.toLocaleString()}`} />}
+                    {order.deadline && <Row label={t("Deadline")} value={formatDate(order.deadline)} />}
                     {order.publish_on && <Row label={t("Publishing day")} value={formatDate(`${order.publish_on.slice(0, 10)}T00:00:00`)} />}
                     {order.format && order.format !== "post" && <Row label={t("Format")} value={t(order.format === "carousel" ? "Carousel" : order.format === "reels" ? "Reels" : "Stories")} />}
                   </dl>
                 </CardContent>
               </Card>
+              )}
 
               {order.notes && (
                 <Card>
