@@ -9,12 +9,12 @@ import { notifyPlanChanged } from "@/lib/use-plan"
 import { useT } from "@/lib/i18n"
 
 /** The first screen of a new account: what the business does, which sets up its dashboard. */
-export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (niche: CrmNiche | "smm") => void }) {
+export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (niche: CrmNiche) => void }) {
   const { t } = useT()
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function pick(niche: CrmNiche | "smm") {
+  async function pick(niche: CrmNiche) {
     setBusy(niche)
     setError(null)
     try {
@@ -59,9 +59,6 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
         </div>
 
         {error && <p className="text-center text-sm text-destructive">{error}</p>}
-        <button type="button" disabled={!!busy} onClick={() => pick("smm")} className="mx-auto text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-          {t("I'm an SMM specialist: content plans for clients")}
-        </button>
       </div>
     </div>
   )

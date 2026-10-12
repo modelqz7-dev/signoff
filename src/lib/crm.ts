@@ -201,7 +201,8 @@ export async function chooseNiche(shopId: string, niche: CrmNiche | "smm", trans
   if (error) throw error
   const config = nicheConfig(niche)
   if (!config) return
-  const { count } = await supabase.from("crm_services").select("id", { count: "exact", head: true }).eq("shop_id", shopId)
+  // starter services only when there are none of this niche's kind (switching nails → cakes adds the cakes)
+  const { count } = await supabase.from("crm_services").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("kind", config.kind)
   if (count) return
   const rows = config.services.map((s, i) => ({
     shop_id: shopId,

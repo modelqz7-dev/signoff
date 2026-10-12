@@ -14,7 +14,9 @@ import { STATUS_MAP, type OrderStatus, type Shop } from "@/components/dashboard/
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { ACTIVITIES, COMING_SOON_ACTIVITIES, currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
+import { currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
+import { NICHES, isCrmNiche, nicheConfig } from "@/lib/niches"
+import { chooseNiche } from "@/lib/crm"
 import { PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
@@ -149,7 +151,7 @@ function ProfilePanel() {
   const avatarSrc = useFileUrl(profile?.avatarUrl) || ""
   const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState<string | null>(null)
-  const [soonFor, setSoonFor] = useState<string | null>(null)
+  const [switching, setSwitching] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
@@ -209,7 +211,7 @@ function ProfilePanel() {
         </Avatar>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{shop?.name || t("Your brand")}</p>
-          <p className="truncate text-xs text-muted-foreground">{shownActivity ? t(shownActivity) : t("Add your activity below")}</p>
+          <p className="truncate text-xs text-muted-foreground">{nicheConfig(shop?.niche) ? t(nicheConfig(shop?.niche)!.name) : shownActivity ? t(shownActivity) : ""}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <Button size="sm" variant="outline" onPress={() => fileRef.current?.click()} isDisabled={!shop || uploading}>
@@ -243,52 +245,41 @@ function ProfilePanel() {
         </div>
       </form>
 
-      <div className="flex flex-col gap-2">
-        <Label>{t("What do you do?")}</Label>
-        <div className="flex flex-wrap gap-1.5">
-          {[...ACTIVITIES, ...COMING_SOON_ACTIVITIES].map((a) => {
-            const active = profile.activity === a
-            const soon = (COMING_SOON_ACTIVITIES as readonly string[]).includes(a)
-            return (
-              <button
-                key={a}
-                type="button"
-                aria-pressed={active}
-                onClick={() => {
-                  // Still saved, so we know which trade to tailor Nodly to next.
-                  run(() => updateProfile({ activity: active ? "" : a }))
-                  if (soon && !active) setSoonFor(a)
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
-                  active
-                    ? "border-accent bg-accent/15 text-foreground"
-                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {t(a)}
-                {soon && <span className="rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground">{t("Soon")}</span>}
-              </button>
-            )
-          })}
+      {/* the niche sets up the whole dashboard; without supabase/crm.sql there is nothing to pick */}
+      {shop && "niche" in shop && (
+        <div className="flex flex-col gap-2">
+          <Label>{t("What do you do?")}</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {[...NICHES.map((n) => [n.id, `${n.emoji} ${t(n.name)}`] as const), ["smm", t("SMM: content plans")] as const].map(([id, label]) => {
+              const active = shop.niche === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  disabled={active || switching}
+                  onClick={async () => {
+                    setSwitching(true)
+                    // a full reload, so every screen and the menu take the new niche
+                    try { await chooseNiche(shop.id, id, t); if (window.location.pathname === "/dashboard") window.location.reload(); else window.location.replace("/dashboard") } catch (e) { setStatus({ ok: false, text: (e as Error).message }); setSwitching(false) }
+                  }}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                    active ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">{t("The niche sets up the dashboard, services and the booking form. Your data stays.")}</p>
         </div>
-      </div>
+      )}
 
-      {/* Picking a trade Nodly isn't tailored to yet */}
-      <Dialog isOpen={!!soonFor} onOpenChange={(v) => !v && setSoonFor(null)} className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{t("Coming soon")}</DialogTitle>
-          <DialogDescription>
-            {t("Nodly is built for SMM specialists and agencies right now. A version for “{activity}” is on the way: we'll tailor the words, order stages and examples to your work.", { activity: soonFor ? t(soonFor) : "" })}
-          </DialogDescription>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">{t("Until then, everything works for you as it is: upload a design, send the link, get comments and approval.")}</p>
-        <Button onPress={() => setSoonFor(null)}>{t("Got it")}</Button>
-      </Dialog>
+      {!isCrmNiche(shop?.niche) && <PortalLogo shop={shop} onSaved={setShop} />}
 
-      <PortalLogo shop={shop} onSaved={setShop} />
-
-      <BrandKit shop={shop} onSaved={setShop} />
+      {!isCrmNiche(shop?.niche) && <BrandKit shop={shop} onSaved={setShop} />}
 
       <Message status={status} />
 
