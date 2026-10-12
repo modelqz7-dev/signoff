@@ -29,11 +29,15 @@ export type Order = {
   caption?: string
   publish_on?: string | null
   position?: number
+  /** What kind of post (see supabase/post-format.sql). */
+  format?: PostFormat
   /** A project's free canvas: { nodes, edges } (see ProjectCanvas). */
   board?: unknown
 }
 
 export type OrderKind = "single" | "project" | "post"
+
+export type PostFormat = "post" | "carousel" | "reels" | "stories"
 
 export type OrderVersion = {
   id: string

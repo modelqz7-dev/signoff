@@ -143,6 +143,8 @@ export default function Dashboard() {
           items={items}
           projectName={projectName}
           onNewProject={newProject}
+          onPostChanged={(post) => setOrders((prev) => prev.map((o) => (o.id === post.id ? post : o)))}
+          onPostDeleted={(id) => setOrders((prev) => prev.filter((o) => o.id !== id))}
           onPlanned={(rows) => setOrders((prev) => [...rows.filter((r) => !prev.some((o) => o.id === r.id)), ...prev])}
           intro={<GettingStarted orders={orders} shop={shop} onNewOrder={newProject} />}
         />
