@@ -34,8 +34,20 @@ const itemDay = (o: Order) => (o.publish_on || o.deadline || "").slice(0, 10) ||
 type Lane = "changes" | "waiting" | "nofile" | "approved"
 const LANES: Lane[] = ["changes", "waiting", "nofile", "approved"]
 const LANE_LABEL: Record<Lane, string> = { changes: "With changes", waiting: "Waiting on the client", nofile: "No file yet", approved: "Approved posts" }
-/** Apple's system colours for the stages. */
-const LANE_COLOR: Record<Lane, string> = { changes: "#ff9500", waiting: "#8e8e93", nofile: "#c7c7cc", approved: "#34c759" }
+/**
+ * A stage's mark, in grey like the rest of the app: told apart by shape, not colour. Changes is a
+ * solid dot, waiting a grey one, no file an empty ring, approved a ticked disc.
+ */
+function LaneMark({ lane, className }: { lane: Lane; className?: string }) {
+  if (lane === "approved") {
+    return <span className={cn("flex size-3 shrink-0 items-center justify-center rounded-full bg-foreground text-background", className)}><CheckIcon className="size-2" strokeWidth={4} /></span>
+  }
+  return (
+    <span className={cn("flex size-3 shrink-0 items-center justify-center", className)}>
+      <span className={cn("size-2 rounded-full", lane === "changes" ? "bg-foreground" : lane === "waiting" ? "bg-muted-foreground" : "ring-[1.5px] ring-muted-foreground ring-inset")} />
+    </span>
+  )
+}
 type View = "week" | "projects" | "list"
 
 export function BentoHome({ home, projects, items, projectName, onNewProject, onPlanned, intro }: {
@@ -335,7 +347,7 @@ function MonthCard({ items, today, lane, picked, onPickDay }: {
               >
                 {n}
               </span>
-              <span className="mt-0.5 size-1 rounded-full" style={{ backgroundColor: list.length && !on ? (changes ? LANE_COLOR.changes : "var(--muted-foreground)") : "transparent" }} />
+              <span className="mt-0.5 size-1 rounded-full" style={{ backgroundColor: list.length && !on ? (changes ? "var(--foreground)" : "var(--muted-foreground)") : "transparent" }} />
             </button>
           )
         })}
@@ -353,7 +365,7 @@ function NowCard({ home, projectName, onNewProject }: { home: Home; projectName:
   if (!next) {
     return (
       <Card>
-        <p className="flex items-center gap-1.5 text-[13px] font-medium" style={{ color: LANE_COLOR.approved }}><CheckCircle2Icon className="size-4" />{t("All quiet")}</p>
+        <p className="flex items-center gap-1.5 text-[13px] font-medium text-foreground"><CheckCircle2Icon className="size-4" />{t("All quiet")}</p>
         <p className="mt-1.5 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{t("Nothing needs you. Start the next client?")}</p>
         <button type="button" onClick={onNewProject} className="mt-3 rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-foreground hover:opacity-90">{t("New project")}</button>
       </Card>
@@ -363,7 +375,7 @@ function NowCard({ home, projectName, onNewProject }: { home: Home; projectName:
   return (
     <Card>
       <p className="flex items-center justify-between gap-2 text-[13px]">
-        <span className="font-medium" style={{ color: next.kind === "overdue" ? "var(--foreground)" : LANE_COLOR.changes }}>{label}</span>
+        <span className="font-medium text-foreground">{label}</span>
         <span className="truncate text-muted-foreground">{projectName(next.item)}</span>
       </p>
       <p className="mt-1.5 text-[17px] leading-snug font-semibold tracking-[-0.01em]">
@@ -445,7 +457,7 @@ function Row({ lane, label, count, children }: { lane: Lane; label: string; coun
   return (
     <>
       <div className="col-span-full flex items-center gap-2 border-t border-border pt-3 pb-2 text-[12px] font-semibold whitespace-nowrap">
-        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[lane] }} />
+        <LaneMark lane={lane} />
         {label}
         <span className="font-medium text-muted-foreground tabular-nums">{count}</span>
       </div>
@@ -500,7 +512,7 @@ function StatusCard({ counts, lanes, onLanes }: { counts: Record<Lane, number>; 
             onClick={() => toggle(l)}
             className="flex items-center gap-2.5 border-b border-border py-2.5 text-left text-[14px] last:border-b-0"
           >
-            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: LANE_COLOR[l] }} />
+            <LaneMark lane={l} />
             <span className="flex-1">{t(LANE_LABEL[l])}</span>
             <span className="text-muted-foreground tabular-nums">{counts[l]}</span>
             <CheckIcon className={cn("size-4 text-primary", !lanes.has(l) && "invisible")} strokeWidth={2.5} />
