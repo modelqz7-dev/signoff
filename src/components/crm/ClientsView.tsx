@@ -54,7 +54,7 @@ export function ClientsView({ data, config, shopId, onNew, onOpen }: {
   const visitWord = config.kind === "order" ? t("Orders") : t("Visits")
 
   return (
-    <div className="flex flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-[24px] font-semibold tracking-tight">{t("Clients")}</h1>
