@@ -11,6 +11,7 @@ import { TEMPLATES, type CanvasTemplate } from "@/components/projects/templates"
 import { PROJECTS_CHANGED, PROJECT_RENAMED, openNav, openPanel } from "@/lib/panels"
 import { usePlanUsage } from "@/lib/use-plan"
 import { can } from "@/lib/plans"
+import { FEATURES } from "@/lib/features"
 import { uploadOrderFile } from "@/lib/versions"
 import { cn } from "@/lib/utils"
 import { siteOrigin } from "@/lib/site"
@@ -30,7 +31,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
   // the canvas is on paid plans: without one the project stays on its posts
   const usage = usePlanUsage()
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
-  const view: View = canvasLocked ? "posts" : chosen
+  const view: View = canvasLocked || !FEATURES.canvas ? "posts" : chosen
   const setView = (v: View) => {
     if (v === "canvas" && canvasLocked) { openPanel("billing"); return }
     setViewState(v)
@@ -182,7 +183,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
           ariaLabel={t("Client")}
         />
         {error && <span className="truncate text-xs text-destructive">{error}</span>}
-        <div role="tablist" className="ml-auto flex shrink-0 items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
+        {FEATURES.canvas && <div role="tablist" className="ml-auto flex shrink-0 items-center gap-0.5 rounded-lg bg-foreground/[0.05] p-0.5">
           {([["posts", LayoutGridIcon, t("Posts")], ["canvas", ShapesIcon, t("Canvas")]] as const).map(([id, Icon, label]) => (
             <button
               key={id}
@@ -200,7 +201,7 @@ export function ProjectView({ project, onChange, onToggleSidebar }: { project: O
               {id === "canvas" && canvasLocked && <LockIcon className="size-3 opacity-70" />}
             </button>
           ))}
-        </div>
+        </div>}
       </div>
 
       <main className={cn("relative min-h-0 flex-1")}>

@@ -13,6 +13,7 @@ import { OPEN_CALENDAR_EVENT, OPEN_NAV_EVENT, OPEN_NEW_PROJECT, PROJECTS_CHANGED
 import { TemplatesDialog } from "@/components/projects/TemplatesDialog"
 import type { CanvasTemplate, PostTemplate } from "@/components/projects/templates"
 import { can } from "@/lib/plans"
+import { FEATURES } from "@/lib/features"
 import { supabase } from "@/lib/supabase"
 import { LinkMark, Logo, LogoMark } from "@/components/Logo"
 import { setTheme, useTheme } from "@/lib/theme"
@@ -255,7 +256,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
       <nav className="flex flex-col items-center gap-1.5">
         <RailItem label={t("Home")} href="/dashboard" active={activePage === "dashboard"} icon={HomeIcon} />
-        <RailItem label={t("Canvas")} href="/board" active={activePage === "board"} icon={ShapesIcon} locked={canvasLocked} />
+        {FEATURES.canvas && <RailItem label={t("Canvas")} href="/board" active={activePage === "board"} icon={ShapesIcon} locked={canvasLocked} />}
         <RailItem label={t("Search")} hint="Ctrl+K" icon={SearchIcon} onClick={() => setSearching(true)} />
         {beta ? (
           <>
@@ -482,7 +483,7 @@ function TopRow({ activePage }: { activePage: string }) {
   return (
     <div className="flex items-center gap-1 pt-1">
       {pill("home", "/dashboard", HomeIcon, t("Home"))}
-      {pill("canvas", "/board", ShapesIcon, t("Canvas"))}
+      {FEATURES.canvas && pill("canvas", "/board", ShapesIcon, t("Canvas"))}
       <Link
         href="/dashboard?calendar=1"
         title={t("Calendar")}
