@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react"
 import { ArrowRightIcon, ChevronDownIcon, PlusIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import type { BookingPreset } from "@/components/crm/BookingDialog"
 import { Stat } from "@/components/crm/AppointmentsHome"
 import {
@@ -17,8 +16,10 @@ const LOAD_DAYS = 14
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x }
 
 /** Cakes: orders on a board by stage, how loaded the next two weeks are, and what's handed over. */
-export function OrdersHome({ data, onNew, onOpen, onChanged }: {
+export function OrdersHome({ data, onNew, onOpen, onChanged, cta }: {
   data: CrmData
+  /** The main button: the booking link. */
+  cta: React.ReactNode
   onNew: (preset?: BookingPreset) => void
   onOpen: (booking: CrmBooking) => void
   onChanged: (booking: CrmBooking) => void
@@ -75,9 +76,7 @@ export function OrdersHome({ data, onNew, onOpen, onChanged }: {
           <h1 className="text-[24px] font-semibold tracking-tight">{t("Orders")}</h1>
           <p className="text-[13.5px] text-muted-foreground">{t("{n} in work", { n: open.length })}{overdue.length ? ` · ${t("{n} overdue", { n: overdue.length })}` : ""}</p>
         </div>
-        <Button onPress={() => onNew(day ? { dueOn: day } : undefined)} className="h-9 gap-1.5 rounded-full px-4">
-          <PlusIcon className="size-4" />{t("New order")}
-        </Button>
+        {cta}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
@@ -148,6 +147,11 @@ export function OrdersHome({ data, onNew, onOpen, onChanged }: {
                 )
               })}
               {!items.length && <p className="px-1.5 pb-2 text-[12.5px] text-muted-foreground">{status === "new" ? t("New orders land here.") : "—"}</p>}
+              {status === "new" && (
+                <button type="button" onClick={() => onNew(day ? { dueOn: day } : undefined)} className="flex items-center gap-1 rounded-lg px-1.5 py-1 text-[12.5px] text-muted-foreground hover:bg-hover hover:text-foreground">
+                  <PlusIcon className="size-3.5" />{t("Add by hand")}
+                </button>
+              )}
             </section>
           )
         })}

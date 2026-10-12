@@ -87,7 +87,10 @@ const TEXT = {
     approvedMany: (who: string, n: number, project: string) => `✅ ${who || "The client"} approved ${n} posts in “${project}”`,
     changes: (order: string) => `✏️ The client requested changes on “${order}”`,
     request: (who: string) => `📩 New request from ${who}`,
+    booking: (who: string, what: string, when: string) => `📅 ${who} booked “${what}” for ${when}`,
+    order: (who: string, what: string, when: string) => `🎂 New order from ${who}: “${what}” for ${when}`,
     openRequests: "Open requests",
+    openBookings: "Open the calendar",
     open: "Open",
     page: (n: number) => `page ${n}`,
     footer: "You get this because notifications are on in Nodly → Notifications.",
@@ -98,7 +101,10 @@ const TEXT = {
     approvedMany: (who: string, n: number, project: string) => `✅ ${who || "Клиент"} утвердил(а) ${n} ${ruPosts(n)} в «${project}»`,
     changes: (order: string) => `✏️ Клиент попросил правки по «${order}»`,
     request: (who: string) => `📩 Новая заявка от ${who}`,
+    booking: (who: string, what: string, when: string) => `📅 ${who} записал(ась) на «${what}» — ${when}`,
+    order: (who: string, what: string, when: string) => `🎂 Новый заказ от ${who}: «${what}» к ${when}`,
     openRequests: "Открыть заявки",
+    openBookings: "Открыть календарь",
     open: "Открыть",
     page: (n: number) => `стр. ${n}`,
     footer: "Вы получили это письмо, потому что уведомления включены в Nodly → Уведомления.",
@@ -119,13 +125,16 @@ export type NotifyEvent =
   /** Several posts of one project approved together ("Approve all" in the content plan). */
   | { kind: "approvedMany"; orderTitle: string; count: number; by: string }
   | { kind: "request"; name: string; contact: string; message: string }
+  /** A client booked on the public page: an appointment or an order. `when` is already written out. */
+  | { kind: "booking"; order: boolean; name: string; phone: string; what: string; when: string; note: string }
 
 /** Builds the Telegram text and the email subject/body for an event. */
 function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
   const L = TEXT[lang]
-  const order = event.kind === "request" ? "" : escapeHtml(event.orderTitle)
+  const order = event.kind === "request" || event.kind === "booking" ? "" : escapeHtml(event.orderTitle)
   const headline =
     event.kind === "request" ? L.request(escapeHtml(event.name))
+    : event.kind === "booking" ? (event.order ? L.order : L.booking)(escapeHtml(event.name), escapeHtml(event.what), escapeHtml(event.when))
     : event.kind === "comment" ? L.comment(escapeHtml(event.author), order)
     : event.kind === "approved" ? L.approved(order)
     : event.kind === "approvedMany" ? L.approvedMany(escapeHtml(event.by), event.count, order)
@@ -134,8 +143,10 @@ function renderEvent(event: NotifyEvent, lang: Lang, orderUrl: string) {
     ? `<b>${escapeHtml(event.title)}</b>${event.description ? `\n${escapeHtml(event.description)}` : ""}\n<i>${L.page(event.page)}</i>`
     : event.kind === "request"
       ? `<b>${escapeHtml(event.contact)}</b>${event.message ? `\n${escapeHtml(event.message.slice(0, 600))}` : ""}`
-      : ""
-  const linkLabel = event.kind === "request" ? L.openRequests : L.open
+      : event.kind === "booking"
+        ? `<b>${escapeHtml(event.phone)}</b>${event.note ? `\n${escapeHtml(event.note.slice(0, 600))}` : ""}`
+        : ""
+  const linkLabel = event.kind === "request" ? L.openRequests : event.kind === "booking" ? L.openBookings : L.open
   const telegram = [headline, details, `<a href="${orderUrl}">${linkLabel}</a>`].filter(Boolean).join("\n\n")
   const subject = headline.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
   const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f1e1d">

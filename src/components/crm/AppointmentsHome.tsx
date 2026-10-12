@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import type { BookingPreset } from "@/components/crm/BookingDialog"
 import { appointmentEnd, counts, dayKey, money, type CrmBooking, type CrmData } from "@/lib/crm"
 import { cn } from "@/lib/utils"
@@ -43,8 +42,10 @@ function lanes(items: CrmBooking[]) {
 }
 
 /** Nails and barbershop: the day's appointments on a timeline, a week strip and the day's money. */
-export function AppointmentsHome({ data, onNew, onOpen }: {
+export function AppointmentsHome({ data, onNew, onOpen, cta }: {
   data: CrmData
+  /** The main button: the booking link. */
+  cta: React.ReactNode
   onNew: (preset?: BookingPreset) => void
   onOpen: (booking: CrmBooking) => void
 }) {
@@ -112,9 +113,7 @@ export function AppointmentsHome({ data, onNew, onOpen }: {
           <button type="button" onClick={() => setDay(today)} disabled={isToday} className="h-9 rounded-lg px-3 text-[13px] font-medium hover:bg-hover disabled:opacity-40">{t("Today")}</button>
           <button type="button" aria-label={t("Next day")} onClick={() => setDay(addDays(day, 1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
         </div>
-        <Button onPress={() => { const s = new Date(day); s.setHours(Math.max(from, isToday ? now.getHours() + 1 : 10), 0, 0, 0); onNew({ startsAt: s }) }} className="ml-auto h-9 gap-1.5 rounded-full px-4 sm:ml-0">
-          <PlusIcon className="size-4" />{t("New appointment")}
-        </Button>
+        <div className="ml-auto sm:ml-0">{cta}</div>
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">

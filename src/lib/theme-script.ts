@@ -2,10 +2,10 @@
 export const THEME_STORAGE_KEY = "signoff-theme"
 
 /** The signed-in app's pages, which wear the home page's look (the `app` class, see globals.css). */
-export const APP_PATHS = "^/(dashboard|board|orders|link|requests|plan|portal|clients|services)(/|$)"
+export const APP_PATHS = "^/(dashboard|board|orders|link|requests|plan|portal|clients|services|online)(/|$)"
 
 /** Pages clients open from a link: light unless they picked dark themselves. */
-export const CLIENT_PATHS = "^/(plan|portal)(/|$)"
+export const CLIENT_PATHS = "^/(plan|portal|p)(/|$)|^/@"
 
 /**
  * Runs in <head> before first paint (see app/layout.tsx), so a saved light theme
