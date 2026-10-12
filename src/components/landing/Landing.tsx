@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { KeyHero } from "@/components/landing/KeyHero"
 import { TelegramVsNodly } from "@/components/landing/TelegramVsNodly"
 import { PromoVideo } from "@/components/landing/PromoVideo"
+import { HowItWorks, TheLoop } from "@/components/landing/SmmFlow"
 import { Closing, Pricing, Questions, WorkshopFooter } from "@/components/landing/WorkshopSections"
 
 /** next/link styled like the shadcn Button, for calls to action. */
@@ -50,6 +51,8 @@ export function Landing() {
       <main>
         <KeyHero t={t} signedIn={signedIn} />
         <PromoVideo t={t} />
+        <HowItWorks t={t} />
+        <TheLoop t={t} />
         <TelegramVsNodly t={t} />
         <Pricing t={t} />
         <Questions t={t} />
@@ -64,7 +67,7 @@ export function Landing() {
 
 function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
   const links = [
-    ["#product", t("How it works")],
+    ["#how", t("How it works")],
     ["#pricing", t("Pricing")],
     ["#faq", t("FAQ")],
   ]
