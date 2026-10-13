@@ -55,7 +55,7 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
                 busy === n.id && "bg-hover"
               )}
             >
-              <NicheIcon niche={n.id} className="size-14 rounded-2xl" />
+              <NicheIcon niche={n.id} className="size-14" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="text-[16px] font-semibold">{t(n.name)}</span>
                 <span className="text-[13.5px] text-muted-foreground">{t(n.hint)}</span>

@@ -114,7 +114,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
         {avatar
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={avatar} alt="" className="size-20 rounded-full object-cover ring-1 ring-border" />
-          : <NicheIcon niche={niche} className="size-20 rounded-3xl" />}
+          : <NicheIcon niche={niche} className="size-20" />}
         <div>
           <h1 className="text-[24px] font-semibold tracking-tight">{title}</h1>
           <p className="text-[14px] text-muted-foreground">{t(config.name)}</p>
