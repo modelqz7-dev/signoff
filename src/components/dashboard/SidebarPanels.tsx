@@ -15,8 +15,8 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
-import { NICHES, isCrmNiche, nicheConfig, type NicheConfig } from "@/lib/niches"
-import { chooseNiche } from "@/lib/crm"
+import { isCrmNiche, nicheConfig, type NicheConfig } from "@/lib/niches"
+import { resetNiche } from "@/lib/crm"
 import { planHighlights, PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
@@ -160,6 +160,7 @@ function ProfilePanel() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState<string | null>(null)
   const [switching, setSwitching] = useState(false)
+  const [confirmNiche, setConfirmNiche] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
@@ -253,37 +254,42 @@ function ProfilePanel() {
         </div>
       </form>
 
-      {/* the niche sets up the whole dashboard; without supabase/crm.sql there is nothing to pick */}
-      {shop && "niche" in shop && (
+      {/* the niche sets up the whole dashboard; changing it starts the setup over */}
+      {shop && nicheConfig(shop.niche) && (
         <div className="flex flex-col gap-2">
-          <Label>{t("What do you do?")}</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {NICHES.map((n) => [n.id, `${n.emoji} ${t(n.name)}`] as const).map(([id, label]) => {
-              const active = shop.niche === id
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={active}
-                  disabled={active || switching}
-                  onClick={async () => {
-                    setSwitching(true)
-                    // a full reload, so every screen and the menu take the new niche
-                    try { await chooseNiche(shop.id, id, t); if (window.location.pathname === "/dashboard") window.location.reload(); else window.location.replace("/dashboard") } catch (e) { setStatus({ ok: false, text: (e as Error).message }); setSwitching(false) }
-                  }}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                    active ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  {label}
-                </button>
-              )
-            })}
+          <Label>{t("Your business")}</Label>
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-foreground/[0.04] px-3.5 py-3 ring-1 ring-border">
+            <div className="min-w-0">
+              <p className="truncate text-[14px] font-medium">{t(nicheConfig(shop.niche)!.name)}</p>
+              <p className="truncate text-xs text-muted-foreground">{t(nicheConfig(shop.niche)!.hint)}</p>
+            </div>
+            <Button size="sm" variant="outline" onPress={() => setConfirmNiche(true)}>{t("Switch")}</Button>
           </div>
-          <p className="text-xs text-muted-foreground">{t("The niche sets up the dashboard, services and the booking form. Your data stays.")}</p>
         </div>
       )}
+      <Dialog isOpen={confirmNiche} onOpenChange={(v) => !v && !switching && setConfirmNiche(false)} className="rounded-2xl sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("Change your business?")}</DialogTitle>
+          <DialogDescription>{t("You'll pick the business again and Nodly will set itself up anew. Your current services won't carry over; clients and their history stay.")}</DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onPress={() => setConfirmNiche(false)} isDisabled={switching}>{t("Cancel")}</Button>
+          <Button isDisabled={switching} onPress={async () => {
+            if (!shop) return
+            setSwitching(true)
+            try {
+              await resetNiche(shop.id)
+              // fade the app out, then the business picker fades in
+              document.body.appendChild(Object.assign(document.createElement("div"), { className: "fixed inset-0 z-[100] bg-background animate-in fade-in duration-300" }))
+              window.setTimeout(() => window.location.replace("/dashboard"), 320)
+            } catch (e) {
+              setStatus({ ok: false, text: (e as Error).message })
+              setSwitching(false)
+              setConfirmNiche(false)
+            }
+          }}>{switching ? t("Saving…") : t("Switch")}</Button>
+        </div>
+      </Dialog>
 
       {!isCrmNiche(shop?.niche) && <PortalLogo shop={shop} onSaved={setShop} />}
 

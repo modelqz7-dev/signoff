@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import type { BookingKind, CrmNiche } from "@/lib/niches"
-import { nicheConfig } from "@/lib/niches"
+import { NICHES, nicheConfig } from "@/lib/niches"
 
 // The CRM's data (see supabase/crm.sql): services, clients and bookings of one shop.
 
@@ -202,7 +202,7 @@ export async function chooseNiche(shopId: string, niche: CrmNiche | "smm", trans
   const config = nicheConfig(niche)
   if (!config) return
   // starter services only when there are none of this niche's kind (switching nails → cakes adds the cakes)
-  const { count } = await supabase.from("crm_services").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("kind", config.kind)
+  const { count } = await supabase.from("crm_services").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("kind", config.kind).eq("archived", false)
   if (count) return
   const rows = config.services.map((s, i) => ({
     shop_id: shopId,
@@ -216,4 +216,23 @@ export async function chooseNiche(shopId: string, niche: CrmNiche | "smm", trans
   }))
   const { error: seedError } = await supabase.from("crm_services").insert(rows)
   if (seedError) throw seedError
+}
+
+/**
+ * Starts the niche over: the current services are hidden (not deleted), the niche is cleared,
+ * and the dashboard asks what the business is again. Clients and their history stay.
+ */
+export async function resetNiche(shopId: string) {
+  const { error: hideError } = await supabase.from("crm_services").update({ archived: true }).eq("shop_id", shopId).eq("archived", false)
+  if (hideError) throw hideError
+  const { error } = await supabase.from("shops").update({ niche: null }).eq("id", shopId)
+  if (error) throw error
+}
+
+/** Starter services created in English (before the account's language was known), renamed into it. */
+export async function translateStarterTitles(services: CrmService[], translate: (s: string) => string) {
+  const starters = new Set(NICHES.flatMap((n) => n.services.map((x) => x.title)))
+  const fixes = services.filter((s) => starters.has(s.title) && translate(s.title) !== s.title)
+  for (const s of fixes) await supabase.from("crm_services").update({ title: translate(s.title) }).eq("id", s.id)
+  return fixes.length ? services.map((s) => (starters.has(s.title) ? { ...s, title: translate(s.title) } : s)) : null
 }

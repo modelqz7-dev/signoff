@@ -11,7 +11,7 @@ import { OrdersHome } from "@/components/crm/OrdersHome"
 import { ClientsView } from "@/components/crm/ClientsView"
 import { ServicesView } from "@/components/crm/ServicesView"
 import { BookingLinkButton, OnlineBookingView } from "@/components/crm/OnlineBookingView"
-import { useCrmData, type CrmBooking } from "@/lib/crm"
+import { translateStarterTitles, useCrmData, type CrmBooking } from "@/lib/crm"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { getOrCreateShop } from "@/lib/shop"
 import { supabase } from "@/lib/supabase"
@@ -40,9 +40,15 @@ export function useCrmShop() {
 /** One CRM screen: the menu, the page and the booking dialog every screen can open. */
 export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage }) {
   const [shop, setShop] = useState(initialShop)
-  const { t } = useT()
+  const { t, lang } = useT()
   const config = nicheConfig(shop.niche as CrmNiche)!
   const data = useCrmData(shop.id)
+  // starter services made before the account's language was known take its words once
+  const { services, setServices, loading } = data
+  useEffect(() => {
+    if (loading || lang !== "ru" || !services.length) return
+    translateStarterTitles(services, t).then((fixed) => { if (fixed) setServices(fixed) }).catch(() => {})
+  }, [loading, lang, services, setServices, t])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   // a link with ?new=1 opens on a new booking
   const [dialog, setDialog] = useState<{ booking?: CrmBooking | null; preset?: BookingPreset } | null>(
