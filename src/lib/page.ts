@@ -72,6 +72,8 @@ export type PageData = {
   listed: boolean
   /** The city it's found by in the catalog, an id from lib/cities ("" when not picked). */
   city: string
+  /** Where it is, for the catalog's map; null until the business puts its pin. */
+  geo: { lat: number; lng: number } | null
 }
 
 export type ShopPage = { shop_id: string; slug: string; published: boolean; data: PageData; updated_at?: string }
@@ -199,7 +201,16 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",
     listed: src.listed === true,
     city: typeof src.city === "string" && CITY_IDS.has(src.city) ? src.city : "",
+    geo: cleanGeo(src.geo),
   }
+}
+
+/** A point on the map, rounded to about a metre; anything else is dropped. */
+function cleanGeo(v: unknown): PageData["geo"] {
+  const g = v as { lat?: unknown; lng?: unknown } | null
+  const lat = Number(g?.lat), lng = Number(g?.lng)
+  if (!g || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null
+  return { lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5 }
 }
 
 /** A fresh page for a workshop that has none yet. */

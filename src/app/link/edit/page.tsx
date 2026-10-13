@@ -25,7 +25,11 @@ import {
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { cleanBooking } from "@/lib/booking"
-import { CITIES } from "@/lib/cities"
+import { CITIES, UKRAINE, cityById } from "@/lib/cities"
+import dynamic from "next/dynamic"
+
+// the map loads only when the catalog block opens
+const MapView = dynamic(() => import("@/components/catalog/MapView").then((m) => m.MapView), { ssr: false, loading: () => <div className="h-60 w-full animate-pulse rounded-xl bg-muted" /> })
 import { Picker } from "@/components/crm/Pickers"
 import { BookingPage } from "@/components/booking/BookingPage"
 import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
@@ -609,6 +613,18 @@ export default function PageEditor() {
                         options={[{ value: "none", label: t("Not chosen") }, ...CITIES.map((c) => ({ value: c.id, label: c[lang] }))]} />
                     </Field>
                     {data.listed && !data.city && <p className="text-xs text-muted-foreground">{t("Pick a city so clients nearby find you.")}</p>}
+                    <Field label={t("Pin on the map")}>
+                      <MapView className="h-60 w-full overflow-hidden rounded-xl ring-1 ring-border"
+                        center={data.geo ?? cityById(data.city) ?? UKRAINE} zoom={data.geo ? 15 : data.city ? 11 : UKRAINE.zoom}
+                        picker={{ value: data.geo, onChange: (geo) => update({ geo }) }} />
+                    </Field>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="outline" onPress={() => navigator.geolocation?.getCurrentPosition(
+                        (pos) => update({ geo: { lat: pos.coords.latitude, lng: pos.coords.longitude } }),
+                        () => setSaveError(t("Couldn't get your location. Click the map instead.")))}>{t("I'm here now")}</Button>
+                      {data.geo && <Button size="sm" variant="ghost" onPress={() => update({ geo: null })}>{t("Remove the pin")}</Button>}
+                      <span className="text-xs text-muted-foreground">{data.geo ? t("Drag the pin to move it.") : t("Click the map where you work.")}</span>
+                    </div>
                     {data.listed && !published && <p className="text-xs text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
                     <a href="/catalog" target="_blank" rel="noopener" className="text-sm font-medium underline underline-offset-2">{t("Open the catalog")}</a>
                   </Block>
