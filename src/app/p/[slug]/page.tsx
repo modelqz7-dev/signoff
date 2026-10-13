@@ -48,7 +48,7 @@ export default async function PublicPage({ params }: Props) {
     const isOrder = config.kind === "order"
     return (
       <main className="min-h-dvh">
-        <BookingPage data={{ ...page.data, bio: page.data.bio || cleanBooking(shop.booking).about }} slug={page.slug} reviews={reviews} isOrder={isOrder}
+        <BookingPage data={{ ...page.data, bio: page.data.bio || cleanBooking(shop.booking).about }} slug={page.slug} reviews={reviews} isOrder={isOrder} niche={config.id}
           booking={<PublicBooking embedded slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
             about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} />} />
       </main>
