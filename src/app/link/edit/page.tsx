@@ -669,7 +669,7 @@ export default function PageEditor() {
 
         {/* Live preview: a phone or a computer */}
         <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-72px)] lg:px-6">
-          <DevicePreview path={pagePath(slug.slug)} side={published && savedSlug && (
+          <DevicePreview side={published && savedSlug && (
             <div className="flex flex-col gap-1 rounded-full bg-muted p-1">
               <IconBtn label={t("Copy Link")} onClick={copyLink}>{copied ? <CheckIcon /> : <CopyIcon />}</IconBtn>
               <IconBtn label={t("Open page")} onClick={() => window.open(pagePath(savedSlug), "_blank", "noopener")}><ExternalLinkIcon /></IconBtn>
