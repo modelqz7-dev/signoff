@@ -69,15 +69,15 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
   const weekdayName = (d: number) => new Date(2024, 0, 7 + d).toLocaleDateString(locale, { weekday: "short" })
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-5 sm:p-8">
       <div>
-        <h1 className="text-[24px] font-semibold tracking-tight">{t("Online booking")}</h1>
-        <p className="text-[13.5px] text-muted-foreground">{isOrder ? t("Clients order through your link and the order lands on the board at once.") : t("Clients book through your link and the appointment lands in the calendar at once.")}</p>
+        <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("Online booking")}</h1>
+        <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("Clients order through your link and the order lands on the board at once.") : t("Clients book through your link and the appointment lands in the calendar at once.")}</p>
       </div>
 
       <LinkCard shop={shop} page={page} onPage={setPage} />
 
-      <section className="flex flex-col gap-4 rounded-2xl bg-card p-4 ring-1 ring-border">
+      <section className="flex flex-col gap-4 rounded-[22px] apple-card p-4">
         <h2 className="text-[15px] font-semibold">{isOrder ? t("When you take orders") : t("When clients can book")}</h2>
         <div className="flex flex-col gap-1.5">
           <span className={LABEL}>{t("Working days")}</span>
@@ -123,7 +123,7 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
             options={[7, 14, 30, 60, 90].map((d) => ({ value: d, label: t("{n} days ahead", { n: d }) }))} /></div>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
+      <section className="flex flex-col gap-2 rounded-[22px] apple-card p-4">
         <h2 className="text-[15px] font-semibold">{t("A word for clients")}</h2>
         <textarea value={settings.about} onChange={(e) => set("about", e.target.value.slice(0, 500))} rows={3}
           placeholder={isOrder ? t("e.g. Cakes from natural ingredients. Pickup at Lvivska 12 or delivery around the city.") : t("e.g. Studio at Khreshchatyk 10, 2nd floor. Sterile tools, coffee included.")}
@@ -163,7 +163,7 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
     return () => { off = true; window.clearTimeout(id) }
   }, [wanted, page, problem])
 
-  if (page === undefined) return <section className="h-28 animate-pulse rounded-2xl bg-card ring-1 ring-border" />
+  if (page === undefined) return <section className="h-28 animate-pulse rounded-[22px] apple-card" />
 
   const url = page ? `${siteOrigin()}${pagePath(page.slug)}` : ""
   async function create() {
@@ -187,13 +187,13 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
 
   const free = !problem && check?.slug === wanted && check.ok
   return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+    <section className="flex flex-col gap-3 rounded-[22px] apple-card p-4">
       <h2 className="text-[15px] font-semibold">{t("Your booking link")}</h2>
       {page ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(FIELD, "flex min-w-0 flex-1 items-center truncate font-medium", !page.published && "text-muted-foreground line-through")}>{url.replace(/^https?:\/\//, "")}</span>
-            <Button onPress={copy} isDisabled={!page.published} className="h-10 gap-1.5 rounded-full px-4">{copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}</Button>
+            <Button onPress={copy} isDisabled={!page.published} className="h-10 gap-1.5 rounded-full px-5 text-[14px]">{copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}</Button>
             <a href={url} target="_blank" rel="noreferrer" aria-label={t("Open")} className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ExternalLinkIcon className="size-4" /></a>
           </div>
           <Toggle checked={page.published} onChange={toggle}>
@@ -203,7 +203,7 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
         </>
       ) : (
         <>
-          <p className="text-[13.5px] text-muted-foreground">{t("Pick an address. Clients will open it to book.")}</p>
+          <p className="mt-1 text-[15px] text-muted-foreground">{t("Pick an address. Clients will open it to book.")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(FIELD, "flex min-w-0 flex-1 items-center gap-0 pr-1")}>
               <span className="shrink-0 text-muted-foreground">{siteOrigin().replace(/^https?:\/\//, "")}/@</span>

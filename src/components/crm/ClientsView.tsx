@@ -54,13 +54,13 @@ export function ClientsView({ data, config, shopId, onNew, onOpen }: {
   const visitWord = config.kind === "order" ? t("Orders") : t("Visits")
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-5 sm:p-8">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">{t("Clients")}</h1>
-          <p className="text-[13.5px] text-muted-foreground">{t("{n} in the base", { n: data.clients.length })}</p>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("Clients")}</h1>
+          <p className="mt-1 text-[15px] text-muted-foreground">{t("{n} in the base", { n: data.clients.length })}</p>
         </div>
-        <Button onPress={() => setOpenId("new")} className="h-9 gap-1.5 rounded-full px-4"><PlusIcon className="size-4" />{t("New client")}</Button>
+        <Button onPress={() => setOpenId("new")} className="h-10 gap-1.5 rounded-full px-5 text-[14px]"><PlusIcon className="size-4" />{t("New client")}</Button>
       </div>
 
       <label className="relative">
@@ -69,7 +69,7 @@ export function ClientsView({ data, config, shopId, onNew, onOpen }: {
       </label>
 
       {shown.length ? (
-        <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+        <div className="overflow-hidden rounded-[22px] apple-card">
           <div className="hidden grid-cols-[1.4fr_1fr_80px_110px_110px] gap-3 border-b border-border px-4 py-2 text-[12px] font-medium text-muted-foreground sm:grid">
             <span>{t("Full name")}</span><span>{t("Phone")}</span><span className="text-right">{visitWord}</span><span className="text-right">{t("Spent")}</span><span className="text-right">{t("Last time")}</span>
           </div>
@@ -90,7 +90,7 @@ export function ClientsView({ data, config, shopId, onNew, onOpen }: {
           })}
         </div>
       ) : (
-        <div className="rounded-2xl bg-card px-6 py-12 text-center ring-1 ring-border">
+        <div className="rounded-[22px] apple-card px-6 py-12 text-center">
           <p className="font-medium">{q ? t("Nobody found") : t("No clients yet")}</p>
           <p className="mt-1 text-[13.5px] text-muted-foreground">{q ? t("Try another name or number.") : t("They're added when you book someone, or add one yourself.")}</p>
         </div>
@@ -174,9 +174,9 @@ function ClientDialog({ open, client, bookings, shopId, onClose, onSaved, onDele
   const phoneDigits = form.phone.replace(/[^\d+]/g, "")
 
   return (
-    <Dialog isOpen={open} onOpenChange={(v) => !v && !saving && onClose()} className="max-h-[92dvh] gap-5 overflow-y-auto rounded-2xl p-5 sm:max-w-lg">
+    <Dialog isOpen={open} onOpenChange={(v) => !v && !saving && onClose()} className="max-h-[92dvh] gap-5 overflow-y-auto rounded-[24px] p-6 sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle className="text-[17px]">{client ? client.name : t("New client")}</DialogTitle>
+        <DialogTitle className="text-[20px] tracking-[-0.01em]">{client ? client.name : t("New client")}</DialogTitle>
         <DialogDescription>{t("Contacts and notes stay in your base only.")}</DialogDescription>
       </DialogHeader>
 

@@ -116,18 +116,18 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
           ? <img src={avatar} alt="" className="size-20 rounded-full object-cover ring-1 ring-border" />
           : <NicheIcon niche={niche} className="size-20" />}
         <div>
-          <h1 className="text-[24px] font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{title}</h1>
           <p className="text-[14px] text-muted-foreground">{t(config.name)}</p>
         </div>
         {about && <p className="max-w-md text-[14.5px] leading-relaxed whitespace-pre-line text-muted-foreground">{about}</p>}
       </header>
 
       {done ? (
-        <section className="flex flex-col items-center gap-3 rounded-3xl bg-card px-6 py-10 text-center ring-1 ring-border">
+        <section className="flex flex-col items-center gap-3 rounded-3xl apple-card px-6 py-10 text-center">
           <span className="flex size-14 items-center justify-center rounded-full bg-foreground text-background"><CheckIcon className="size-7" /></span>
           <h2 className="text-[20px] font-semibold">{isOrder ? t("Order sent!") : t("You're booked!")}</h2>
           <p className="text-[15px] first-letter:uppercase">{summary}</p>
-          <p className="text-[13.5px] text-muted-foreground">{isOrder ? t("{name} will get in touch to confirm the details and the price.", { name: title }) : t("{name} will contact you if anything changes.", { name: title })}</p>
+          <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("{name} will get in touch to confirm the details and the price.", { name: title }) : t("{name} will contact you if anything changes.", { name: title })}</p>
         </section>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-6">
@@ -141,7 +141,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
             </h2>
             {(service ? [service] : services).map((s) => (
               <button key={s.id} type="button" onClick={() => pick(s)} aria-pressed={service?.id === s.id}
-                className={cn("flex items-center gap-3 rounded-2xl bg-card px-4 py-3.5 text-left ring-1 transition-colors",
+                className={cn("flex items-center gap-3 rounded-[20px] bg-card px-4 py-4 text-left shadow-[var(--card-shadow)] ring-1 transition-all duration-300",
                   service?.id === s.id ? "ring-2 ring-foreground" : "ring-border hover:ring-foreground/30")}>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-medium">{s.title}</span>
@@ -158,7 +158,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
                 )}
               </button>
             ))}
-            {!services.length && <p className="rounded-2xl bg-card px-4 py-6 text-center text-[14px] text-muted-foreground ring-1 ring-border">{t("Booking isn't open yet.")}</p>}
+            {!services.length && <p className="rounded-[22px] apple-card px-4 py-6 text-center text-[14px] text-muted-foreground">{t("Booking isn't open yet.")}</p>}
           </section>
 
           {/* 2. when */}
@@ -167,7 +167,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
               <h2 className="text-[15px] font-semibold">{isOrder ? t("For which day?") : t("Day and time")}</h2>
               {loadError ? <p className="text-[14px] text-destructive">{loadError}</p>
                 : !open ? <p className="text-[14px] text-muted-foreground">{t("Loading...")}</p>
-                : !days.length ? <p className="rounded-2xl bg-card px-4 py-6 text-center text-[14px] text-muted-foreground ring-1 ring-border">{t("No free days in the coming weeks. Write to us and we'll find a time.")}</p>
+                : !days.length ? <p className="rounded-[22px] apple-card px-4 py-6 text-center text-[14px] text-muted-foreground">{t("No free days in the coming weeks. Write to us and we'll find a time.")}</p>
                 : (
                   <>
                     <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">

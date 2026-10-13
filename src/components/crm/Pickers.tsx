@@ -10,7 +10,7 @@ import { useT } from "@/lib/i18n"
 // look, in place of the browser's (no "AM/PM", no system wheels, the same in every browser).
 // They're built on react-aria, so they position themselves and work inside dialogs.
 
-const TRIGGER = "flex h-10 w-full items-center gap-2 rounded-lg bg-foreground/[0.06] px-3 text-left text-[14px] text-foreground outline-none ring-1 ring-transparent transition-colors hover:bg-foreground/[0.09] data-[focus-visible]:ring-foreground/25 data-[pressed]:bg-foreground/[0.09]"
+const TRIGGER = "flex h-11 w-full items-center gap-2 rounded-xl bg-foreground/[0.05] px-3 text-left text-[14px] text-foreground outline-none ring-1 ring-transparent transition-colors hover:bg-foreground/[0.09] data-[focus-visible]:ring-foreground/25 data-[pressed]:bg-foreground/[0.09]"
 const PANEL = "rounded-xl bg-popover text-popover-foreground shadow-[0_12px_40px_rgba(0,0,0,0.18)] ring-1 ring-border outline-none data-[entering]:animate-in data-[entering]:fade-in-0 data-[entering]:zoom-in-95 data-[exiting]:animate-out data-[exiting]:fade-out-0"
 const ITEM = "flex cursor-default items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-[13.5px] outline-none data-[focused]:bg-hover data-[selected]:font-semibold"
 
