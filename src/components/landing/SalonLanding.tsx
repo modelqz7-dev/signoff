@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, Link2Icon, PlusIcon, QrCodeIcon, SendIcon, StarIcon, UsersIcon,
+  ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, Link2Icon, PlusIcon, QrCodeIcon, StarIcon, UsersIcon,
 } from "lucide-react"
 import { Logo } from "@/components/Logo"
 import { NicheIcon } from "@/components/crm/NicheIcon"
@@ -127,10 +127,7 @@ function Hero({ t, start, startLabel }: { t: T; start: string; startLabel: strin
   return (
     <section className="overflow-hidden">
       <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-14 text-center sm:px-6 sm:pt-20">
-        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium text-muted-foreground ring-1 ring-border">
-          <span className="size-1.5 rounded-full bg-[#34c759]" />{t("Early access · free")}
-        </span>
-        <h1 className={cn(H, "mt-6 text-[44px] leading-[1.02] sm:text-[72px] lg:text-[88px]")}>
+        <h1 className={cn(H, "text-[44px] leading-[1.02] sm:text-[72px] lg:text-[88px]")}>
           {t("Clients book themselves.")}<br /><span className="text-muted-foreground/70">{t("You just work.")}</span>
         </h1>
         <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-muted-foreground sm:text-[20px]">{t("One link in your Instagram bio, and bookings land in your calendar on their own.")}</p>
@@ -141,21 +138,10 @@ function Hero({ t, start, startLabel }: { t: T; start: string; startLabel: strin
         <p className="mt-4 text-[13px] text-muted-foreground">{t("Nails · barbershops · cakes to order")}</p>
       </div>
 
-      {/* the stage: the owner's calendar, the client's phone, the Telegram notice */}
+      {/* the stage: the owner's calendar as it is */}
       <div className="relative mx-auto mt-14 max-w-6xl px-4 pb-16 sm:mt-20 sm:px-6 sm:pb-24">
         <div className="relative overflow-hidden rounded-[22px] bg-card shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35)] ring-1 ring-border sm:rounded-[28px]">
           <Shot name="nails-app" alt={t("The appointments calendar in Nodly")} className="w-full" />
-        </div>
-        <div className="absolute right-6 -bottom-2 w-[30%] max-w-[260px] min-w-[140px] overflow-hidden rounded-[30px] border-[6px] border-[#1d1d1f] bg-white shadow-[0_40px_80px_-20px_rgba(0,0,0,0.45)] sm:right-12 sm:rounded-[40px] sm:border-[9px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/nails-phone.webp" alt={t("The client's booking page")} className="block w-full" />
-        </div>
-        <div className="absolute top-[18%] left-0 hidden w-[270px] items-start gap-3 rounded-2xl bg-card/95 p-3.5 text-left shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] ring-1 ring-border backdrop-blur md:flex lg:-left-6 [animation:toast-in_.6s_.5s_both]">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><SendIcon className="size-4" /></span>
-          <span className="min-w-0 text-[13px] leading-snug">
-            <span className="flex items-center justify-between gap-2"><span className="font-semibold">Telegram · Nodly</span><span className="text-[11px] text-muted-foreground">{t("now")}</span></span>
-            <span className="block text-muted-foreground">{t("New booking")}: {t("Iryna · Gel manicure · tomorrow 13:00")}</span>
-          </span>
         </div>
       </div>
     </section>
