@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
-  AlignLeftIcon, AwardIcon, BanknoteIcon, CalendarIcon, ChevronDownIcon, ExternalLinkIcon, GlobeIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
-  ImagesIcon, ListChecksIcon, MailIcon, MapIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, RulerIcon, SendIcon, Share2Icon, ShieldCheckIcon,
+  AlignLeftIcon, AwardIcon, BanknoteIcon, CalendarIcon, ChevronDownIcon, ExternalLinkIcon, HourglassIcon, ImageIcon, ImagePlusIcon,
+  ImagesIcon, ListChecksIcon, MapIcon, MapPinIcon, RulerIcon, Share2Icon, ShieldCheckIcon,
   StarIcon, UsersIcon, XIcon,
 } from "lucide-react"
 import { useT } from "@/lib/i18n"
@@ -30,25 +30,8 @@ function palette(data: PageData) {
   } as React.CSSProperties
 }
 
-function InstagramGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4">
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-export const CONTACT_ICON: Record<keyof PageContacts, React.ReactNode> = {
-  instagram: <InstagramGlyph />,
-  telegram: <SendIcon className="size-4" />,
-  viber: <MessageCircleIcon className="size-4" />,
-  whatsapp: <MessageCircleIcon className="size-4" />,
-  phone: <PhoneIcon className="size-4" />,
-  email: <MailIcon className="size-4" />,
-  website: <GlobeIcon className="size-4" />,
-}
+import { CONTACT_ICON } from "@/components/page/contact-icons"
+export { CONTACT_ICON }
 
 export const CONTACT_LABEL: Record<keyof PageContacts, string> = {
   instagram: "Instagram", telegram: "Telegram", viber: "Viber", whatsapp: "WhatsApp",

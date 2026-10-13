@@ -421,7 +421,7 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
     { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
-    { page: "online", href: "/online", label: t("Online booking"), icon: Link2Icon },
+    { page: "online", href: "/online", label: t("My page"), icon: Link2Icon },
   ]
 }
 

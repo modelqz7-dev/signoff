@@ -70,6 +70,14 @@ export type ShopPage = { shop_id: string; slug: string; published: boolean; data
 
 export const CONTACT_KEYS = ["instagram", "telegram", "viber", "whatsapp", "phone", "email", "website"] as const
 
+/** The contacts a beauty or cake business is reached by, in the order they show on its page. */
+export const BOOKING_CONTACTS: (keyof PageContacts)[] = ["instagram", "telegram", "viber", "whatsapp", "phone"]
+
+/** Every photo of the page's work, the old per-project lists in one row. */
+export function pagePhotos(data: PageData) {
+  return data.projects.flatMap((p) => p.photos)
+}
+
 /** Accent colours offered in the editor; the page only accepts these. */
 export const ACCENTS = ["#1f1e1d", "#7a5a3c", "#2f5d50", "#8b3a3a", "#36557f", "#6b4f8a"] as const
 

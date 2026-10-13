@@ -45,7 +45,7 @@ export default async function PublicPage({ params }: Props) {
     return (
       <main className="min-h-dvh bg-background text-foreground">
         <PublicBooking slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
-          about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} />
+          about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} page={page.data} />
       </main>
     )
   }
