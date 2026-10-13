@@ -313,7 +313,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
             </div>
 
             {/* Section tabs, pinned while scrolling; the current one is underlined */}
-            <nav className="sticky top-0 z-10 mt-5 flex gap-6 overflow-x-auto overflow-y-hidden border-b border-[var(--pg-border)] bg-[var(--pg-bg)] px-5 text-sm [scrollbar-width:none] @3xl:px-0">
+            <nav className="sticky top-0 z-10 mt-5 flex gap-6 overflow-x-auto overflow-y-hidden border-b border-[var(--pg-border)] bg-[var(--pg-bg)] px-5 text-sm no-scrollbar @3xl:px-0">
               {tabs.map(([, id, label]) => (
                 <button key={id} type="button" onClick={() => go(id)}
                   className={`-mb-px shrink-0 border-b-2 py-3 font-medium whitespace-nowrap transition-colors ${

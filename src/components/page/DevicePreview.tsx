@@ -61,7 +61,7 @@ export function DevicePreview({ children, path, side }: { children: React.ReactN
               <div className="min-h-0 flex-1 overflow-hidden">
                 {/* Scaled (so the page's own pop-ups stay inside this window), and scrolls inside */}
                 <div style={{ width: SITE_WIDTH, height: (height - BAR_HEIGHT) / scale, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
-                  <div className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
+                  <div className="h-full overflow-y-auto no-scrollbar">{children}</div>
                 </div>
               </div>
             </div>
@@ -73,7 +73,7 @@ export function DevicePreview({ children, path, side }: { children: React.ReactN
         <div className="flex items-center gap-4">
           <div style={{ width: PHONE_WIDTH, height }}
             className="overflow-hidden rounded-[32px] bg-white shadow-[0_20px_60px_-20px_rgba(0,0,0,0.3)] ring-1 ring-black/[0.06] [transform:translateZ(0)]">
-            <div className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
+            <div className="h-full overflow-y-auto no-scrollbar">{children}</div>
           </div>
           {side}
         </div>

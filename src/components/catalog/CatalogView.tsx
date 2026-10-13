@@ -88,7 +88,7 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
 
         {/* filters: trade, city, name */}
         <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div role="tablist" className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-foreground/[0.06] p-1 [scrollbar-width:none]">
+          <div role="tablist" className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-foreground/[0.06] p-1 no-scrollbar">
             {tabs.map((x) => (
               <button key={x.id || "all"} type="button" role="tab" aria-selected={niche === x.id} onClick={() => setNiche(x.id)}
                 className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium transition-all",
