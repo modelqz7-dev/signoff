@@ -152,7 +152,7 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
       <div className="flex flex-1 flex-col">
         <div className="px-4 pt-4 pb-2"><Link href="/dashboard" className="text-[15px] font-semibold">{usage?.shop.name || "Nodly"}</Link></div>
         <nav className="flex-1 px-3 pt-2 pb-4">
-          {items.map((i) => <NavItem key={i.href} icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={activePage === i.page} href={i.href} />)}
+          {items.map((i) => <NavItem key={i.href} icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={crmActive(i.page, activePage)} href={i.href} />)}
         </nav>
         <PlanCard onOpen={() => setPanel("billing")} />
         <AccountRow panel={panel} onPanel={setPanel} />
@@ -291,7 +291,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
       <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
         <Link href="/dashboard" aria-label="Nodly" className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></Link>
         <nav className="flex flex-col items-center gap-1.5">
-          {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={activePage === i.page} icon={i.icon} />)}
+          {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={crmActive(i.page, activePage)} icon={i.icon} menu={i.menu} />)}
         </nav>
         <div className="my-4 h-px w-10 bg-border" />
         {/* the booking link at hand: copy it for a client or look at it as they do */}
@@ -421,8 +421,23 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
     { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
-    { page: "online", href: "/online", label: t("My page"), icon: Link2Icon },
+    {
+      page: "link", href: "/link", label: t("My page"), icon: Link2Icon,
+      // the page, how it looks, when clients can book, how it's doing and its QR code
+      menu: [
+        { href: "/link", label: t("My page") },
+        { href: "/link/edit", label: t("Edit page") },
+        { href: "/online", label: t("Online booking") },
+        { href: "/link/stats", label: t("Statistics") },
+        { href: "/link/qr", label: t("QR code") },
+      ],
+    },
   ]
+}
+
+/** Whether a CRM menu item is the open page (My page covers its own screens and the booking hours). */
+function crmActive(page: string, activePage: string) {
+  return page === "link" ? activePage.startsWith("link") || activePage === "online" : activePage === page
 }
 
 /** One icon of the rail, its name in a dark label on hover (or, with menu, a list of links). */

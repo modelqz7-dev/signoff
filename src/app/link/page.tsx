@@ -13,6 +13,7 @@ import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { cleanPage, pagePath, suggestSlug, type PageData } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
+import { nicheConfig } from "@/lib/niches"
 
 type PageRow = { slug: string; published: boolean; data: PageData }
 
@@ -58,9 +59,10 @@ export default function MyPage() {
       setLoading(false)
       if (!row) return
       const since = days[0]
+      // a beauty or cake business counts the bookings and orders that came in, not requests
       const [{ data: viewRows }, { count }] = await Promise.all([
         supabase.from("page_views").select("day, count").eq("shop_id", shopData.id).gte("day", since),
-        supabase.from("page_requests").select("id", { count: "exact", head: true }).eq("shop_id", shopData.id).gte("created_at", since + "T00:00:00Z"),
+        supabase.from(nicheConfig(shopData.niche) ? "crm_bookings" : "page_requests").select("id", { count: "exact", head: true }).eq("shop_id", shopData.id).gte("created_at", since + "T00:00:00Z"),
       ])
       setViews(Object.fromEntries(((viewRows as { day: string; count: number }[]) || []).map((v) => [v.day, v.count])))
       setRequests(count ?? 0)
@@ -75,6 +77,7 @@ export default function MyPage() {
     setTimeout(() => setCopied(false), 1500)
   }
 
+  const salon = nicheConfig(shop?.niche)
   const name = page?.data.title || shop?.name || ""
   const avatar = page ? page.data.avatar_url : shop?.logo_url ?? null
   const host = useSyncExternalStore(noop, () => window.location.host, () => "")
@@ -165,11 +168,13 @@ export default function MyPage() {
                   ))}
                 </div>
               </StatCard>
-              <StatCard title={t("Requests")} period={t("Last 7 days")}
-                empty={requests === 0} emptyText={t("No requests during this time")} illustration={<InboxArt />}
-                footer={<Pill href="/requests">{t("Open requests")}<ChevronRightIcon className="size-4" /></Pill>}>
+              <StatCard title={salon ? (salon.kind === "order" ? t("Orders") : t("Appointments")) : t("Requests")} period={t("Last 7 days")}
+                empty={requests === 0} emptyText={salon ? (salon.kind === "order" ? t("No new orders during this time") : t("No new appointments during this time")) : t("No requests during this time")} illustration={<InboxArt />}
+                footer={salon
+                  ? <Pill href="/dashboard">{salon.kind === "order" ? t("Open orders") : t("Open appointments")}<ChevronRightIcon className="size-4" /></Pill>
+                  : <Pill href="/requests">{t("Open requests")}<ChevronRightIcon className="size-4" /></Pill>}>
                 <span className="text-4xl font-bold tabular-nums">{requests}</span>
-                <p className="mt-2 text-sm text-muted-foreground">{t("Requests from your page")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{salon ? (salon.kind === "order" ? t("New orders this week") : t("New appointments this week")) : t("Requests from your page")}</p>
               </StatCard>
             </div>
             {page && !page.published && (

@@ -172,11 +172,17 @@ function Detail({ label, children, onEmpty }: { label: string; children?: React.
  * About, Projects, Business, Services, Areas, Credentials and Reviews, and a "Contact" card that
  * opens a message window. `preview` is the editor's live copy: links stay inert and forms don't send.
  */
-export function PageView({ data, slug, reviews = [], preview = false, onEdit }: {
+export function PageView({ data, slug, reviews = [], preview = false, onEdit, booking }: {
   data: PageData
   slug: string
   reviews?: PageReview[]
   preview?: boolean
+  /**
+   * A beauty or cake business's booking (its services, free times and the form). With it the page
+   * leads with Booking, its button books instead of sending a message, and the sections a salon
+   * doesn't use (services as text, areas, credentials) stay out.
+   */
+  booking?: { label: string; button: string; node: React.ReactNode }
   /** Editor only: an empty section was tapped. */
   onEdit?: (target: PageEditTarget) => void
 }) {
@@ -207,15 +213,17 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
 
   // Section ids differ in the editor's preview, so they never clash with the editor itself.
   const sid = (s: string) => (preview ? `pg-${s}-preview` : `pg-${s}`)
+  const salon = !!booking
   const tabs = ([
+    ...(booking ? [[true, "booking", booking.label]] : []),
     [!!data.bio || !!data.category, "about", t("About us")],
-    [data.projects.length > 0, "projects", t("Projects")],
+    [data.projects.length > 0, "projects", salon ? t("Work") : t("Projects")],
     [true, "business", t("Business")],
-    [data.services.length > 0, "services", t("Services")],
-    [areas.length > 0, "areas", t("Areas")],
-    [data.credentials.length > 0, "credentials", t("Credentials")],
+    [!salon && data.services.length > 0, "services", t("Services")],
+    [!salon && areas.length > 0, "areas", t("Areas")],
+    [!salon && data.credentials.length > 0, "credentials", t("Credentials")],
     [true, "reviews", t("Reviews")],
-  ] as [boolean, string, string][]).filter(([on]) => on || preview)
+  ] as [boolean, string, string][]).filter(([on, id]) => on || (preview && !(salon && ["services", "areas", "credentials"].includes(id))))
   const current = active || tabs[0]?.[1]
 
   function go(id: string) {
@@ -309,6 +317,16 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
               ))}
             </nav>
 
+            {booking && (
+              <Section id={sid("booking")} title={booking.label}>
+                {/* the booking speaks in the app's words: its colours follow the page's own */}
+                <div style={{
+                  "--background": "var(--pg-bg)", "--foreground": "var(--pg-text)", "--card": "var(--pg-card)", "--card-foreground": "var(--pg-text)",
+                  "--muted-foreground": "var(--pg-muted)", "--border": "var(--pg-border)", "--hover": "var(--pg-field)",
+                } as React.CSSProperties}>{booking.node}</div>
+              </Section>
+            )}
+
             {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
                 {!data.bio && !data.category && <Placeholder icon={<AlignLeftIcon />} title={t("Tell clients about yourself")} hint={t("Who you are, what you make, how long you've been at it.")} onClick={() => onEdit?.("about")} />}
@@ -338,7 +356,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
             )}
 
             {(data.projects.length > 0 || preview) && (
-              <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
+              <Section id={sid("projects")} title={salon ? t("Work") : data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
                 {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Images of finished work and a couple of words about it.")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
@@ -417,7 +435,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
               </dl>
             </Section>
 
-            {(data.services.length > 0 || preview) && (
+            {!salon && (data.services.length > 0 || preview) && (
               <Section id={sid("services")} title={t("Services provided")}>
                 {data.services.length === 0 && <Placeholder icon={<ListChecksIcon />} title={t("Add services and prices")} hint={t("What you make and from what price.")} onClick={() => onEdit?.("services")} />}
                 <MoreList items={data.services.map((s, i) => (
@@ -429,14 +447,14 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
               </Section>
             )}
 
-            {(areas.length > 0 || preview) && (
+            {!salon && (areas.length > 0 || preview) && (
               <Section id={sid("areas")} title={t("Where we work")}>
                 {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add where you work")} hint={t("Cities, countries or simply Online.")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
 
-            {(data.credentials.length > 0 || preview) && (
+            {!salon && (data.credentials.length > 0 || preview) && (
               <Section id={sid("credentials")} title={t("Credentials")}>
                 {data.credentials.length === 0 && <Placeholder icon={<AwardIcon />} title={t("Add awards and certificates")} hint={t("Certificates, publications, contest wins.")} onClick={() => onEdit?.("credentials")} />}
                 <div className="flex flex-wrap gap-5">
@@ -492,12 +510,12 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
           </div>
 
           {/* "Contact" card: pinned on the right on a computer, a bar at the bottom on a phone */}
-          {data.requests && (
+          {(data.requests || booking) && (
             <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--pg-border)] bg-[var(--pg-bg)] p-3 @4xl:sticky @4xl:top-6 @4xl:inset-auto @4xl:z-auto @4xl:rounded-md @4xl:border @4xl:p-4">
-              <p className="mb-3 hidden text-sm font-medium @4xl:block">{t("Contact {name}", { name: data.title || t("Your name") })}</p>
-              <button type="button" onClick={() => setContact(true)}
+              <p className="mb-3 hidden text-sm font-medium @4xl:block">{booking ? booking.label : t("Contact {name}", { name: data.title || t("Your name") })}</p>
+              <button type="button" onClick={() => (booking ? go("booking") : setContact(true))}
                 className={`flex h-11 w-full items-center justify-center bg-[var(--pg-accent)] text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 @4xl:h-10 ${SHAPE[data.buttons]}`}>
-                {data.cta || t("Send message")}
+                {booking ? booking.button : data.cta || t("Send message")}
               </button>
             </aside>
           )}

@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeftIcon, CheckIcon, ChevronRightIcon, ClockIcon, XIcon } from "lucide-react"
+import { ArrowLeftIcon, CheckIcon, ClockIcon } from "lucide-react"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 import { NicheIcon } from "@/components/crm/NicheIcon"
 import { useT } from "@/lib/i18n"
-import { CONTACT_ICON } from "@/components/page/contact-icons"
-import { BOOKING_CONTACTS, pageContactHref, pagePhotos, type PageData } from "@/lib/page"
 
 export type PublicService = { id: string; title: string; duration_min: number | null; price: number | null; price_from: boolean; unit: string }
 
@@ -22,15 +20,17 @@ function money(v: number | null, locale: string) {
 }
 
 /** A business's booking page (/@name): pick a service, a free time or a day, leave a name and phone. */
-export function PublicBooking({ slug, title, avatar, about, niche, services, page }: {
+export function PublicBooking({ slug, title, avatar, about, niche, services, embedded = false, preview = false }: {
   slug: string
   title: string
   avatar: string | null
   about: string
   niche: CrmNiche
   services: PublicService[]
-  /** The look set on My page: cover, a line under the name, contacts, work photos and links. */
-  page?: PageData
+  /** Inside the business's page (its Booking section): just the steps, no header or footer. */
+  embedded?: boolean
+  /** The page editor's live copy: services can be picked, nothing is fetched or sent. */
+  preview?: boolean
 }) {
   const { t, locale } = useT()
   const config = NICHES.find((n) => n.id === niche)!
@@ -50,15 +50,11 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, pag
   const [done, setDone] = useState(false)
   // bumped to fetch the free times again, e.g. after a time was taken meanwhile
   const [reload, setReload] = useState(0)
-  const [photo, setPhoto] = useState<string | null>(null)
-  const photos = page ? pagePhotos(page) : []
-  const contacts = page ? BOOKING_CONTACTS.map((k) => ({ k, href: page.contacts[k] ? pageContactHref(k, page.contacts[k]!) : null })).filter((c) => c.href) : []
-  const bio = page?.bio || about
 
   // the free times of the chosen service
   const serviceId = service?.id
   useEffect(() => {
-    if (!serviceId) return
+    if (!serviceId || preview) return
     let off = false
     fetch(`/api/book/${encodeURIComponent(slug)}?service=${serviceId}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
@@ -71,7 +67,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, pag
       })
       .catch(() => { if (!off) setLoadError(t("Couldn't load free times. Refresh the page.")) })
     return () => { off = true }
-  }, [serviceId, slug, t, reload])
+  }, [serviceId, slug, t, reload, preview])
 
   const days = open ? (open.kind === "appointment" ? Object.keys(open.slots) : open.days) : []
   const times = open?.kind === "appointment" && day ? open.slots[day] ?? [] : []
@@ -84,6 +80,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, pag
   }
 
   function pick(s: PublicService) {
+    if (preview) return
     setService(s); setOpen(null); setDay(null); setTime(null); setError(null)
   }
 
@@ -116,34 +113,8 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, pag
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service, day, time, isOrder, locale])
 
-  return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-6 px-4 py-8 sm:py-12">
-      <header className="flex flex-col items-center gap-3 text-center">
-        {page?.banner_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={page.banner_url} alt="" className="-mb-14 h-36 w-full rounded-3xl object-cover sm:h-44" />
-        )}
-        {avatar
-          // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={avatar} alt="" className={cn("size-20 rounded-full object-cover ring-1 ring-border", page?.banner_url && "size-24 ring-4 ring-background")} />
-          : <NicheIcon niche={niche} className={cn("size-20", page?.banner_url && "size-24 ring-4 ring-background")} />}
-        <div>
-          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{title}</h1>
-          <p className="text-[14px] text-muted-foreground">{page?.tagline || t(config.name)}</p>
-        </div>
-        {bio && <p className="max-w-md text-[14.5px] leading-relaxed whitespace-pre-line text-muted-foreground">{bio}</p>}
-        {contacts.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2">
-            {contacts.map(({ k, href }) => (
-              <a key={k} href={href!} target={href!.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" aria-label={k}
-                className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[var(--card-shadow)] ring-1 ring-border transition-colors hover:ring-foreground/30 [&_svg]:size-[18px]">
-                {CONTACT_ICON[k]}
-              </a>
-            ))}
-          </div>
-        )}
-      </header>
-
+  const steps = (
+    <>
       {done ? (
         <section className="flex flex-col items-center gap-3 rounded-3xl apple-card px-6 py-10 text-center">
           <span className="flex size-14 items-center justify-center rounded-full bg-foreground text-background"><CheckIcon className="size-7" /></span>
@@ -263,40 +234,25 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, pag
           )}
         </form>
       )}
+    </>
+  )
 
-      {photos.length > 0 && (
-        <section className="flex flex-col gap-2.5">
-          <h2 className="text-[15px] font-semibold">{t("Work photos")}</h2>
-          <div className="grid grid-cols-3 gap-1.5">
-            {photos.map((src) => (
-              <button key={src} type="button" onClick={() => setPhoto(src)} className="aspect-square overflow-hidden rounded-xl bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" loading="lazy" className="size-full object-cover transition-transform duration-300 hover:scale-105" />
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {page && page.links.length > 0 && (
-        <section className="flex flex-col gap-2">
-          {page.links.map((l) => (
-            <a key={l.url + l.title} href={l.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-[20px] bg-card px-4 py-3.5 text-[15px] font-medium shadow-[var(--card-shadow)] ring-1 ring-border transition-colors hover:ring-foreground/30">
-              <span className="min-w-0 flex-1 truncate">{l.title}</span>
-              <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
-            </a>
-          ))}
-        </section>
-      )}
-
-      {photo && (
-        <div role="dialog" aria-modal className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 animate-in fade-in duration-200" onClick={() => setPhoto(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo} alt="" className="max-h-full max-w-full rounded-2xl object-contain" />
-          <button type="button" aria-label={t("Close")} className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"><XIcon className="size-5" /></button>
+  if (embedded) return <div className="flex flex-col gap-6">{steps}</div>
+  return (
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-6 px-4 py-8 sm:py-12">
+      <header className="flex flex-col items-center gap-3 text-center">
+        {avatar
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={avatar} alt="" className="size-20 rounded-full object-cover ring-1 ring-border" />
+          : <NicheIcon niche={niche} className="size-20" />}
+        <div>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{title}</h1>
+          <p className="text-[14px] text-muted-foreground">{t(config.name)}</p>
         </div>
-      )}
+        {about && <p className="max-w-md text-[14.5px] leading-relaxed whitespace-pre-line text-muted-foreground">{about}</p>}
+      </header>
+
+      {steps}
 
       <p className="mt-auto pt-4 text-center text-[12px] text-muted-foreground">
         <Link href="/" className="hover:text-foreground">{t("Booking by Nodly")}</Link>
