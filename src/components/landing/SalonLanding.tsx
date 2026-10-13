@@ -5,12 +5,11 @@ import Link from "next/link"
 import {
   ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, ClockIcon, Link2Icon, PlusIcon, QrCodeIcon, SendIcon, StarIcon, UsersIcon,
 } from "lucide-react"
-import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { Logo } from "@/components/Logo"
 import { NicheIcon } from "@/components/crm/NicheIcon"
 import { WorkshopFooter } from "@/components/landing/WorkshopSections"
 import { supabase } from "@/lib/supabase"
-import { useT, type T } from "@/lib/i18n"
+import { setLang, useLang, useT, type Lang, type T } from "@/lib/i18n"
 import type { CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 
@@ -59,28 +58,55 @@ export function SalonLanding() {
 }
 
 function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
+  // a floating capsule; it gains a shadow once the page scrolls under it
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 8)
+    on()
+    window.addEventListener("scroll", on, { passive: true })
+    return () => window.removeEventListener("scroll", on)
+  }, [])
+  const links = [["#how", t("How it works")], ["#features", t("What's inside")], ["#price", t("Pricing")], ["#faq", t("FAQ")]] as const
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" aria-label="Nodly"><Logo /></Link>
-        <nav className="hidden items-center gap-7 md:flex">
-          {([["#how", t("How it works")], ["#features", t("What's inside")], ["#price", t("Pricing")], ["#faq", t("FAQ")]] as const).map(([href, label]) => (
-            <a key={href} href={href} className="text-[14px] text-muted-foreground transition-colors hover:text-foreground">{label}</a>
+    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+      <div className={cn(
+        "mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 rounded-full pr-2 pl-5 transition-all duration-300",
+        scrolled ? "bg-card/90 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)] ring-1 ring-border backdrop-blur-xl" : "bg-transparent",
+      )}>
+        <Link href="/" aria-label="Nodly" className="shrink-0"><Logo /></Link>
+        <nav className="hidden items-center gap-1 md:flex">
+          {links.map(([href, label]) => (
+            <a key={href} href={href} className="rounded-full px-3.5 py-1.5 text-[14px] text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground">{label}</a>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher className="hidden sm:flex" />
+        <div className="flex items-center gap-1.5">
+          <LangToggle />
           {signedIn ? (
-            <Link href="/dashboard" className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[14px] font-medium text-background hover:opacity-85">{t("Open dashboard")}</Link>
+            <Link href="/dashboard" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-85">{t("Open dashboard")}</Link>
           ) : (
             <>
-              <Link href="/login" className="hidden px-2 text-[14px] text-muted-foreground hover:text-foreground sm:block">{t("Sign in")}</Link>
-              <Link href="/signup" className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[14px] font-medium text-background hover:opacity-85">{t("Start free")}</Link>
+              <Link href="/login" className="hidden h-10 items-center rounded-full px-4 text-[14px] text-foreground/80 transition-colors hover:bg-foreground/[0.06] hover:text-foreground sm:inline-flex">{t("Sign in")}</Link>
+              <Link href="/signup" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-85">{t("Start free")}</Link>
             </>
           )}
         </div>
       </div>
     </header>
+  )
+}
+
+/** Two languages, two letters: a small switch instead of a dropdown. */
+function LangToggle() {
+  const lang = useLang()
+  return (
+    <div role="radiogroup" aria-label="Language" className="hidden h-8 items-center rounded-full bg-foreground/[0.06] p-0.5 text-[12px] font-semibold sm:flex">
+      {(["ru", "en"] as Lang[]).map((l) => (
+        <button key={l} type="button" role="radio" aria-checked={lang === l} onClick={() => setLang(l)}
+          className={cn("h-7 rounded-full px-2.5 uppercase transition-colors", lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+          {l}
+        </button>
+      ))}
+    </div>
   )
 }
 
