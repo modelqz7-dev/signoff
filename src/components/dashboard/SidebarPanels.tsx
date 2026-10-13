@@ -17,6 +17,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/profile"
 import { isCrmNiche, nicheConfig, type NicheConfig } from "@/lib/niches"
 import { resetNiche } from "@/lib/crm"
+import { NicheIcon } from "@/components/crm/NicheIcon"
 import { planHighlights, PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
@@ -258,8 +259,9 @@ function ProfilePanel() {
       {shop && nicheConfig(shop.niche) && (
         <div className="flex flex-col gap-2">
           <Label>{t("Your business")}</Label>
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-foreground/[0.04] px-3.5 py-3 ring-1 ring-border">
-            <div className="min-w-0">
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-foreground/[0.04] px-3 py-3 ring-1 ring-border">
+            <NicheIcon niche={shop.niche!} className="size-11" />
+            <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-medium">{t(nicheConfig(shop.niche)!.name)}</p>
               <p className="truncate text-xs text-muted-foreground">{t(nicheConfig(shop.niche)!.hint)}</p>
             </div>

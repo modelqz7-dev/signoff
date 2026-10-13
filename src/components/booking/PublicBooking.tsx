@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeftIcon, CheckIcon, ClockIcon } from "lucide-react"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
+import { NicheIcon } from "@/components/crm/NicheIcon"
 import { useT } from "@/lib/i18n"
 
 export type PublicService = { id: string; title: string; duration_min: number | null; price: number | null; price_from: boolean; unit: string }
@@ -113,7 +114,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services }: {
         {avatar
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={avatar} alt="" className="size-20 rounded-full object-cover ring-1 ring-border" />
-          : <span className="flex size-20 items-center justify-center rounded-full bg-muted text-[36px]" aria-hidden>{config.emoji}</span>}
+          : <NicheIcon niche={niche} className="size-20 rounded-3xl" />}
         <div>
           <h1 className="text-[24px] font-semibold tracking-tight">{title}</h1>
           <p className="text-[14px] text-muted-foreground">{t(config.name)}</p>
