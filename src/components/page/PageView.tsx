@@ -270,8 +270,9 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   // Laid out by its own width (a container), not the screen's: the editor previews it as a phone or a computer.
   return (
     <div ref={rootRef} style={palette(data)} className="@container min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
-      <div className="mx-auto w-full max-w-[1120px] pb-24 @3xl:px-8 @3xl:pt-6 @4xl:pb-12">
-        <div className="@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:items-start @4xl:gap-10">
+      {/* a business that takes bookings: one centred column (booking leads it), no side card on a computer */}
+      <div className={`mx-auto w-full pb-24 @3xl:px-8 @3xl:pt-6 @4xl:pb-12 ${booking ? "max-w-[760px]" : "max-w-[1120px]"}`}>
+        <div className={booking ? "" : "@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:items-start @4xl:gap-10"}>
           <div className="min-w-0">
             {/* Cover: the workshop's photo; without one, its logo blurred, or a wash of the accent */}
             <div className="h-48 overflow-hidden bg-[var(--pg-field)] @3xl:h-[300px] @3xl:rounded-md">
@@ -518,7 +519,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
 
           {/* "Contact" card: pinned on the right on a computer, a bar at the bottom on a phone */}
           {(data.requests || booking) && (
-            <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--pg-border)] bg-[var(--pg-bg)] p-3 @4xl:sticky @4xl:top-6 @4xl:inset-auto @4xl:z-auto @4xl:rounded-md @4xl:border @4xl:p-4">
+            <aside className={`fixed inset-x-0 bottom-0 z-20 border-t border-[var(--pg-border)] bg-[var(--pg-bg)] p-3 @4xl:sticky ${booking ? "@3xl:hidden" : ""} @4xl:top-6 @4xl:inset-auto @4xl:z-auto @4xl:rounded-md @4xl:border @4xl:p-4`}>
               <p className="mb-3 hidden text-sm font-medium @4xl:block">{booking ? booking.label : t("Contact {name}", { name: data.title || t("Your name") })}</p>
               <button type="button" onClick={() => (booking ? go("booking") : setContact(true))}
                 className={`flex h-11 w-full items-center justify-center bg-[var(--pg-accent)] text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 @4xl:h-10 ${SHAPE[data.buttons]}`}>
