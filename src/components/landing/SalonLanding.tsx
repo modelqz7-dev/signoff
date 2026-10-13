@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, ClockIcon, Link2Icon, PlusIcon, QrCodeIcon, SendIcon, StarIcon, UsersIcon,
+  ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, Link2Icon, PlusIcon, QrCodeIcon, SendIcon, StarIcon, UsersIcon,
 } from "lucide-react"
 import { Logo } from "@/components/Logo"
 import { NicheIcon } from "@/components/crm/NicheIcon"
@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils"
 // big tight headlines, white cards on a light grey page, black pill buttons, no colour but one.
 
 const H = "font-semibold tracking-[-0.035em] text-foreground"
-const CARD = "rounded-[28px] apple-card"
 
 function Cta({ href, children, light, className }: { href: string; children: React.ReactNode; light?: boolean; className?: string }) {
   return (
@@ -110,183 +109,159 @@ function LangToggle() {
   )
 }
 
-// ── Hero: the promise on the left, the client's booking and the owner's day on the right ──
+// ── Hero: the promise in the middle, the real app under it ──
+
+/** A real screen of the app, light or dark with the site's theme. */
+function Shot({ name, alt, className }: { name: string; alt: string; className?: string }) {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/landing/${name}-light.webp`} alt={alt} className={cn("block dark:hidden", className)} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/landing/${name}-dark.webp`} alt={alt} className={cn("hidden dark:block", className)} />
+    </>
+  )
+}
 
 function Hero({ t, start, startLabel }: { t: T; start: string; startLabel: string }) {
   return (
     <section className="overflow-hidden">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-24 lg:pb-28">
-        <div className="flex flex-col items-start gap-6">
-          <span className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1 text-[13px] font-medium ring-1 ring-border">
-            <span className="size-1.5 rounded-full bg-[#34c759]" />{t("Early access · free")}
-          </span>
-          <h1 className={cn(H, "text-[44px] leading-[1.02] sm:text-[60px] lg:text-[68px]")}>{t("Clients book themselves. You just work.")}</h1>
-          <p className="max-w-xl text-[18px] leading-relaxed text-muted-foreground">
-            {t("Nodly gives nail masters, barbers and cake makers one link for the Instagram bio: clients see your work and prices, pick a free time and book. The appointment lands in your calendar, the notice comes to Telegram.")}
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
-            <Cta href="#how" light>{t("How it works")}</Cta>
-          </div>
-          <p className="text-[13px] text-muted-foreground">{t("Set up in 5 minutes · no card")}</p>
+      <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-14 text-center sm:px-6 sm:pt-20">
+        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium text-muted-foreground ring-1 ring-border">
+          <span className="size-1.5 rounded-full bg-[#34c759]" />{t("Early access · free")}
+        </span>
+        <h1 className={cn(H, "mt-6 text-[44px] leading-[1.02] sm:text-[72px] lg:text-[88px]")}>
+          {t("Clients book themselves.")}<br /><span className="text-muted-foreground/70">{t("You just work.")}</span>
+        </h1>
+        <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-muted-foreground sm:text-[20px]">{t("One link in your Instagram bio, and bookings land in your calendar on their own.")}</p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
+          <Cta href="#how" light>{t("How it works")}</Cta>
         </div>
-        <HeroVisual t={t} />
+        <p className="mt-4 text-[13px] text-muted-foreground">{t("Nails · barbershops · cakes to order")}</p>
+      </div>
+
+      {/* the stage: the owner's calendar, the client's phone, the Telegram notice */}
+      <div className="relative mx-auto mt-14 max-w-6xl px-4 pb-16 sm:mt-20 sm:px-6 sm:pb-24">
+        <div className="relative overflow-hidden rounded-[22px] bg-card shadow-[0_50px_100px_-30px_rgba(0,0,0,0.35)] ring-1 ring-border sm:rounded-[28px]">
+          <Shot name="nails-app" alt={t("The appointments calendar in Nodly")} className="w-full" />
+        </div>
+        <div className="absolute right-6 -bottom-2 w-[30%] max-w-[260px] min-w-[140px] overflow-hidden rounded-[30px] border-[6px] border-[#1d1d1f] bg-white shadow-[0_40px_80px_-20px_rgba(0,0,0,0.45)] sm:right-12 sm:rounded-[40px] sm:border-[9px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/landing/nails-phone.webp" alt={t("The client's booking page")} className="block w-full" />
+        </div>
+        <div className="absolute top-[18%] left-0 hidden w-[270px] items-start gap-3 rounded-2xl bg-card/95 p-3.5 text-left shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] ring-1 ring-border backdrop-blur md:flex lg:-left-6 [animation:toast-in_.6s_.5s_both]">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><SendIcon className="size-4" /></span>
+          <span className="min-w-0 text-[13px] leading-snug">
+            <span className="flex items-center justify-between gap-2"><span className="font-semibold">Telegram · Nodly</span><span className="text-[11px] text-muted-foreground">{t("now")}</span></span>
+            <span className="block text-muted-foreground">{t("New booking")}: {t("Iryna · Gel manicure · tomorrow 13:00")}</span>
+          </span>
+        </div>
       </div>
     </section>
   )
 }
 
-function HeroVisual({ t }: { t: T }) {
-  const times = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30"]
-  return (
-    <div className="relative mx-auto w-full max-w-[460px] lg:mx-0 lg:justify-self-end">
-      {/* the client's phone */}
-      <div className="relative z-10 mx-auto w-[280px] rounded-[44px] bg-[#1d1d1f] p-2.5 ring-1 ring-white/10 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.35)] sm:w-[300px]">
-        <div className="overflow-hidden rounded-[36px] bg-background">
-          <div className="h-20 bg-[linear-gradient(135deg,#f3e7e3,#e9e4f1)]" />
-          <div className="-mt-8 flex flex-col items-center gap-1 px-4 pb-4 text-center">
-            <NicheIcon niche="nails" className="size-16 ring-4 ring-background" />
-            <p className="mt-1 text-[16px] font-semibold tracking-[-0.01em]">Studio Oksana</p>
-            <p className="flex items-center gap-1 text-[11.5px] text-muted-foreground"><StarIcon className="size-3 fill-[#f5a623] text-[#f5a623]" />4.9 · {t("Manicure in Podil")}</p>
-          </div>
-          <div className="flex flex-col gap-2 px-3.5 pb-4">
-            <div className="flex items-center gap-2 rounded-2xl bg-card px-3 py-2.5 ring-2 ring-foreground">
-              <span className="min-w-0 flex-1">
-                <span className="block text-[12.5px] font-medium">{t("Gel manicure")}</span>
-                <span className="flex items-center gap-1 text-[10.5px] text-muted-foreground"><ClockIcon className="size-3" />{t("{h} h {m} min", { h: 1, m: 30 })}</span>
-              </span>
-              <span className="text-[12.5px] font-semibold">600 ₴</span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {times.map((tm, i) => (
-                <span key={tm} className={cn("flex h-8 items-center justify-center rounded-lg text-[12px] font-medium tabular-nums ring-1",
-                  i === 2 ? "bg-foreground text-background ring-foreground" : "bg-card ring-border")}>{tm}</span>
-              ))}
-            </div>
-            <span className="mt-1 flex h-10 items-center justify-center rounded-xl bg-foreground text-[13px] font-semibold text-background">{t("Book now")}</span>
-          </div>
-        </div>
-      </div>
-      {/* the owner's side: the notice and the day */}
-      <div className="absolute top-6 -left-2 z-20 hidden w-[230px] items-start gap-2.5 rounded-2xl bg-card/95 p-3 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.25)] ring-1 ring-border backdrop-blur sm:flex lg:-left-16 [animation:toast-in_.6s_.4s_both]">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><SendIcon className="size-4" /></span>
-        <span className="min-w-0 text-[12px] leading-snug">
-          <span className="block font-semibold">{t("New booking")}</span>
-          <span className="text-muted-foreground">{t("Iryna · Gel manicure · tomorrow 13:00")}</span>
-        </span>
-      </div>
-      <div className="absolute -right-2 bottom-8 z-20 hidden w-[220px] rounded-2xl bg-card/95 p-3 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.25)] ring-1 ring-border backdrop-blur sm:block lg:-right-8 [animation:toast-in_.6s_.8s_both]">
-        <p className="mb-2 text-[11px] font-semibold text-muted-foreground uppercase">{t("Tomorrow")}</p>
-        {[["10:00", t("Olena"), t("Pedicure")], ["13:00", t("Iryna"), t("Gel manicure")], ["16:00", t("Maria"), t("Extensions")]].map(([tm, name, what], i) => (
-          <div key={tm} className={cn("flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11.5px]", i === 1 && "bg-foreground/[0.06]")}>
-            <span className="w-9 font-semibold tabular-nums">{tm}</span>
-            <span className="min-w-0 flex-1 truncate"><span className="font-medium">{name}</span> <span className="text-muted-foreground">· {what}</span></span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Who it's for ──
+// ── Who it's for: one trade at a time, with its own screen ──
 
 function Niches({ t }: { t: T }) {
-  const items: { id: CrmNiche; title: string; text: string }[] = [
-    { id: "nails", title: t("Nail masters"), text: t("Services with their time and price, free windows, regular clients and their history.") },
-    { id: "barber", title: t("Barbershops"), text: t("Haircuts and beards by the slot, regulars at hand, no double bookings.") },
-    { id: "cakes", title: t("Cakes to order"), text: t("Orders by day with the filling, weight and inscription, a board from new to delivered.") },
+  const items: { id: CrmNiche; tab: string; title: string; points: string[] }[] = [
+    { id: "nails", tab: t("Nails"), title: t("For nail masters"), points: [t("Services with time and price"), t("Only free windows on the page"), t("Every client's history")] },
+    { id: "barber", tab: t("Barbershop"), title: t("For barbershops"), points: [t("Haircuts and beards by the slot"), t("No double bookings"), t("Regulars found by phone")] },
+    { id: "cakes", tab: t("Cakes"), title: t("For cakes to order"), points: [t("Orders by day, not by hour"), t("Filling, weight, inscription"), t("A board from new to delivered")] },
   ]
+  const [on, setOn] = useState<CrmNiche>("nails")
+  const cur = items.find((i) => i.id === on)!
   return (
-    <section className="py-20">
+    <section className="py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className={cn(H, "max-w-2xl text-[36px] leading-[1.05] sm:text-[48px]")}>{t("Made for your trade, not for everyone.")}</h2>
-        <p className="mt-4 max-w-xl text-[17px] text-muted-foreground">{t("Pick your business when you sign up, and Nodly sets itself up for it: the services, the words, the calendar or the order board.")}</p>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {items.map((n) => (
-            <div key={n.id} className={cn(CARD, "flex flex-col gap-4 p-6")}>
-              <NicheIcon niche={n.id} className="size-20" />
-              <h3 className="text-[21px] font-semibold tracking-[-0.02em]">{n.title}</h3>
-              <p className="text-[15px] leading-relaxed text-muted-foreground">{n.text}</p>
-            </div>
-          ))}
+        <div className="flex flex-col items-center text-center">
+          <h2 className={cn(H, "text-[36px] leading-[1.05] sm:text-[56px]")}>{t("Set up for your trade.")}</h2>
+          <p className="mt-4 max-w-lg text-[17px] text-muted-foreground">{t("Pick your business when you sign up. The services, the words and the screens follow.")}</p>
+          <div role="tablist" className="mt-8 inline-flex max-w-full gap-0.5 rounded-full sm:gap-1 bg-foreground/[0.06] p-1">
+            {items.map((i) => (
+              <button key={i.id} type="button" role="tab" aria-selected={on === i.id} onClick={() => setOn(i.id)}
+                className={cn("flex h-10 items-center gap-1.5 rounded-full pr-3 pl-1 text-[13.5px] font-medium transition-all sm:h-11 sm:gap-2 sm:pr-4 sm:pl-1.5 sm:text-[14.5px]",
+                  on === i.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                <NicheIcon niche={i.id} className="size-7 sm:size-8" />{i.tab}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div key={on} className="mt-12 grid items-center gap-10 lg:grid-cols-[320px_1fr] animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex flex-col gap-5">
+            <NicheIcon niche={cur.id} className="size-24" />
+            <h3 className="text-[30px] font-semibold tracking-[-0.03em]">{cur.title}</h3>
+            <ul className="flex flex-col gap-3">
+              {cur.points.map((x) => (
+                <li key={x} className="flex items-center gap-3 text-[17px]"><CheckIcon className="size-5 shrink-0" strokeWidth={2.2} />{x}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="overflow-hidden rounded-[22px] shadow-[0_30px_70px_-30px_rgba(0,0,0,0.35)] ring-1 ring-border">
+            <Shot name={`${cur.id}-app`} alt={cur.title} className="w-full" />
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-// ── How it works ──
+// ── How it works: three steps on a line ──
 
 function How({ t }: { t: T }) {
   const steps = [
-    { title: t("Pick your business"), text: t("Nails, barbershop or cakes. Starter services are added for you; change the prices to yours.") },
-    { title: t("Make your page"), text: t("A photo, a few words, your work and contacts. Set the days and hours you take clients.") },
-    { title: t("Put the link in your bio"), text: t("Clients open it, pick a service and a free time. You get a Telegram message and the booking is in the calendar.") },
+    { title: t("Pick your business"), text: t("Starter services appear on their own. Put in your prices.") },
+    { title: t("Make your page"), text: t("Photo, a few words, contacts and the hours you work.") },
+    { title: t("Put the link in your bio"), text: t("Clients book. You get a message in Telegram.") },
   ]
   return (
-    <section id="how" className="scroll-mt-16 py-20">
+    <section id="how" className="scroll-mt-20 border-y border-border py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className={cn(H, "text-[36px] leading-[1.05] sm:text-[48px]")}>{t("Three steps, five minutes.")}</h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        <h2 className={cn(H, "text-[36px] leading-[1.05] sm:text-[56px]")}>{t("Three steps, five minutes.")}</h2>
+        <ol className="mt-14 grid gap-12 md:grid-cols-3 md:gap-8">
           {steps.map((s, i) => (
-            <div key={s.title} className={cn(CARD, "flex flex-col gap-3 p-6")}>
-              <span className="flex size-10 items-center justify-center rounded-full bg-foreground text-[15px] font-semibold text-background tabular-nums">{i + 1}</span>
-              <h3 className="mt-2 text-[20px] font-semibold tracking-[-0.02em]">{s.title}</h3>
-              <p className="text-[15px] leading-relaxed text-muted-foreground">{s.text}</p>
-            </div>
+            <li key={s.title} className="flex flex-col gap-3 md:border-l md:border-border md:pl-8 md:first:border-l-0 md:first:pl-0">
+              <span className="text-[64px] leading-none font-semibold tracking-[-0.05em] text-foreground/15 tabular-nums">{i + 1}</span>
+              <h3 className="text-[21px] font-semibold tracking-[-0.02em]">{s.title}</h3>
+              <p className="text-[16px] leading-relaxed text-muted-foreground">{s.text}</p>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   )
 }
 
-// ── What's inside: a bento of the app's parts ──
+// ── What's inside: a plain list, like a spec sheet ──
 
 function Features({ t }: { t: T }) {
-  const small = [
-    { icon: UsersIcon, title: t("Client base"), text: t("Every client with the phone, notes and visit history. Regulars are found by the phone on their own.") },
-    { icon: BellIcon, title: t("Telegram notices"), text: t("A message for every new booking or order, at once, with the name, the service and the time.") },
-    { icon: QrCodeIcon, title: t("QR code"), text: t("Print it on cards or put it at the counter: the camera opens your page.") },
-    { icon: StarIcon, title: t("Reviews"), text: t("Clients leave them on your page, and new clients read them before they book.") },
+  const rows = [
+    { icon: Link2Icon, title: t("Your page with online booking"), text: t("Work, reviews, contacts and booking, open day and night.") },
+    { icon: CalendarDaysIcon, title: t("A calendar that fills itself"), text: t("The day by the hour and what it earns. Cakes get an order board.") },
+    { icon: UsersIcon, title: t("Client base"), text: t("Phone, notes and every visit, gathered on their own.") },
+    { icon: BellIcon, title: t("Telegram notices"), text: t("A message the moment someone books.") },
+    { icon: QrCodeIcon, title: t("QR code"), text: t("For cards and the counter.") },
+    { icon: StarIcon, title: t("Reviews"), text: t("Clients leave them, new clients read them.") },
   ]
   return (
-    <section id="features" className="scroll-mt-16 py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className={cn(H, "max-w-2xl text-[36px] leading-[1.05] sm:text-[48px]")}>{t("Everything a small business needs. Nothing it doesn't.")}</h2>
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className={cn(CARD, "flex flex-col gap-4 p-7")}>
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-foreground/[0.06]"><Link2Icon className="size-5" /></span>
-            <h3 className="text-[24px] font-semibold tracking-[-0.02em]">{t("Your page with online booking")}</h3>
-            <p className="text-[15px] leading-relaxed text-muted-foreground">{t("Cover, photo, about you, your work, reviews and contacts, and booking right on it. Clients book 24/7, only into free times.")}</p>
-            <div className="mt-auto flex flex-wrap gap-2 pt-2">
-              {["nodly.app/@studio.oksana", t("Book now")].map((x, i) => (
-                <span key={x} className={cn("inline-flex h-9 items-center rounded-full px-4 text-[13px] font-medium", i ? "bg-foreground text-background" : "bg-foreground/[0.06]")}>{x}</span>
-              ))}
-            </div>
-          </div>
-          <div className={cn(CARD, "flex flex-col gap-4 p-7")}>
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-foreground/[0.06]"><CalendarDaysIcon className="size-5" /></span>
-            <h3 className="text-[24px] font-semibold tracking-[-0.02em]">{t("A calendar that fills itself")}</h3>
-            <p className="text-[15px] leading-relaxed text-muted-foreground">{t("The week at a glance, the day by the hour, the takings for today and the week. Cakes get a board: new, confirmed, baking, ready, delivered.")}</p>
-            <div className="mt-auto grid grid-cols-7 gap-1.5 pt-2">
-              {[2, 5, 3, 4, 6, 1, 0].map((n, i) => (
-                <span key={i} className={cn("flex h-14 flex-col items-center justify-center rounded-xl text-[11px]", i === 1 ? "bg-foreground text-background" : "bg-foreground/[0.05] text-muted-foreground")}>
-                  <span className="text-[15px] font-semibold tabular-nums">{12 + i}</span>{n ? `${n}` : "—"}
-                </span>
-              ))}
-            </div>
-          </div>
+    <section id="features" className="scroll-mt-20 py-20 sm:py-28">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.3fr]">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className={cn(H, "text-[36px] leading-[1.05] sm:text-[56px]")}>{t("What's inside.")}</h2>
+          <p className="mt-4 max-w-sm text-[17px] text-muted-foreground">{t("What a small business uses every day. Nothing else.")}</p>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {small.map((f) => (
-            <div key={f.title} className={cn(CARD, "flex flex-col gap-3 p-6")}>
-              <f.icon className="size-5" strokeWidth={1.8} />
-              <h3 className="text-[17px] font-semibold tracking-[-0.01em]">{f.title}</h3>
-              <p className="text-[14px] leading-relaxed text-muted-foreground">{f.text}</p>
-            </div>
+        <ul className="flex flex-col">
+          {rows.map((r) => (
+            <li key={r.title} className="flex items-start gap-5 border-b border-border py-6 first:pt-0">
+              <r.icon className="mt-1 size-6 shrink-0" strokeWidth={1.6} />
+              <div>
+                <h3 className="text-[19px] font-semibold tracking-[-0.02em]">{r.title}</h3>
+                <p className="mt-1 text-[16px] text-muted-foreground">{r.text}</p>
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   )
@@ -300,20 +275,22 @@ function Price({ t, start, startLabel }: { t: T; start: string; startLabel: stri
     t("Telegram notices"), t("QR code and statistics"), t("Works on the phone and the computer"),
   ]
   return (
-    <section id="price" className="scroll-mt-16 py-20">
+    <section id="price" className="scroll-mt-20 py-10 sm:py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className={cn(CARD, "grid gap-10 p-8 sm:p-12 lg:grid-cols-[1fr_1fr] lg:items-center")}>
+        {/* the one dark block on the page: the price is the news */}
+        <div className="grid gap-10 rounded-[32px] bg-[#1d1d1f] p-8 text-white sm:p-14 lg:grid-cols-[1.1fr_1fr] lg:items-end dark:bg-white dark:text-[#1d1d1f]">
           <div className="flex flex-col items-start gap-5">
-            <span className="rounded-full bg-foreground/[0.06] px-3 py-1 text-[13px] font-medium">{t("Early access")}</span>
-            <h2 className={cn(H, "text-[40px] leading-[1.02] sm:text-[56px]")}>{t("Free while we grow.")}</h2>
-            <p className="max-w-md text-[16px] leading-relaxed text-muted-foreground">{t("Everything is open and costs nothing while Nodly is in early access. We'll write well ahead before any plans appear, and the first masters will keep a good price.")}</p>
-            <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
+            <span className="text-[14px] font-medium opacity-60">{t("Early access")}</span>
+            <h2 className="text-[44px] leading-[1] font-semibold tracking-[-0.04em] sm:text-[72px]">{t("Free while we grow.")}</h2>
+            <p className="max-w-md text-[17px] leading-relaxed opacity-70">{t("No plans and no card. We'll warn you well ahead before prices appear, and the first masters keep a good one.")}</p>
+            <Link href={start} className="mt-2 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-[#1d1d1f] hover:opacity-90 dark:bg-[#1d1d1f] dark:text-white">
+              {startLabel}<ArrowRightIcon className="size-4" />
+            </Link>
           </div>
-          <ul className="flex flex-col gap-3.5">
+          <ul className="flex flex-col">
             {included.map((x) => (
-              <li key={x} className="flex items-center gap-3 text-[16px]">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-foreground text-background"><CheckIcon className="size-3.5" strokeWidth={2.5} /></span>
-                {x}
+              <li key={x} className="flex items-center gap-3 border-b border-current/15 py-3.5 text-[16px] last:border-0">
+                <CheckIcon className="size-4 shrink-0 opacity-70" strokeWidth={2.5} />{x}
               </li>
             ))}
           </ul>
