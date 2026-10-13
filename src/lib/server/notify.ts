@@ -78,22 +78,27 @@ function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
-type Lang = "en" | "ru"
+export type Lang = "uk" | "ru"
+
+/** The language a shop gets its notices in: Russian if it chose it, Ukrainian otherwise. */
+export function shopLang(value: string | null | undefined): Lang {
+  return value === "ru" ? "ru" : "uk"
+}
 
 const TEXT = {
-  en: {
-    comment: (who: string, order: string) => `💬 ${who} left a comment on “${order}”`,
-    approved: (order: string) => `✅ The client approved “${order}”`,
-    approvedMany: (who: string, n: number, project: string) => `✅ ${who || "The client"} approved ${n} posts in “${project}”`,
-    changes: (order: string) => `✏️ The client requested changes on “${order}”`,
-    request: (who: string) => `📩 New request from ${who}`,
-    booking: (who: string, what: string, when: string) => `📅 ${who} booked “${what}” for ${when}`,
-    order: (who: string, what: string, when: string) => `🎂 New order from ${who}: “${what}” for ${when}`,
-    openRequests: "Open requests",
-    openBookings: "Open the calendar",
-    open: "Open",
-    page: (n: number) => `page ${n}`,
-    footer: "You get this because notifications are on in Nodly → Notifications.",
+  uk: {
+    comment: (who: string, order: string) => `💬 ${who} залишив(-ла) коментар до «${order}»`,
+    approved: (order: string) => `✅ Клієнт затвердив «${order}»`,
+    approvedMany: (who: string, n: number, project: string) => `✅ ${who || "Клієнт"} затвердив(-ла) ${n} ${ukPosts(n)} у «${project}»`,
+    changes: (order: string) => `✏️ Клієнт попросив правки до «${order}»`,
+    request: (who: string) => `📩 Нова заявка від ${who}`,
+    booking: (who: string, what: string, when: string) => `📅 ${who} записав(-лась) на «${what}» — ${when}`,
+    order: (who: string, what: string, when: string) => `🎂 Нове замовлення від ${who}: «${what}» на ${when}`,
+    openRequests: "Відкрити заявки",
+    openBookings: "Відкрити календар",
+    open: "Відкрити",
+    page: (n: number) => `стор. ${n}`,
+    footer: "Ви отримали цей лист, бо сповіщення увімкнені в Nodly → Сповіщення.",
   },
   ru: {
     comment: (who: string, order: string) => `💬 ${who} оставил(а) комментарий к «${order}»`,
@@ -109,6 +114,14 @@ const TEXT = {
     page: (n: number) => `стр. ${n}`,
     footer: "Вы получили это письмо, потому что уведомления включены в Nodly → Уведомления.",
   },
+}
+
+/** "допис", "дописи", "дописів" for a count. */
+function ukPosts(n: number) {
+  const d = n % 10, h = n % 100
+  if (d === 1 && h !== 11) return "допис"
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return "дописи"
+  return "дописів"
 }
 
 /** "пост", "поста", "постов" for a count. */
@@ -160,7 +173,7 @@ ${details ? `<p style="margin:0 0 16px;padding:12px 14px;background:#f6f5f3;bord
 
 /** Sends an event to every channel the shop has enabled. Returns per-channel results. */
 export async function notifyShop(shop: NotifyShop, event: NotifyEvent, orderUrl: string) {
-  const lang: Lang = shop.notify_lang === "ru" ? "ru" : "en"
+  const lang = shopLang(shop.notify_lang)
   const msg = renderEvent(event, lang, orderUrl)
   const results: Record<string, unknown> = {}
 
@@ -182,12 +195,12 @@ export async function notifyShop(shop: NotifyShop, event: NotifyEvent, orderUrl:
 }
 
 const REMINDER = {
-  en: {
-    subject: (order: string) => `Reminder: “${order}” is waiting for your review`,
+  uk: {
+    subject: (order: string) => `Нагадування: «${order}» чекає на вашу відповідь`,
     body: (shop: string, order: string, name: string) =>
-      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your feedback on “${order}”. Open it, leave comments right on the picture, or approve it in one click.`,
-    open: "Review it",
-    footer: (shop: string) => `Sent by Nodly on behalf of ${shop}. Reply to this email to reach them.`,
+      `${name ? `Вітаємо, ${name}!` : "Вітаємо!"}<br><br>${shop} чекає на вашу відповідь щодо «${order}». Відкрийте, залиште коментарі просто на зображенні або затвердьте однією кнопкою.`,
+    open: "Переглянути",
+    footer: (shop: string) => `Лист надіслано через Nodly від імені «${shop}». Щоб зв'язатися з ними, просто дайте відповідь на нього.`,
   },
   ru: {
     subject: (order: string) => `Напоминание: «${order}» ждёт вашего ответа`,
@@ -199,11 +212,11 @@ const REMINDER = {
 }
 
 const PLAN_REMINDER = {
-  en: {
-    subject: (n: number, project: string) => `Reminder: ${n} posts in “${project}” are waiting for you`,
+  uk: {
+    subject: (n: number, project: string) => `Нагадування: ${n} ${ukPosts(n)} у «${project}» чекають на ваше рішення`,
     body: (shop: string, n: number, project: string, name: string) =>
-      `${name ? `Hi ${name},` : "Hi,"}<br><br>${shop} is waiting for your decision on ${n} posts in “${project}”. Open the content plan, leave comments right on the pictures, or approve them all in one click.`,
-    open: "Open the content plan",
+      `${name ? `Вітаємо, ${name}!` : "Вітаємо!"}<br><br>${shop} чекає на ваше рішення: ${n} ${ukPosts(n)} у «${project}». Відкрийте контент-план, залиште коментарі просто на зображеннях або затвердьте все однією кнопкою.`,
+    open: "Відкрити контент-план",
   },
   ru: {
     subject: (n: number, project: string) => `Напоминание: ${n} ${ruPosts(n)} в «${project}» ждут вашего решения`,

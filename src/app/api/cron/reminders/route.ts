@@ -1,4 +1,4 @@
-import { adminClient, renderPlanReminder, renderReminder, secretMatches, sendEmail } from "@/lib/server/notify"
+import { adminClient, renderPlanReminder, renderReminder, secretMatches, sendEmail, shopLang, type Lang } from "@/lib/server/notify"
 import { FEATURES } from "@/lib/features"
 import { can } from "@/lib/plans"
 
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
   const now = () => new Date().toISOString()
 
   /** Sends one reminder from the shop's name; false when the shop's plan has no reminders. */
-  async function remind(shopId: string, to: string, id: string, render: (lang: "en" | "ru", shopName: string) => { subject: string; html: string }) {
+  async function remind(shopId: string, to: string, id: string, render: (lang: Lang, shopName: string) => { subject: string; html: string }) {
     const shop = shopById.get(shopId)
     if (!shop || !can(shop, "reminders")) return false
     if (!ownerEmails.has(shop.user_id)) {
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
         ownerEmails.set(shop.user_id, undefined)
       }
     }
-    const msg = render(shop.notify_lang === "ru" ? "ru" : "en", shop.name || "Nodly")
+    const msg = render(shopLang(shop.notify_lang), shop.name || "Nodly")
     const result = await sendEmail(to, msg.subject, msg.html, {
       fromName: shop.name ? `${shop.name} via Nodly` : undefined,
       replyTo: ownerEmails.get(shop.user_id),

@@ -1,3 +1,4 @@
+import { LocaleProvider } from "@/components/LocaleProvider"
 import type { Metadata } from "next"
 import { Inter, Manrope } from "next/font/google"
 import "./globals.css"
@@ -26,13 +27,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${brand.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="uk" className={`dark ${inter.variable} ${brand.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
         <VisualViewport />
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
         <Analytics />
       </body>
     </html>

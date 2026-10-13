@@ -8,7 +8,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
   useEffect(() => { reportError(error, "global error") }, [error])
 
   return (
-    <html lang="en">
+    <html lang="uk">
       <body style={{ margin: 0, fontFamily: "system-ui, sans-serif", background: "#1f1e1d", color: "#f5f4f2" }}>
         <title>Nodly — something went wrong</title>
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 24, textAlign: "center" }}>

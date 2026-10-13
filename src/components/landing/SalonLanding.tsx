@@ -97,12 +97,13 @@ function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
 /** Two languages, two letters: a small switch instead of a dropdown. */
 function LangToggle() {
   const lang = useLang()
+  const { t } = useT()
   return (
-    <div role="radiogroup" aria-label="Language" className="hidden h-8 items-center rounded-full bg-foreground/[0.06] p-0.5 text-[12px] font-semibold sm:flex">
-      {(["ru", "en"] as Lang[]).map((l) => (
+    <div role="radiogroup" aria-label={t("Language")} className="hidden h-8 items-center rounded-full bg-foreground/[0.06] p-0.5 text-[12px] font-semibold sm:flex">
+      {([["uk", "UA"], ["ru", "RU"]] as [Lang, string][]).map(([l, label]) => (
         <button key={l} type="button" role="radio" aria-checked={lang === l} onClick={() => setLang(l)}
-          className={cn("h-7 rounded-full px-2.5 uppercase transition-colors", lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-          {l}
+          className={cn("h-7 rounded-full px-2.5 transition-colors", lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+          {label}
         </button>
       ))}
     </div>
@@ -111,14 +112,15 @@ function LangToggle() {
 
 // ── Hero: the promise in the middle, the real app under it ──
 
-/** A real screen of the app, light or dark with the site's theme. */
+/** A real screen of the app, light or dark with the site's theme, in the site's language. */
 function Shot({ name, alt, className }: { name: string; alt: string; className?: string }) {
+  const lang = useLang()
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/landing/${name}-light.webp`} alt={alt} className={cn("block dark:hidden", className)} />
+      <img src={`/landing/${name}-light-${lang}.webp`} alt={alt} className={cn("block dark:hidden", className)} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/landing/${name}-dark.webp`} alt={alt} className={cn("hidden dark:block", className)} />
+      <img src={`/landing/${name}-dark-${lang}.webp`} alt={alt} className={cn("hidden dark:block", className)} />
     </>
   )
 }

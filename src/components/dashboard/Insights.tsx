@@ -15,7 +15,7 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSt
 
 /** A month of deadlines: dots on the days, the orders of the picked day below. */
 export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]; open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { t, lang, locale } = useT()
+  const { t, locale } = useT()
   const now = useNow()
   const todayKey = dayKey(new Date(now))
   const [month, setMonth] = useState<{ y: number; m: number } | null>(null)
@@ -30,7 +30,7 @@ export function CalendarDialog({ orders, open, onOpenChange }: { orders: Order[]
   }, [orders])
 
   // Weeks start on Monday in Russian, on Sunday in English.
-  const weekStart = lang === "ru" ? 1 : 0
+  const weekStart = 1
   const first = new Date(shown.y, shown.m, 1)
   const lead = (first.getDay() - weekStart + 7) % 7
   const daysInMonth = new Date(shown.y, shown.m + 1, 0).getDate()
