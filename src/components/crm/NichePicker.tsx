@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { notifyPlanChanged } from "@/lib/use-plan"
 import { useSyncAccountLang } from "@/lib/account-lang"
 import { useT } from "@/lib/i18n"
+import { NicheIcon } from "@/components/crm/NicheIcon"
 
 /** The first screen of a new account (and of a niche change): what the business is. */
 export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (niche: CrmNiche) => void }) {
@@ -54,6 +55,7 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
                 busy === n.id && "bg-hover"
               )}
             >
+              <NicheIcon niche={n.id} className="size-14 rounded-2xl" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="text-[16px] font-semibold">{t(n.name)}</span>
                 <span className="text-[13.5px] text-muted-foreground">{t(n.hint)}</span>

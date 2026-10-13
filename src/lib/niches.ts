@@ -33,7 +33,6 @@ export type NicheConfig = {
   /** English; through t(). */
   name: string
   hint: string
-  emoji: string
   kind: BookingKind
   /** What the person doing the work is called. */
   staffWord: string
@@ -46,7 +45,6 @@ export const NICHES: NicheConfig[] = [
     id: "nails",
     name: "Nails & manicure",
     hint: "Appointments by time, clients and their visits",
-    emoji: "💅",
     kind: "appointment",
     staffWord: "Master",
     services: [
@@ -61,7 +59,6 @@ export const NICHES: NicheConfig[] = [
     id: "barber",
     name: "Barbershop",
     hint: "Appointments by time for each barber",
-    emoji: "💈",
     kind: "appointment",
     staffWord: "Barber",
     services: [
@@ -76,7 +73,6 @@ export const NICHES: NicheConfig[] = [
     id: "cakes",
     name: "Custom cakes",
     hint: "Orders for a date: filling, weight, inscription",
-    emoji: "🎂",
     kind: "order",
     staffWord: "Confectioner",
     services: [
