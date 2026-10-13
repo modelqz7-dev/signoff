@@ -325,14 +325,17 @@ function Faq({ t }: { t: T }) {
 
 function Closing({ t, start, startLabel }: { t: T; start: string; startLabel: string }) {
   return (
-    <section className="py-24">
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-        <div className="flex -space-x-3">
-          {(["nails", "barber", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-14 ring-4 ring-background" />)}
+    <section className="py-16 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        {/* the closing call in the other theme's colours, like the catalog's call to masters */}
+        <div className="surface-invert flex flex-col items-center gap-6 rounded-[32px] bg-background px-6 py-14 text-center sm:py-20">
+          <div className="flex -space-x-3">
+            {(["nails", "barber", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-14 ring-4 ring-background" />)}
+          </div>
+          <h2 className={cn(H, "max-w-2xl text-[40px] leading-[1.02] sm:text-[56px]")}>{t("Your link is five minutes away.")}</h2>
+          <p className="max-w-lg text-[17px] text-muted-foreground">{t("Sign up, pick your business and send the link to your first client today.")}</p>
+          <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
         </div>
-        <h2 className={cn(H, "text-[40px] leading-[1.02] sm:text-[56px]")}>{t("Your link is five minutes away.")}</h2>
-        <p className="text-[17px] text-muted-foreground">{t("Sign up, pick your business and send the link to your first client today.")}</p>
-        <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
       </div>
     </section>
   )
