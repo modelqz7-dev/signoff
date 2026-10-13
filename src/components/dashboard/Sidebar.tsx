@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
   SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
@@ -31,6 +31,7 @@ import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { ProjectRow } from "@/components/dashboard/ProjectRow"
 import { ProjectAvatar } from "@/components/ProjectAvatar"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
+import { siteOrigin } from "@/lib/site"
 
 type SidebarProps = {
   open: boolean
@@ -274,6 +275,8 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
   const niche = useKnownNiche(usage)
   const crm = nicheConfig(niche)
+  const booking = useBookingLink(!!crm)
+  const [copied, setCopied] = useState(false)
   // until the niche is known, an empty rail: no flash of the other side's buttons
   if (niche === undefined) {
     return (
@@ -291,10 +294,26 @@ function Rail({ activePage, panel, onPanel, beta }: {
           {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={activePage === i.page} icon={i.icon} />)}
         </nav>
         <div className="my-4 h-px w-10 bg-border" />
-        <div className="flex flex-col items-center gap-2.5">
-          <AccountRow panel={panel} onPanel={onPanel} compact />
+        {/* the booking link at hand: copy it for a client or look at it as they do */}
+        <div className="flex flex-col items-center gap-1.5">
+          {booking?.published ? (
+            <>
+              <RailItem label={copied ? t("Link copied") : t("Copy booking link")} icon={copied ? CheckIcon : CopyIcon} onClick={async () => {
+                try { await navigator.clipboard.writeText(`${siteOrigin()}${pagePath(booking.slug)}`); setCopied(true); window.setTimeout(() => setCopied(false), 1500) } catch {}
+              }} />
+              <RailItem label={t("Open page")} icon={ExternalLinkIcon} onClick={() => window.open(pagePath(booking.slug), "_blank", "noopener")} />
+            </>
+          ) : booking === null ? (
+            <RailItem label={t("Set up online booking")} href="/online" icon={Link2Icon} />
+          ) : null}
         </div>
-        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
+        <div className="mt-auto flex flex-col items-center gap-1.5">
+          <RailItem label={t("Help")} icon={CircleHelpIcon} active={HELP_PANELS.includes(panel as PanelId)} onClick={() => onPanel("help")} />
+          <RailItem label={t("Settings")} icon={SettingsIcon} active={SETTINGS_PANELS.includes(panel as PanelId)} onClick={() => onPanel("notifications")} />
+          <div className="my-2.5 h-px w-10 bg-border" />
+          <AccountRow panel={panel} onPanel={onPanel} compact />
+          <div className="mt-3"><ThemeSwitch /></div>
+        </div>
       </div>
     )
   }
@@ -362,6 +381,19 @@ function Rail({ activePage, panel, onPanel, beta }: {
   )
 }
 
+/** The account's booking page for the rail: null when there is none yet, undefined while loading. */
+function useBookingLink(enabled: boolean) {
+  const [row, setRow] = useState<{ slug: string; published: boolean } | null | undefined>(undefined)
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+    supabase.from("shop_pages").select("slug, published").limit(1).maybeSingle()
+      .then(({ data, error }) => { if (!cancelled && !error) setRow(data ?? null) })
+    return () => { cancelled = true }
+  }, [enabled])
+  return enabled ? row : undefined
+}
+
 const NICHE_KEY = "nodly-niche"
 
 /**
@@ -389,7 +421,7 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
     { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
-    { page: "online", href: "/online", label: t("Online booking"), icon: Link2Icon },
+    { page: "online", href: "/online", label: t("My page"), icon: Link2Icon },
   ]
 }
 

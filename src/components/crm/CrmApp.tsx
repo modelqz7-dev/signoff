@@ -65,7 +65,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
   const openBooking = (booking: CrmBooking) => setDialog({ booking })
   const replace = (b: CrmBooking) => data.setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]))
 
-  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("Online booking") }
+  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("My page") }
   const activePage = page === "home" ? "dashboard" : page
 
   return (
