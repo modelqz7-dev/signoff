@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react"
 import { ru } from "@/lib/i18n-ru"
+import { uk } from "@/lib/i18n-uk"
 
-export type Lang = "en" | "ru"
+/** Nodly speaks Ukrainian and Russian; Ukrainian unless the person chose Russian or browses in it. */
+export type Lang = "uk" | "ru"
 
 const STORAGE_KEY = "signoff-lang"
 const CHANGE_EVENT = "signoff:lang"
@@ -11,9 +13,9 @@ const CHANGE_EVENT = "signoff:lang"
 function readLang(): Lang {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved === "en" || saved === "ru") return saved
+    if (saved === "uk" || saved === "ru") return saved
   } catch {}
-  return typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "en"
+  return typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "uk"
 }
 
 function subscribe(onChange: () => void) {
@@ -30,9 +32,9 @@ export function setLang(lang: Lang) {
   window.dispatchEvent(new Event(CHANGE_EVENT))
 }
 
-/** Current UI language; English on the server, the saved or browser language on the client. */
+/** Current UI language; Ukrainian on the server, the saved or browser language on the client. */
 export function useLang(): Lang {
-  const lang = useSyncExternalStore(subscribe, readLang, () => "en" as Lang)
+  const lang = useSyncExternalStore(subscribe, readLang, () => "uk" as Lang)
   useEffect(() => { document.documentElement.lang = lang }, [lang])
   return lang
 }
@@ -45,15 +47,15 @@ function format(text: string, vars?: Vars) {
 }
 
 /**
- * Translation hook. Keys are the English strings themselves, so untranslated text
- * falls back to English. Placeholders look like {name}.
+ * Translation hook. Keys are the English strings of the code; each language has its dictionary
+ * (a Ukrainian gap falls back to Russian, then to the key). Placeholders look like {name}.
  */
 export function useT() {
   const lang = useLang()
   const t = useCallback<T>(
-    (text, vars) => format(lang === "ru" ? ru[text] ?? text : text, vars),
+    (text, vars) => format(lang === "ru" ? ru[text] ?? text : uk[text] ?? ru[text] ?? text, vars),
     [lang]
   )
-  const locale = lang === "ru" ? "ru-RU" : "en-US"
+  const locale = lang === "ru" ? "ru-RU" : "uk-UA"
   return { t, lang, locale }
 }

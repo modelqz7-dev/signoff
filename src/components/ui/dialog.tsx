@@ -15,6 +15,13 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useT } from "@/lib/i18n"
+
+/** "Close" in the site's language, for the dialogs' close buttons. */
+function CloseLabel() {
+  const { t } = useT()
+  return <>{t("Close")}</>
+}
 
 function DialogTrigger({ ...props }: DialogTriggerPrimitiveProps) {
   return <DialogTriggerPrimitive data-slot="dialog-trigger" {...props} />
@@ -94,7 +101,7 @@ function Dialog({
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only"><CloseLabel /></span>
             </DialogClose>
           )}
         </DialogPrimitive>
@@ -131,7 +138,7 @@ function DialogFooter({
       {...props}
     >
       {children}
-      {showCloseButton && <DialogClose variant="outline">Close</DialogClose>}
+      {showCloseButton && <DialogClose variant="outline"><CloseLabel /></DialogClose>}
     </div>
   )
 }

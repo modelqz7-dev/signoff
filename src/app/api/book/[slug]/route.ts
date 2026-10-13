@@ -1,4 +1,4 @@
-import { adminClient, notifyShop, type NotifyShop } from "@/lib/server/notify"
+import { adminClient, notifyShop, shopLang, type NotifyShop } from "@/lib/server/notify"
 import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
 import { cleanBooking, freeSlots, orderDays, phoneKey, zonedTime, type Busy } from "@/lib/booking"
@@ -80,7 +80,7 @@ function orderDetails(config: NicheConfig, raw: unknown) {
 }
 
 function whenText(lang: string, day: string, time: string) {
-  const date = new Date(`${day}T12:00:00Z`).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-GB", { weekday: "short", day: "numeric", month: "long", timeZone: "UTC" })
+  const date = new Date(`${day}T12:00:00Z`).toLocaleDateString(lang === "ru" ? "ru-RU" : "uk-UA", { weekday: "short", day: "numeric", month: "long", timeZone: "UTC" })
   return time ? `${date}, ${time}` : date
 }
 
@@ -142,7 +142,7 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
-  const lang = ctx.shop.notify_lang === "ru" ? "ru" : "en"
+  const lang = shopLang(ctx.shop.notify_lang)
   const extra = Object.values(details).join(" · ")
   await notifyShop(ctx.shop as NotifyShop, {
     kind: "booking", order: isOrder, name, phone, what: s.title,

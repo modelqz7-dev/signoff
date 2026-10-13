@@ -46,7 +46,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
   // starter services made before the account's language was known take its words once
   const { services, setServices, loading } = data
   useEffect(() => {
-    if (loading || lang !== "ru" || !services.length) return
+    if (loading || !services.length) return
     translateStarterTitles(services, t).then((fixed) => { if (fixed) setServices(fixed) }).catch(() => {})
   }, [loading, lang, services, setServices, t])
   const [sidebarOpen, setSidebarOpen] = useState(true)

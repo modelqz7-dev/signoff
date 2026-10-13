@@ -51,7 +51,7 @@ function loadPaddle(): Promise<PaddleGlobal> {
 }
 
 /** Opens Paddle's checkout for a price; the shop id comes back to the webhook as custom data. */
-export async function openCheckout({ priceId, email, shopId, lang }: { priceId: string; email?: string; shopId: string; lang: "en" | "ru" }) {
+export async function openCheckout({ priceId, email, shopId, lang }: { priceId: string; email?: string; shopId: string; lang: "uk" | "ru" }) {
   const paddle = await loadPaddle()
   paddle.Checkout.open({
     items: [{ priceId, quantity: 1 }],
