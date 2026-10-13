@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
   SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
@@ -30,8 +30,8 @@ import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { ProjectRow } from "@/components/dashboard/ProjectRow"
 import { ProjectAvatar } from "@/components/ProjectAvatar"
-import { NicheIcon } from "@/components/crm/NicheIcon"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
+import { siteOrigin } from "@/lib/site"
 
 type SidebarProps = {
   open: boolean
@@ -88,8 +88,8 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Computers: a narrow rail of icons, as in the reference design */}
     <aside
-      className="sticky top-0 z-30 hidden h-screen shrink-0 self-start transition-all duration-200 lg:flex"
-      style={{ marginLeft: open ? 0 : -260, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+      className="sticky top-0 z-30 hidden h-screen w-[108px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
+      style={{ marginLeft: open ? 0 : -108, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
     >
       <Rail activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
@@ -275,46 +275,50 @@ function Rail({ activePage, panel, onPanel, beta }: {
 
   const niche = useKnownNiche(usage)
   const crm = nicheConfig(niche)
+  const booking = useBookingLink(!!crm)
+  const [copied, setCopied] = useState(false)
   // until the niche is known, an empty rail: no flash of the other side's buttons
   if (niche === undefined) {
-    return <div className="h-full w-[248px] border-r border-border/60" />
+    return (
+      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+        <span className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></span>
+        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
+      </div>
+    )
   }
   if (crm) {
     return (
-      <div className="flex h-full w-[248px] flex-col border-r border-border/60 px-3 pt-5 pb-3">
-        <Link href="/dashboard" className="mb-5 flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover">
-          <NicheIcon niche={crm.id} className="size-9" />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14.5px] font-semibold tracking-[-0.01em]">{usage?.shop.name || "Nodly"}</span>
-            <span className="block truncate text-[12.5px] text-muted-foreground">{t(crm.name)}</span>
-          </span>
-        </Link>
-        <nav className="flex flex-col gap-0.5">
-          {crmNav(crm, t).map((i) => {
-            const active = activePage === i.page
-            return (
-              <Link key={i.href} href={i.href} aria-current={active ? "page" : undefined}
-                className={cn("flex h-9 items-center gap-3 rounded-lg px-2.5 text-[14px] transition-colors",
-                  active ? "bg-foreground/[0.07] font-medium text-foreground dark:bg-white/[0.08]" : "text-foreground/75 hover:bg-hover hover:text-foreground")}>
-                <i.icon className={cn("size-[18px] shrink-0", active ? "text-foreground" : "text-muted-foreground")} strokeWidth={1.7} />
-                {i.label}
-              </Link>
-            )
-          })}
+      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+        <Link href="/dashboard" aria-label="Nodly" className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></Link>
+        <nav className="flex flex-col items-center gap-1.5">
+          {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={activePage === i.page} icon={i.icon} />)}
         </nav>
-        <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-between px-2.5">
-            <span className="text-[12.5px] text-muted-foreground">{t("Theme")}</span>
-            <ThemeSwitch />
-          </div>
-          <AccountRow panel={panel} onPanel={onPanel} />
+        <div className="my-4 h-px w-10 bg-border" />
+        {/* the booking link at hand: copy it for a client or look at it as they do */}
+        <div className="flex flex-col items-center gap-1.5">
+          {booking?.published ? (
+            <>
+              <RailItem label={copied ? t("Link copied") : t("Copy booking link")} icon={copied ? CheckIcon : CopyIcon} onClick={async () => {
+                try { await navigator.clipboard.writeText(`${siteOrigin()}${pagePath(booking.slug)}`); setCopied(true); window.setTimeout(() => setCopied(false), 1500) } catch {}
+              }} />
+              <RailItem label={t("Open page")} icon={ExternalLinkIcon} onClick={() => window.open(pagePath(booking.slug), "_blank", "noopener")} />
+            </>
+          ) : booking === null ? (
+            <RailItem label={t("Set up online booking")} href="/online" icon={Link2Icon} />
+          ) : null}
+        </div>
+        <div className="mt-auto flex flex-col items-center gap-1.5">
+          <RailItem label={t("Help")} icon={CircleHelpIcon} active={HELP_PANELS.includes(panel as PanelId)} onClick={() => onPanel("help")} />
+          <RailItem label={t("Settings")} icon={SettingsIcon} active={SETTINGS_PANELS.includes(panel as PanelId)} onClick={() => onPanel("notifications")} />
+          <div className="my-2.5 h-px w-10 bg-border" />
+          <AccountRow panel={panel} onPanel={onPanel} compact />
+          <div className="mt-3"><ThemeSwitch /></div>
         </div>
       </div>
     )
   }
 
-    return (
-    <div className="h-full p-2.5 pr-0">
+  return (
     <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
       <AppSwitcher linkMode={activePage.startsWith("link")} beta={FEATURES.myPage && (beta || activePage.startsWith("link"))} onSoon={() => setSoon("page")} />
 
@@ -374,8 +378,20 @@ function Rail({ activePage, panel, onPanel, beta }: {
       {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
       {allOpen && <AllProjectsDialog projects={projects} activePage={activePage} onClose={() => setAllOpen(false)} />}
     </div>
-    </div>
   )
+}
+
+/** The account's booking page for the rail: null when there is none yet, undefined while loading. */
+function useBookingLink(enabled: boolean) {
+  const [row, setRow] = useState<{ slug: string; published: boolean } | null | undefined>(undefined)
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+    supabase.from("shop_pages").select("slug, published").limit(1).maybeSingle()
+      .then(({ data, error }) => { if (!cancelled && !error) setRow(data ?? null) })
+    return () => { cancelled = true }
+  }, [enabled])
+  return enabled ? row : undefined
 }
 
 const NICHE_KEY = "nodly-niche"
