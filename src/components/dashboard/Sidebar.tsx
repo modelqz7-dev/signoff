@@ -30,6 +30,7 @@ import { UsageMeter } from "@/components/plans/PlanBits"
 import { NavItem, SectionLabel, NAV_ICONS } from "@/components/dashboard/nav"
 import { ProjectRow } from "@/components/dashboard/ProjectRow"
 import { ProjectAvatar } from "@/components/ProjectAvatar"
+import { NicheIcon } from "@/components/crm/NicheIcon"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
 
 type SidebarProps = {
@@ -87,8 +88,8 @@ export function Sidebar({ open, activePage = "dashboard" }: SidebarProps) {
     <>
     {/* Computers: a narrow rail of icons, as in the reference design */}
     <aside
-      className="sticky top-0 z-30 hidden h-screen w-[108px] shrink-0 self-start p-2.5 pr-0 transition-all duration-200 lg:flex"
-      style={{ marginLeft: open ? 0 : -108, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+      className="sticky top-0 z-30 hidden h-screen shrink-0 self-start transition-all duration-200 lg:flex"
+      style={{ marginLeft: open ? 0 : -260, opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
     >
       <Rail activePage={activePage} panel={panel} onPanel={openPanelFromNav} beta={beta} />
     </aside>
@@ -276,30 +277,44 @@ function Rail({ activePage, panel, onPanel, beta }: {
   const crm = nicheConfig(niche)
   // until the niche is known, an empty rail: no flash of the other side's buttons
   if (niche === undefined) {
-    return (
-      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
-        <span className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></span>
-        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
-      </div>
-    )
+    return <div className="h-full w-[248px] border-r border-border/60" />
   }
   if (crm) {
     return (
-      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
-        <Link href="/dashboard" aria-label="Nodly" className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></Link>
-        <nav className="flex flex-col items-center gap-1.5">
-          {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={activePage === i.page} icon={i.icon} />)}
+      <div className="flex h-full w-[248px] flex-col border-r border-border/60 px-3 pt-5 pb-3">
+        <Link href="/dashboard" className="mb-5 flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover">
+          <NicheIcon niche={crm.id} className="size-9" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14.5px] font-semibold tracking-[-0.01em]">{usage?.shop.name || "Nodly"}</span>
+            <span className="block truncate text-[12.5px] text-muted-foreground">{t(crm.name)}</span>
+          </span>
+        </Link>
+        <nav className="flex flex-col gap-0.5">
+          {crmNav(crm, t).map((i) => {
+            const active = activePage === i.page
+            return (
+              <Link key={i.href} href={i.href} aria-current={active ? "page" : undefined}
+                className={cn("flex h-9 items-center gap-3 rounded-lg px-2.5 text-[14px] transition-colors",
+                  active ? "bg-foreground/[0.07] font-medium text-foreground dark:bg-white/[0.08]" : "text-foreground/75 hover:bg-hover hover:text-foreground")}>
+                <i.icon className={cn("size-[18px] shrink-0", active ? "text-foreground" : "text-muted-foreground")} strokeWidth={1.7} />
+                {i.label}
+              </Link>
+            )
+          })}
         </nav>
-        <div className="my-4 h-px w-10 bg-border" />
-        <div className="flex flex-col items-center gap-2.5">
-          <AccountRow panel={panel} onPanel={onPanel} compact />
+        <div className="mt-auto flex flex-col gap-2">
+          <div className="flex items-center justify-between px-2.5">
+            <span className="text-[12.5px] text-muted-foreground">{t("Theme")}</span>
+            <ThemeSwitch />
+          </div>
+          <AccountRow panel={panel} onPanel={onPanel} />
         </div>
-        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
       </div>
     )
   }
 
-  return (
+    return (
+    <div className="h-full p-2.5 pr-0">
     <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
       <AppSwitcher linkMode={activePage.startsWith("link")} beta={FEATURES.myPage && (beta || activePage.startsWith("link"))} onSoon={() => setSoon("page")} />
 
@@ -358,6 +373,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
       {soon && <ComingSoon feature={soon} onClose={() => setSoon(null)} />}
       {searching && <SearchDialog projects={projects} onClose={() => setSearching(false)} />}
       {allOpen && <AllProjectsDialog projects={projects} activePage={activePage} onClose={() => setAllOpen(false)} />}
+    </div>
     </div>
   )
 }
