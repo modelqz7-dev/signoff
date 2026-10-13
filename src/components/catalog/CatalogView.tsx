@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowRightIcon, ListIcon, LocateFixedIcon, MapIcon, MapPinIcon, SearchIcon, StarIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import { Header } from "@/components/landing/SalonLanding"
+import { NICHE_COVER } from "@/components/booking/BookingPage"
 import { WorkshopFooter } from "@/components/landing/WorkshopSections"
 import { NicheIcon } from "@/components/crm/NicheIcon"
 import { Picker } from "@/components/crm/Pickers"
@@ -22,11 +23,7 @@ const MapView = dynamic(() => import("@/components/catalog/MapView").then((m) =>
 })
 
 const H = "font-semibold tracking-[-0.035em] text-foreground"
-const COVER: Record<CrmNiche, string> = {
-  nails: "linear-gradient(135deg,#f6e7e4,#ece6f3)",
-  barber: "linear-gradient(135deg,#e6e9ee,#e9e4dc)",
-  cakes: "linear-gradient(135deg,#f7eadb,#f3e3ea)",
-}
+const COVER = NICHE_COVER
 
 /** Nodly's catalog: businesses that chose to be found, by trade and city, each a step from booking. */
 export function CatalogView({ entries, initialNiche, initialCity }: { entries: CatalogEntry[]; initialNiche: string; initialCity: string }) {

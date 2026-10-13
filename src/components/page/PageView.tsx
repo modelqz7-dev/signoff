@@ -91,10 +91,11 @@ function Stars({ value, className = "size-4" }: { value: number; className?: str
   )
 }
 
-function Avatar({ data, initials, className = "" }: { data: PageData; initials: string; className?: string }) {
+function Avatar({ data, initials, face, className = "" }: { data: PageData; initials: string; face?: string; className?: string }) {
+  const src = data.avatar_url || face
   return (
-    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--pg-field)] font-semibold ring-1 ring-[var(--pg-border)] ${className}`}>
-      {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : initials}
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold ring-1 ring-[var(--pg-border)] ${face && !data.avatar_url ? "bg-white" : "bg-[var(--pg-field)]"} ${className}`}>
+      {src ? <img src={src} alt="" className="size-full object-cover" /> : initials}
     </div>
   )
 }
@@ -182,7 +183,13 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
    * leads with Booking, its button books instead of sending a message, and the sections a salon
    * doesn't use (services as text, areas, credentials) stay out.
    */
-  booking?: { label: string; button: string; node: React.ReactNode }
+  booking?: {
+    label: string; button: string; node: React.ReactNode
+    /** The trade's character, in place of initials until the business adds a photo. */
+    face?: string
+    /** A soft wash of the trade's colours, in place of a grey cover. */
+    cover?: string
+  }
   /** Editor only: an empty section was tapped. */
   onEdit?: (target: PageEditTarget) => void
 }) {
@@ -273,13 +280,13 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
               ) : data.avatar_url ? (
                 <img src={data.avatar_url} alt="" className="size-full scale-125 object-cover opacity-50 blur-3xl" />
               ) : (
-                <div className="size-full" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--pg-accent) 22%, var(--pg-field)), var(--pg-field) 70%)" }} />
+                <div className="size-full" style={{ background: booking?.cover ?? "linear-gradient(135deg, color-mix(in srgb, var(--pg-accent) 22%, var(--pg-field)), var(--pg-field) 70%)" }} />
               )}
             </div>
 
             {/* Logo, name, rating, category */}
             <div className="flex items-center gap-4 px-5 pt-4 @3xl:px-0">
-              <Avatar data={data} initials={initials} className="size-[72px] text-xl @3xl:size-[88px] @3xl:text-2xl" />
+              <Avatar data={data} initials={initials} face={booking?.face} className="size-[72px] text-xl @3xl:size-[88px] @3xl:text-2xl" />
               <div className="flex min-w-0 flex-col gap-1">
                 <h1 className="text-[22px] leading-tight font-semibold tracking-tight @3xl:text-2xl">{data.title || t("Your name")}</h1>
                 {allReviews.length > 0 && (

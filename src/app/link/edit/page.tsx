@@ -248,7 +248,7 @@ export default function PageEditor() {
   }
   const hints = salon ? SALON_HINTS[salon] : null
   const preview = salon
-    ? <BookingPage data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} isOrder={nicheConfig(salon)!.kind === "order"}
+    ? <BookingPage data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} isOrder={nicheConfig(salon)!.kind === "order"} niche={salon}
         booking={<PublicBooking embedded preview slug={slug.slug} title={data.title} avatar={data.avatar_url} about="" niche={salon} services={salonServices} />} />
     : <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} />
   const move = <K extends "links" | "services" | "projects" | "credentials">(key: K, i: number, d: -1 | 1) => {
