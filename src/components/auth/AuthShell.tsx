@@ -21,8 +21,7 @@ export function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 py-10">
-      {/* the form is the one bright block on the page, like the catalog's call to masters */}
-      <Card className="surface-invert w-full max-w-sm rounded-[28px] border-0 bg-card py-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.45)] ring-0">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mb-3 flex items-center justify-between">
             <Link href="/" aria-label="Nodly">
