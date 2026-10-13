@@ -75,7 +75,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
         <div className="lg:hidden">
           <DashboardHeader shopName={shop.name} title={titles[page]} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
-        <main className="app-panel flex min-w-0 flex-1 flex-col bg-background lg:m-3 lg:min-h-[calc(100dvh-24px)] lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
+        <main className="flex min-w-0 flex-1 flex-col bg-background">
           {data.loading ? (
             <p className="m-auto text-sm text-muted-foreground">{t("Loading...")}</p>
           ) : data.error ? (

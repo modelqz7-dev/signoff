@@ -99,14 +99,14 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
   }
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-6 p-5 sm:p-8">
       {/* day and week */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="w-full min-w-0 sm:w-auto sm:flex-1">
-          <h1 className="text-[24px] font-semibold tracking-tight first-letter:uppercase">
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] first-letter:uppercase sm:text-[34px]">
             {isToday ? t("Today") : day.toLocaleDateString(locale, { weekday: "long" })}
           </h1>
-          <p className="text-[13.5px] text-muted-foreground first-letter:uppercase">{day.toLocaleDateString(locale, { weekday: isToday ? "long" : undefined, day: "numeric", month: "long" })}</p>
+          <p className="mt-1 text-[15px] text-muted-foreground first-letter:uppercase">{day.toLocaleDateString(locale, { weekday: isToday ? "long" : undefined, day: "numeric", month: "long" })}</p>
         </div>
         <div className="flex items-center gap-1">
           <button type="button" aria-label={t("Previous day")} onClick={() => setDay(addDays(day, -1))} className="flex size-9 items-center justify-center rounded-lg hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
@@ -135,7 +135,7 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
 
       <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[1fr_280px]">
         {/* the day's timeline */}
-        <div ref={scroller} className="relative max-h-[70dvh] min-h-[360px] overflow-y-auto rounded-2xl bg-card ring-1 ring-border xl:max-h-none">
+        <div ref={scroller} className="relative max-h-[70dvh] min-h-[360px] overflow-y-auto rounded-[22px] apple-card xl:max-h-none">
           <div className="relative flex" style={{ height: (to - from) * HOUR_PX }}>
             <div className="w-14 shrink-0">
               {Array.from({ length: to - from }, (_, i) => (
@@ -200,7 +200,7 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
             <Stat label={isToday ? t("Today's takings") : t("Day's takings")} value={money(dayMoney, locale)} />
             <Stat label={t("This week")} value={money(weekMoney, locale)} />
           </div>
-          <div className="rounded-2xl bg-card p-3 ring-1 ring-border">
+          <div className="rounded-[22px] apple-card p-3">
             <p className="px-1 pb-2 text-[13px] font-semibold">{t("Coming up")}</p>
             {upcoming.length ? upcoming.map((b) => {
               const s = new Date(b.starts_at!)
@@ -225,7 +225,7 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
 
 export function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-2xl bg-card px-4 py-3 ring-1 ring-border">
+    <div className="flex flex-col gap-0.5 rounded-[22px] apple-card px-4 py-3">
       <span className="truncate text-[12px] text-muted-foreground">{label}</span>
       <span className="truncate text-[20px] font-semibold tabular-nums">{value || "—"}</span>
     </div>

@@ -73,10 +73,10 @@ export function SidebarPanel({ panel, onClose }: { panel: PanelId | null; onClos
   const crm = isCrmNiche(usage?.shop.niche)
 
   return (
-    <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="rounded-2xl p-5 sm:max-w-lg">
+    <Dialog isOpen={!!panel} onOpenChange={(v) => !v && onClose()} className="rounded-[24px] p-6 sm:max-w-lg">
       {meta && (
         <DialogHeader>
-          <DialogTitle className="text-[17px]">{t(group ? group.title : meta.title)}</DialogTitle>
+          <DialogTitle className="text-[20px] tracking-[-0.01em]">{t(group ? group.title : meta.title)}</DialogTitle>
           {!group && <DialogDescription>{t(meta.description)}</DialogDescription>}
         </DialogHeader>
       )}

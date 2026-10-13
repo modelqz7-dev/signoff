@@ -70,18 +70,18 @@ export function OrdersHome({ data, onNew, onOpen, onChanged, cta }: {
   }
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-6 p-5 sm:p-8">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">{t("Orders")}</h1>
-          <p className="text-[13.5px] text-muted-foreground">{t("{n} in work", { n: open.length })}{overdue.length ? ` · ${t("{n} overdue", { n: overdue.length })}` : ""}</p>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("Orders")}</h1>
+          <p className="mt-1 text-[15px] text-muted-foreground">{t("{n} in work", { n: open.length })}{overdue.length ? ` · ${t("{n} overdue", { n: overdue.length })}` : ""}</p>
         </div>
         {cta}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
         {/* the next two weeks */}
-        <div className="rounded-2xl bg-card p-3 ring-1 ring-border">
+        <div className="rounded-[22px] apple-card p-3">
           <div className="flex items-center justify-between px-1 pb-2">
             <p className="text-[13px] font-semibold">{t("Load for two weeks")}</p>
             {day && <button type="button" onClick={() => setDay(null)} className="text-[12.5px] text-muted-foreground hover:text-foreground">{t("Show all")}</button>}
@@ -121,7 +121,7 @@ export function OrdersHome({ data, onNew, onOpen, onChanged, cta }: {
                 const late = o.due_on! < todayKey && o.status !== "ready"
                 const next = nextOrderStatus(o.status)
                 return (
-                  <article key={o.id} className="group flex flex-col gap-1.5 rounded-xl bg-card p-3 ring-1 ring-border transition-shadow hover:shadow-md">
+                  <article key={o.id} className="group flex flex-col gap-1.5 rounded-2xl apple-card p-3 transition-shadow hover:shadow-md">
                     <button type="button" onClick={() => onOpen(o)} className="flex flex-col gap-1 text-left">
                       <span className={cn("text-[12px] font-medium", late ? "text-destructive" : "text-muted-foreground")}>
                         {late ? `${t("Overdue")} · ` : ""}{dueLabel(o)}
@@ -159,7 +159,7 @@ export function OrdersHome({ data, onNew, onOpen, onChanged, cta }: {
 
       {/* handed over and cancelled */}
       {finished.length > 0 && (
-        <div className="rounded-2xl bg-card ring-1 ring-border">
+        <div className="rounded-[22px] apple-card">
           <button type="button" onClick={() => setShowDone(!showDone)} className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold">
             {t("Handed over and cancelled")}
             <ChevronDownIcon className={cn("size-4 text-muted-foreground transition-transform", showDone && "rotate-180")} />

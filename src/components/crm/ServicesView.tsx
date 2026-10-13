@@ -32,13 +32,13 @@ export function ServicesView({ data, config, shopId }: { data: CrmData; config: 
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-5 sm:p-8">
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">{isOrder ? t("Products") : t("Services")}</h1>
-          <p className="text-[13.5px] text-muted-foreground">{isOrder ? t("What clients can order on your link.") : t("What clients can book on your link.")}</p>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{isOrder ? t("Products") : t("Services")}</h1>
+          <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("What clients can order on your link.") : t("What clients can book on your link.")}</p>
         </div>
-        <Button onPress={() => setEditing("new")} className="h-9 gap-1.5 rounded-full px-4"><PlusIcon className="size-4" />{isOrder ? t("Add a product") : t("Add a service")}</Button>
+        <Button onPress={() => setEditing("new")} className="h-10 gap-1.5 rounded-full px-5 text-[14px]"><PlusIcon className="size-4" />{isOrder ? t("Add a product") : t("Add a service")}</Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -47,10 +47,10 @@ export function ServicesView({ data, config, shopId }: { data: CrmData; config: 
           {shown.map((s) => <ServiceCard key={s.id} service={s} isOrder={isOrder} onEdit={() => setEditing(s)} onVisible={(v) => setVisible(s, v)} />)}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-2xl bg-card px-6 py-12 text-center ring-1 ring-border">
+        <div className="flex flex-col items-center gap-3 rounded-[22px] apple-card px-6 py-12 text-center">
           <p className="font-medium">{isOrder ? t("No products yet") : t("No services yet")}</p>
           <p className="max-w-sm text-[13.5px] text-muted-foreground">{t("Add the first one: clients will see it on your booking page.")}</p>
-          <Button onPress={() => setEditing("new")} className="h-9 gap-1.5 rounded-full px-4"><PlusIcon className="size-4" />{isOrder ? t("Add a product") : t("Add a service")}</Button>
+          <Button onPress={() => setEditing("new")} className="h-10 gap-1.5 rounded-full px-5 text-[14px]"><PlusIcon className="size-4" />{isOrder ? t("Add a product") : t("Add a service")}</Button>
         </div>
       )}
 
@@ -94,7 +94,7 @@ export function ServicesView({ data, config, shopId }: { data: CrmData; config: 
 function ServiceCard({ service: s, isOrder, onEdit, onVisible }: { service: CrmService; isOrder: boolean; onEdit: () => void; onVisible: (v: boolean) => void }) {
   const { t, locale } = useT()
   return (
-    <article className={cn("group flex flex-col gap-4 rounded-2xl bg-card p-4 ring-1 ring-border transition-all hover:ring-foreground/25", s.archived && "opacity-60")}>
+    <article className={cn("group flex flex-col gap-4 rounded-[22px] apple-card p-5 transition-all duration-300 hover:-translate-y-0.5", s.archived && "opacity-60")}>
       <button type="button" onClick={onEdit} className="flex items-start gap-3 text-left">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-foreground/[0.06] text-[17px] font-semibold uppercase" aria-hidden>{s.title.trim().charAt(0) || "·"}</span>
         <span className="min-w-0 flex-1">
@@ -156,9 +156,9 @@ function ServiceDialog({ open, service, isOrder, onClose, onSave, onDelete }: {
   }
 
   return (
-    <Dialog isOpen={open} onOpenChange={(v) => !v && !busy && onClose()} className="gap-5 rounded-2xl p-5 sm:max-w-md">
+    <Dialog isOpen={open} onOpenChange={(v) => !v && !busy && onClose()} className="gap-5 rounded-[24px] p-6 sm:max-w-md">
       <DialogHeader>
-        <DialogTitle className="text-[17px]">{service ? (isOrder ? t("Product") : t("Service")) : (isOrder ? t("New product") : t("New service"))}</DialogTitle>
+        <DialogTitle className="text-[20px] tracking-[-0.01em]">{service ? (isOrder ? t("Product") : t("Service")) : (isOrder ? t("New product") : t("New service"))}</DialogTitle>
         <DialogDescription>{isOrder ? t("Clients see the name and the price when they order.") : t("Clients see the name, the time and the price when they book.")}</DialogDescription>
       </DialogHeader>
       <form className="flex flex-col gap-4" onSubmit={(e) => {

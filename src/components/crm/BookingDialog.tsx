@@ -17,7 +17,7 @@ import { useT } from "@/lib/i18n"
 export type BookingPreset = { startsAt?: Date; dueOn?: string; clientId?: string }
 
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240]
-export const FIELD = "h-10 w-full rounded-lg bg-foreground/[0.06] px-3 text-[14px] text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground focus:ring-foreground/25"
+export const FIELD = "h-11 w-full rounded-xl bg-foreground/[0.05] px-3 text-[14px] text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground focus:ring-foreground/25"
 const LABEL = "text-[12.5px] font-medium text-muted-foreground"
 
 function timeOf(d: Date) {
@@ -181,9 +181,9 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
   const heading = booking ? (isOrder ? t("Order") : t("Appointment")) : (isOrder ? t("New order") : t("New appointment"))
 
   return (
-    <Dialog isOpen={open} onOpenChange={(v) => !v && !saving && onClose()} className="max-h-[92dvh] gap-5 overflow-y-auto rounded-2xl p-5 sm:max-w-lg">
+    <Dialog isOpen={open} onOpenChange={(v) => !v && !saving && onClose()} className="max-h-[92dvh] gap-5 overflow-y-auto rounded-[24px] p-6 sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle className="text-[17px]">{heading}</DialogTitle>
+        <DialogTitle className="text-[20px] tracking-[-0.01em]">{heading}</DialogTitle>
         <DialogDescription>{isOrder ? t("Who orders, what and for when.") : t("Who comes, for what and when.")}</DialogDescription>
       </DialogHeader>
 
