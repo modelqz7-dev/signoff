@@ -2,18 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowRightIcon, MapPinIcon, SearchIcon, StarIcon } from "lucide-react"
+import { ArrowRightIcon, ListIcon, LocateFixedIcon, MapIcon, MapPinIcon, SearchIcon, StarIcon } from "lucide-react"
+import dynamic from "next/dynamic"
 import { Header } from "@/components/landing/SalonLanding"
 import { WorkshopFooter } from "@/components/landing/WorkshopSections"
 import { NicheIcon } from "@/components/crm/NicheIcon"
 import { Picker } from "@/components/crm/Pickers"
-import { CITIES, cityById } from "@/lib/cities"
+import { CITIES, UKRAINE, cityById, distanceKm } from "@/lib/cities"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { pagePath } from "@/lib/page"
 import { supabase } from "@/lib/supabase"
 import type { CatalogEntry } from "@/lib/server/catalog"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+
+// the map loads only when someone opens it
+const MapView = dynamic(() => import("@/components/catalog/MapView").then((m) => m.MapView), {
+  ssr: false, loading: () => <div className="size-full animate-pulse bg-muted" />,
+})
 
 const H = "font-semibold tracking-[-0.035em] text-foreground"
 const COVER: Record<CrmNiche, string> = {
@@ -30,6 +36,22 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
   const [niche, setNiche] = useState<CrmNiche | "">(NICHES.some((n) => n.id === initialNiche) ? (initialNiche as CrmNiche) : "")
   const [city, setCity] = useState(cityById(initialCity) ? initialCity : "")
   const [q, setQ] = useState("")
+  const [view, setView] = useState<"list" | "map">("list")
+  const [me, setMe] = useState<{ lat: number; lng: number } | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [locError, setLocError] = useState(false)
+  const [picked, setPicked] = useState<string | null>(null)
+
+  function nearMe() {
+    if (!navigator.geolocation) { setLocError(true); return }
+    setLocating(true)
+    setLocError(false)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setCity(""); setLocating(false) },
+      () => { setLocError(true); setLocating(false) },
+      { enableHighAccuracy: false, timeout: 10000 },
+    )
+  }
 
   // the filters live in the address too, so a search can be shared
   useEffect(() => {
@@ -44,8 +66,18 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
     for (const e of entries) if (e.city) count.set(e.city, (count.get(e.city) ?? 0) + 1)
     return CITIES.filter((c) => count.has(c.id)).sort((a, b) => count.get(b.id)! - count.get(a.id)!)
   }, [entries])
+  // where each one is: its pin, or else its city's centre
+  const where = (e: CatalogEntry) => e.geo ?? cityById(e.city)
+  const km = (e: CatalogEntry) => { const w = where(e); return me && w ? distanceKm(me, w) : null }
   const shown = entries.filter((e) => (!niche || e.niche === niche) && (!city || e.city === city)
     && (!q.trim() || `${e.title} ${e.category}`.toLowerCase().includes(q.trim().toLowerCase())))
+  // near me: the closest first, those with no place at the end
+  if (me) shown.sort((a, b) => (km(a) ?? 1e9) - (km(b) ?? 1e9))
+  const points = shown.flatMap((e) => (e.geo ? [{ id: e.slug, lat: e.geo.lat, lng: e.geo.lng, image: e.avatar, niche: e.niche, label: e.title }] : []))
+  const pickedEntry = shown.find((e) => e.slug === picked) ?? null
+  const cityInfo = cityById(city)
+  const focus = pickedEntry?.geo ?? me ?? cityInfo ?? UKRAINE
+  const focusZoom = pickedEntry?.geo ? 14 : me ? 12 : cityInfo ? 11 : UKRAINE.zoom
   const tabs: { id: CrmNiche | ""; label: string }[] = [
     { id: "", label: t("Everyone") }, { id: "nails", label: t("Nails") }, { id: "barber", label: t("Barbershop") }, { id: "cakes", label: t("Cakes") },
   ]
@@ -68,8 +100,8 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
               </button>
             ))}
           </div>
-          <div className="flex flex-1 gap-3">
-            <div className="w-48 shrink-0">
+          <div className="flex flex-1 flex-wrap gap-3">
+            <div className="w-44 shrink-0">
               <Picker value={city || "all"} onChange={(v) => setCity(v === "all" ? "" : v)} label={t("City")}
                 options={[{ value: "all", label: t("All cities") }, ...cities.map((c) => ({ value: c.id, label: c[lang] }))]} />
             </div>
@@ -81,9 +113,51 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
           </div>
         </div>
 
-        {shown.length ? (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {shown.map((e) => <Card key={e.slug} entry={e} />)}
+        {/* near me, and list or map */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <button type="button" onClick={me ? () => setMe(null) : nearMe} disabled={locating} aria-pressed={!!me}
+            className={cn("flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-medium ring-1 transition-colors",
+              me ? "bg-foreground text-background ring-foreground" : "ring-border hover:bg-hover")}>
+            <LocateFixedIcon className="size-4" />{locating ? t("Finding you…") : t("Near me")}
+          </button>
+          {locError && <span className="text-[13px] text-muted-foreground">{t("Couldn't get your location. Allow it in the browser or pick a city.")}</span>}
+          <div role="tablist" className="ml-auto flex gap-0.5 rounded-full bg-foreground/[0.06] p-1">
+            {([["list", t("List"), ListIcon], ["map", t("Map"), MapIcon]] as const).map(([id, label, Icon]) => (
+              <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}
+                className={cn("flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13.5px] font-medium transition-all",
+                  view === id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                <Icon className="size-4" />{label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {view === "map" ? (
+          <div className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
+            <div className="order-2 flex flex-col gap-3 lg:order-1 lg:max-h-[640px] lg:overflow-y-auto lg:pr-1">
+              {pickedEntry && <Card entry={pickedEntry} km={km(pickedEntry)} />}
+              {shown.filter((e) => e !== pickedEntry).map((e) => (
+                <button key={e.slug} type="button" onClick={() => setPicked(e.slug)}
+                  className="flex items-center gap-3 rounded-2xl bg-card p-3 text-left ring-1 ring-border transition-colors hover:ring-foreground/30">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {e.avatar ? <img src={e.avatar} alt="" className="size-11 shrink-0 rounded-full object-cover" /> : <NicheIcon niche={e.niche} className="size-11" />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold">{e.title}</span>
+                    <span className="block truncate text-[13px] text-muted-foreground">
+                      {[e.rating != null ? `★ ${e.rating.toFixed(1)}` : "", km(e) != null ? kmLabel(km(e)!, t) : cityById(e.city)?.[lang] ?? "", !e.geo ? t("no pin") : ""].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                </button>
+              ))}
+              {!shown.length && <p className="rounded-2xl apple-card p-6 text-center text-[14px] text-muted-foreground">{t("Nobody here yet")}</p>}
+            </div>
+            <div className="order-1 h-[60vh] overflow-hidden rounded-[24px] ring-1 ring-border lg:order-2 lg:h-[640px]">
+              <MapView className="size-full" center={focus} zoom={focusZoom} points={points} selected={picked} onSelect={setPicked} me={me} />
+            </div>
+          </div>
+        ) : shown.length ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((e) => <Card key={e.slug} entry={e} km={km(e)} />)}
           </div>
         ) : (
           <div className="mt-8 flex flex-col items-center gap-3 rounded-[28px] apple-card px-6 py-16 text-center">
@@ -110,12 +184,17 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
 }
 
 /** A business: its cover, face, name, what it does, where, how it's rated, and the way to book. */
-function Card({ entry: e }: { entry: CatalogEntry }) {
+/** "350 m", "1.2 km", "15 km": how far, in the site's words. */
+function kmLabel(km: number, t: ReturnType<typeof useT>["t"]) {
+  return km < 1 ? t("{n} m", { n: Math.round(km * 1000 / 10) * 10 }) : t("{n} km", { n: km < 10 ? km.toFixed(1).replace(".", ",") : Math.round(km) })
+}
+
+function Card({ entry: e, km }: { entry: CatalogEntry; km?: number | null }) {
   const { t, lang } = useT()
   const city = cityById(e.city)
   const config = NICHES.find((n) => n.id === e.niche)!
   return (
-    <Link href={pagePath(e.slug)} className="group flex flex-col overflow-hidden rounded-[24px] apple-card transition-transform duration-300 hover:-translate-y-0.5">
+    <Link href={pagePath(e.slug)} className="group flex shrink-0 flex-col overflow-hidden rounded-[24px] apple-card transition-transform duration-300 hover:-translate-y-0.5">
       <div className="relative h-36" style={{ background: COVER[e.niche] }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {e.cover && <img src={e.cover} alt="" loading="lazy" className="size-full object-cover" />}
@@ -139,7 +218,7 @@ function Card({ entry: e }: { entry: CatalogEntry }) {
               <span className="font-normal text-muted-foreground">({e.reviews})</span>
             </span>
           )}
-          {city && <span className="flex items-center gap-1"><MapPinIcon className="size-3.5" />{city[lang]}</span>}
+          {(city || km != null) && <span className="flex items-center gap-1"><MapPinIcon className="size-3.5" />{[city?.[lang], km != null ? kmLabel(km, t) : ""].filter(Boolean).join(" · ")}</span>}
           {e.works > 0 && <span>{t("Work photos: {n}", { n: e.works })}</span>}
         </div>
         <span className="mt-auto flex h-10 items-center justify-center rounded-full bg-foreground text-[14px] font-medium text-background transition-opacity group-hover:opacity-90">

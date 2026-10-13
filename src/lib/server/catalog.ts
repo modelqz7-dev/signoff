@@ -14,6 +14,8 @@ export type CatalogEntry = {
   rating: number | null
   reviews: number
   works: number
+  /** Its pin on the map, if it put one. */
+  geo: { lat: number; lng: number } | null
 }
 
 /**
@@ -51,6 +53,7 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
       rating: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null,
       reviews: rs.length,
       works: p.data.projects.reduce((n, x) => n + x.photos.length, 0),
+      geo: p.data.geo,
     })
   }
   // the best rated and the most reviewed first, then by name
