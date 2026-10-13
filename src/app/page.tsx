@@ -1,6 +1,6 @@
-import { Landing } from "@/components/landing/Landing"
+import { SalonLanding } from "@/components/landing/SalonLanding"
 import "./landing.css"
 
 export default function Home() {
-  return <Landing />
+  return <SalonLanding />
 }

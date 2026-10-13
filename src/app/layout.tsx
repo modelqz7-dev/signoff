@@ -20,8 +20,8 @@ const brand = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "Nodly — client approvals for designs",
-  description: "Share a design, collect pinned comments and get your client's approval in one link.",
+  title: "Nodly — online booking for nail masters, barbers and cake makers",
+  description: "One link for your Instagram bio: clients see your work and prices and book a free time. Bookings land in your calendar, notices come to Telegram.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
