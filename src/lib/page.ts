@@ -1,4 +1,8 @@
 // The workshop's public page (a "link in bio" page): what it holds and how it is checked.
+import { CITIES } from "@/lib/cities"
+
+const CITY_IDS = new Set(CITIES.map((c) => c.id))
+
 // Shared by the server (public page, request API) and the browser (editor), so no "use client".
 
 export type PageContacts = {
@@ -64,6 +68,10 @@ export type PageData = {
   requests: boolean
   cta: string
   buttons: ButtonShape
+  /** Shown in Nodly's catalog (the business turns it on itself). */
+  listed: boolean
+  /** The city it's found by in the catalog, an id from lib/cities ("" when not picked). */
+  city: string
 }
 
 export type ShopPage = { shop_id: string; slug: string; published: boolean; data: PageData; updated_at?: string }
@@ -88,7 +96,7 @@ export function splitList(value: string) {
 const RESERVED = new Set([
   "admin", "api", "app", "dashboard", "orders", "requests", "link", "login", "signup", "logout", "portal", "p",
   "terms", "privacy", "refund", "help", "support", "settings", "billing", "nodly", "www", "mail", "blog", "about",
-  "pricing", "forgot-password", "reset-password", "static", "assets", "_next",
+  "pricing", "forgot-password", "reset-password", "static", "assets", "_next", "catalog",
 ])
 
 export function normalizeSlug(value: string) {
@@ -189,6 +197,8 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     requests: src.requests !== false,
     cta: text(src.cta, 40),
     buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",
+    listed: src.listed === true,
+    city: typeof src.city === "string" && CITY_IDS.has(src.city) ? src.city : "",
   }
 }
 

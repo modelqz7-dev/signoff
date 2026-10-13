@@ -56,7 +56,8 @@ export function SalonLanding() {
   )
 }
 
-function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
+/** The site's top bar, shared by the landing and the catalog. */
+export function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
   // a floating capsule; it gains a shadow once the page scrolls under it
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -65,7 +66,7 @@ function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
     window.addEventListener("scroll", on, { passive: true })
     return () => window.removeEventListener("scroll", on)
   }, [])
-  const links = [["#how", t("How it works")], ["#features", t("What's inside")], ["#price", t("Pricing")], ["#faq", t("FAQ")]] as const
+  const links = [["/catalog", t("Catalog")], ["/#how", t("How it works")], ["/#features", t("What's inside")], ["/#price", t("Pricing")], ["/#faq", t("FAQ")]] as const
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
       <div className={cn(

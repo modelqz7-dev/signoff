@@ -25,6 +25,8 @@ import {
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { cleanBooking } from "@/lib/booking"
+import { CITIES } from "@/lib/cities"
+import { Picker } from "@/components/crm/Pickers"
 import { BookingPage } from "@/components/booking/BookingPage"
 import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
 
@@ -55,7 +57,7 @@ const SALON_BUSINESS: (keyof PageBusiness)[] = ["since", "team", "address", "pay
 /** Full-screen page editor: sections on the left, the content in the middle, the phone preview on the right. */
 export default function PageEditor() {
   const router = useRouter()
-  const { t, locale } = useT()
+  const { t, locale, lang } = useT()
   const [shop, setShop] = useState<Shop | null>(null)
   const [data, setData] = useState<PageData | null>(null)
   const [savedSlug, setSavedSlug] = useState<string | null>(null)
@@ -599,6 +601,18 @@ export default function PageEditor() {
 
             {section === "settings" && (
               <>
+                {salon && (
+                  <Block title={t("Nodly catalog")} hint={t("People look for masters by trade and city on nodly. Your page shows there only if you turn it on.")}>
+                    <Toggle checked={data.listed} onChange={(v) => update({ listed: v })} label={t("Show my page in the catalog")} />
+                    <Field label={t("City")}>
+                      <Picker value={data.city || "none"} onChange={(v) => update({ city: v === "none" ? "" : v })} label={t("City")}
+                        options={[{ value: "none", label: t("Not chosen") }, ...CITIES.map((c) => ({ value: c.id, label: c[lang] }))]} />
+                    </Field>
+                    {data.listed && !data.city && <p className="text-xs text-muted-foreground">{t("Pick a city so clients nearby find you.")}</p>}
+                    {data.listed && !published && <p className="text-xs text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
+                    <a href="/catalog" target="_blank" rel="noopener" className="text-sm font-medium underline underline-offset-2">{t("Open the catalog")}</a>
+                  </Block>
+                )}
                 <Block title={t("Page address")}>
                   <div className="flex items-center rounded-lg border border-input focus-within:border-ring">
                     <span className="shrink-0 pl-2.5 text-sm text-muted-foreground">{typeof window !== "undefined" ? window.location.host : ""}/@</span>
