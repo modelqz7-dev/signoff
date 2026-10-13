@@ -373,7 +373,7 @@ export default function PageEditor() {
                   </div>
                 </div>
 
-                <div className="-mx-3 flex gap-5 overflow-x-auto border-b border-border px-3 text-sm whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:px-0">
+                <div className="-mx-3 flex gap-5 overflow-x-auto border-b border-border px-3 text-sm whitespace-nowrap no-scrollbar sm:mx-0 sm:px-0">
                   {(([["projects", salon ? t("Work") : t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][])
                     .filter(([id]) => !salon || (id !== "services" && id !== "credentials"))).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}

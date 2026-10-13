@@ -269,6 +269,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-hover);
 }
+/* Scrolls without showing a scrollbar (previews, tab rows). Plain CSS, so it outranks the rule above. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* Dashboard responsive layout */
 @media (max-width: 1100px) {
