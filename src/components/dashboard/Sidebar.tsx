@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
@@ -142,7 +142,9 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
   const canvasLocked = !!usage && !can(usage.shop, "canvas")
 
   const sub = "[&>a]:pl-9 [&>button]:pl-9"
-  const crm = nicheConfig(usage?.shop.niche)
+  const niche = useKnownNiche(usage)
+  const crm = nicheConfig(niche)
+  if (niche === undefined) return <div className="flex flex-1 flex-col" />
   if (crm) {
     const items = crmNav(crm, t)
     return (
@@ -270,7 +272,17 @@ function Rail({ activePage, panel, onPanel, beta }: {
     ...(page?.published ? [{ href: pagePath(page.slug), label: t("Open page") }] : []),
   ]
 
-  const crm = nicheConfig(usage?.shop.niche)
+  const niche = useKnownNiche(usage)
+  const crm = nicheConfig(niche)
+  // until the niche is known, an empty rail: no flash of the other side's buttons
+  if (niche === undefined) {
+    return (
+      <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
+        <span className="mb-4 flex size-12 items-center justify-center"><LogoMark className="size-10" /></span>
+        <div className="mt-auto flex flex-col items-center gap-3"><ThemeSwitch /></div>
+      </div>
+    )
+  }
   if (crm) {
     return (
       <div className="flex h-full w-[98px] flex-col items-center rounded-2xl bg-card py-4 text-muted-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none dark:ring-1 dark:ring-white/[0.06]">
@@ -348,6 +360,26 @@ function Rail({ activePage, panel, onPanel, beta }: {
       {allOpen && <AllProjectsDialog projects={projects} activePage={activePage} onClose={() => setAllOpen(false)} />}
     </div>
   )
+}
+
+const NICHE_KEY = "nodly-niche"
+
+/**
+ * The account's niche for the menu: remembered on this device, so a reload draws the right
+ * menu at once instead of the other side's for a moment; undefined until known.
+ */
+function useKnownNiche(usage: ReturnType<typeof usePlanUsage>) {
+  const cached = useSyncExternalStore(
+    (onChange) => { window.addEventListener("storage", onChange); return () => window.removeEventListener("storage", onChange) },
+    () => { try { return localStorage.getItem(NICHE_KEY) } catch { return null } },
+    () => null,
+  )
+  const live = usage ? (usage.shop.niche ?? "") : undefined
+  useEffect(() => {
+    if (live === undefined) return
+    try { localStorage.setItem(NICHE_KEY, live) } catch {}
+  }, [live])
+  return live ?? cached ?? undefined
 }
 
 /** The CRM's screens: bookings (the home), clients and what the business offers. */
