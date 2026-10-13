@@ -1,13 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckIcon, CopyIcon, ExternalLinkIcon, QrCodeIcon } from "lucide-react"
+import { CheckIcon, CopyIcon, ExternalLinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FIELD } from "@/components/crm/BookingDialog"
 import type { Shop } from "@/components/dashboard/types"
 import { cleanBooking, type BookingSettings } from "@/lib/booking"
-import { cleanPage, normalizeSlug, pagePath, slugProblem, type PageData } from "@/lib/page"
-import { PageProfile, QrDialog } from "@/components/crm/PageProfile"
+import { normalizeSlug, pagePath, slugProblem } from "@/lib/page"
 import type { NicheConfig } from "@/lib/niches"
 import { supabase } from "@/lib/supabase"
 import { siteOrigin } from "@/lib/site"
@@ -29,88 +28,56 @@ function suggestSlug(name: string) {
   return normalizeSlug(latin.replace(/[\s.]+/g, "-")).replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 30)
 }
 
-type PageRow = { slug: string; published: boolean; data: PageData }
+type PageRow = { slug: string; published: boolean }
 
-/** The page's row in shop_pages (its address, whether it's open and how it looks), made and changed here. */
+/** The booking link's row in shop_pages, made and switched here. */
 export function useBookingPage(shopId: string) {
   const [page, setPage] = useState<PageRow | null | undefined>(undefined)
   useEffect(() => {
     let off = false
-    supabase.from("shop_pages").select("slug, published, data").eq("shop_id", shopId).maybeSingle()
-      .then(({ data }) => { if (!off) setPage(data ? { slug: data.slug, published: data.published, data: cleanPage(data.data) } : null) })
+    supabase.from("shop_pages").select("slug, published").eq("shop_id", shopId).maybeSingle()
+      .then(({ data }) => { if (!off) setPage((data as PageRow) ?? null) })
     return () => { off = true }
   }, [shopId])
   return [page, setPage] as const
 }
 
-/**
- * My page: the one link a business gives out (/@name). On it clients see the photo, the contacts,
- * the work and links, and book; here the owner sets how it looks and when clients can book.
- */
+/** Online booking: the link clients book through, when they can book and a word about the business. */
 export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop; config: NicheConfig; onShopChanged: (shop: Shop) => void }) {
   const { t, locale } = useT()
   const isOrder = config.kind === "order"
   const [page, setPage] = useBookingPage(shop.id)
-  const [tab, setTab] = useState<"page" | "booking">("page")
   const [settings, setSettings] = useState<BookingSettings>(() => cleanBooking(shop.booking))
-  // the page's look, edited here and saved with the hours; the old "word for clients" becomes its About
-  const [look, setLook] = useState<PageData | null>(null)
-  const [lookFor, setLookFor] = useState<string | null>(null)
-  if (page && lookFor !== page.slug) {
-    setLookFor(page.slug)
-    setLook({ ...page.data, title: page.data.title || shop.name, bio: page.data.bio || cleanBooking(shop.booking).about })
-  }
-  const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const set = <K extends keyof BookingSettings>(key: K, value: BookingSettings[K]) => { setSettings((s) => ({ ...s, [key]: value })); setDirty(true); setSaved(false) }
-  const change = (patch: Partial<PageData>) => { setLook((d) => (d ? { ...d, ...patch } : d)); setDirty(true); setSaved(false) }
+  const set = <K extends keyof BookingSettings>(key: K, value: BookingSettings[K]) => { setSettings((s) => ({ ...s, [key]: value })); setSaved(false) }
 
   async function save() {
     setSaving(true)
     setError(null)
-    // the owner's browser knows the business's time zone; the word for clients lives in the page now
-    const booking = cleanBooking({ ...settings, about: look ? "" : settings.about, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || settings.tz })
-    const data = look ? cleanPage({ ...look, requests: false }, shop.name) : null
-    const [{ error: e1 }, res2] = await Promise.all([
-      supabase.from("shops").update({ booking }).eq("id", shop.id),
-      data ? supabase.from("shop_pages").update({ data, updated_at: new Date().toISOString() }).eq("shop_id", shop.id) : Promise.resolve({ error: null }),
-    ])
+    // the owner's browser knows the business's time zone
+    const booking = cleanBooking({ ...settings, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || settings.tz })
+    const { error: e } = await supabase.from("shops").update({ booking }).eq("id", shop.id)
     setSaving(false)
-    const e = e1 || res2.error
     if (e) { setError(e.message); return }
     setSettings(booking)
     onShopChanged({ ...shop, booking })
-    if (data && page) { setPage({ ...page, data }); setLook(data) }
-    setDirty(false)
     setSaved(true)
   }
 
   const weekdayName = (d: number) => new Date(2024, 0, 7 + d).toLocaleDateString(locale, { weekday: "short" })
-  const canSave = !saving && dirty && settings.days.length > 0 && settings.to > settings.from
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-5 pb-28 sm:p-8 sm:pb-28">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-5 sm:p-8">
       <div>
-        <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("My page")}</h1>
-        <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("One link for your bio: your work, contacts and ordering. Orders land on the board at once.") : t("One link for your bio: your work, contacts and booking. Appointments land in the calendar at once.")}</p>
+        <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("Online booking")}</h1>
+        <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("Clients order through your link and the order lands on the board at once.") : t("Clients book through your link and the appointment lands in the calendar at once.")}</p>
       </div>
 
-      <LinkCard shop={shop} page={page} onPage={(p) => { setPage(p); if (!page && p) { setLookFor(p.slug); setLook({ ...p.data, title: p.data.title || shop.name, bio: p.data.bio || settings.about }); setDirty(!!settings.about) } }} />
+      <LinkCard shop={shop} page={page} onPage={setPage} />
 
-      {page && (
-        <div role="tablist" className="grid h-11 grid-cols-2 gap-1 rounded-xl bg-foreground/[0.05] p-1">
-          {([["page", t("Page")], ["booking", isOrder ? t("Ordering") : t("Booking")]] as const).map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={cn("rounded-lg text-[14px] font-medium transition-colors", tab === id ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")}>{label}</button>
-          ))}
-        </div>
-      )}
-
-      {page && look && tab === "page" && <PageProfile shopId={shop.id} niche={config.id} data={look} onChange={change} />}
-
-      {(!page || tab === "booking") && <section className="flex flex-col gap-4 rounded-[22px] apple-card p-4">
+      <section className="flex flex-col gap-4 rounded-[22px] apple-card p-4">
         <h2 className="text-[15px] font-semibold">{isOrder ? t("When you take orders") : t("When clients can book")}</h2>
         <div className="flex flex-col gap-1.5">
           <span className={LABEL}>{t("Working days")}</span>
@@ -154,35 +121,20 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
         <div className="flex flex-col gap-1.5"><span className={LABEL}>{t("Booking open for")}</span>
           <Picker value={settings.ahead} onChange={(v) => set("ahead", v)} label={t("Booking open for")} className="sm:max-w-60"
             options={[7, 14, 30, 60, 90].map((d) => ({ value: d, label: t("{n} days ahead", { n: d }) }))} /></div>
-      </section>}
+      </section>
+
+      <p className="text-[13px] text-muted-foreground">
+        {t("Your photo, a word about you, your work and contacts are set on")} <a href="/link/edit" className="font-medium text-foreground underline underline-offset-2">{t("My page")}</a>.
+      </p>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      {/* one save for the look and the hours, at hand while scrolling */}
-      <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4 lg:pl-[120px]" style={{ pointerEvents: "none" }}>
-        <div className={cn("flex items-center gap-3 rounded-full bg-card py-2 pr-2 pl-5 shadow-[0_12px_40px_rgba(0,0,0,0.16)] ring-1 ring-border transition-all duration-300",
-          dirty || saved ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0")} style={{ pointerEvents: dirty || saved ? "auto" : "none" }}>
-          <span className="text-[13.5px] text-muted-foreground">
-            {!settings.days.length ? t("Pick at least one day") : saved && !dirty ? <span className="flex items-center gap-1"><CheckIcon className="size-4" />{t("Saved")}</span> : t("Unsaved changes")}
-          </span>
-          <Button onPress={save} isDisabled={!canSave} className="h-9 rounded-full px-5">{saving ? t("Saving…") : t("Save")}</Button>
-        </div>
+      <div className="flex items-center gap-3">
+        <Button onPress={save} isDisabled={saving || !settings.days.length || settings.to <= settings.from} className="h-10 rounded-full px-5">{saving ? t("Saving…") : t("Save")}</Button>
+        {saved && <span className="flex items-center gap-1 text-[13px] text-muted-foreground"><CheckIcon className="size-4" />{t("Saved")}</span>}
+        {!settings.days.length && <span className="text-[13px] text-muted-foreground">{t("Pick at least one day")}</span>}
       </div>
     </div>
   )
-}
-
-/** How many times the page was opened in the last 7 days (null until known). */
-function useWeekViews(shopId: string, enabled: boolean) {
-  const [views, setViews] = useState<number | null>(null)
-  useEffect(() => {
-    if (!enabled) return
-    let off = false
-    const since = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)
-    supabase.from("page_views").select("count").eq("shop_id", shopId).gte("day", since)
-      .then(({ data, error }) => { if (!off && !error) setViews(((data as { count: number }[]) ?? []).reduce((n, r) => n + (r.count || 0), 0)) })
-    return () => { off = true }
-  }, [shopId, enabled])
-  return views
 }
 
 function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | undefined; onPage: (p: PageRow) => void }) {
@@ -192,8 +144,6 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [qr, setQr] = useState(false)
-  const views = useWeekViews(shop.id, !!page)
 
   // is the address free? (asked as you type, once it's long enough)
   const wanted = normalizeSlug(slug)
@@ -218,7 +168,7 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
     const { error: e } = await supabase.from("shop_pages").insert({ shop_id: shop.id, slug: wanted, published: true, data: { title: shop.name, requests: false } })
     setBusy(false)
     if (e) { setError(e.code === "23505" ? t("This address is taken") : e.message); return }
-    onPage({ slug: wanted, published: true, data: cleanPage({ title: shop.name, requests: false }, shop.name) })
+    onPage({ slug: wanted, published: true })
   }
   async function toggle() {
     if (!page) return
@@ -240,11 +190,8 @@ function LinkCard({ shop, page, onPage }: { shop: Shop; page: PageRow | null | u
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(FIELD, "flex min-w-0 flex-1 items-center truncate font-medium", !page.published && "text-muted-foreground line-through")}>{url.replace(/^https?:\/\//, "")}</span>
             <Button onPress={copy} isDisabled={!page.published} className="h-10 gap-1.5 rounded-full px-5 text-[14px]">{copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy")}</Button>
-            <a href={url} target="_blank" rel="noreferrer" aria-label={t("Open")} title={t("Open")} className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ExternalLinkIcon className="size-4" /></a>
-            <button type="button" onClick={() => setQr(true)} aria-label={t("QR code")} title={t("QR code")} className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><QrCodeIcon className="size-4" /></button>
+            <a href={url} target="_blank" rel="noreferrer" aria-label={t("Open")} className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ExternalLinkIcon className="size-4" /></a>
           </div>
-          <QrDialog url={url} slug={page.slug} open={qr} onClose={() => setQr(false)} />
-          {views != null && <p className="text-[13px] text-muted-foreground">{t("Opened {n} times in the last 7 days", { n: views })}</p>}
           <Toggle checked={page.published} onChange={toggle}>
             {page.published ? t("Booking is open") : t("Booking is closed: the link shows nothing")}
           </Toggle>

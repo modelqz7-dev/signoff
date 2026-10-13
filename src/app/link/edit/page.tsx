@@ -23,6 +23,10 @@ import {
   type PageProject, type PageReview,
 } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
+import { nicheConfig, type CrmNiche } from "@/lib/niches"
+import { cleanBooking } from "@/lib/booking"
+import { BookingPage } from "@/components/booking/BookingPage"
+import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
 
 type Section = "content" | "header" | "design" | "settings"
 type ContentTab = "projects" | "services" | "reviews" | "credentials" | "links"
@@ -39,6 +43,14 @@ const BUSINESS_PLACEHOLDER: Record<keyof PageBusiness, string> = {
   areas: "Dnipro, Samar, Pidhorodne and up to 50 km around", measure: "Free 15-minute call",
   terms: "Content plan in 3 days, first posts in a week", payment: "Monthly, paid upfront", warranty: "2 rounds of revisions included",
 }
+
+/** Hints for a beauty or cake business, in place of the agency ones above. */
+const SALON_HINTS: Record<CrmNiche, { work: string; category: string; tagline: string; bio: string }> = {
+  nails: { work: "e.g. Nude manicure with a pattern", category: "Manicure and pedicure", tagline: "Nail master · Kyiv, Podil", bio: "e.g. Studio at Khreshchatyk 10, 2nd floor. Sterile tools, coffee included." },
+  barber: { work: "e.g. Fade with a beard trim", category: "Barbershop", tagline: "Men's haircuts · Lviv, centre", bio: "e.g. Haircuts, beards and hot towel shaves. Coffee or a drink while you wait." },
+  cakes: { work: "e.g. Bento cake for a birthday", category: "Cakes to order", tagline: "Home bakery · Odesa", bio: "e.g. Cakes from natural ingredients. Pickup at Lvivska 12 or delivery around the city." },
+}
+const SALON_BUSINESS: (keyof PageBusiness)[] = ["since", "team", "address", "payment"]
 
 /** Full-screen page editor: sections on the left, the content in the middle, the phone preview on the right. */
 export default function PageEditor() {
@@ -68,6 +80,9 @@ export default function PageEditor() {
   const [previewOpen, setPreviewOpen] = useState(false)
   const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
+  // a beauty or cake business: its page leads with booking, and its services come from the CRM
+  const [salon, setSalon] = useState<CrmNiche | null>(null)
+  const [salonServices, setSalonServices] = useState<PublicService[]>([])
 
   useEffect(() => {
     async function init() {
@@ -76,6 +91,13 @@ export default function PageEditor() {
       const { data: shopData } = await getOrCreateShop(session.user)
       if (!shopData) return
       setShop(shopData)
+      const crm = nicheConfig(shopData.niche)
+      if (crm) {
+        setSalon(crm.id)
+        supabase.from("crm_services").select("id, title, duration_min, price, price_from, unit").eq("shop_id", shopData.id)
+          .eq("archived", false).eq("kind", crm.kind).order("position", { ascending: true })
+          .then(({ data: rows }) => setSalonServices((rows as PublicService[] | null) ?? []))
+      }
       // Reviews clients left (a separate table; missing until pages.sql is run again — then just none).
       supabase.from("page_reviews").select("*").eq("shop_id", shopData.id)
         .order("created_at", { ascending: false }).limit(100)
@@ -83,14 +105,16 @@ export default function PageEditor() {
       const { data: row, error } = await supabase.from("shop_pages").select("*").eq("shop_id", shopData.id).maybeSingle()
       if (error && /shop_pages|relation|schema cache/i.test(error.message)) setMissingTable(true)
       if (row) {
-        setData(cleanPage(row.data, shopData.name))
+        const loaded = cleanPage(row.data, shopData.name)
+        // the word for clients written in Online booking before it moved here
+        setData(crm && !loaded.bio ? { ...loaded, bio: cleanBooking(shopData.booking).about } : loaded)
         setSavedSlug(row.slug)
         setSlug({ slug: row.slug, status: "ok" })
         setPublished(row.published)
         return
       }
       // A new page: suggest an address from the name and check it.
-      setData(emptyPage(shopData.name, shopData.logo_url))
+      setData(crm ? { ...emptyPage(shopData.name, shopData.logo_url), requests: false } : emptyPage(shopData.name, shopData.logo_url))
       setSave("dirty")
       const suggested = suggestSlug(shopData.name)
       const problem = slugProblem(suggested)
@@ -216,7 +240,11 @@ export default function PageEditor() {
     else setSection("header")
     setPreviewOpen(false)
   }
-  const preview = <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} />
+  const hints = salon ? SALON_HINTS[salon] : null
+  const preview = salon
+    ? <BookingPage data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} isOrder={nicheConfig(salon)!.kind === "order"}
+        booking={<PublicBooking embedded preview slug={slug.slug} title={data.title} avatar={data.avatar_url} about="" niche={salon} services={salonServices} />} />
+    : <PageView data={cleanPage(data, shop?.name ?? "")} slug={slug.slug} reviews={reviews} preview onEdit={editTarget} />
   const move = <K extends "links" | "services" | "projects" | "credentials">(key: K, i: number, d: -1 | 1) => {
     const list = [...data[key]] as PageData[K]
     const j = i + d
@@ -302,7 +330,7 @@ export default function PageEditor() {
           {([
             ["content", t("Content"), <LayoutListIcon key="c" />],
             ["header", t("Header"), <UserRoundIcon key="h" />],
-            ["design", t("Design"), <PaletteIcon key="d" />],
+            ["design", t("Look"), <PaletteIcon key="d" />],
             ["settings", t("Settings"), <SettingsIcon key="s" />],
           ] as [Section, string, React.ReactNode][]).map(([id, label, icon]) => (
             <button key={id} type="button" onClick={() => setSection(id)} aria-label={label}
@@ -340,7 +368,8 @@ export default function PageEditor() {
                 </div>
 
                 <div className="-mx-3 flex gap-5 overflow-x-auto border-b border-border px-3 text-sm whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:px-0">
-                  {([["projects", t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][]).map(([id, label]) => (
+                  {(([["projects", salon ? t("Work") : t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][])
+                    .filter(([id]) => !salon || (id !== "services" && id !== "credentials"))).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
                       className={`-mb-px shrink-0 border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
                       {label}
@@ -387,13 +416,13 @@ export default function PageEditor() {
 
                 {tab === "projects" && (
                   <>
-                    <AddButton disabled={data.projects.length >= MAX_PROJECTS} label={t("Add project")}
+                    <AddButton disabled={data.projects.length >= MAX_PROJECTS} label={salon ? t("Add work") : t("Add project")}
                       onClick={() => update({ projects: [{ title: "", city: "", description: "", photos: [] }, ...data.projects] })} />
                     {data.projects.length === 0 && <Empty title={t("No projects yet")} text={t("Show finished work: a few images and a couple of words about each project.")} />}
                     {data.projects.map((p, i) => (
                       <ItemCard key={i} onUp={() => move("projects", i, -1)} onDown={() => move("projects", i, 1)} first={i === 0} last={i === data.projects.length - 1}
                         onRemove={() => update({ projects: data.projects.filter((_, j) => j !== i) })}>
-                        <Input aria-label={t("Project name")} placeholder={t("Instagram for a coffee shop: +2,000 followers")} value={p.title} maxLength={80}
+                        <Input aria-label={t("Project name")} placeholder={t(hints?.work ?? "Instagram for a coffee shop: +2,000 followers")} value={p.title} maxLength={80}
                           className="h-9 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { title: e.target.value })} />
                         <Input aria-label={t("City")} placeholder={t("City")} value={p.city} maxLength={60}
                           className="h-8 border-none px-0 text-sm shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { city: e.target.value })} />
@@ -474,27 +503,27 @@ export default function PageEditor() {
                   <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => upload(f, "banner")} onClear={() => update({ banner_url: null })} />
                 </div>
                 <Field label={t("Name")}><Input value={data.title} maxLength={80} onChange={(e) => update({ title: e.target.value })} /></Field>
-                <Field label={t("Category")}><Input value={data.category} placeholder={t("Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
-                <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t("SMM specialist · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
-                <Field label={t("About")}><Textarea value={data.bio} placeholder={t("What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
+                <Field label={t("Category")}><Input value={data.category} placeholder={t(hints?.category ?? "Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
+                <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t(hints?.tagline ?? "SMM specialist · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
+                <Field label={t("About")}><Textarea value={data.bio} placeholder={t(hints?.bio ?? "What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
               </Block>
             )}
 
             {section === "header" && (
               <Block title={t("Business")} hint={t("Only filled ones show on the page.")}>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {BUSINESS_KEYS.filter((key) => key !== "areas").map((key) => (
+                  {BUSINESS_KEYS.filter((key) => key !== "areas" && (!salon || SALON_BUSINESS.includes(key))).map((key) => (
                     <Field key={key} label={t(BUSINESS_FIELDS[key].label)}>
                       <Input value={data.business[key]} placeholder={t(BUSINESS_PLACEHOLDER[key])} maxLength={160}
                         onChange={(e) => update({ business: { ...data.business, [key]: e.target.value } })} />
                     </Field>
                   ))}
                 </div>
-                <Field label={t("Where you work")}>
+                {!salon && <><Field label={t("Where you work")}>
                   <Textarea value={data.business.areas} placeholder={t(BUSINESS_PLACEHOLDER.areas)} maxLength={300} className="min-h-16"
                     onChange={(e) => update({ business: { ...data.business, areas: e.target.value } })} />
                 </Field>
-                <p className="-mt-1 text-xs text-muted-foreground">{t("Separate cities and districts with commas: they show as a list.")}</p>
+                <p className="-mt-1 text-xs text-muted-foreground">{t("Separate cities and districts with commas: they show as a list.")}</p></>}
               </Block>
             )}
 
@@ -581,13 +610,13 @@ export default function PageEditor() {
                       : slug.status === "checking" ? t("Checking...") : slug.status === "taken" ? t("This address is already taken") : t(slug.problem!)}
                   </p>
                 </Block>
-                <Block title={t("Request form")}>
+                {!salon && <Block title={t("Request form")}>
                   <Toggle checked={data.requests} onChange={(v) => update({ requests: v })} label={t("Clients can leave a request on the page")} />
                   {data.requests && (
                     <Field label={t("Button text")}><Input value={data.cta} placeholder={t("Leave a request")} maxLength={40} onChange={(e) => update({ cta: e.target.value })} /></Field>
                   )}
                   <p className="text-xs text-muted-foreground">{t("Requests arrive in Requests and in your Telegram or email notifications.")}</p>
-                </Block>
+                </Block>}
                 <Block title={t("Contacts")} hint={t("Only filled ones show on the page.")}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {CONTACT_KEYS.map((key) => (

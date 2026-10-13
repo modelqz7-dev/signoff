@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { PageView } from "@/components/page/PageView"
+import { BookingPage } from "@/components/booking/BookingPage"
 import { loadPageReviews, loadPublicPage } from "@/lib/server/page"
 import { adminClient } from "@/lib/server/notify"
 import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
@@ -42,10 +43,14 @@ export default async function PublicPage({ params }: Props) {
   if (shop && config) {
     const { data: services } = await db.from("crm_services").select("id, title, duration_min, price, price_from, unit")
       .eq("shop_id", page.shopId).eq("archived", false).eq("kind", config.kind).order("position", { ascending: true })
+    // the page (cover, about, work, reviews) with booking as its first section
+    const reviews = await loadPageReviews(page.shopId)
+    const isOrder = config.kind === "order"
     return (
-      <main className="min-h-dvh bg-background text-foreground">
-        <PublicBooking slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
-          about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} page={page.data} />
+      <main className="min-h-dvh">
+        <BookingPage data={{ ...page.data, bio: page.data.bio || cleanBooking(shop.booking).about }} slug={page.slug} reviews={reviews} isOrder={isOrder}
+          booking={<PublicBooking embedded slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
+            about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} />} />
       </main>
     )
   }
