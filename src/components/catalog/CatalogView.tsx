@@ -83,7 +83,7 @@ export function CatalogView({ entries, initialNiche, initialCity, initialRegion 
   const focus = pickedEntry?.geo ?? me ?? cityInfo ?? regionInfo ?? UKRAINE
   const focusZoom = pickedEntry?.geo ? 14 : me ? 12 : cityInfo ? 11 : regionInfo ? (region === "kyiv-city" ? 10 : 7.5) : UKRAINE.zoom
   const tabs: { id: CrmNiche | ""; label: string }[] = [
-    { id: "", label: t("Everyone") }, { id: "nails", label: t("Nails") }, { id: "barber", label: t("Barbershop") }, { id: "cakes", label: t("Cakes") },
+    { id: "", label: t("Everyone") }, { id: "nails", label: t("Nails") }, { id: "barber", label: t("Barbershop") }, { id: "tattoo", label: t("Tattoo") }, { id: "cakes", label: t("Cakes") },
   ]
 
   return (
@@ -91,7 +91,7 @@ export function CatalogView({ entries, initialNiche, initialCity, initialRegion 
       <Header t={t} signedIn={signedIn} />
       <main className="mx-auto max-w-6xl px-4 pt-12 pb-20 sm:px-6 sm:pt-16">
         <h1 className={cn(H, "text-[40px] leading-[1.02] sm:text-[64px]")}>{t("Find your master.")}</h1>
-        <p className="mt-4 max-w-xl text-[17px] text-muted-foreground sm:text-[19px]">{t("Nails, barbershops and cakes to order. Look at the work, read the reviews and book online.")}</p>
+        <p className="mt-4 max-w-xl text-[17px] text-muted-foreground sm:text-[19px]">{t("Nails, barbershops, tattoo and cakes to order. Look at the work, read the reviews and book online.")}</p>
 
         {/* filters: trade, city, name */}
         <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -171,7 +171,7 @@ export function CatalogView({ entries, initialNiche, initialCity, initialRegion 
           </div>
         ) : (
           <div className="mt-8 flex flex-col items-center gap-3 rounded-[28px] apple-card px-6 py-16 text-center">
-            <div className="flex -space-x-3">{(["nails", "barber", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-12 ring-4 ring-card" />)}</div>
+            <div className="flex -space-x-3">{(["nails", "barber", "tattoo", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-12 ring-4 ring-card" />)}</div>
             <p className="mt-2 text-[18px] font-semibold">{entries.length ? t("Nobody here yet") : t("The catalog is just opening")}</p>
             <p className="max-w-sm text-[15px] text-muted-foreground">{entries.length ? t("Try another city or trade.") : t("The first masters are setting up their pages. Come back soon.")}</p>
           </div>
