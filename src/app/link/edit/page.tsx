@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
 import { WorkSheet } from "@/components/page/WorkSheet"
+import { ImageCropper } from "@/components/page/ImageCropper"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { AvatarPlaceholder, Block, FILLED, FILLED_AREA, Field, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
@@ -82,6 +83,8 @@ export default function PageEditor() {
   // the work open in its sheet (null index: a new one), and the tile being dragged
   const [workSheet, setWorkSheet] = useState<{ index: number | null } | null>(null)
   const [dragged, setDragged] = useState<number | null>(null)
+  // a picked photo or cover, framed before it's uploaded
+  const [crop, setCrop] = useState<{ file: File; kind: "avatar" | "banner" } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
@@ -457,8 +460,8 @@ export default function PageEditor() {
             {section === "header" && (
               <Block>
                 <div className="flex flex-wrap gap-6">
-                  <ImagePick label={t("Photo or logo")} src={data.avatar_url} round busy={uploading === "avatar"} onPick={(f) => upload(f, "avatar")} onClear={() => update({ avatar_url: null })} />
-                  <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => upload(f, "banner")} onClear={() => update({ banner_url: null })} />
+                  <ImagePick label={t("Photo or logo")} src={data.avatar_url} round busy={uploading === "avatar"} onPick={(f) => (croppable(f) ? setCrop({ file: f, kind: "avatar" }) : upload(f, "avatar"))} onClear={() => update({ avatar_url: null })} />
+                  <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => (croppable(f) ? setCrop({ file: f, kind: "banner" }) : upload(f, "banner"))} onClear={() => update({ banner_url: null })} />
                 </div>
                 <Field label={t("Name")}><Input value={data.title} maxLength={80} className={FILLED} onChange={(e) => update({ title: e.target.value })} /></Field>
                 <Field label={t("Category")}><Input value={data.category} className={FILLED} placeholder={t(hints?.category ?? "Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
@@ -627,6 +630,11 @@ export default function PageEditor() {
         </div>
       </div>
 
+      {crop && (
+        <ImageCropper key={crop.file.name + crop.kind} file={crop.file} shape={crop.kind === "avatar" ? "round" : "wide"}
+          onCancel={() => setCrop(null)} onDone={(f) => { const kind = crop.kind; setCrop(null); upload(f, kind) }} />
+      )}
+
       {workSheet && (
         <WorkSheet key={workSheet.index ?? "new"} isNew={workSheet.index === null} salon={!!salon}
           hint={t(hints?.work ?? "Instagram for a coffee shop: +2,000 followers")}
@@ -677,6 +685,9 @@ function Choice({ on, children }: { on: boolean; children: React.ReactNode }) {
     </span>
   )
 }
+
+/** Photos the cropper can frame (an animation or a drawing goes up as it is). */
+const croppable = (f: File) => f.type.startsWith("image/") && f.type !== "image/gif" && f.type !== "image/svg+xml"
 
 function AddButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
