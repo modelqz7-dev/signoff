@@ -117,42 +117,31 @@ export default function MyPage() {
             {/* The page card */}
             <h2 className="mt-9 mb-6 text-xl leading-7 font-bold tracking-tight">{t("Your page")}</h2>
             {loading ? (
-              <div className="h-[200px] w-full animate-pulse rounded-[32px] bg-muted" />
+              <div className="h-[356px] w-[280px] animate-pulse rounded-3xl bg-muted" />
             ) : (
-              // the page as the one bright block of the screen: white on dark, black on light
-              <div className="surface-invert flex flex-col gap-6 rounded-[32px] bg-background p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-10">
-                <a href="/link/edit" aria-label={t("Edit")} className="shrink-0 self-start sm:self-center">
+              <div className="relative flex h-[356px] w-[280px] max-w-full flex-col rounded-3xl bg-muted p-px">
+                {/* The preview area is 278×276, the name and buttons sit in the 78px under it. */}
+                <a href="/link/edit" aria-label={t("Edit")} className="flex h-[276px] w-[278px] max-w-full shrink-0 items-center justify-center rounded-t-[23px]">
                   {avatar
-                    ? <img src={avatar} alt="" className="size-24 rounded-full object-cover sm:size-28" />
-                    : salon
-                      ? <img src={`/niches/${salon.id}.svg`} alt="" className="size-24 rounded-full bg-white ring-1 ring-border sm:size-28" />
-                      : <AvatarPlaceholder className="size-24 sm:size-28" />}
+                    ? <img src={avatar} alt="" className="size-[164px] rounded-full object-cover" />
+                    : <AvatarPlaceholder className="size-[164px]" />}
                 </a>
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-[28px] leading-tight font-semibold tracking-[-0.03em] sm:text-[34px]">{name}</p>
-                    <p className="mt-1 text-[15px] text-muted-foreground">
-                      {page ? (page.published ? t("Your page is live") : t("Draft")) : t("Not created yet")}
-                    </p>
+                <div className="flex flex-1 items-center gap-2 px-4 pb-px">
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-xl leading-7 font-bold tracking-tight">{name}</span>
+                    <span className="truncate text-sm text-muted-foreground">
+                      {page ? (page.published ? t("{n} links", { n: page.data.links.length }) : t("Draft")) : t("Not created yet")}
+                    </span>
                   </div>
                   {page && (
-                    <button type="button" onClick={copyLink} title={t("Copy Link")}
-                      className="flex h-10 max-w-full items-center gap-2 self-start rounded-full bg-muted px-4 text-[14px] font-medium transition-colors hover:bg-hover-strong">
-                      {copied ? <CheckIcon className="size-4 shrink-0" /> : <CopyIcon className="size-4 shrink-0" />}
-                      <span className="truncate">{copied ? t("Link copied") : `${host}${pagePath(page.slug)}`}</span>
+                    <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background/70 hover:bg-background">
+                      <ShareIcon className="size-[18px]" />
                     </button>
                   )}
-                </div>
-                <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch">
-                  <a href="/link/edit" className="flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-[15px] font-medium text-background hover:opacity-90">
-                    {page ? t("Edit page") : t("Create page")}
+                  <a href="/link/edit" className="flex h-10 shrink-0 items-center rounded-full bg-background/70 px-4 text-sm font-medium hover:bg-background">
+                    {page ? t("Edit") : t("Create")}
                   </a>
-                  {page && (
-                    <button type="button" onClick={() => setShareOpen(true)}
-                      className="flex h-11 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium ring-1 ring-border hover:bg-hover">
-                      <ShareIcon className="size-4" />{t("Share")}
-                    </button>
-                  )}
                 </div>
               </div>
             )}
