@@ -1,5 +1,13 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "Phone call": "Звонок",
+  "How should we reach you?": "Как с вами связаться?",
+  "@username in Telegram (optional)": "@никнейм в Telegram (необязательно)",
+  "Your wishes, if you'd like": "Ваши пожелания, если хотите",
+  "Attach a photo or sketch": "Прикрепить фото или эскиз",
+  "Reach by": "Связь",
+  "Client's photos": "Фото от клиента",
+  "If your page has opening hours, clients book within them.": "Если на странице заполнен график работы, клиенты записываются в его пределах.",
   "This booking isn't there any more.": "Этой записи уже нет.",
   "Invoice": "Счёт",
   "Receipt": "Чек",

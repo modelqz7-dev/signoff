@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto"
 import { adminClient, notifyShop, shopLang, type NotifyShop } from "@/lib/server/notify"
+import { FILES_BUCKET } from "@/lib/storage-path"
 import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
 import { cleanBooking, freeSlots, orderDays, phoneKey, zonedTime, type Busy } from "@/lib/booking"
@@ -9,6 +11,10 @@ type Params = { params: Promise<{ slug: string }> }
 const DAY = 86_400_000
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+const MAX_PHOTOS = 3
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024
+/** Plain photos only (no SVG: it can carry scripts). */
+const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"])
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "")
 
 /** The published page's business, if it takes bookings (a CRM niche). */
@@ -21,7 +27,8 @@ async function context(slug: string) {
     .eq("id", page.shopId).maybeSingle()
   const config = nicheConfig(shop?.niche)
   if (!shop || !config) return null
-  return { db, shop, config, settings: cleanBooking(shop.booking) }
+  // the page's opening hours, when filled in, are the hours clients can book in
+  return { db, shop, config, settings: cleanBooking(shop.booking), hours: page.data.hours }
 }
 
 type Ctx = NonNullable<Awaited<ReturnType<typeof context>>>
@@ -45,14 +52,14 @@ async function availability(ctx: Ctx, duration: number) {
       const start = Date.parse(b.starts_at)
       return { start, end: start + (b.duration_min ?? 60) * 60_000 }
     })
-    return { kind: "appointment" as const, slots: freeSlots(ctx.settings, duration, busy, now) }
+    return { kind: "appointment" as const, slots: freeSlots(ctx.settings, duration, busy, now, ctx.hours) }
   }
   const { data } = await ctx.db.from("crm_bookings").select("due_on")
     .eq("shop_id", ctx.shop.id).eq("kind", "order").neq("status", "cancelled")
     .gte("due_on", new Date(now.getTime() - DAY).toISOString().slice(0, 10))
   const taken: Record<string, number> = {}
   for (const o of data ?? []) if (o.due_on) taken[o.due_on] = (taken[o.due_on] ?? 0) + 1
-  return { kind: "order" as const, days: orderDays(ctx.settings, taken, now) }
+  return { kind: "order" as const, days: orderDays(ctx.settings, taken, now, ctx.hours) }
 }
 
 /** Free times for one service (GET ?service=…). */
@@ -88,7 +95,12 @@ function whenText(lang: string, day: string, time: string) {
 export async function POST(request: Request, { params }: Params) {
   const ctx = await context((await params).slug)
   if (!ctx) return Response.json({ error: "not_found" }, { status: 404 })
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null
+  // a form with reference photos, or plain JSON
+  const isForm = (request.headers.get("content-type") ?? "").includes("multipart/form-data")
+  const form = isForm ? await request.formData().catch(() => null) : null
+  const body = form
+    ? { ...Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")), details: JSON.parse(String(form.get("details") || "{}")) } as Record<string, unknown>
+    : await request.json().catch(() => null) as Record<string, unknown> | null
   if (!body) return Response.json({ error: "invalid" }, { status: 400 })
   // bots fill in every field; people never see this one
   if (text(body.company, 100)) return Response.json({ ok: true })
@@ -98,6 +110,8 @@ export async function POST(request: Request, { params }: Params) {
   const note = text(body.note, 500)
   const day = text(body.day, 10)
   const time = text(body.time, 5)
+  const way = text(body.contact, 10)
+  const nick = text(body.telegram, 40).replace(/^@?/, "@")
   if (!name || phoneKey(phone).length < 9 || !DAY_RE.test(day)) return Response.json({ error: "invalid" }, { status: 400 })
   const isOrder = ctx.config.kind === "order"
   if (!isOrder && !TIME_RE.test(time)) return Response.json({ error: "invalid" }, { status: 400 })
@@ -115,12 +129,27 @@ export async function POST(request: Request, { params }: Params) {
   const { data: known } = await ctx.db.from("crm_clients").select("id, phone").eq("shop_id", ctx.shop.id)
   let clientId = (known ?? []).find((c) => c.phone && phoneKey(c.phone) === phoneKey(phone))?.id ?? null
   if (!clientId) {
-    const { data: created, error } = await ctx.db.from("crm_clients").insert({ shop_id: ctx.shop.id, name, phone }).select("id").single()
+    const tg = way === "telegram" && nick.length > 1 ? nick : ""
+    const { data: created, error } = await ctx.db.from("crm_clients").insert({ shop_id: ctx.shop.id, name, phone, telegram: tg }).select("id").single()
     if (error) { console.error("Booking client error:", error); return Response.json({ error: "failed" }, { status: 500 }) }
     clientId = created.id
   }
 
-  const details = isOrder ? orderDetails(ctx.config, body.details) : {}
+  const details: Record<string, string> = isOrder ? orderDetails(ctx.config, body.details) : {}
+  // how the client wants to be reached: Telegram, Viber or a call
+  if (way === "telegram" || way === "viber" || way === "phone") details.contact = way
+  if (way === "telegram" && nick.length > 1) details.telegram = nick
+  // reference photos (a sketch, a cake they liked): the business's private folder, like requests
+  const photos: string[] = []
+  for (const entry of form ? form.getAll("files").slice(0, MAX_PHOTOS) : []) {
+    if (!(entry instanceof File) || !PHOTO_TYPES.has(entry.type) || entry.size > MAX_PHOTO_BYTES) continue
+    const ext = (entry.name.split(".").pop() || "jpg").replace(/[^a-z0-9]/gi, "").slice(0, 5) || "jpg"
+    const path = `${ctx.shop.id}/bookings/${randomUUID()}.${ext}`
+    const { error: upError } = await ctx.db.storage.from(FILES_BUCKET).upload(path, entry, { contentType: entry.type })
+    if (upError) { console.error("Booking photo upload error:", upError); continue }
+    photos.push(ctx.db.storage.from(FILES_BUCKET).getPublicUrl(path).data.publicUrl)
+  }
+  if (photos.length) details.photos = photos.join("\n")
   const { error } = await ctx.db.from("crm_bookings").insert({
     shop_id: ctx.shop.id,
     client_id: clientId,
@@ -143,11 +172,14 @@ export async function POST(request: Request, { params }: Params) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
   const lang = shopLang(ctx.shop.notify_lang)
-  const extra = Object.values(details).join(" · ")
+  const WAY: Record<string, string> = { telegram: "Telegram", viber: "Viber", phone: lang === "ru" ? "звонок" : "дзвінок" }
+  const reach = details.contact ? `${WAY[details.contact]}${details.telegram ? ` ${details.telegram}` : ""}` : ""
+  const extra = Object.entries(details).filter(([k]) => !["contact", "telegram", "photos"].includes(k)).map(([, v]) => v).join(" · ")
+  const photoLine = photos.length ? (lang === "ru" ? `Фото: ${photos.length}` : `Фото: ${photos.length}`) : ""
   await notifyShop(ctx.shop as NotifyShop, {
-    kind: "booking", order: isOrder, name, phone, what: s.title,
+    kind: "booking", order: isOrder, name, phone: reach ? `${phone} · ${reach}` : phone, what: s.title,
     when: whenText(lang, day, isOrder ? (TIME_RE.test(time) ? time : "") : time),
-    note: [extra, note].filter(Boolean).join("\n"),
+    note: [extra, note, photoLine].filter(Boolean).join("\n"),
   }, `${siteUrl}/dashboard`).catch((e) => console.error("Notify error:", e))
 
   return Response.json({ ok: true })

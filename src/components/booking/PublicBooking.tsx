@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeftIcon, CheckIcon, ClockIcon } from "lucide-react"
+import { ArrowLeftIcon, CheckIcon, ClockIcon, ImagePlusIcon, XIcon } from "lucide-react"
+import { shrinkImage } from "@/lib/image"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 import { NicheIcon } from "@/components/crm/NicheIcon"
@@ -19,7 +20,7 @@ function money(v: number | null, locale: string) {
   return new Intl.NumberFormat(locale, { style: "currency", currency: "UAH", maximumFractionDigits: 0 }).format(v)
 }
 
-/** A business's booking page (/@name): pick a service, a free time or a day, leave a name and phone. */
+/** A business's booking page (/@name): pick a service, a free time or a day, leave a name, a way to reach you and maybe a photo. */
 export function PublicBooking({ slug, title, avatar, about, niche, services, embedded = false, preview = false }: {
   slug: string
   title: string
@@ -45,6 +46,18 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
   const [phone, setPhone] = useState("")
   const [note, setNote] = useState("")
   const [company, setCompany] = useState("")
+  // how to reach the client, and reference photos (a sketch, a cake they liked)
+  const [way, setWay] = useState<"telegram" | "viber" | "phone">("telegram")
+  const [nick, setNick] = useState("")
+  const [photos, setPhotos] = useState<File[]>([])
+  const photoUrls = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos])
+  useEffect(() => () => photoUrls.forEach((u) => URL.revokeObjectURL(u)), [photoUrls])
+  const photoInput = useRef<HTMLInputElement>(null)
+  async function addPhotos(list: FileList | null) {
+    const picked = Array.from(list ?? []).filter((f) => f.type.startsWith("image/") && f.type !== "image/svg+xml" && f.type !== "image/gif")
+    const small = await Promise.all(picked.slice(0, 3 - photos.length).map((f) => shrinkImage(f, 1600)))
+    setPhotos((p) => [...p, ...small.filter((f) => f.size <= 4 * 1024 * 1024)].slice(0, 3))
+  }
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
@@ -89,11 +102,11 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
     if (!ready || !service || !day) return
     setSending(true)
     setError(null)
-    const res = await fetch(`/api/book/${encodeURIComponent(slug)}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ service: service.id, day, time: time ?? details.time ?? "", name, phone, note, details, company }),
-    }).catch(() => null)
+    const form = new FormData()
+    for (const [k, v] of Object.entries({ service: service.id, day, time: time ?? details.time ?? "", name, phone, note, company, contact: way, telegram: way === "telegram" ? nick : "" })) form.set(k, v)
+    form.set("details", JSON.stringify(details))
+    photos.forEach((f) => form.append("files", f))
+    const res = await fetch(`/api/book/${encodeURIComponent(slug)}`, { method: "POST", body: form }).catch(() => null)
     setSending(false)
     if (res?.ok) { setDone(true); return }
     const code = res ? ((await res.json().catch(() => ({}))) as { error?: string }).error : null
@@ -220,8 +233,38 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
             <section className="flex flex-col gap-3">
               <h2 className="text-[15px] font-semibold">{t("Your contacts")}</h2>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Your name")} autoComplete="name" maxLength={80} className={FIELD} aria-label={t("Your name")} />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] font-medium text-muted-foreground">{t("How should we reach you?")}</span>
+                <div role="radiogroup" aria-label={t("How should we reach you?")} className="grid h-12 grid-cols-3 gap-1 rounded-xl bg-foreground/[0.05] p-1">
+                  {([["telegram", "Telegram"], ["viber", "Viber"], ["phone", t("Phone call")]] as const).map(([id, label]) => (
+                    <button key={id} type="button" role="radio" aria-checked={way === id} onClick={() => setWay(id)}
+                      className={cn("rounded-lg text-[14px] font-medium transition-colors", way === id ? "bg-card shadow-sm" : "text-muted-foreground")}>{label}</button>
+                  ))}
+                </div>
+              </div>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380 __ ___ __ __" type="tel" autoComplete="tel" maxLength={40} className={FIELD} aria-label={t("Phone")} />
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={t("A comment, if you'd like")} className={cn(FIELD, "h-auto resize-none py-3 leading-snug")} />
+              {way === "telegram" && (
+                <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder={t("@username in Telegram (optional)")} maxLength={40} className={FIELD} aria-label="Telegram" />
+              )}
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={isOrder ? t("Your wishes, if you'd like") : t("A comment, if you'd like")} className={cn(FIELD, "h-auto resize-none py-3 leading-snug")} />
+              {/* a reference: the tattoo sketch, the cake they liked, the nails they want */}
+              <div className="flex flex-wrap items-center gap-2">
+                {photoUrls.map((u, i) => (
+                  <span key={u} className="relative size-16 overflow-hidden rounded-xl bg-foreground/[0.05]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={u} alt="" className="size-full object-cover" />
+                    <button type="button" aria-label={t("Remove")} onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
+                      className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white"><XIcon className="size-3" /></button>
+                  </span>
+                ))}
+                {photos.length < 3 && (
+                  <button type="button" onClick={() => photoInput.current?.click()}
+                    className={cn("flex items-center gap-2 rounded-xl bg-foreground/[0.05] px-4 text-[14px] font-medium text-muted-foreground hover:text-foreground", photos.length ? "size-16 justify-center px-0" : "h-12")}>
+                    <ImagePlusIcon className="size-4" />{!photos.length && t("Attach a photo or sketch")}
+                  </button>
+                )}
+                <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addPhotos(e.target.files); e.target.value = "" }} />
+              </div>
               {/* a field people don't see; bots fill it in */}
               <input value={company} onChange={(e) => setCompany(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="company" />
               {error && <p className="text-[14px] text-destructive">{error}</p>}

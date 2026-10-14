@@ -12,6 +12,7 @@ import type { NicheConfig } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 import { DatePicker, Picker, TimePicker } from "@/components/crm/Pickers"
 import { useT } from "@/lib/i18n"
+import { useFileUrl } from "@/lib/files"
 
 /** Where a new booking starts: a time slot, a day, a client. */
 export type BookingPreset = { startsAt?: Date; dueOn?: string; clientId?: string }
@@ -159,7 +160,8 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
         status,
         price: num(price),
         prepaid: isOrder ? num(prepaid) : null,
-        details: isOrder ? Object.fromEntries(Object.entries(details).filter(([, v]) => v.trim())) : {},
+        // the order's fields, and what the client left when booking (how to reach them, photos)
+        details: Object.fromEntries(Object.entries(details).filter(([, v]) => v.trim())),
         staff: staff.trim(),
         notes: notes.trim(),
       }
@@ -344,6 +346,24 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
           </div>
         )}
 
+        {/* what the client left on the booking page */}
+        {booking && (booking.details.contact || booking.details.photos) && (
+          <div className="flex flex-col gap-2 rounded-2xl bg-foreground/[0.04] p-3">
+            {booking.details.contact && (
+              <p className="text-[13.5px]"><span className="text-muted-foreground">{t("Reach by")}: </span>
+                <span className="font-medium">{booking.details.contact === "telegram" ? "Telegram" : booking.details.contact === "viber" ? "Viber" : t("Phone call")}</span>
+                {booking.details.telegram && <> · <a href={`https://t.me/${booking.details.telegram.replace(/^@/, "")}`} target="_blank" rel="noopener" className="font-medium underline underline-offset-2">{booking.details.telegram}</a></>}
+              </p>
+            )}
+            {booking.details.photos && (
+              <div className="flex flex-col gap-1.5">
+                <span className={LABEL}>{t("Client's photos")}</span>
+                <div className="flex flex-wrap gap-2">{booking.details.photos.split("\n").filter(Boolean).map((u) => <ClientPhoto key={u} url={u} />)}</div>
+              </div>
+            )}
+          </div>
+        )}
+
         {booking && (
           <div className="flex flex-col gap-1.5">
             <span className={LABEL}>{t("Documents")}</span>
@@ -369,5 +389,16 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
         </DialogFooter>
       </form>
     </Dialog>
+  )
+}
+
+/** A photo the client attached when booking: stored privately, shown through a short-lived link. */
+function ClientPhoto({ url }: { url: string }) {
+  const src = useFileUrl(url)
+  return (
+    <a href={src ?? undefined} target="_blank" rel="noopener" className="block size-20 overflow-hidden rounded-xl bg-foreground/[0.06]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {src && <img src={src} alt="" className="size-full object-cover" />}
+    </a>
   )
 }

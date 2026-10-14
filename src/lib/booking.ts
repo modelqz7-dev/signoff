@@ -113,15 +113,31 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${St
 /** An appointment that takes up time: [start, end) in ms. */
 export type Busy = { start: number; end: number }
 
+/** Opening hours by weekday, Monday first ({from, to} or null for a day off), as on the business's page. */
+export type WeekHours = ({ from: string; to: string } | null)[]
+
+/**
+ * A day's working hours: the business's own schedule from its page when it's filled in,
+ * otherwise the booking settings' days and hours. Null: closed.
+ */
+function dayHours(settings: BookingSettings, day: string, hours?: WeekHours) {
+  if (hours?.some(Boolean)) {
+    const h = hours[(weekday(day) + 6) % 7]
+    return h && h.to > h.from ? { open: minutes(h.from), close: minutes(h.to) } : null
+  }
+  return settings.days.includes(weekday(day)) ? { open: minutes(settings.from), close: minutes(settings.to) } : null
+}
+
 /** Free start times for a service, by day, over the days clients may book. */
-export function freeSlots(settings: BookingSettings, duration: number, busy: Busy[], now = new Date()) {
+export function freeSlots(settings: BookingSettings, duration: number, busy: Busy[], now = new Date(), hours?: WeekHours) {
   const out: Record<string, string[]> = {}
   const today = zonedDay(now, settings.tz)
   const earliest = now.getTime() + settings.notice * 3_600_000
-  const open = minutes(settings.from), close = minutes(settings.to)
   for (let i = 0; i < settings.ahead; i++) {
     const day = addDays(today, i)
-    if (!settings.days.includes(weekday(day))) continue
+    const h = dayHours(settings, day, hours)
+    if (!h) continue
+    const { open, close } = h
     const times: string[] = []
     for (let m = open; m + duration <= close; m += settings.step) {
       const start = zonedTime(day, hhmm(m), settings.tz).getTime()
@@ -136,12 +152,12 @@ export function freeSlots(settings: BookingSettings, duration: number, busy: Bus
 }
 
 /** Days an order can be made for: after the lead time, on working days, with room left. */
-export function orderDays(settings: BookingSettings, perDayTaken: Record<string, number>, now = new Date()) {
+export function orderDays(settings: BookingSettings, perDayTaken: Record<string, number>, now = new Date(), hours?: WeekHours) {
   const today = zonedDay(now, settings.tz)
   const out: string[] = []
   for (let i = settings.lead; i < settings.lead + settings.ahead; i++) {
     const day = addDays(today, i)
-    if (!settings.days.includes(weekday(day))) continue
+    if (!dayHours(settings, day, hours)) continue
     if ((perDayTaken[day] ?? 0) >= settings.perDay) continue
     out.push(day)
   }
