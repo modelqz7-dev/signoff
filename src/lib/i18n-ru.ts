@@ -1,5 +1,10 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "2 nail masters": "2 мастера маникюра",
+  "3 barbers": "3 барбера",
+  "Just me": "Только я",
+  "Cash or card": "Наличные или карта",
+  "50% upfront, the rest on pickup": "50% предоплата, остальное при получении",
   "/mo": "/мес",
   "/mo, billed yearly": "/мес при оплате за год",
   "1 new comment": "Комментарии: 1",

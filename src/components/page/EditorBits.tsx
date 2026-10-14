@@ -2,15 +2,18 @@
 
 import { useId, useRef } from "react"
 import { ImagePlusIcon } from "lucide-react"
-import { Label } from "@/components/ui/label"
 import { useT } from "@/lib/i18n"
 
-// Small building blocks of the page editor.
+// Small building blocks of the page editor, in the app's look: cards, filled fields, switches.
+
+/** A filled field like the rest of the app's (CRM forms, Online booking). */
+export const FILLED = "h-11 rounded-xl border-transparent bg-foreground/[0.05] px-3 text-[14px] md:text-[14px] dark:bg-foreground/[0.05] focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-foreground/25"
+export const FILLED_AREA = "rounded-xl border-transparent bg-foreground/[0.05] px-3 py-2.5 text-[14px] md:text-[14px] dark:bg-foreground/[0.05] focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-foreground/25"
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs">{label}</Label>
+      <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
       {children}
     </div>
   )
@@ -19,19 +22,20 @@ export function Field({ label, children }: { label: string; children: React.Reac
 export function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
-      className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground disabled:opacity-30 [&_svg]:size-4">
+      className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground disabled:opacity-30 [&_svg]:size-4">
       {children}
     </button>
   )
 }
 
+/** A setting row: the words on the left, the switch on the right, like iOS Settings. */
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className="flex items-center gap-3 text-left text-sm">
-      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-primary" : "bg-muted ring-1 ring-border"}`}>
-        <span className={`absolute top-0.5 size-4 rounded-full bg-background shadow-sm transition-all ${checked ? "left-[18px]" : "left-0.5"}`} />
-      </span>
+    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className="flex w-full items-center justify-between gap-3 text-left text-[14px]">
       {label}
+      <span className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${checked ? "bg-foreground" : "bg-foreground/15"}`}>
+        <span className={`absolute top-0.5 size-5 rounded-full bg-background shadow-sm transition-all ${checked ? "left-[18px]" : "left-0.5"}`} />
+      </span>
     </button>
   )
 }
@@ -54,10 +58,10 @@ export function ImagePick({ label, src, round, wide, busy, onPick, onClear }: {
   onPick: (file: File) => void; onClear: () => void
 }) {
   const { t } = useT()
-  const box = `${round ? "size-20 rounded-full" : wide ? "h-20 w-40 rounded-xl" : "size-20 rounded-xl"} overflow-hidden bg-muted flex items-center justify-center`
+  const box = `${round ? "size-20 rounded-full" : wide ? "h-20 w-40 rounded-xl" : "size-20 rounded-xl"} overflow-hidden bg-foreground/[0.05] flex items-center justify-center`
   return (
     <div className="flex flex-col items-start gap-2">
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
       <FileButton busy={busy} label={label} onFiles={(f) => onPick(f[0])} className={`${box} text-muted-foreground transition-opacity hover:opacity-80`}>
         {src ? <img src={src} alt="" className="size-full object-cover" /> : <ImagePlusIcon className="size-5" />}
       </FileButton>
@@ -69,14 +73,14 @@ export function ImagePick({ label, src, round, wide, busy, onPick, onClear }: {
   )
 }
 
-/** A white card section inside an editor panel. */
+/** A card section inside an editor panel, like the app's cards. */
 export function Block({ title, hint, children }: { title?: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10 sm:p-5">
+    <section className="flex flex-col gap-4 rounded-[22px] apple-card p-4 sm:p-5">
       {(title || hint) && (
         <div className="flex flex-col gap-0.5">
-          {title && <h3 className="text-sm font-medium">{title}</h3>}
-          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+          {title && <h3 className="text-[15px] font-semibold">{title}</h3>}
+          {hint && <p className="text-[13px] text-muted-foreground">{hint}</p>}
         </div>
       )}
       {children}

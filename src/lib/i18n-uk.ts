@@ -1,5 +1,10 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "2 nail masters": "2 майстри манікюру",
+  "3 barbers": "3 барбери",
+  "Just me": "Лише я",
+  "Cash or card": "Готівка або картка",
+  "50% upfront, the rest on pickup": "50% наперед, решта при отриманні",
   "/mo": "/міс",
   "/mo, billed yearly": "/міс при оплаті за рік",
   "1 new comment": "Коментарі: 1",
