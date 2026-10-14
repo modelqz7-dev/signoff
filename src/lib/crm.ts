@@ -88,6 +88,11 @@ export function money(value: number | null | undefined, locale: string) {
   return new Intl.NumberFormat(locale, { style: "currency", currency: "UAH", maximumFractionDigits: 0 }).format(value)
 }
 
+/** A booking's short number, the same on every invoice and receipt about it. */
+export function docNumber(id: string) {
+  return id.replace(/-/g, "").slice(0, 8).toUpperCase()
+}
+
 /** YYYY-MM-DD of a local date. */
 export function dayKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`

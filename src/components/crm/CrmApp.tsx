@@ -10,6 +10,7 @@ import { AppointmentsHome } from "@/components/crm/AppointmentsHome"
 import { OrdersHome } from "@/components/crm/OrdersHome"
 import { ClientsView } from "@/components/crm/ClientsView"
 import { ServicesView } from "@/components/crm/ServicesView"
+import { HistoryView } from "@/components/crm/HistoryView"
 import { BookingLinkButton, OnlineBookingView } from "@/components/crm/OnlineBookingView"
 import { translateStarterTitles, useCrmData, type CrmBooking } from "@/lib/crm"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
@@ -18,7 +19,7 @@ import { supabase } from "@/lib/supabase"
 import { useT } from "@/lib/i18n"
 import { OPEN_NEW_BOOKING } from "@/lib/panels"
 
-export type CrmPage = "home" | "clients" | "services" | "online"
+export type CrmPage = "home" | "clients" | "services" | "online" | "history"
 
 /** The signed-in user's shop for the CRM pages; sends visitors without an account to sign in. */
 export function useCrmShop() {
@@ -65,7 +66,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
   const openBooking = (booking: CrmBooking) => setDialog({ booking })
   const replace = (b: CrmBooking) => data.setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]))
 
-  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("Online booking") }
+  const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("Online booking"), history: t("History") }
   const activePage = page === "home" ? "dashboard" : page
 
   return (
@@ -89,6 +90,8 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
               : <AppointmentsHome data={data} onNew={newBooking} onOpen={openBooking} cta={<BookingLinkButton shopId={shop.id} />} />
           ) : page === "clients" ? (
             <ClientsView data={data} config={config} shopId={shop.id} onNew={newBooking} onOpen={openBooking} />
+          ) : page === "history" ? (
+            <HistoryView data={data} config={config} onOpen={openBooking} />
           ) : page === "online" ? (
             <OnlineBookingView shop={shop} config={config} onShopChanged={setShop} />
           ) : (

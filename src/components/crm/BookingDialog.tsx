@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Trash2Icon, XIcon } from "lucide-react"
+import { FileTextIcon, ReceiptTextIcon, Trash2Icon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -19,6 +19,13 @@ export type BookingPreset = { startsAt?: Date; dueOn?: string; clientId?: string
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240]
 export const FIELD = "h-11 w-full rounded-xl bg-foreground/[0.05] px-3 text-[14px] text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground focus:ring-foreground/25"
 const LABEL = "text-[12.5px] font-medium text-muted-foreground"
+
+/** Only what makes a number: digits and one decimal mark (so a weight can't read "asdasd kg"). */
+function numeric(v: string) {
+  const s = v.replace(/[^\d.,]/g, "").replace(/,/g, ".")
+  const i = s.indexOf(".")
+  return i < 0 ? s : s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "")
+}
 
 function timeOf(d: Date) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
@@ -280,7 +287,7 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
                     ))}
                   </div>
                 ) : (
-                  <input value={details[f.key] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [f.key]: e.target.value }))}
+                  <input value={details[f.key] ?? ""} onChange={(e) => { const v = f.type === "number" ? numeric(e.target.value) : e.target.value; setDetails((d) => ({ ...d, [f.key]: v })) }}
                     inputMode={f.type === "number" ? "decimal" : undefined} placeholder={f.placeholder ? t(f.placeholder) : ""} maxLength={300} className={FIELD} />
                 )}
               </label>
@@ -292,12 +299,12 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5">
             <span className={LABEL}>{t("Price, ₴")}</span>
-            <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" placeholder="0" className={FIELD} />
+            <input value={price} onChange={(e) => setPrice(numeric(e.target.value))} inputMode="decimal" placeholder="0" className={FIELD} />
           </label>
           {isOrder ? (
             <label className="flex flex-col gap-1.5">
               <span className={LABEL}>{t("Prepaid, ₴")}</span>
-              <input value={prepaid} onChange={(e) => setPrepaid(e.target.value)} inputMode="decimal" placeholder="0" className={FIELD} />
+              <input value={prepaid} onChange={(e) => setPrepaid(numeric(e.target.value))} inputMode="decimal" placeholder="0" className={FIELD} />
             </label>
           ) : (
             <label className="flex flex-col gap-1.5">
@@ -333,6 +340,18 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
                   {t(label)}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {booking && (
+          <div className="flex flex-col gap-1.5">
+            <span className={LABEL}>{t("Documents")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              <a href={`/receipt/${booking.id}?doc=invoice`} target="_blank" rel="noopener"
+                className="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium ring-1 ring-border hover:bg-hover"><FileTextIcon className="size-4" />{t("Invoice")}</a>
+              <a href={`/receipt/${booking.id}?doc=receipt`} target="_blank" rel="noopener"
+                className="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium ring-1 ring-border hover:bg-hover"><ReceiptTextIcon className="size-4" />{t("Receipt")}</a>
             </div>
           </div>
         )}
