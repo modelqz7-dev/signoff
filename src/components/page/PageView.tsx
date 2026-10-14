@@ -50,26 +50,26 @@ export const BUSINESS_FIELDS: Record<keyof PageBusiness, { label: string; icon: 
   warranty: { label: "Revisions", icon: <ShieldCheckIcon /> },
 }
 
-const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
+export const ASPECT_LABEL: Record<(typeof REVIEW_ASPECTS)[number], string> = {
   quality: "Work quality", communication: "Communication", value: "Value for money",
 }
 
 const SOCIAL_KEYS = ["instagram", "telegram", "viber", "whatsapp", "email"] as const
-const BUSINESS_DETAIL_KEYS = ["since", "team", "measure", "terms", "payment", "warranty"] as const
+export const BUSINESS_DETAIL_KEYS = ["since", "team", "measure", "terms", "payment", "warranty"] as const
 const SHAPE = { pill: "rounded-full", rounded: "rounded-xl", square: "rounded-md" } as const
-const STAR = "#f5a524"
+export const STAR = "#f5a524"
 
 /** Weekday names, Monday first (1 Jan 2024 was a Monday). */
 export function weekdays(locale: string, style: "short" | "long" = "short") {
   return Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i).toLocaleDateString(locale, { weekday: style }))
 }
 
-const hasHours = (hours: PageHours) => hours.some(Boolean)
+export const hasHours = (hours: PageHours) => hours.some(Boolean)
 const noop = () => () => {}
-const average = (list: number[]) => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0)
+export const average = (list: number[]) => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0)
 
 /** "open" / "closed" by the visitor's clock; null on the server, so the page renders the same on both sides. */
-function useOpenNow(hours: PageHours) {
+export function useOpenNow(hours: PageHours) {
   return useSyncExternalStore(noop, () => {
     if (!hasHours(hours)) return null
     const now = new Date()
@@ -80,7 +80,7 @@ function useOpenNow(hours: PageHours) {
   }, () => null)
 }
 
-function Stars({ value, className = "size-4" }: { value: number; className?: string }) {
+export function Stars({ value, className = "size-4" }: { value: number; className?: string }) {
   return (
     <span className="flex items-center gap-0.5" aria-label={`${value.toFixed(1)} / 5`}>
       {[1, 2, 3, 4, 5].map((i) => {
@@ -91,7 +91,7 @@ function Stars({ value, className = "size-4" }: { value: number; className?: str
   )
 }
 
-function Avatar({ data, initials, face, className = "" }: { data: PageData; initials: string; face?: string; className?: string }) {
+export function Avatar({ data, initials, face, className = "" }: { data: PageData; initials: string; face?: string; className?: string }) {
   const src = data.avatar_url || face
   return (
     <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold ring-1 ring-[var(--pg-border)] ${face && !data.avatar_url ? "bg-white" : "bg-[var(--pg-field)]"} ${className}`}>
@@ -100,8 +100,8 @@ function Avatar({ data, initials, face, className = "" }: { data: PageData; init
   )
 }
 
-const REVIEWER_COLORS = ["#a16207", "#475569", "#ea580c", "#0f766e", "#7c3aed", "#be123c", "#15803d", "#1d4ed8"]
-function initialsOf(name: string) {
+export const REVIEWER_COLORS = ["#a16207", "#475569", "#ea580c", "#0f766e", "#7c3aed", "#be123c", "#15803d", "#1d4ed8"]
+export function initialsOf(name: string) {
   return name.split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w)).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?"
 }
 
@@ -122,7 +122,7 @@ function Section({ id, title, aside, children }: { id: string; title: string; as
 export type PageEditTarget = "about" | "projects" | "business" | "contacts" | "services" | "areas" | "credentials"
 
 /** An empty section in the editor's preview, like the dashboard's empty states: what goes here, and "Add". */
-function Placeholder({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick?: () => void }) {
+export function Placeholder({ icon, title, hint, onClick }: { icon: React.ReactNode; title: string; hint: string; onClick?: () => void }) {
   const { t } = useT()
   return (
     <button type="button" onClick={onClick}
@@ -173,23 +173,11 @@ function Detail({ label, children, onEmpty }: { label: string; children?: React.
  * About, Projects, Business, Services, Areas, Credentials and Reviews, and a "Contact" card that
  * opens a message window. `preview` is the editor's live copy: links stay inert and forms don't send.
  */
-export function PageView({ data, slug, reviews = [], preview = false, onEdit, booking }: {
+export function PageView({ data, slug, reviews = [], preview = false, onEdit }: {
   data: PageData
   slug: string
   reviews?: PageReview[]
   preview?: boolean
-  /**
-   * A beauty or cake business's booking (its services, free times and the form). With it the page
-   * opens the booking in a sheet from its buttons instead of sending a message, and the sections a salon
-   * doesn't use (services as text, areas, credentials) stay out.
-   */
-  booking?: {
-    label: string; button: string; node: React.ReactNode
-    /** The trade's character, in place of initials until the business adds a photo. */
-    face?: string
-    /** A soft wash of the trade's colours, in place of a grey cover. */
-    cover?: string
-  }
   /** Editor only: an empty section was tapped. */
   onEdit?: (target: PageEditTarget) => void
 }) {
@@ -201,10 +189,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   const [added, setAdded] = useState<PageReview[]>([])
   const [writing, setWriting] = useState(false)
   const [contact, setContact] = useState(false)
-  // a booking page: its steps open in a sheet; the pinned button shows once the top one scrolls away
-  const [sheet, setSheet] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const bookRef = useRef<HTMLButtonElement>(null)
   const [active, setActive] = useState("")
   const openNow = useOpenNow(data.hours)
   const today = useSyncExternalStore(noop, () => (new Date().getDay() + 6) % 7, () => -1)
@@ -224,16 +208,15 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
 
   // Section ids differ in the editor's preview, so they never clash with the editor itself.
   const sid = (s: string) => (preview ? `pg-${s}-preview` : `pg-${s}`)
-  const salon = !!booking
   const tabs = ([
     [!!data.bio || !!data.category, "about", t("About us")],
-    [data.projects.length > 0, "projects", salon ? t("Work") : t("Projects")],
+    [data.projects.length > 0, "projects", t("Projects")],
     [true, "business", t("Business")],
-    [!salon && data.services.length > 0, "services", t("Services")],
-    [!salon && areas.length > 0, "areas", t("Areas")],
-    [!salon && data.credentials.length > 0, "credentials", t("Credentials")],
+    [data.services.length > 0, "services", t("Services")],
+    [areas.length > 0, "areas", t("Areas")],
+    [data.credentials.length > 0, "credentials", t("Credentials")],
     [true, "reviews", t("Reviews")],
-  ] as [boolean, string, string][]).filter(([on, id]) => on || (preview && !(salon && ["services", "areas", "credentials"].includes(id))))
+  ] as [boolean, string, string][]).filter(([on]) => on || preview)
   const current = active || tabs[0]?.[1]
 
   function go(id: string) {
@@ -252,25 +235,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
     root.querySelectorAll("[data-pg-section]").forEach((el) => io.observe(el))
     return () => io.disconnect()
   }, [tabs.length])
-
-  useEffect(() => {
-    const el = bookRef.current
-    if (!el || typeof IntersectionObserver === "undefined") return
-    const io = new IntersectionObserver(([e]) => setScrolled(!e.isIntersecting && e.boundingClientRect.top < 0))
-    io.observe(el)
-    return () => io.disconnect()
-  }, [booking])
-
-  // the sheet: Escape closes it, the page under it stays put
-  useEffect(() => {
-    if (!sheet) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSheet(false) }
-    window.addEventListener("keydown", onKey)
-    const body = preview ? null : document.body
-    const was = body?.style.overflow
-    if (body) body.style.overflow = "hidden"
-    return () => { window.removeEventListener("keydown", onKey); if (body) body.style.overflow = was ?? "" }
-  }, [sheet, preview])
 
   async function share() {
     if (preview) return
@@ -303,13 +267,13 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
               ) : data.avatar_url ? (
                 <img src={data.avatar_url} alt="" className="size-full scale-125 object-cover opacity-50 blur-3xl" />
               ) : (
-                <div className="size-full" style={{ background: booking?.cover ?? "linear-gradient(135deg, color-mix(in srgb, var(--pg-accent) 22%, var(--pg-field)), var(--pg-field) 70%)" }} />
+                <div className="size-full" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--pg-accent) 22%, var(--pg-field)), var(--pg-field) 70%)" }} />
               )}
             </div>
 
             {/* Logo, name, rating, category */}
             <div className="flex items-center gap-4 px-5 pt-4 @3xl:px-0">
-              <Avatar data={data} initials={initials} face={booking?.face} className="size-[72px] text-xl @3xl:size-[88px] @3xl:text-2xl" />
+              <Avatar data={data} initials={initials} className="size-[72px] text-xl @3xl:size-[88px] @3xl:text-2xl" />
               <div className="flex min-w-0 flex-col gap-1">
                 <h1 className="text-[22px] leading-tight font-semibold tracking-tight @3xl:text-2xl">{data.title || t("Your name")}</h1>
                 {allReviews.length > 0 && (
@@ -325,12 +289,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 px-5 pt-5 @3xl:px-0">
-              {booking && (
-                <button ref={bookRef} type="button" onClick={() => setSheet(true)}
-                  className="flex h-9 items-center rounded-full bg-[var(--pg-accent)] px-5 text-sm font-semibold text-[var(--pg-on-accent)] transition-transform active:scale-[0.98]">
-                  {booking.button}
-                </button>
-              )}
               <button type="button" onClick={writeReview} className={btn}><StarIcon />{t("Write a review")}</button>
               <button type="button" onClick={share} className={btn}><Share2Icon />{shared ? t("Link copied") : t("Share")}</button>
               {openNow && (
@@ -382,7 +340,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
             )}
 
             {(data.projects.length > 0 || preview) && (
-              <Section id={sid("projects")} title={salon ? t("Work") : data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
+              <Section id={sid("projects")} title={data.projects.length ? t("Projects: {n}", { n: data.projects.length }) : t("Projects")}>
                 {data.projects.length === 0 && <Placeholder icon={<ImagesIcon />} title={t("Add your first project")} hint={t("Images of finished work and a couple of words about it.")} onClick={() => onEdit?.("projects")} />}
                 <div className="grid gap-4 @md:grid-cols-2">
                   {data.projects.map((p, i) => (
@@ -461,7 +419,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
               </dl>
             </Section>
 
-            {!salon && (data.services.length > 0 || preview) && (
+            {(data.services.length > 0 || preview) && (
               <Section id={sid("services")} title={t("Services provided")}>
                 {data.services.length === 0 && <Placeholder icon={<ListChecksIcon />} title={t("Add services and prices")} hint={t("What you make and from what price.")} onClick={() => onEdit?.("services")} />}
                 <MoreList items={data.services.map((s, i) => (
@@ -473,14 +431,14 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
               </Section>
             )}
 
-            {!salon && (areas.length > 0 || preview) && (
+            {(areas.length > 0 || preview) && (
               <Section id={sid("areas")} title={t("Where we work")}>
                 {areas.length === 0 && <Placeholder icon={<MapIcon />} title={t("Add where you work")} hint={t("Cities, countries or simply Online.")} onClick={() => onEdit?.("areas")} />}
                 <MoreList items={areas} />
               </Section>
             )}
 
-            {!salon && (data.credentials.length > 0 || preview) && (
+            {(data.credentials.length > 0 || preview) && (
               <Section id={sid("credentials")} title={t("Credentials")}>
                 {data.credentials.length === 0 && <Placeholder icon={<AwardIcon />} title={t("Add awards and certificates")} hint={t("Certificates, publications, contest wins.")} onClick={() => onEdit?.("credentials")} />}
                 <div className="flex flex-wrap gap-5">
@@ -535,41 +493,17 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
             </a>
           </div>
 
-          {/* the main button, pinned to the bottom; a booking page shows it once its top button scrolls away */}
-          {(data.requests || booking) && (
-            <aside className={`pointer-events-none sticky bottom-0 z-20 flex justify-center bg-gradient-to-t from-[var(--pg-bg)] via-[var(--pg-bg)]/85 to-transparent px-4 pt-8 pb-[max(16px,env(safe-area-inset-bottom))] transition-all duration-300 ${booking && !scrolled ? "invisible translate-y-4 opacity-0" : ""}`}>
-              <button type="button" onClick={() => (booking ? setSheet(true) : setContact(true))}
+          {/* the main button, pinned to the bottom */}
+          {data.requests && (
+            <aside className="pointer-events-none sticky bottom-0 z-20 flex justify-center bg-gradient-to-t from-[var(--pg-bg)] via-[var(--pg-bg)]/85 to-transparent px-4 pt-8 pb-[max(16px,env(safe-area-inset-bottom))]">
+              <button type="button" onClick={() => setContact(true)}
                 className="pointer-events-auto flex h-12 w-full max-w-[380px] items-center justify-center rounded-full bg-[var(--pg-accent)] text-[15px] font-semibold text-[var(--pg-on-accent)] shadow-[0_12px_32px_-10px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]">
-                {booking ? booking.button : data.cta || t("Send message")}
+                {data.cta || t("Send message")}
               </button>
             </aside>
           )}
         </div>
       </div>
-
-      {/* booking: a sheet from the bottom on a phone, a window on a computer; kept mounted so a closed sheet keeps its choices */}
-      {booking && (
-        <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/45 backdrop-blur-[2px] @3xl:items-center @3xl:p-8 ${sheet ? "" : "hidden"}`}
-          role="dialog" aria-modal="true" aria-label={booking.button} onClick={() => setSheet(false)}>
-          <div onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[92%] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--pg-bg)] shadow-[0_-10px_40px_-12px_rgba(0,0,0,0.35)] @3xl:rounded-[28px]">
-            <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-[var(--pg-border)] @3xl:hidden" />
-            <header className="flex shrink-0 items-center gap-3 px-5 pt-3 pb-2 @3xl:pt-5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[20px] leading-tight font-semibold tracking-[-0.01em]">{booking.label}</p>
-                <p className="truncate text-[13px] text-[var(--pg-muted)]">{data.title}</p>
-              </div>
-              <button type="button" aria-label={t("Close")} onClick={() => setSheet(false)}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--pg-field)] text-[var(--pg-muted)] hover:text-[var(--pg-text)]"><XIcon className="size-4" /></button>
-            </header>
-            {/* the booking speaks in the app's words: its colours follow the page's own */}
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]" style={{
-              "--background": "var(--pg-bg)", "--foreground": "var(--pg-text)", "--card": "var(--pg-card)", "--card-foreground": "var(--pg-text)",
-              "--muted-foreground": "var(--pg-muted)", "--border": "var(--pg-border)", "--hover": "var(--pg-field)",
-            } as React.CSSProperties}>{booking.node}</div>
-          </div>
-        </div>
-      )}
 
       {contact && (
         <ContactModal data={data} slug={slug} preview={preview} rating={rating} count={allReviews.length} initials={initials} onClose={() => setContact(false)} />
@@ -630,7 +564,7 @@ function StarPicker({ value, onChange, size = "size-7", label }: { value: number
 }
 
 /** "Write a review": overall stars, optional marks per aspect, a name and a few words. Shows at once. */
-function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; preview: boolean; onClose: () => void; onSent: (r: PageReview) => void }) {
+export function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; preview: boolean; onClose: () => void; onSent: (r: PageReview) => void }) {
   const { t } = useT()
   const [rating, setRating] = useState(0)
   const [marks, setMarks] = useState<Record<string, number>>({})
@@ -657,9 +591,9 @@ function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; preview:
     setError(res?.status === 429 ? t("Too many requests. Try again in a few minutes.") : t("Couldn't send the review. Try again."))
   }
 
-  const field = "w-full rounded-md border border-[var(--pg-border)] bg-[var(--pg-bg)] px-3.5 py-2.5 text-[16px] text-[var(--pg-text)] outline-none placeholder:text-[var(--pg-muted)] focus:border-[var(--pg-text)] sm:text-sm"
+  const field = "w-full rounded-xl bg-[var(--pg-field)] px-4 py-3 text-[16px] text-[var(--pg-text)] outline-none ring-1 ring-transparent placeholder:text-[var(--pg-muted)] focus:ring-[var(--pg-muted)] sm:text-[15px]"
   return (
-    <form onSubmit={submit} className="mb-5 flex flex-col gap-3 rounded-md border border-[var(--pg-border)] p-4">
+    <form onSubmit={submit} className="mb-5 flex flex-col gap-3 rounded-[22px] bg-[var(--pg-card)] p-4 ring-1 ring-[var(--pg-border)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-semibold">{t("Your rating")}</span>
         <StarPicker value={rating} onChange={setRating} label={t("Rating")} />
@@ -675,9 +609,9 @@ function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; preview:
       <input className="hidden" tabIndex={-1} autoComplete="off" aria-hidden value={trap} onChange={(e) => setTrap(e.target.value)} name="company" />
       {error && <p className="text-sm text-[#c2410c]">{error}</p>}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="h-10 rounded-md border border-[var(--pg-border)] px-4 text-sm font-medium">{t("Cancel")}</button>
+        <button type="button" onClick={onClose} className="h-10 rounded-full bg-[var(--pg-field)] px-5 text-sm font-medium">{t("Cancel")}</button>
         <button type="submit" disabled={sending}
-          className="h-10 rounded-md bg-[var(--pg-accent)] px-5 text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60">
+          className="h-10 rounded-full bg-[var(--pg-accent)] px-5 text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60">
           {sending ? t("Sending...") : t("Publish review")}
         </button>
       </div>

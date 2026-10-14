@@ -1,6 +1,7 @@
 "use client"
 
-import { PageView } from "@/components/page/PageView"
+import { SalonPage } from "@/components/booking/SalonPage"
+import type { PageEditTarget } from "@/components/page/PageView"
 import type { PageData, PageReview } from "@/lib/page"
 import { useT } from "@/lib/i18n"
 import type { CrmNiche } from "@/lib/niches"
@@ -13,7 +14,7 @@ export const NICHE_COVER: Record<CrmNiche, string> = {
   cakes: "linear-gradient(135deg,#f7eadb,#f3e3ea)",
 }
 
-/** A beauty or cake business's page: the Link page in its own design, its booking in a sheet behind one button. */
+/** A beauty or cake business's page: the Link page in its own design, in the app's Apple look, its booking in a sheet. */
 export function BookingPage({ data, slug, reviews, isOrder, niche, booking, preview, onEdit }: {
   data: PageData
   niche: CrmNiche
@@ -22,11 +23,11 @@ export function BookingPage({ data, slug, reviews, isOrder, niche, booking, prev
   isOrder: boolean
   booking: React.ReactNode
   preview?: boolean
-  onEdit?: React.ComponentProps<typeof PageView>["onEdit"]
+  onEdit?: (target: PageEditTarget) => void
 }) {
   const { t } = useT()
   return (
-    <PageView data={data} slug={slug} reviews={reviews} preview={preview} onEdit={onEdit}
+    <SalonPage data={data} slug={slug} reviews={reviews} preview={preview} onEdit={onEdit}
       booking={{ label: isOrder ? t("Order") : t("Booking"), button: isOrder ? t("Place the order") : t("Book now"), node: booking, face: `/niches/${niche}.svg`, cover: NICHE_COVER[niche] }} />
   )
 }
