@@ -25,6 +25,7 @@ import {
   ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_CREDENTIALS, MAX_LINKS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
   normalizeSlug, pagePath, slugProblem, suggestSlug, type ButtonShape, type PageBusiness, type PageContacts, type PageData,
   type PageReview,
+  pageContactHref,
 } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
@@ -338,6 +339,8 @@ export default function PageEditor() {
                           className={`relative flex size-9 items-center justify-center rounded-full transition-colors hover:bg-hover [&_svg]:size-[24px] [&_svg]:stroke-[1.75] ${data.contacts[key] ? "text-foreground" : "text-muted-foreground"}`}>
                           {CONTACT_ICON[key]}
                           {!data.contacts[key] && <span className="absolute top-0.5 right-0.5 flex size-3 items-center justify-center rounded-full bg-card text-[11px] leading-none font-bold text-foreground">+</span>}
+                          {/* filled in, but no link can be made of it: it won't show as a button on the page */}
+                          {data.contacts[key] && !pageContactHref(key, data.contacts[key]!) && <span className="absolute top-0.5 right-0.5 flex size-3.5 items-center justify-center rounded-full bg-destructive text-[10px] leading-none font-bold text-white">!</span>}
                         </button>
                       ))}
                       <button type="button" title={t("All contacts")} onClick={() => setContactModal("pick")} className="ml-1 flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-hover-strong"><PlusIcon className="size-[18px]" /></button>
@@ -784,6 +787,8 @@ function ContactModal({ state, contacts, onPick, onBack, onClose, onSave }: {
   const name = editing ? t(CONTACT_LABEL[editing.key]) : ""
   const title = !editing ? t("Add icon") : current ? t("Edit {name} icon", { name }) : t("Add {name} icon", { name })
   const iconBtn = "flex size-9 items-center justify-center rounded-full hover:bg-hover"
+  // empty is fine (nothing typed yet); anything typed must make a working link
+  const valid = !editing || !value.trim() || !!pageContactHref(editing.key, value)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={onClose}>
@@ -807,14 +812,17 @@ function ContactModal({ state, contacts, onPick, onBack, onClose, onSave }: {
             ))}
           </div>
         ) : (
-          <form className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (value.trim()) onSave(editing.key, value.trim()) }}>
+          <form className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (value.trim() && valid) onSave(editing.key, value.trim()) }}>
             <div className="flex flex-col gap-2">
               <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder={t(CONTACT_PROMPT[editing.key]) + "*"}
                 aria-label={t(CONTACT_PROMPT[editing.key])} maxLength={120}
                 className="h-12 rounded-xl bg-muted px-4 text-[15px] outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-foreground/20" />
-              <p className="px-1.5 text-xs text-muted-foreground">{t("Example: {value}", { value: CONTACT_PLACEHOLDER[editing.key] })}</p>
+              {/* only what makes a working link is kept: clients tap it on the page */}
+              <p className={`px-1.5 text-xs ${valid ? "text-muted-foreground" : "text-destructive"}`}>
+                {valid ? t("Example: {value}", { value: CONTACT_PLACEHOLDER[editing.key] }) : t("This won't open as {name}. Example: {value}", { name, value: CONTACT_PLACEHOLDER[editing.key] })}
+              </p>
             </div>
-            <button type="submit" disabled={!value.trim() || value.trim() === current}
+            <button type="submit" disabled={!value.trim() || !valid || value.trim() === current}
               className="h-12 rounded-full bg-primary text-[15px] font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
               {current ? t("Save") : t("Add")}
             </button>
