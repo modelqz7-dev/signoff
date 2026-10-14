@@ -204,7 +204,7 @@ function Card({ entry: e, km }: { entry: CatalogEntry; km?: number | null }) {
   const city = cityById(e.city) ?? regionById(e.region)
   const config = NICHES.find((n) => n.id === e.niche)!
   return (
-    <Link href={pagePath(e.slug)} className="group flex shrink-0 flex-col overflow-hidden rounded-[24px] apple-card transition-transform duration-300 hover:-translate-y-0.5">
+    <Link href={pagePath(e.slug)} className="group flex shrink-0 flex-col overflow-hidden rounded-[24px] apple-card">
       <div className="relative h-36" style={{ background: COVER[e.niche] }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {e.cover && <img src={e.cover} alt="" loading="lazy" className="size-full object-cover" />}
