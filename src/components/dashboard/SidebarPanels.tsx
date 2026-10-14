@@ -288,7 +288,7 @@ function ProfilePanel() {
               await resetNiche(shop.id)
               // fade the app out, then the business picker fades in
               document.body.appendChild(Object.assign(document.createElement("div"), { className: "fixed inset-0 z-[100] bg-background animate-in fade-in duration-300" }))
-              window.setTimeout(() => window.location.replace("/dashboard"), 320)
+              window.setTimeout(() => window.location.replace("/welcome"), 320)
             } catch (e) {
               setStatus({ ok: false, text: (e as Error).message })
               setSwitching(false)
