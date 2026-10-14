@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon, PlusIcon, Trash2Icon, XIcon,
+  ArrowDownIcon, ArrowUpIcon, CheckIcon, LocateFixedIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon, PlusIcon, Trash2Icon, XIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ import {
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { cleanBooking } from "@/lib/booking"
-import { CITIES, UKRAINE, cityById } from "@/lib/cities"
+import { CITIES, REGIONS, UKRAINE, cityById, nearestCity, regionById } from "@/lib/cities"
 import dynamic from "next/dynamic"
 
 // the map loads only when the catalog block opens
@@ -152,6 +152,18 @@ export default function PageEditor() {
 
   function update(patch: Partial<PageData>) {
     setData((d) => (d ? { ...d, ...patch } : d))
+    setSave("dirty")
+  }
+
+  /** A new pin: with no town picked yet, the nearest one (and its region) is filled in. */
+  function placePin(geo: { lat: number; lng: number }) {
+    setData((d) => {
+      if (!d) return d
+      if (d.city) return { ...d, geo }
+      const near = nearestCity(geo)
+      const region = near?.region ?? nearestCity(geo, 120)?.region ?? d.region
+      return { ...d, geo, city: near && (!d.region || near.region === d.region) ? near.id : "", region: d.region || region }
+    })
     setSave("dirty")
   }
 
@@ -564,23 +576,36 @@ export default function PageEditor() {
                 {salon && (
                   <Block title={t("Nodly catalog")} hint={t("People look for masters by trade and city on nodly. Your page shows there only if you turn it on.")}>
                     <Toggle checked={data.listed} onChange={(v) => update({ listed: v })} label={t("Show my page in the catalog")} />
-                    <Field label={t("City")}>
-                      <Picker value={data.city || "none"} onChange={(v) => update({ city: v === "none" ? "" : v })} label={t("City")}
-                        options={[{ value: "none", label: t("Not chosen") }, ...CITIES.map((c) => ({ value: c.id, label: c[lang] }))]} />
-                    </Field>
-                    {data.listed && !data.city && <p className="text-[12.5px] text-muted-foreground">{t("Pick a city so clients nearby find you.")}</p>}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label={t("Region")}>
+                        <Picker value={data.region || "none"} label={t("Region")}
+                          onChange={(v) => update({ region: v === "none" ? "" : v, city: cityById(data.city)?.region === v ? data.city : "" })}
+                          options={[{ value: "none", label: t("Not chosen") }, ...[...REGIONS].sort((x, y) => x[lang].localeCompare(y[lang], locale)).map((r) => ({ value: r.id, label: r[lang] }))]} />
+                      </Field>
+                      <Field label={t("Town")}>
+                        <Picker value={data.city || "none"} label={t("Town")}
+                          onChange={(v) => update(v === "none" ? { city: "" } : { city: v, region: cityById(v)!.region })}
+                          options={[{ value: "none", label: data.region ? t("Another town") : t("Not chosen") },
+                            ...CITIES.filter((c) => !data.region || c.region === data.region).sort((x, y) => x[lang].localeCompare(y[lang], locale)).map((c) => ({ value: c.id, label: c[lang] }))]} />
+                      </Field>
+                    </div>
+                    {data.listed && !data.region && <p className="text-[12.5px] text-muted-foreground">{t("Pick a region so clients nearby find you.")}</p>}
                     <Field label={t("Pin on the map")}>
-                      <MapView className="h-60 w-full overflow-hidden rounded-2xl"
-                        center={data.geo ?? cityById(data.city) ?? UKRAINE} zoom={data.geo ? 15 : data.city ? 11 : UKRAINE.zoom}
-                        picker={{ value: data.geo, onChange: (geo) => update({ geo }) }} />
+                      <MapView className="h-64 w-full overflow-hidden rounded-2xl"
+                        center={data.geo ?? cityById(data.city) ?? regionById(data.region) ?? UKRAINE}
+                        zoom={data.geo ? 15 : data.city ? 11 : data.region ? (data.region === "kyiv-city" ? 10 : 7.5) : UKRAINE.zoom}
+                        picker={{ value: data.geo, onChange: placePin }} />
                     </Field>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button size="sm" variant="outline" className={PILL} onPress={() => navigator.geolocation?.getCurrentPosition(
-                        (pos) => update({ geo: { lat: pos.coords.latitude, lng: pos.coords.longitude } }),
-                        () => setSaveError(t("Couldn't get your location. Click the map instead.")))}>{t("I'm here now")}</Button>
+                        (pos) => placePin({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        () => setSaveError(t("Couldn't get your location. Click the map instead.")))}><LocateFixedIcon className="size-4" />{t("I'm here now")}</Button>
                       {data.geo && <Button size="sm" variant="ghost" className={PILL} onPress={() => update({ geo: null })}>{t("Remove the pin")}</Button>}
-                      <span className="text-[12.5px] text-muted-foreground">{data.geo ? t("Drag the pin to move it.") : t("Click the map where you work.")}</span>
                     </div>
+                    <p className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] ${data.geo ? "bg-[var(--status-approved)]/10 text-foreground" : "bg-foreground/[0.04] text-muted-foreground"}`}>
+                      <MapPinIcon className={`size-4 shrink-0 ${data.geo ? "text-[#ff3b30]" : ""}`} />
+                      {data.geo ? t("Your pin is set: clients see you on the catalog map. Drag it to move it.") : t("Tap the map where you work, or press “I'm here now”.")}
+                    </p>
                     {data.listed && !published && <p className="text-[12.5px] text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
                     <a href="/catalog" target="_blank" rel="noopener" className="text-[14px] font-medium underline underline-offset-2">{t("Open the catalog")}</a>
                   </Block>

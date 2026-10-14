@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 // fresh on every visit: a business that turns the catalog on shows up at once
 export const dynamic = "force-dynamic"
 
-type Props = { searchParams: Promise<{ niche?: string; city?: string }> }
+type Props = { searchParams: Promise<{ niche?: string; city?: string; region?: string }> }
 
 export default async function CatalogPage({ searchParams }: Props) {
   const [entries, params] = await Promise.all([loadCatalog(), searchParams])
-  return <CatalogView entries={entries} initialNiche={params.niche ?? ""} initialCity={params.city ?? ""} />
+  return <CatalogView entries={entries} initialNiche={params.niche ?? ""} initialCity={params.city ?? ""} initialRegion={params.region ?? ""} />
 }

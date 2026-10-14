@@ -9,7 +9,7 @@ import { NICHE_COVER } from "@/components/booking/BookingPage"
 import { WorkshopFooter } from "@/components/landing/WorkshopSections"
 import { NicheIcon } from "@/components/crm/NicheIcon"
 import { Picker } from "@/components/crm/Pickers"
-import { CITIES, UKRAINE, cityById, distanceKm } from "@/lib/cities"
+import { CITIES, REGIONS, UKRAINE, cityById, distanceKm, regionById } from "@/lib/cities"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { pagePath } from "@/lib/page"
 import { supabase } from "@/lib/supabase"
@@ -26,12 +26,13 @@ const H = "font-semibold tracking-[-0.035em] text-foreground"
 const COVER = NICHE_COVER
 
 /** Nodly's catalog: businesses that chose to be found, by trade and city, each a step from booking. */
-export function CatalogView({ entries, initialNiche, initialCity }: { entries: CatalogEntry[]; initialNiche: string; initialCity: string }) {
+export function CatalogView({ entries, initialNiche, initialCity, initialRegion }: { entries: CatalogEntry[]; initialNiche: string; initialCity: string; initialRegion: string }) {
   const { t, lang } = useT()
   const [signedIn, setSignedIn] = useState(false)
   useEffect(() => { supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session)) }, [])
   const [niche, setNiche] = useState<CrmNiche | "">(NICHES.some((n) => n.id === initialNiche) ? (initialNiche as CrmNiche) : "")
   const [city, setCity] = useState(cityById(initialCity) ? initialCity : "")
+  const [region, setRegion] = useState(cityById(initialCity)?.region ?? (regionById(initialRegion) ? initialRegion : ""))
   const [q, setQ] = useState("")
   const [view, setView] = useState<"list" | "map">("list")
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null)
@@ -44,7 +45,7 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
     setLocating(true)
     setLocError(false)
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setCity(""); setLocating(false) },
+      (pos) => { setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setCity(""); setRegion(""); setLocating(false) },
       () => { setLocError(true); setLocating(false) },
       { enableHighAccuracy: false, timeout: 10000 },
     )
@@ -53,28 +54,34 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
   // the filters live in the address too, so a search can be shared
   useEffect(() => {
     const u = new URL(window.location.href)
-    for (const [k, v] of [["niche", niche], ["city", city]] as const) { if (v) u.searchParams.set(k, v); else u.searchParams.delete(k) }
+    for (const [k, v] of [["niche", niche], ["region", city ? "" : region], ["city", city]] as const) { if (v) u.searchParams.set(k, v); else u.searchParams.delete(k) }
     window.history.replaceState(null, "", u.pathname + u.search)
-  }, [niche, city])
+  }, [niche, region, city])
 
-  // cities that have someone listed, the most populated first
+  // regions and towns that have someone listed, the most populated first
+  const regions = useMemo(() => {
+    const count = new Map<string, number>()
+    for (const e of entries) if (e.region) count.set(e.region, (count.get(e.region) ?? 0) + 1)
+    return REGIONS.filter((x) => count.has(x.id)).sort((a, b) => count.get(b.id)! - count.get(a.id)!)
+  }, [entries])
   const cities = useMemo(() => {
     const count = new Map<string, number>()
-    for (const e of entries) if (e.city) count.set(e.city, (count.get(e.city) ?? 0) + 1)
+    for (const e of entries) if (e.city && (!region || e.region === region)) count.set(e.city, (count.get(e.city) ?? 0) + 1)
     return CITIES.filter((c) => count.has(c.id)).sort((a, b) => count.get(b.id)! - count.get(a.id)!)
-  }, [entries])
+  }, [entries, region])
   // where each one is: its pin, or else its city's centre
-  const where = (e: CatalogEntry) => e.geo ?? cityById(e.city)
+  const where = (e: CatalogEntry) => e.geo ?? cityById(e.city) ?? regionById(e.region)
   const km = (e: CatalogEntry) => { const w = where(e); return me && w ? distanceKm(me, w) : null }
-  const shown = entries.filter((e) => (!niche || e.niche === niche) && (!city || e.city === city)
+  const shown = entries.filter((e) => (!niche || e.niche === niche) && (!region || e.region === region) && (!city || e.city === city)
     && (!q.trim() || `${e.title} ${e.category}`.toLowerCase().includes(q.trim().toLowerCase())))
   // near me: the closest first, those with no place at the end
   if (me) shown.sort((a, b) => (km(a) ?? 1e9) - (km(b) ?? 1e9))
   const points = shown.flatMap((e) => (e.geo ? [{ id: e.slug, lat: e.geo.lat, lng: e.geo.lng, image: e.avatar, niche: e.niche, label: e.title }] : []))
   const pickedEntry = shown.find((e) => e.slug === picked) ?? null
   const cityInfo = cityById(city)
-  const focus = pickedEntry?.geo ?? me ?? cityInfo ?? UKRAINE
-  const focusZoom = pickedEntry?.geo ? 14 : me ? 12 : cityInfo ? 11 : UKRAINE.zoom
+  const regionInfo = regionById(region)
+  const focus = pickedEntry?.geo ?? me ?? cityInfo ?? regionInfo ?? UKRAINE
+  const focusZoom = pickedEntry?.geo ? 14 : me ? 12 : cityInfo ? 11 : regionInfo ? (region === "kyiv-city" ? 10 : 7.5) : UKRAINE.zoom
   const tabs: { id: CrmNiche | ""; label: string }[] = [
     { id: "", label: t("Everyone") }, { id: "nails", label: t("Nails") }, { id: "barber", label: t("Barbershop") }, { id: "cakes", label: t("Cakes") },
   ]
@@ -98,10 +105,16 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
             ))}
           </div>
           <div className="flex flex-1 flex-wrap gap-3">
-            <div className="w-44 shrink-0">
-              <Picker value={city || "all"} onChange={(v) => setCity(v === "all" ? "" : v)} label={t("City")}
-                options={[{ value: "all", label: t("All cities") }, ...cities.map((c) => ({ value: c.id, label: c[lang] }))]} />
+            <div className="w-52 shrink-0">
+              <Picker value={region || "all"} onChange={(v) => { setRegion(v === "all" ? "" : v); setCity("") }} label={t("Region")}
+                options={[{ value: "all", label: t("All regions") }, ...regions.map((x) => ({ value: x.id, label: x[lang] }))]} />
             </div>
+            {cities.length > 0 && (
+              <div className="w-44 shrink-0">
+                <Picker value={city || "all"} onChange={(v) => { setCity(v === "all" ? "" : v); if (v !== "all") setRegion(cityById(v)!.region) }} label={t("Town")}
+                  options={[{ value: "all", label: t("All towns") }, ...cities.map((c) => ({ value: c.id, label: c[lang] }))]} />
+              </div>
+            )}
             <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-foreground/[0.05] px-3 ring-1 ring-transparent focus-within:ring-foreground/25">
               <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Name or what they do")} aria-label={t("Search")}
@@ -141,7 +154,7 @@ export function CatalogView({ entries, initialNiche, initialCity }: { entries: C
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-semibold">{e.title}</span>
                     <span className="block truncate text-[13px] text-muted-foreground">
-                      {[e.rating != null ? `★ ${e.rating.toFixed(1)}` : "", km(e) != null ? kmLabel(km(e)!, t) : cityById(e.city)?.[lang] ?? "", !e.geo ? t("no pin") : ""].filter(Boolean).join(" · ")}
+                      {[e.rating != null ? `★ ${e.rating.toFixed(1)}` : "", km(e) != null ? kmLabel(km(e)!, t) : (cityById(e.city) ?? regionById(e.region))?.[lang] ?? "", !e.geo ? t("no pin") : ""].filter(Boolean).join(" · ")}
                     </span>
                   </span>
                 </button>
@@ -188,7 +201,7 @@ function kmLabel(km: number, t: ReturnType<typeof useT>["t"]) {
 
 function Card({ entry: e, km }: { entry: CatalogEntry; km?: number | null }) {
   const { t, lang } = useT()
-  const city = cityById(e.city)
+  const city = cityById(e.city) ?? regionById(e.region)
   const config = NICHES.find((n) => n.id === e.niche)!
   return (
     <Link href={pagePath(e.slug)} className="group flex shrink-0 flex-col overflow-hidden rounded-[24px] apple-card transition-transform duration-300 hover:-translate-y-0.5">

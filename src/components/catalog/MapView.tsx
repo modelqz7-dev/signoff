@@ -30,6 +30,14 @@ function pin(p: MapPoint, selected: boolean) {
   return el
 }
 
+/** The owner's own pin in the editor: a red map pin that stands out on the light and the dark map. */
+function ownPin() {
+  const el = document.createElement("div")
+  el.style.cssText = "width:34px;height:44px;cursor:grab;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))"
+  el.innerHTML = '<svg viewBox="0 0 34 44" width="34" height="44"><path d="M17 43C17 43 32 27.6 32 16.5A15 15 0 0 0 2 16.5C2 27.6 17 43 17 43Z" fill="#ff3b30" stroke="#fff" stroke-width="2.5"/><circle cx="17" cy="16.5" r="5.5" fill="#fff"/></svg>'
+  return el
+}
+
 export function MapView({ center, zoom, points = [], selected, onSelect, me, picker, className }: {
   center: LatLng
   zoom: number
@@ -94,7 +102,7 @@ export function MapView({ center, zoom, points = [], selected, onSelect, me, pic
       markers.current.push(new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(m))
     }
     if (picker?.value) {
-      const mk = new maplibregl.Marker({ color: "#1d1d1f", draggable: true }).setLngLat([picker.value.lng, picker.value.lat]).addTo(m)
+      const mk = new maplibregl.Marker({ element: ownPin(), anchor: "bottom", draggable: true }).setLngLat([picker.value.lng, picker.value.lat]).addTo(m)
       mk.on("dragend", () => { const { lat, lng } = mk.getLngLat(); pickerRef.current?.onChange({ lat, lng }) })
       markers.current.push(mk)
     }
