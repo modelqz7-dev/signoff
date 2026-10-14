@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
-import { AvatarPlaceholder, Block, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
+import { AvatarPlaceholder, Block, FILLED, FILLED_AREA, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { uploadPublicAsset } from "@/lib/files"
 import { shrinkImage } from "@/lib/image"
@@ -30,7 +30,7 @@ import dynamic from "next/dynamic"
 
 // the map loads only when the catalog block opens
 const MapView = dynamic(() => import("@/components/catalog/MapView").then((m) => m.MapView), { ssr: false, loading: () => <div className="h-60 w-full animate-pulse rounded-xl bg-muted" /> })
-import { Picker } from "@/components/crm/Pickers"
+import { Picker, TimePicker, Toggle as Switch } from "@/components/crm/Pickers"
 import { BookingPage } from "@/components/booking/BookingPage"
 import { PublicBooking, type PublicService } from "@/components/booking/PublicBooking"
 
@@ -51,10 +51,10 @@ const BUSINESS_PLACEHOLDER: Record<keyof PageBusiness, string> = {
 }
 
 /** Hints for a beauty or cake business, in place of the agency ones above. */
-const SALON_HINTS: Record<CrmNiche, { work: string; category: string; tagline: string; bio: string }> = {
-  nails: { work: "e.g. Nude manicure with a pattern", category: "Manicure and pedicure", tagline: "Nail master · Kyiv, Podil", bio: "e.g. Studio at Khreshchatyk 10, 2nd floor. Sterile tools, coffee included." },
-  barber: { work: "e.g. Fade with a beard trim", category: "Barbershop", tagline: "Men's haircuts · Lviv, centre", bio: "e.g. Haircuts, beards and hot towel shaves. Coffee or a drink while you wait." },
-  cakes: { work: "e.g. Bento cake for a birthday", category: "Cakes to order", tagline: "Home bakery · Odesa", bio: "e.g. Cakes from natural ingredients. Pickup at Lvivska 12 or delivery around the city." },
+const SALON_HINTS: Record<CrmNiche, { work: string; category: string; tagline: string; bio: string; team: string; payment: string }> = {
+  nails: { work: "e.g. Nude manicure with a pattern", category: "Manicure and pedicure", tagline: "Nail master · Kyiv, Podil", bio: "e.g. Studio at Khreshchatyk 10, 2nd floor. Sterile tools, coffee included.", team: "2 nail masters", payment: "Cash or card" },
+  barber: { work: "e.g. Fade with a beard trim", category: "Barbershop", tagline: "Men's haircuts · Lviv, centre", bio: "e.g. Haircuts, beards and hot towel shaves. Coffee or a drink while you wait.", team: "3 barbers", payment: "Cash or card" },
+  cakes: { work: "e.g. Bento cake for a birthday", category: "Cakes to order", tagline: "Home bakery · Odesa", bio: "e.g. Cakes from natural ingredients. Pickup at Lvivska 12 or delivery around the city.", team: "Just me", payment: "50% upfront, the rest on pickup" },
 }
 const SALON_BUSINESS: (keyof PageBusiness)[] = ["since", "team", "address", "payment"]
 
@@ -310,12 +310,12 @@ export default function PageEditor() {
                     <a href={pagePath(savedSlug)} target="_blank" rel="noopener" className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium hover:bg-hover"><ExternalLinkIcon className="size-4" />{t("Open page")}</a>
                     <Button variant="outline" size="sm" className="h-8" onPress={() => persist(false)}>{t("Hide page")}</Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>
+                  <p className="text-[12.5px] text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>
                 </>
               ) : (
                 <>
                   <p className="text-sm font-medium">{t("Publish your page to share it")}</p>
-                  <p className="text-xs text-muted-foreground">{t("Until then only you can see it here.")}</p>
+                  <p className="text-[12.5px] text-muted-foreground">{t("Until then only you can see it here.")}</p>
                   <Button onPress={async () => { if (await persist(true)) setShareOpen(true) }} isDisabled={slug.status !== "ok"}>{t("Publish")}</Button>
                   {slug.status !== "ok" && <p className="text-xs text-destructive">{t("Choose a free page address first")}</p>}
                 </>
@@ -341,7 +341,7 @@ export default function PageEditor() {
           ] as [Section, string, React.ReactNode][]).map(([id, label, icon]) => (
             <button key={id} type="button" onClick={() => setSection(id)} aria-label={label}
               className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm lg:flex-col lg:gap-1.5 lg:rounded-none lg:px-0 lg:py-0 lg:text-xs ${id === "settings" ? "lg:absolute lg:bottom-4" : ""}`}>
-              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-primary lg:text-primary-foreground lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
+              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-foreground lg:text-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
               <span className={`${section === id ? "font-medium text-foreground" : "text-muted-foreground lg:text-foreground"} ${id === "settings" ? "lg:hidden" : ""}`}>{label}</span>
             </button>
           ))}
@@ -351,7 +351,7 @@ export default function PageEditor() {
         {/* The white panel: 851×856 on a full-size screen, scrolls inside */}
         <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:mt-[10px] lg:h-[calc(100dvh-88px)] lg:w-[851px] lg:max-w-[851px] lg:flex-none lg:overflow-y-auto lg:rounded-t-[32px] lg:bg-card lg:px-8 lg:pt-12 lg:pb-10 lg:ring-1 lg:ring-foreground/10">
           <div className="mx-auto flex w-full max-w-[580px] flex-col gap-4">
-            {section === "content" && <h2 className="hidden text-xl font-bold lg:block">{t("Content")}</h2>}
+            <h1 className="hidden text-[28px] leading-tight font-semibold tracking-[-0.02em] lg:block">{{ content: t("Content"), header: t("Header"), design: t("Look"), settings: t("Settings") }[section]}</h1>
             {section === "content" && (
               <>
                 <div className="flex items-center gap-4">
@@ -373,11 +373,11 @@ export default function PageEditor() {
                   </div>
                 </div>
 
-                <div className="-mx-3 flex gap-5 overflow-x-auto border-b border-border px-3 text-sm whitespace-nowrap no-scrollbar sm:mx-0 sm:px-0">
+                <div className="flex gap-1 overflow-x-auto rounded-full bg-foreground/[0.05] p-1 text-[13.5px] whitespace-nowrap no-scrollbar">
                   {(([["projects", salon ? t("Work") : t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][])
                     .filter(([id]) => !salon || (id !== "services" && id !== "credentials"))).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
-                      className={`-mb-px shrink-0 border-b-2 px-1 pb-2.5 ${tab === id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                      className={`h-8 flex-1 shrink-0 rounded-full px-3 transition-colors ${tab === id ? "bg-card font-medium shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muted-foreground hover:text-foreground"}`}>
                       {label}
                     </button>
                   ))}
@@ -433,7 +433,7 @@ export default function PageEditor() {
                         <Input aria-label={t("City")} placeholder={t("City")} value={p.city} maxLength={60}
                           className="h-8 border-none px-0 text-sm shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { city: e.target.value })} />
                         <Textarea aria-label={t("Description")} placeholder={t("The task, what you did, the result…")} value={p.description} maxLength={1000}
-                          className="min-h-16 text-sm" onChange={(e) => updateProject(i, { description: e.target.value })} />
+                          className={`min-h-16 ${FILLED_AREA}`} onChange={(e) => updateProject(i, { description: e.target.value })} />
                         <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
                           {p.photos.map((src, k) => (
                             <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
@@ -446,7 +446,7 @@ export default function PageEditor() {
                           {p.photos.length < MAX_PROJECT_PHOTOS && (
                             <FileButton multiple busy={uploading === `project-${i}`} label={t("Add photos")}
                               onFiles={(files) => addProjectPhotos(i, files.slice(0, MAX_PROJECT_PHOTOS - p.photos.length))}
-                              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:bg-hover disabled:opacity-60">
+                              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-foreground/[0.05] text-xs text-muted-foreground hover:bg-hover disabled:opacity-60">
                               <ImagePlusIcon className="size-4" />{uploading === `project-${i}` ? "…" : t("Photos")}
                             </FileButton>
                           )}
@@ -488,13 +488,13 @@ export default function PageEditor() {
                     <p className="text-sm text-muted-foreground">{t("Clients write reviews themselves on your page and they show at once. You can delete any of them.")}</p>
                     {reviews.length === 0 && <Empty title={t("No reviews yet")} text={t("Send your page to happy clients and ask them to leave a review.")} />}
                     {reviews.map((r) => (
-                      <div key={r.id} className="flex flex-col gap-1.5 rounded-2xl p-4 ring-1 ring-foreground/10">
+                      <div key={r.id} className="flex flex-col gap-1.5 rounded-[22px] apple-card p-4">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-sm font-semibold">{r.name} <span className="ml-1 text-[#f5a524]">{"★".repeat(r.rating)}<span className="text-foreground/15">{"★".repeat(5 - r.rating)}</span></span></span>
                           <IconBtn label={t("Delete")} onClick={() => { if (window.confirm(t("Delete this review?"))) deleteReview(r.id) }}><Trash2Icon /></IconBtn>
                         </div>
                         <p className="text-sm whitespace-pre-line">{r.text}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</p>
+                        <p className="text-[12.5px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</p>
                       </div>
                     ))}
                   </>
@@ -508,10 +508,10 @@ export default function PageEditor() {
                   <ImagePick label={t("Photo or logo")} src={data.avatar_url} round busy={uploading === "avatar"} onPick={(f) => upload(f, "avatar")} onClear={() => update({ avatar_url: null })} />
                   <ImagePick label={t("Cover")} src={data.banner_url} wide busy={uploading === "banner"} onPick={(f) => upload(f, "banner")} onClear={() => update({ banner_url: null })} />
                 </div>
-                <Field label={t("Name")}><Input value={data.title} maxLength={80} onChange={(e) => update({ title: e.target.value })} /></Field>
-                <Field label={t("Category")}><Input value={data.category} placeholder={t(hints?.category ?? "Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
-                <Field label={t("One line about you")}><Input value={data.tagline} placeholder={t(hints?.tagline ?? "SMM specialist · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
-                <Field label={t("About")}><Textarea value={data.bio} placeholder={t(hints?.bio ?? "What you make, how you work, what clients love.")} maxLength={2000} className="min-h-28" onChange={(e) => update({ bio: e.target.value })} /></Field>
+                <Field label={t("Name")}><Input value={data.title} maxLength={80} className={FILLED} onChange={(e) => update({ title: e.target.value })} /></Field>
+                <Field label={t("Category")}><Input value={data.category} className={FILLED} placeholder={t(hints?.category ?? "Instagram and TikTok for local businesses")} maxLength={80} onChange={(e) => update({ category: e.target.value })} /></Field>
+                <Field label={t("One line about you")}><Input value={data.tagline} className={FILLED} placeholder={t(hints?.tagline ?? "SMM specialist · Austin")} maxLength={120} onChange={(e) => update({ tagline: e.target.value })} /></Field>
+                <Field label={t("About")}><Textarea value={data.bio} placeholder={t(hints?.bio ?? "What you make, how you work, what clients love.")} maxLength={2000} className={`min-h-28 ${FILLED_AREA}`} onChange={(e) => update({ bio: e.target.value })} /></Field>
               </Block>
             )}
 
@@ -520,43 +520,42 @@ export default function PageEditor() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   {BUSINESS_KEYS.filter((key) => key !== "areas" && (!salon || SALON_BUSINESS.includes(key))).map((key) => (
                     <Field key={key} label={t(BUSINESS_FIELDS[key].label)}>
-                      <Input value={data.business[key]} placeholder={t(BUSINESS_PLACEHOLDER[key])} maxLength={160}
+                      <Input value={data.business[key]} placeholder={t((key === "team" || key === "payment") && hints ? hints[key] : BUSINESS_PLACEHOLDER[key])} maxLength={160} className={FILLED}
                         onChange={(e) => update({ business: { ...data.business, [key]: e.target.value } })} />
                     </Field>
                   ))}
                 </div>
                 {!salon && <><Field label={t("Where you work")}>
-                  <Textarea value={data.business.areas} placeholder={t(BUSINESS_PLACEHOLDER.areas)} maxLength={300} className="min-h-16"
+                  <Textarea value={data.business.areas} placeholder={t(BUSINESS_PLACEHOLDER.areas)} maxLength={300} className={`min-h-16 ${FILLED_AREA}`}
                     onChange={(e) => update({ business: { ...data.business, areas: e.target.value } })} />
                 </Field>
-                <p className="-mt-1 text-xs text-muted-foreground">{t("Separate cities and districts with commas: they show as a list.")}</p></>}
+                <p className="-mt-2 text-[12.5px] text-muted-foreground">{t("Separate cities and districts with commas: they show as a list.")}</p></>}
               </Block>
             )}
 
             {section === "header" && (
               <Block title={t("Working hours")} hint={t("Clients see whether you're open right now.")}>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onPress={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 5 ? { from: "09:00", to: "18:00" } : null)) })}>{t("Mon–Fri 9–18")}</Button>
-                  <Button size="sm" variant="outline" onPress={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 6 ? { from: "09:00", to: i === 5 ? "15:00" : "18:00" } : null)) })}>{t("Mon–Sat")}</Button>
-                  {data.hours.some(Boolean) && <Button size="sm" variant="ghost" onPress={() => update({ hours: Array(7).fill(null) })}>{t("Clear")}</Button>}
+                  <button type="button" className={CHIP} onClick={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 5 ? { from: "09:00", to: "18:00" } : null)) })}>{t("Mon–Fri 9–18")}</button>
+                  <button type="button" className={CHIP} onClick={() => update({ hours: Array.from({ length: 7 }, (_, i) => (i < 6 ? { from: "09:00", to: i === 5 ? "15:00" : "18:00" } : null)) })}>{t("Mon–Sat")}</button>
+                  {data.hours.some(Boolean) && <button type="button" className={`${CHIP} bg-transparent text-muted-foreground`} onClick={() => update({ hours: Array(7).fill(null) })}>{t("Clear")}</button>}
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col divide-y divide-border">
                   {weekdays(locale, "long").map((day, i) => {
                     const d = data.hours[i]
                     const set = (v: { from: string; to: string } | null) => update({ hours: data.hours.map((x, j) => (j === i ? v : x)) })
                     return (
-                      <div key={i} className="flex items-center gap-3">
-                        <label className="flex w-36 shrink-0 items-center gap-2 text-sm capitalize">
-                          <input type="checkbox" checked={!!d} onChange={(e) => set(e.target.checked ? { from: "09:00", to: "18:00" } : null)} className="size-4 accent-[var(--primary)]" />
+                      <div key={i} className="flex min-h-14 items-center gap-3 py-1.5">
+                        <Switch checked={!!d} onChange={(on) => set(on ? { from: "09:00", to: "18:00" } : null)} className="w-36 shrink-0 text-[14px] capitalize sm:w-40">
                           {day}
-                        </label>
+                        </Switch>
                         {d ? (
-                          <span className="flex items-center gap-2 text-sm">
-                            <input type="time" value={d.from} onChange={(e) => e.target.value && set({ ...d, from: e.target.value })} className="h-8 rounded-md border border-input bg-transparent px-2" />
+                          <span className="flex flex-1 items-center gap-2 text-[14px] text-muted-foreground">
+                            <TimePicker value={d.from} onChange={(v) => v && set({ ...d, from: v })} label={t("From")} step={15} className="w-24" />
                             –
-                            <input type="time" value={d.to} onChange={(e) => e.target.value && set({ ...d, to: e.target.value })} className="h-8 rounded-md border border-input bg-transparent px-2" />
+                            <TimePicker value={d.to} onChange={(v) => v && set({ ...d, to: v })} label={t("Until")} step={15} className="w-24" />
                           </span>
-                        ) : <span className="text-sm text-muted-foreground">{t("Day off")}</span>}
+                        ) : <span className="text-[14px] text-muted-foreground">{t("Day off")}</span>}
                       </div>
                     )
                   })}
@@ -570,13 +569,13 @@ export default function PageEditor() {
                   <div className="grid grid-cols-2 gap-3">
                     {(["light", "dark"] as const).map((th) => (
                       <button key={th} type="button" onClick={() => update({ theme: th })}
-                        className={`flex flex-col gap-2 rounded-2xl p-2 text-sm ring-2 transition-colors ${data.theme === th ? "ring-foreground" : "ring-transparent hover:ring-border"}`}>
-                        <span className={`flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl ${th === "light" ? "bg-[#f6f5f3]" : "bg-[#191919]"}`}>
+                        className="flex flex-col items-center gap-2.5 text-[14px]">
+                        <span className={`flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-2xl ring-offset-2 ring-offset-card transition-shadow ${th === "light" ? "bg-[#f6f5f3] ring-1 ring-black/10" : "bg-[#191919] ring-1 ring-white/10"} ${data.theme === th ? "ring-2 ring-foreground" : ""}`}>
                           <span className={`size-6 rounded-full ${th === "light" ? "bg-[#d9d6d2]" : "bg-[#3a3836]"}`} />
                           <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#252525] ring-1 ring-white/10"}`} />
                           <span className={`h-3 w-20 rounded-full ${th === "light" ? "bg-white ring-1 ring-black/10" : "bg-[#252525] ring-1 ring-white/10"}`} />
                         </span>
-                        {th === "light" ? t("Light") : t("Dark")}
+                        <Choice on={data.theme === th}>{th === "light" ? t("Light") : t("Dark")}</Choice>
                       </button>
                     ))}
                   </div>
@@ -585,7 +584,7 @@ export default function PageEditor() {
                   <div className="flex flex-wrap gap-3">
                     {ACCENTS.map((a) => (
                       <button key={a} type="button" aria-label={a} onClick={() => update({ accent: a })}
-                        className={`size-9 rounded-full ring-offset-2 ring-offset-card ${data.accent === a ? "ring-2 ring-foreground" : ""}`} style={{ background: a }} />
+                        className="flex size-10 items-center justify-center rounded-full text-white ring-1 ring-foreground/10" style={{ background: a }}>{data.accent === a && <CheckIcon className="size-5" strokeWidth={2.5} />}</button>
                     ))}
                   </div>
                 </Block>
@@ -593,9 +592,11 @@ export default function PageEditor() {
                   <div className="grid grid-cols-3 gap-3">
                     {([["pill", "rounded-full", t("Round")], ["rounded", "rounded-xl", t("Soft")], ["square", "rounded-sm", t("Square")]] as [ButtonShape, string, string][]).map(([id, cls, label]) => (
                       <button key={id} type="button" onClick={() => update({ buttons: id })}
-                        className={`flex flex-col items-center gap-2 rounded-2xl p-3 text-sm ring-2 ${data.buttons === id ? "ring-foreground" : "ring-transparent hover:ring-border"}`}>
-                        <span className={`h-8 w-full bg-muted ring-1 ring-border ${cls}`} />
-                        {label}
+                        className="flex flex-col items-center gap-2.5 text-[14px]">
+                        <span className={`flex h-16 w-full items-center justify-center rounded-2xl bg-foreground/[0.05] ring-offset-2 ring-offset-card ${data.buttons === id ? "ring-2 ring-foreground" : ""}`}>
+                          <span className={`h-8 w-[70%] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.15)] ${cls}`} />
+                        </span>
+                        <Choice on={data.buttons === id}>{label}</Choice>
                       </button>
                     ))}
                   </div>
@@ -612,30 +613,30 @@ export default function PageEditor() {
                       <Picker value={data.city || "none"} onChange={(v) => update({ city: v === "none" ? "" : v })} label={t("City")}
                         options={[{ value: "none", label: t("Not chosen") }, ...CITIES.map((c) => ({ value: c.id, label: c[lang] }))]} />
                     </Field>
-                    {data.listed && !data.city && <p className="text-xs text-muted-foreground">{t("Pick a city so clients nearby find you.")}</p>}
+                    {data.listed && !data.city && <p className="text-[12.5px] text-muted-foreground">{t("Pick a city so clients nearby find you.")}</p>}
                     <Field label={t("Pin on the map")}>
-                      <MapView className="h-60 w-full overflow-hidden rounded-xl ring-1 ring-border"
+                      <MapView className="h-60 w-full overflow-hidden rounded-2xl"
                         center={data.geo ?? cityById(data.city) ?? UKRAINE} zoom={data.geo ? 15 : data.city ? 11 : UKRAINE.zoom}
                         picker={{ value: data.geo, onChange: (geo) => update({ geo }) }} />
                     </Field>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button size="sm" variant="outline" onPress={() => navigator.geolocation?.getCurrentPosition(
+                      <Button size="sm" variant="outline" className={PILL} onPress={() => navigator.geolocation?.getCurrentPosition(
                         (pos) => update({ geo: { lat: pos.coords.latitude, lng: pos.coords.longitude } }),
                         () => setSaveError(t("Couldn't get your location. Click the map instead.")))}>{t("I'm here now")}</Button>
-                      {data.geo && <Button size="sm" variant="ghost" onPress={() => update({ geo: null })}>{t("Remove the pin")}</Button>}
-                      <span className="text-xs text-muted-foreground">{data.geo ? t("Drag the pin to move it.") : t("Click the map where you work.")}</span>
+                      {data.geo && <Button size="sm" variant="ghost" className={PILL} onPress={() => update({ geo: null })}>{t("Remove the pin")}</Button>}
+                      <span className="text-[12.5px] text-muted-foreground">{data.geo ? t("Drag the pin to move it.") : t("Click the map where you work.")}</span>
                     </div>
-                    {data.listed && !published && <p className="text-xs text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
-                    <a href="/catalog" target="_blank" rel="noopener" className="text-sm font-medium underline underline-offset-2">{t("Open the catalog")}</a>
+                    {data.listed && !published && <p className="text-[12.5px] text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
+                    <a href="/catalog" target="_blank" rel="noopener" className="text-[14px] font-medium underline underline-offset-2">{t("Open the catalog")}</a>
                   </Block>
                 )}
                 <Block title={t("Page address")}>
-                  <div className="flex items-center rounded-lg border border-input focus-within:border-ring">
-                    <span className="shrink-0 pl-2.5 text-sm text-muted-foreground">{typeof window !== "undefined" ? window.location.host : ""}/@</span>
+                  <div className="flex h-11 items-center rounded-xl bg-foreground/[0.05] ring-1 ring-transparent focus-within:ring-foreground/25">
+                    <span className="shrink-0 pl-3 text-[14px] text-muted-foreground">{typeof window !== "undefined" ? window.location.host : ""}/@</span>
                     <input aria-label={t("Page address")} value={slug.slug} maxLength={30} onChange={(e) => changeSlug(e.target.value)}
-                      className="h-9 min-w-0 flex-1 bg-transparent pr-2.5 text-base outline-none md:text-sm" />
+                      className="h-11 min-w-0 flex-1 bg-transparent pr-3 text-base font-medium outline-none md:text-[14px]" />
                   </div>
-                  <p className={`text-xs ${slug.status === "ok" ? "text-[var(--status-approved)]" : slug.status === "checking" ? "text-muted-foreground" : "text-destructive"}`}>
+                  <p className={`text-[12.5px] ${slug.status === "ok" ? "text-[var(--status-approved)]" : slug.status === "checking" ? "text-muted-foreground" : "text-destructive"}`}>
                     {slug.status === "ok" ? (slug.slug === savedSlug ? t("This is your address") : t("Address is free"))
                       : slug.status === "checking" ? t("Checking...") : slug.status === "taken" ? t("This address is already taken") : t(slug.problem!)}
                   </p>
@@ -643,15 +644,15 @@ export default function PageEditor() {
                 {!salon && <Block title={t("Request form")}>
                   <Toggle checked={data.requests} onChange={(v) => update({ requests: v })} label={t("Clients can leave a request on the page")} />
                   {data.requests && (
-                    <Field label={t("Button text")}><Input value={data.cta} placeholder={t("Leave a request")} maxLength={40} onChange={(e) => update({ cta: e.target.value })} /></Field>
+                    <Field label={t("Button text")}><Input value={data.cta} className={FILLED} placeholder={t("Leave a request")} maxLength={40} onChange={(e) => update({ cta: e.target.value })} /></Field>
                   )}
-                  <p className="text-xs text-muted-foreground">{t("Requests arrive in Requests and in your Telegram or email notifications.")}</p>
+                  <p className="text-[12.5px] text-muted-foreground">{t("Requests arrive in Requests and in your Telegram or email notifications.")}</p>
                 </Block>}
                 <Block title={t("Contacts")} hint={t("Only filled ones show on the page.")}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {CONTACT_KEYS.map((key) => (
                       <Field key={key} label={t(CONTACT_LABEL[key])}>
-                        <Input value={data.contacts[key] ?? ""} placeholder={CONTACT_PLACEHOLDER[key]} maxLength={120}
+                        <Input value={data.contacts[key] ?? ""} className={FILLED} placeholder={CONTACT_PLACEHOLDER[key]} maxLength={120}
                           onChange={(e) => update({ contacts: { ...data.contacts, [key]: e.target.value } })} />
                       </Field>
                     ))}
@@ -659,8 +660,8 @@ export default function PageEditor() {
                 </Block>
                 <Block title={t("Visibility")}>
                   {published
-                    ? <div className="flex items-center justify-between gap-3"><span className="text-sm">{t("Your page is live")}</span><Button size="sm" variant="outline" onPress={() => persist(false)}>{t("Hide page")}</Button></div>
-                    : <div className="flex items-center justify-between gap-3"><span className="text-sm text-muted-foreground">{t("The page is hidden until you publish it.")}</span><Button size="sm" onPress={() => persist(true)} isDisabled={slug.status !== "ok"}>{t("Publish")}</Button></div>}
+                    ? <div className="flex items-center justify-between gap-3"><span className="text-[14px]">{t("Your page is live")}</span><Button size="sm" variant="outline" className={PILL} onPress={() => persist(false)}>{t("Hide page")}</Button></div>
+                    : <div className="flex items-center justify-between gap-3"><span className="text-[14px] text-muted-foreground">{t("The page is hidden until you publish it.")}</span><Button size="sm" className={PILL} onPress={() => persist(true)} isDisabled={slug.status !== "ok"}>{t("Publish")}</Button></div>}
                 </Block>
               </>
             )}
@@ -704,6 +705,19 @@ export default function PageEditor() {
   )
 }
 
+const CHIP = "h-8 rounded-full bg-foreground/[0.06] px-3.5 text-[13px] font-medium hover:bg-foreground/[0.1]"
+const PILL = "h-9 rounded-full px-4 text-[13.5px]"
+
+/** A tile's caption: a filled check beside the chosen one. */
+function Choice({ on, children }: { on: boolean; children: React.ReactNode }) {
+  return (
+    <span className={`flex items-center gap-1.5 ${on ? "font-medium" : "text-muted-foreground"}`}>
+      <span className={`flex size-[18px] items-center justify-center rounded-full ${on ? "bg-foreground text-background" : "ring-[1.5px] ring-foreground/25"}`}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
+      {children}
+    </span>
+  )
+}
+
 function AddButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
@@ -730,7 +744,7 @@ function ItemCard({ children, onUp, onDown, onRemove, first, last }: {
 }) {
   const { t } = useT()
   return (
-    <div className="flex items-start gap-2 rounded-2xl bg-card p-3 pl-4 ring-1 ring-foreground/10">
+    <div className="flex items-start gap-2 rounded-[22px] apple-card p-3 pl-4">
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       <div className="flex shrink-0 flex-col items-center sm:flex-row">
         <IconBtn label={t("Move up")} onClick={onUp} disabled={first}><ArrowUpIcon /></IconBtn>
