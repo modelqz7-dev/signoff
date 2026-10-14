@@ -3,7 +3,6 @@ import { adminClient, notifyShop, type NotifyShop } from "@/lib/server/notify"
 import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
 import { FILES_BUCKET } from "@/lib/storage-path"
-import { isCrmNiche } from "@/lib/niches"
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -16,12 +15,7 @@ const text = (v: FormDataEntryValue | null, max: number) => (typeof v === "strin
 /** A visitor leaves a request on a workshop's page; it lands in the workshop's Requests. */
 export async function POST(request: Request, { params }: Params) {
   const page = await loadPublicPage((await params).slug)
-  if (!page) return Response.json({ error: "not_found" }, { status: 404 })
-  // the request form is on every page that has no booking (a business with a niche books instead)
-  if (!page.data.requests) {
-    const { data: owner } = await adminClient().from("shops").select("niche").eq("id", page.shopId).maybeSingle()
-    if (isCrmNiche(owner?.niche)) return Response.json({ error: "not_found" }, { status: 404 })
-  }
+  if (!page || !page.data.requests) return Response.json({ error: "not_found" }, { status: 404 })
 
   const form = await request.formData().catch(() => null)
   if (!form) return Response.json({ error: "invalid" }, { status: 400 })

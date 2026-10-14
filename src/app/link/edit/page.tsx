@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
 import { WorkSheet } from "@/components/page/WorkSheet"
+import { NoNicheNotice } from "@/components/page/NoNicheNotice"
 import { ImageCropper } from "@/components/page/ImageCropper"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -308,6 +309,7 @@ export default function PageEditor() {
               )}
             </div>
 
+            {shop && <NoNicheNotice niche={shop.niche} />}
             {(missingTable || saveError) && (
               <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{saveError || t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
             )}

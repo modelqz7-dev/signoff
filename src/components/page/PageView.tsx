@@ -521,9 +521,9 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
           {/* "Contact" card: pinned on the right on a computer, a bar at the bottom on a phone */}
           {/* the main button: pinned to the bottom (a booking page shows it on phones only, its form is on the page) */}
           {(data.requests || booking) && (
-            <aside className={`sticky bottom-0 z-20 -mx-0 border-t border-[var(--pg-border)] bg-[var(--pg-bg)]/95 p-3 backdrop-blur ${booking ? "@3xl:hidden" : "@3xl:rounded-t-md @3xl:border-x"}`}>
+            <aside className={`pointer-events-none sticky bottom-0 z-20 flex justify-center bg-gradient-to-t from-[var(--pg-bg)] via-[var(--pg-bg)]/85 to-transparent px-4 pt-8 pb-[max(16px,env(safe-area-inset-bottom))] ${booking ? "@3xl:hidden" : ""}`}>
               <button type="button" onClick={() => (booking ? go("booking") : setContact(true))}
-                className={`flex h-11 w-full items-center justify-center bg-[var(--pg-accent)] text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 ${SHAPE[data.buttons]}`}>
+                className="pointer-events-auto flex h-12 w-full max-w-[380px] items-center justify-center rounded-full bg-[var(--pg-accent)] text-[15px] font-semibold text-[var(--pg-on-accent)] shadow-[0_12px_32px_-10px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]">
                 {booking ? booking.button : data.cta || t("Send message")}
               </button>
             </aside>
