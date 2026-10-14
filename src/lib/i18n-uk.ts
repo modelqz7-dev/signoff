@@ -1,5 +1,7 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "Work photo": "Фото роботи",
+  "{n} of {total}": "{n} з {total}",
   "Drag to move, pinch or scroll to zoom": "Перетягніть, щоб зсунути; щипок або колесо — масштаб",
   "Zoom": "Масштаб",
   "Rotate": "Повернути",
