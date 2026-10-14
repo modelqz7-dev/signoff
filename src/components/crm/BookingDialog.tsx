@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { DatePicker, Picker, TimePicker } from "@/components/crm/Pickers"
 import { useT } from "@/lib/i18n"
 import { useFileUrl } from "@/lib/files"
+import { UpgradeChip } from "@/components/plans/PlanBits"
 
 /** Where a new booking starts: a time slot, a day, a client. */
 export type BookingPreset = { startsAt?: Date; dueOn?: string; clientId?: string }
@@ -39,8 +40,10 @@ export function durationLabel(min: number, t: ReturnType<typeof useT>["t"]) {
 }
 
 /** Make or change an appointment (a time) or an order (a date with the niche's order form). */
-export function BookingDialog({ open, booking, preset, config, shopId, services, clients, bookings, onClose, onSaved, onDeleted, onClientAdded }: {
+export function BookingDialog({ open, booking, preset, config, shopId, services, clients, bookings, onClose, onSaved, onDeleted, onClientAdded, docs = true }: {
   open: boolean
+  /** Invoices and receipts are on the plan (Master and up). */
+  docs?: boolean
   booking?: CrmBooking | null
   preset?: BookingPreset
   config: NicheConfig
@@ -366,13 +369,13 @@ export function BookingDialog({ open, booking, preset, config, shopId, services,
 
         {booking && (
           <div className="flex flex-col gap-1.5">
-            <span className={LABEL}>{t("Documents")}</span>
-            <div className="flex flex-wrap gap-1.5">
+            <span className={cn(LABEL, "flex items-center gap-2")}>{t("Documents")}{!docs && <UpgradeChip feature="documents" />}</span>
+            {docs ? <div className="flex flex-wrap gap-1.5">
               <a href={`/receipt/${booking.id}?doc=invoice`} target="_blank" rel="noopener"
                 className="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium ring-1 ring-border hover:bg-hover"><FileTextIcon className="size-4" />{t("Invoice")}</a>
               <a href={`/receipt/${booking.id}?doc=receipt`} target="_blank" rel="noopener"
                 className="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium ring-1 ring-border hover:bg-hover"><ReceiptTextIcon className="size-4" />{t("Receipt")}</a>
-            </div>
+            </div> : <p className="text-[13px] text-muted-foreground">{t("Invoices and receipts come with the Master plan.")}</p>}
           </div>
         )}
 

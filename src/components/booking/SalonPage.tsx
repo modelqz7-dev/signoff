@@ -80,12 +80,14 @@ function Row({ icon, label, value, href, onClick, external, expanded, children }
  * the facts as an inset list, reviews as cards, and the booking in a sheet. A bar with the button
  * slides up once the top one scrolls away.
  */
-export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, booking }: {
+export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, booking, badge = true }: {
   data: PageData
   slug: string
   reviews?: PageReview[]
   preview?: boolean
   onEdit?: (target: PageEditTarget) => void
+  /** "Made with Nodly" at the bottom: the free plan shows it, paid plans don't. */
+  badge?: boolean
   booking: {
     label: string; button: string; node: React.ReactNode
     /** The trade's character, in place of initials until the business adds a photo. */
@@ -352,9 +354,9 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           )}
         </Group>
 
-        <a href={preview ? undefined : "/business?ref=page"} className="mt-10 block text-center text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-text)]">
+        {badge && <a href={preview ? undefined : "/business?ref=page"} className="mt-10 block text-center text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-text)]">
           {t("Made with Nodly")}
-        </a>
+        </a>}
       </div>
 
       {/* a frosted bar with the button, sliding up once the big one has scrolled away */}

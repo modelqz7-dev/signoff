@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { DownloadIcon, FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react"
 import { Stat } from "@/components/crm/AppointmentsHome"
 import { Picker } from "@/components/crm/Pickers"
+import { UpgradeChip } from "@/components/plans/PlanBits"
 import { docNumber, money, statusLabel, type CrmBooking, type CrmData } from "@/lib/crm"
 import type { NicheConfig } from "@/lib/niches"
 import { cn } from "@/lib/utils"
@@ -21,7 +22,7 @@ function whenOf(b: CrmBooking) {
 }
 
 /** Every booking or order, newest first: filter, sum up, open one, take its invoice or receipt, or export them all. */
-export function HistoryView({ data, config, onOpen }: { data: CrmData; config: NicheConfig; onOpen: (b: CrmBooking) => void }) {
+export function HistoryView({ data, config, onOpen, docs = true }: { data: CrmData; config: NicheConfig; onOpen: (b: CrmBooking) => void; docs?: boolean }) {
   const { t, locale } = useT()
   const isOrder = config.kind === "order"
   const [period, setPeriod] = useState<Period>("month")
@@ -68,7 +69,8 @@ export function HistoryView({ data, config, onOpen }: { data: CrmData; config: N
           <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("History")}</h1>
           <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("Every order. Open one to take its invoice or receipt.") : t("Every booking. Open one to take its invoice or receipt.")}</p>
         </div>
-        <button type="button" onClick={exportCsv} disabled={!rows.length}
+        {!docs && <UpgradeChip feature="documents" />}
+        <button type="button" onClick={exportCsv} disabled={!rows.length || !docs}
           className="flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-90 disabled:opacity-40">
           <DownloadIcon className="size-4" />{t("Export to Excel")}
         </button>
@@ -112,10 +114,10 @@ export function HistoryView({ data, config, onOpen }: { data: CrmData; config: N
               <span className="hidden shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[12px] font-medium sm:inline">{t(statusLabel(b.status))}</span>
               <span className="w-24 shrink-0 text-right text-[13.5px] tabular-nums">{money(b.price, locale) || "—"}</span>
             </button>
-            <a href={`/receipt/${b.id}?doc=invoice`} target="_blank" rel="noopener" aria-label={t("Invoice")} title={t("Invoice")}
+            {docs && <><a href={`/receipt/${b.id}?doc=invoice`} target="_blank" rel="noopener" aria-label={t("Invoice")} title={t("Invoice")}
               className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"><FileTextIcon className="size-4" /></a>
             <a href={`/receipt/${b.id}?doc=receipt`} target="_blank" rel="noopener" aria-label={t("Receipt")} title={t("Receipt")}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"><ReceiptTextIcon className="size-4" /></a>
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"><ReceiptTextIcon className="size-4" /></a></>}
           </div>
         )) : <p className="px-6 py-14 text-center text-[14px] text-muted-foreground">{t("Nothing for this period.")}</p>}
       </div>

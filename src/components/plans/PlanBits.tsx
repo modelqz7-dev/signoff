@@ -50,14 +50,14 @@ export function PlanPrice({ plan, yearly, className }: { plan: Plan; yearly: boo
 }
 
 /** "2 of 3 active projects" with a bar that turns red at the limit. */
-export function UsageMeter({ used, limit, className }: { used: number; limit: number | null; className?: string }) {
+export function UsageMeter({ used, limit, className, label }: { used: number; limit: number | null; className?: string; label?: string }) {
   const { t } = useT()
   const share = limit ? Math.min(used / limit, 1) : 0
   const full = limit !== null && used >= limit
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <div className="flex items-baseline justify-between gap-2 text-xs">
-        <span className="truncate text-muted-foreground">{t("Active projects")}</span>
+        <span className="truncate text-muted-foreground">{label ?? t("Active projects")}</span>
         <span
           className={cn("shrink-0 font-medium", full ? "text-destructive" : "text-foreground")}
           title={limit === null ? t("Unlimited") : undefined}

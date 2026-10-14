@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase"
 import { setLang, useLang, useT, type Lang, type T } from "@/lib/i18n"
 import type { CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
+import { PLANS, planHighlights } from "@/lib/plans"
+import { BillingCycleToggle, PlanPrice } from "@/components/plans/PlanBits"
 
 // The landing for beauty masters, barbers and home bakers, in the app's own Apple-like look:
 // big tight headlines, white cards on a light grey page, black pill buttons, no colour but one.
@@ -268,31 +270,39 @@ function Features({ t }: { t: T }) {
 // ── Price: early access is free ──
 
 function Price({ t, start, startLabel }: { t: T; start: string; startLabel: string }) {
-  const included = [
-    t("Your page with online booking"), t("Unlimited bookings and clients"), t("Calendar of bookings or orders"),
-    t("Telegram notices"), t("QR code and statistics"), t("Works on the phone and the computer"),
-  ]
+  const [yearly, setYearly] = useState(false)
   return (
-    <section id="price" className="scroll-mt-20 py-10 sm:py-16">
+    <section id="price" className="scroll-mt-20 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        {/* the one dark block on the page: the price is the news */}
-        <div className="grid gap-10 rounded-[32px] bg-[#1d1d1f] p-8 text-white sm:p-14 lg:grid-cols-[1.1fr_1fr] lg:items-end dark:bg-white dark:text-[#1d1d1f]">
-          <div className="flex flex-col items-start gap-5">
-            <span className="text-[14px] font-medium opacity-60">{t("Early access")}</span>
-            <h2 className="text-[44px] leading-[1] font-semibold tracking-[-0.04em] sm:text-[72px]">{t("Free while we grow.")}</h2>
-            <p className="max-w-md text-[17px] leading-relaxed opacity-70">{t("No plans and no card. We'll warn you well ahead before prices appear, and the first masters keep a good one.")}</p>
-            <Link href={start} className="mt-2 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-[#1d1d1f] hover:opacity-90 dark:bg-[#1d1d1f] dark:text-white">
-              {startLabel}<ArrowRightIcon className="size-4" />
-            </Link>
-          </div>
-          <ul className="flex flex-col">
-            {included.map((x) => (
-              <li key={x} className="flex items-center gap-3 border-b border-current/15 py-3.5 text-[16px] last:border-0">
-                <CheckIcon className="size-4 shrink-0 opacity-70" strokeWidth={2.5} />{x}
-              </li>
-            ))}
-          </ul>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h2 className={cn(H, "text-[36px] leading-[1.05] sm:text-[56px]")}>{t("Pricing")}</h2>
+          <p className="max-w-lg text-[17px] text-muted-foreground">{t("Start free. Pay when clients book often.")}</p>
+          <BillingCycleToggle yearly={yearly} onChange={setYearly} />
         </div>
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {PLANS.map((plan) => {
+            const best = plan.id === "go"
+            return (
+              <div key={plan.id} className={cn("flex flex-col gap-6 rounded-[28px] p-7", best ? "bg-foreground text-background" : "apple-card")}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[20px] font-semibold">{t(plan.name)}</p>
+                  {best && <span className="rounded-full bg-background/15 px-2.5 py-1 text-[12px] font-medium">{t("Popular")}</span>}
+                </div>
+                <PlanPrice plan={plan} yearly={yearly} className="text-[40px] font-semibold tracking-[-0.03em] [&>span:nth-child(2)]:text-[14px]" />
+                <ul className="flex flex-1 flex-col gap-2.5">
+                  {planHighlights(plan, "nails").map((x) => (
+                    <li key={x} className="flex gap-2.5 text-[15px]"><CheckIcon className="mt-0.5 size-4 shrink-0 opacity-70" strokeWidth={2.5} />{t(x)}</li>
+                  ))}
+                </ul>
+                <Link href={start} className={cn("inline-flex h-12 items-center justify-center gap-2 rounded-full text-[15px] font-medium hover:opacity-90",
+                  best ? "bg-background text-foreground" : "bg-foreground text-background")}>
+                  {plan.monthly ? t("Try 7 days free") : startLabel}
+                </Link>
+              </div>
+            )
+          })}
+        </div>
+        <p className="mt-6 text-center text-[13.5px] text-muted-foreground">{t("Clients never pay and never sign up. Prices in hryvnias, cancel any time.")}</p>
       </div>
     </section>
   )

@@ -2,6 +2,7 @@ import { regionOf } from "@/lib/cities"
 import { adminClient } from "@/lib/server/notify"
 import { cleanPage } from "@/lib/page"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
+import { can } from "@/lib/plans"
 
 /** One business in the catalog: what its card shows. */
 export type CatalogEntry = {
@@ -19,6 +20,8 @@ export type CatalogEntry = {
   works: number
   /** Its pin on the map, if it put one. */
   geo: { lat: number; lng: number } | null
+  /** On the Studio plan: shown first, with a "Recommended" mark. */
+  top: boolean
 }
 
 /**
@@ -33,10 +36,10 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
   if (!listed.length) return []
   const ids = listed.map((p) => p.shopId)
   const [{ data: shops }, { data: reviews }] = await Promise.all([
-    db.from("shops").select("id, name, niche").in("id", ids),
+    db.from("shops").select("id, name, niche, plan, trial_ends_at").in("id", ids),
     db.from("page_reviews").select("shop_id, rating").in("shop_id", ids),
   ])
-  const shopById = new Map((shops ?? []).map((s) => [s.id as string, s as { id: string; name: string; niche: string | null }]))
+  const shopById = new Map((shops ?? []).map((s) => [s.id as string, s as { id: string; name: string; niche: string | null; plan: string; trial_ends_at: string | null }]))
   const stars = new Map<string, number[]>()
   for (const r of (reviews ?? []) as { shop_id: string; rating: number }[]) stars.set(r.shop_id, [...(stars.get(r.shop_id) ?? []), r.rating])
   const out: CatalogEntry[] = []
@@ -58,8 +61,9 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
       reviews: rs.length,
       works: p.data.projects.reduce((n, x) => n + x.photos.length, 0),
       geo: p.data.geo,
+      top: can(shop, "catalogTop"),
     })
   }
-  // the best rated and the most reviewed first, then by name
-  return out.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || b.reviews - a.reviews || a.title.localeCompare(b.title))
+  // Studio plans first, then the best rated and the most reviewed, then by name
+  return out.sort((a, b) => Number(b.top) - Number(a.top) || (b.rating ?? 0) - (a.rating ?? 0) || b.reviews - a.reviews || a.title.localeCompare(b.title))
 }

@@ -5,6 +5,7 @@ import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
 import { cleanBooking, freeSlots, orderDays, phoneKey, zonedTime, type Busy } from "@/lib/booking"
 import { nicheConfig, type NicheConfig } from "@/lib/niches"
+import { can, FREE_BOOKINGS } from "@/lib/plans"
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -23,14 +24,14 @@ async function context(slug: string) {
   if (!page) return null
   const db = adminClient()
   const full = await db.from("shops")
-    .select("id, user_id, name, niche, booking, notify_email, notify_telegram, telegram_chat_id, notify_lang")
+    .select("id, user_id, name, niche, booking, notify_email, notify_telegram, telegram_chat_id, notify_lang, plan, trial_ends_at")
     .eq("id", page.shopId).maybeSingle()
   let shop = full.data
   // an older database may lack some of these columns: book anyway, with what's there
   if (full.error) {
     console.error("Booking shop load error:", full.error)
     const { data: basic } = await db.from("shops").select("id, user_id, name, niche").eq("id", page.shopId).maybeSingle()
-    shop = basic ? { ...basic, booking: {}, notify_email: null, notify_telegram: null, telegram_chat_id: null, notify_lang: null } : null
+    shop = basic ? { ...basic, booking: {}, notify_email: null, notify_telegram: null, telegram_chat_id: null, notify_lang: null, plan: "free", trial_ends_at: null } : null
   }
   const config = nicheConfig(shop?.niche)
   if (!shop || !config) return null
@@ -69,6 +70,15 @@ async function availability(ctx: Ctx, duration: number) {
   return { kind: "order" as const, days: orderDays(ctx.settings, taken, now, ctx.hours) }
 }
 
+/** Bookings made through the page since the 1st of this month (UTC). */
+async function onlineThisMonth(ctx: Ctx) {
+  const now = new Date()
+  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+  const { count } = await ctx.db.from("crm_bookings").select("id", { count: "exact", head: true })
+    .eq("shop_id", ctx.shop.id).eq("details->>via", "online").gte("created_at", from)
+  return count ?? 0
+}
+
 /** Free times for one service (GET ?service=…). */
 export async function GET(request: Request, { params }: Params) {
   const ctx = await context((await params).slug)
@@ -77,6 +87,10 @@ export async function GET(request: Request, { params }: Params) {
   if (limited) return limited
   const s = await service(ctx, new URL(request.url).searchParams.get("service") ?? "")
   if (!s) return Response.json({ error: "no_service" }, { status: 404 })
+  // the month's free online bookings are used up: say so before the client fills anything in
+  if (!can(ctx.shop, "unlimitedBookings") && (await onlineThisMonth(ctx)) >= FREE_BOOKINGS) {
+    return Response.json({ error: "limit" }, { status: 403 })
+  }
   return Response.json(await availability(ctx, s.duration_min ?? 60), { headers: { "cache-control": "no-store" } })
 }
 
@@ -126,6 +140,11 @@ export async function POST(request: Request, { params }: Params) {
   const limited = await overLimit(ctx.db, `book:${clientIp(request)}:${ctx.shop.id}`, 5, 10 * 60_000)
   if (limited) return limited
 
+  // the free plan takes FREE_BOOKINGS online bookings a month; the owner's own entries don't count
+  if (!can(ctx.shop, "unlimitedBookings") && (await onlineThisMonth(ctx)) >= FREE_BOOKINGS) {
+    return Response.json({ error: "limit" }, { status: 403 })
+  }
+
   const s = await service(ctx, text(body.service, 36))
   if (!s) return Response.json({ error: "no_service" }, { status: 404 })
   const open = await availability(ctx, s.duration_min ?? 60)
@@ -143,6 +162,8 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const details: Record<string, string> = isOrder ? orderDetails(ctx.config, body.details) : {}
+  // made through the page, not by the owner: counts toward the free plan's monthly bookings
+  details.via = "online"
   // how the client wants to be reached: Telegram, Viber or a call
   if (way === "telegram" || way === "viber" || way === "phone") details.contact = way
   if (way === "telegram" && nick.length > 1) details.telegram = nick
@@ -181,7 +202,7 @@ export async function POST(request: Request, { params }: Params) {
   const lang = shopLang(ctx.shop.notify_lang)
   const WAY: Record<string, string> = { telegram: "Telegram", viber: "Viber", phone: lang === "ru" ? "звонок" : "дзвінок" }
   const reach = details.contact ? `${WAY[details.contact]}${details.telegram ? ` ${details.telegram}` : ""}` : ""
-  const extra = Object.entries(details).filter(([k]) => !["contact", "telegram", "photos"].includes(k)).map(([, v]) => v).join(" · ")
+  const extra = Object.entries(details).filter(([k]) => !["contact", "telegram", "photos", "via"].includes(k)).map(([, v]) => v).join(" · ")
   const photoLine = photos.length ? (lang === "ru" ? `Фото: ${photos.length}` : `Фото: ${photos.length}`) : ""
   await notifyShop(ctx.shop as NotifyShop, {
     kind: "booking", order: isOrder, name, phone: reach ? `${phone} · ${reach}` : phone, what: s.title,

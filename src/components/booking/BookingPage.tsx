@@ -15,7 +15,7 @@ export const NICHE_COVER: Record<CrmNiche, string> = {
 }
 
 /** A beauty or cake business's page: the Link page in its own design, in the app's Apple look, its booking in a sheet. */
-export function BookingPage({ data, slug, reviews, isOrder, niche, booking, preview, onEdit }: {
+export function BookingPage({ data, slug, reviews, isOrder, niche, booking, preview, onEdit, badge = true }: {
   data: PageData
   niche: CrmNiche
   slug: string
@@ -23,11 +23,13 @@ export function BookingPage({ data, slug, reviews, isOrder, niche, booking, prev
   isOrder: boolean
   booking: React.ReactNode
   preview?: boolean
+  /** "Made with Nodly" at the bottom (the free plan). */
+  badge?: boolean
   onEdit?: (target: PageEditTarget) => void
 }) {
   const { t } = useT()
   return (
-    <SalonPage data={data} slug={slug} reviews={reviews} preview={preview} onEdit={onEdit}
+    <SalonPage data={data} slug={slug} reviews={reviews} preview={preview} onEdit={onEdit} badge={badge}
       booking={{ label: isOrder ? t("Order") : t("Booking"), button: isOrder ? t("Place the order") : t("Book now"), node: booking, face: `/niches/${niche}.svg`, cover: NICHE_COVER[niche] }} />
   )
 }
