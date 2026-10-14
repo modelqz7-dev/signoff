@@ -1760,4 +1760,11 @@ export const ru: Record<string, string> = {
   "no pin": "без точки",
   "{n} m": "{n} м",
   "{n} km": "{n} км",
+  "How many people opened your page and how many orders came in.": "Сколько людей открыли вашу страницу и сколько пришло заказов.",
+  "How many people opened your page and how many bookings came in.": "Сколько людей открыли вашу страницу и сколько пришло записей.",
+  "Orders, 30 days": "Заказы, 30 дней",
+  "Bookings, 30 days": "Записи, 30 дней",
+  "Visitors who ordered": "Посетители, которые заказали",
+  "Visitors who booked": "Посетители, которые записались",
+  "What to post when you don't know what to post. Each idea ends with your page: that's how followers become bookings.": "Что выложить, когда не знаешь, что выложить. Каждая идея ведёт на вашу страницу: так подписчики становятся записями.",
 }

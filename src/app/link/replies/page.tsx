@@ -4,6 +4,8 @@ import { useSyncExternalStore } from "react"
 import { CopyButton, PageShell, usePageContext } from "@/components/page/PageShell"
 import { useT } from "@/lib/i18n"
 import { pagePath } from "@/lib/page"
+import { nicheConfig } from "@/lib/niches"
+import { salonReplies } from "@/lib/salon-content"
 
 const noop = () => () => {}
 
@@ -41,23 +43,28 @@ const TEMPLATES: { title: string; text: string }[] = [
 
 /** Ready answers for typical moments with a client: copy, fill in, send. */
 export default function ReplyTemplates() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { shop, page } = usePageContext()
   const origin = useSyncExternalStore(noop, () => window.location.origin, () => "")
   const link = page && origin ? origin + pagePath(page.slug) : t("[your page link]")
   const name = page?.data.title || shop?.name || ""
-  const fill = (s: string) => t(s).replaceAll("{link}", link).replaceAll("{name}", name)
+  const fill = (s: string) => s.replaceAll("{link}", link).replaceAll("{name}", name)
+  // a beauty or cake business gets its own texts; the rest keep the agency ones
+  const niche = nicheConfig(shop?.niche)?.id
+  const templates = niche
+    ? salonReplies(niche).map((r) => ({ title: r.title[lang], text: r.text[lang] }))
+    : TEMPLATES.map((r) => ({ title: t(r.title), text: t(r.text) }))
 
   return (
     <PageShell activePage="link-replies" title={t("Reply templates")} shopName={shop?.name ?? ""}
       subtitle={t("Ready answers for typical moments with a client. Copy, change the words in brackets and send in any messenger.")}>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        {TEMPLATES.map((tpl) => {
+        {templates.map((tpl) => {
           const text = fill(tpl.text)
           return (
             <section key={tpl.title} className="flex flex-col gap-3 rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-bold">{t(tpl.title)}</h2>
+                <h2 className="text-base font-bold">{tpl.title}</h2>
                 <CopyButton text={text} />
               </div>
               <p className="text-[15px] leading-6 whitespace-pre-line text-muted-foreground">{text}</p>
