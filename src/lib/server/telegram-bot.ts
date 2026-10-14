@@ -105,7 +105,8 @@ type Booking = {
   id: string; client_id: string | null; kind: string; title: string; starts_at: string | null; due_on: string | null; due_time: string
   status: string; price: number | null; prepaid: number | null; details: Record<string, string>; notes: string
 }
-const BOOKING_COLS = "id, client_id, kind, title, starts_at, due_on, due_time, status, price, prepaid, details, notes"
+// every column: an older database may lack some of the newer ones, and naming them would fail the query
+const BOOKING_COLS = "*"
 
 // ── the bot ──
 
@@ -122,15 +123,25 @@ export class OwnerBot {
   }
 
   async shop(): Promise<Shop | null> {
-    const full = await this.db.from("shops").select("id, name, niche, booking").eq("telegram_chat_id", this.chatId).limit(1)
-    if (!full.error) return (full.data?.[0] as Shop | undefined) ?? null
-    // an older database without the booking settings column: default hours and time zone
-    const { data } = await this.db.from("shops").select("id, name, niche").eq("telegram_chat_id", this.chatId).limit(1)
-    return data?.[0] ? { ...(data[0] as Omit<Shop, "booking">), booking: {} } : null
+    let rows: Shop[] = []
+    const full = await this.db.from("shops").select("id, name, niche, booking").eq("telegram_chat_id", this.chatId).limit(5)
+    if (!full.error) rows = (full.data ?? []) as Shop[]
+    else {
+      // an older database without the booking settings column: default hours and time zone
+      const { data, error } = await this.db.from("shops").select("id, name, niche").eq("telegram_chat_id", this.chatId).limit(5)
+      if (error) console.error("Bot shop error:", error)
+      rows = ((data ?? []) as Omit<Shop, "booking">[]).map((x) => ({ ...x, booking: {} }))
+    }
+    // a chat once linked to an older account too: the one that takes bookings wins
+    return rows.find((x) => nicheConfig(x.niche)) ?? rows[0] ?? null
   }
 
   /** A code from Nodly links this chat to that shop. */
   async connect(code: string) {
+    const { data: owner } = await this.db.from("shops").select("id").eq("telegram_link_code", code).maybeSingle()
+    if (!owner) return this.send(this.w.wrongCode)
+    // one chat, one account: unlink it from any other it was connected to before
+    await this.db.from("shops").update({ telegram_chat_id: null }).eq("telegram_chat_id", this.chatId).neq("id", owner.id)
     const { data: shop } = await this.db.from("shops")
       .update({ telegram_chat_id: this.chatId, telegram_link_code: null, notify_telegram: true })
       .eq("telegram_link_code", code).select("name").maybeSingle()
@@ -173,7 +184,8 @@ export class OwnerBot {
     let q = this.db.from("crm_bookings").select(BOOKING_COLS).eq("shop_id", shop.id).neq("status", "cancelled")
     q = isOrder ? q.eq("kind", "order").eq("due_on", today.day)
       : q.eq("kind", "appointment").gte("starts_at", new Date(now.getTime() - 36e5 * 30).toISOString()).lte("starts_at", new Date(now.getTime() + 36e5 * 30).toISOString())
-    const { data } = await q.order(isOrder ? "due_time" : "starts_at", { ascending: true }).limit(40)
+    const { data, error } = await q.order(isOrder ? "due_time" : "starts_at", { ascending: true }).limit(40)
+    if (error) console.error("Bot today error:", error)
     const list = ((data ?? []) as Booking[]).filter((b) => this.when(b, tz).day === today.day)
     if (!list.length) return this.send(isOrder ? this.w.noneOrdersToday : this.w.noneToday, { reply_markup: keyboard(this.l) })
     const names = await this.names(shop, list.map((b) => b.client_id))
@@ -192,7 +204,8 @@ export class OwnerBot {
     let q = this.db.from("crm_bookings").select(BOOKING_COLS).eq("shop_id", shop.id).not("status", "in", "(cancelled,done,no_show,delivered)")
     q = isOrder ? q.eq("kind", "order").gte("due_on", zoned(now, tz, this.l).day).lte("due_on", zoned(week, tz, this.l).day).order("due_on")
       : q.eq("kind", "appointment").gte("starts_at", now.toISOString()).lte("starts_at", week.toISOString()).order("starts_at")
-    const { data } = await q.limit(20)
+    const { data, error } = await q.limit(20)
+    if (error) console.error("Bot upcoming error:", error)
     const list = (data ?? []) as Booking[]
     if (!list.length) return this.send(this.w.noneUpcoming, { reply_markup: keyboard(this.l) })
     const names = await this.names(shop, list.map((b) => b.client_id))
@@ -203,8 +216,9 @@ export class OwnerBot {
 
   /** The client base, 8 at a time, newest first. */
   async clients(shop: Shop, offset = 0, messageId?: number) {
-    const { data, count } = await this.db.from("crm_clients").select("id, name, phone", { count: "exact" })
+    const { data, count, error } = await this.db.from("crm_clients").select("id, name, phone", { count: "exact" })
       .eq("shop_id", shop.id).order("created_at", { ascending: false }).range(offset, offset + 7)
+    if (error) console.error("Bot clients error:", error)
     if (!count) return this.send(this.w.noClients, { reply_markup: keyboard(this.l) })
     const rows: Button[][] = (data ?? []).map((c) => [{ text: `${c.name}${c.phone ? ` · ${c.phone}` : ""}`.slice(0, 60), callback_data: `c:${c.id}` }])
     const nav: Button[] = []
