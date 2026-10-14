@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
-  AlignLeftIcon, CalendarCheckIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, ImagesIcon,
-  InfoIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, ShareIcon, StarIcon, XIcon,
+  AlignLeftIcon, CalendarCheckIcon, CheckIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, ImagesIcon,
+  InfoIcon, MapPinIcon, PhoneIcon, ShareIcon, StarIcon, XIcon,
 } from "lucide-react"
 import {
   ASPECT_LABEL, Avatar, BUSINESS_DETAIL_KEYS, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, Placeholder, REVIEWER_COLORS, ReviewForm, STAR, Stars,
@@ -28,7 +28,6 @@ function palette(data: PageData) {
   } as React.CSSProperties
 }
 
-const MESSAGE_KEYS = ["telegram", "viber", "whatsapp", "instagram"] as const
 const noop = () => () => {}
 
 /** A section: a large bold title over its content, like the App Store's. */
@@ -117,7 +116,6 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
   const days = weekdays(locale, "long")
   const todayHours = today >= 0 ? data.hours[today] : undefined
   const phone = link("phone")
-  const message = MESSAGE_KEYS.map((k) => [k, link(k)] as const).find(([, h]) => h)
   const address = data.business.address
   const route = address || data.geo
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.geo ? `${data.geo.lat},${data.geo.lng}` : address)}`
@@ -169,12 +167,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
     window.setTimeout(() => setShared(false), 1500)
   }
 
-  const tile = "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-[var(--pg-card)] py-2.5 text-[12px] font-medium transition-transform active:scale-[0.97] [&_svg]:size-[19px]"
-  const tiles: { icon: React.ReactNode; label: string; href?: string | null; onClick?: () => void; external?: boolean }[] = [
-    ...(phone ? [{ icon: <PhoneIcon />, label: t("Phone"), href: phone }] : []),
-    ...(message ? [{ icon: <MessageCircleIcon />, label: t("Message"), href: message[1], external: true }] : []),
-    { icon: <ShareIcon />, label: shared ? t("Link copied") : t("Share"), onClick: share },
-  ]
+  const roundBtn = "flex size-9 items-center justify-center rounded-full bg-[var(--pg-card)] transition-transform active:scale-95 [&_svg]:size-[17px]!"
 
   return (
     <div style={palette(data)} className="@container min-h-dvh bg-[var(--pg-bg)] text-[var(--pg-text)] antialiased">
@@ -209,31 +202,29 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           </div>
         </div>
 
-        {/* where else to find them: round buttons, like the editor shows them */}
-        {socials.length > 0 && (
-          <div className="mt-4 flex flex-wrap justify-center gap-2.5 px-4">
-            {socials.map((k) => {
-              const href = link(k)
-              const cls = "flex size-11 items-center justify-center rounded-full bg-[var(--pg-card)] transition-transform active:scale-95 [&_svg]:size-[20px]"
-              const label = `${CONTACT_LABEL[k]}: ${data.contacts[k]}`
-              return href
-                ? <a key={k} href={go(href)} target={k === "email" ? undefined : "_blank"} rel="noopener noreferrer" aria-label={label} title={label} className={cls}>{CONTACT_ICON[k]}</a>
-                : <span key={k} aria-label={label} title={label} className={cls}>{CONTACT_ICON[k]}</span>
-            })}
-          </div>
-        )}
+        {/* one row of small round buttons: phone, socials, email, site, and share */}
+        <div className="mt-4 flex flex-wrap justify-center gap-2 px-4">
+          {data.contacts.phone && (phone
+            ? <a href={go(phone)} aria-label={`${t("Phone")}: ${data.contacts.phone}`} title={data.contacts.phone} className={roundBtn}><PhoneIcon /></a>
+            : <span aria-label={`${t("Phone")}: ${data.contacts.phone}`} title={data.contacts.phone} className={roundBtn}><PhoneIcon /></span>)}
+          {socials.map((k) => {
+            const href = link(k)
+            const label = `${CONTACT_LABEL[k]}: ${data.contacts[k]}`
+            return href
+              ? <a key={k} href={go(href)} target={k === "email" ? undefined : "_blank"} rel="noopener noreferrer" aria-label={label} title={label} className={roundBtn}>{CONTACT_ICON[k]}</a>
+              : <span key={k} aria-label={label} title={label} className={roundBtn}>{CONTACT_ICON[k]}</span>
+          })}
+          <button type="button" onClick={share} aria-label={t("Share")} title={shared ? t("Link copied") : t("Share")} className={roundBtn}>
+            {shared ? <CheckIcon /> : <ShareIcon />}
+          </button>
+        </div>
 
-        {/* the one big button, and the quick actions under it */}
-        <div className="mt-6 flex flex-col gap-2.5 px-4 @3xl:px-0">
+        {/* the one big button */}
+        <div className="mt-5 px-4 @3xl:px-0">
           <button ref={bookRef} type="button" onClick={() => setSheet(true)}
             className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--pg-accent)] text-[17px] font-semibold text-[var(--pg-on-accent)] transition-transform active:scale-[0.98]">
             <CalendarCheckIcon className="size-5" />{booking.button}
           </button>
-          <div className="flex gap-2.5">
-            {tiles.map((x) => x.href
-              ? <a key={x.label} href={go(x.href)} target={x.external ? "_blank" : undefined} rel={x.external ? "noopener noreferrer" : undefined} className={tile}>{x.icon}<span className="max-w-full truncate px-1">{x.label}</span></a>
-              : <button key={x.label} type="button" onClick={x.onClick} className={tile}>{x.icon}<span className="max-w-full truncate px-1">{x.label}</span></button>)}
-          </div>
         </div>
 
         {/* the work: a strip of photos to swipe */}
