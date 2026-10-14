@@ -76,6 +76,8 @@ export default function PageEditor() {
   const [reviews, setReviews] = useState<PageReview[]>([])
   const [uploading, setUploading] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  // the computer preview gets a wider column than the phone one
+  const [wide, setWide] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
@@ -622,8 +624,8 @@ export default function PageEditor() {
         </main>
 
         {/* Live preview: a phone or a computer, beside the editor on a wide screen */}
-        <aside className="sticky top-0 hidden h-screen w-[440px] shrink-0 py-6 pr-6 xl:flex">
-          <DevicePreview>{preview}</DevicePreview>
+        <aside className={`sticky top-0 hidden h-screen shrink-0 py-6 pr-6 transition-[width] duration-300 xl:flex ${wide ? "w-[min(780px,52vw)]" : "w-[440px]"}`}>
+          <DevicePreview dark={data.theme === "dark"} onDeviceChange={(d) => setWide(d === "computer")}>{preview}</DevicePreview>
         </aside>
         </div>
       </div>
