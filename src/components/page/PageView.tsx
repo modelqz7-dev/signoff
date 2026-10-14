@@ -267,12 +267,15 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   const btn = `flex h-9 items-center gap-2 border border-[var(--pg-border)] px-3.5 text-sm font-medium transition-colors hover:border-[var(--pg-text)] [&_svg]:size-4 ${SHAPE[data.buttons]}`
   const open = project !== null ? data.projects[project] : null
 
+  // the "Contact" card sits beside the page only for requests; a booking page keeps one column
+  const sideCard = !booking && data.requests
   // Laid out by its own width (a container), not the screen's: the editor previews it as a phone or a computer.
   return (
     <div ref={rootRef} style={palette(data)} className="@container min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
       {/* a business that takes bookings: one centred column (booking leads it), no side card on a computer */}
-      <div className={`mx-auto w-full pb-24 @3xl:px-8 @3xl:pt-6 @4xl:pb-12 ${booking ? "max-w-[760px]" : "max-w-[1120px]"}`}>
-        <div className={booking ? "" : "@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:items-start @4xl:gap-10"}>
+      {/* one centred column; a page with the contact card gets it on the right instead */}
+      <div className={`mx-auto w-full pb-24 @3xl:px-8 @3xl:pt-6 @4xl:pb-12 ${sideCard ? "max-w-[1120px]" : "max-w-[760px]"}`}>
+        <div className={sideCard ? "@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:items-start @4xl:gap-10" : ""}>
           <div className="min-w-0">
             {/* Cover: the workshop's photo; without one, its logo blurred, or a wash of the accent */}
             <div className="h-48 overflow-hidden bg-[var(--pg-field)] @3xl:h-[300px] @3xl:rounded-md">
