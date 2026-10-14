@@ -1,5 +1,6 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "This won't open as {name}. Example: {value}": "Це не відкриється як {name}. Приклад: {value}",
   "Step {n} of {m}": "Крок {n} з {m}",
   "Route": "Маршрут",
   "Message": "Написати",
