@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeftIcon, CheckIcon, ClockIcon, ImagePlusIcon, XIcon } from "lucide-react"
+import { ArrowLeftIcon, CheckIcon, ChevronRightIcon, ImagePlusIcon, XIcon } from "lucide-react"
 import { shrinkImage } from "@/lib/image"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
@@ -13,7 +13,9 @@ export type PublicService = { id: string; title: string; duration_min: number | 
 
 type Availability = { kind: "appointment"; slots: Record<string, string[]> } | { kind: "order"; days: string[] }
 
-const FIELD = "h-12 w-full rounded-xl bg-foreground/[0.05] px-4 text-[15px] text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground focus:ring-foreground/25"
+/** A field inside an inset form: no box of its own, the card is the box. */
+const ROW = "block h-[50px] w-full bg-transparent px-4 text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
+const FIELD = "h-12 w-full rounded-[14px] bg-card px-4 text-[15px] text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground focus:ring-foreground/25"
 
 function money(v: number | null, locale: string) {
   if (v == null) return ""
@@ -61,6 +63,8 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  // past the time (or an order's details): on to the contacts
+  const [who, setWho] = useState(false)
   // bumped to fetch the free times again, e.g. after a time was taken meanwhile
   const [reload, setReload] = useState(0)
 
@@ -94,7 +98,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
 
   function pick(s: PublicService) {
     if (preview) return
-    setService(s); setOpen(null); setDay(null); setTime(null); setError(null)
+    setService(s); setOpen(null); setDay(null); setTime(null); setError(null); setWho(false)
   }
 
   async function submit(e: React.FormEvent) {
@@ -126,95 +130,119 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service, day, time, isOrder, locale])
 
-  const steps = (
-    <>
-      {done ? (
-        <section className="flex flex-col items-center gap-3 rounded-3xl apple-card px-6 py-10 text-center">
-          <span className="flex size-14 items-center justify-center rounded-full bg-foreground text-background"><CheckIcon className="size-7" /></span>
-          <h2 className="text-[20px] font-semibold">{isOrder ? t("Order sent!") : t("You're booked!")}</h2>
-          <p className="text-[15px] first-letter:uppercase">{summary}</p>
-          <p className="mt-1 text-[15px] text-muted-foreground">{isOrder ? t("{name} will get in touch to confirm the details and the price.", { name: title }) : t("{name} will contact you if anything changes.", { name: title })}</p>
-        </section>
-      ) : (
-        <form onSubmit={submit} className="flex flex-col gap-6">
-          {/* 1. what */}
-          <section className="flex flex-col gap-2.5">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold">
-              {service && services.length > 1 && (
-                <button type="button" onClick={() => setService(null)} aria-label={t("Back")} className="-ml-1 flex size-7 items-center justify-center rounded-full hover:bg-hover"><ArrowLeftIcon className="size-4" /></button>
-              )}
-              {isOrder ? t("What would you like?") : t("Choose a service")}
-            </h2>
-            {(service ? [service] : services).map((s) => (
-              <button key={s.id} type="button" onClick={() => pick(s)} aria-pressed={service?.id === s.id}
-                className={cn("flex items-center gap-3 rounded-[20px] bg-card px-4 py-4 text-left shadow-[var(--card-shadow)] ring-1 transition-all duration-300",
-                  service?.id === s.id ? "ring-2 ring-foreground" : "ring-border hover:ring-foreground/30")}>
+  // one step at a time, like an iOS sheet: what, then when (and the order's details), then who
+  const stage: "what" | "when" | "who" = !service ? "what" : who && day && (isOrder || time) ? "who" : "when"
+  const stepNo = stage === "what" ? 1 : stage === "when" ? 2 : 3
+  const back = () => {
+    setError(null)
+    if (stage === "who") setWho(false)
+    else if (stage === "when" && services.length > 1) { setService(null); setOpen(null); setDay(null); setTime(null) }
+  }
+  const canBack = stage === "who" || (stage === "when" && services.length > 1)
+  const choice = (on: boolean) => cn("transition-colors", on ? "bg-foreground text-background" : "bg-card hover:bg-hover")
+
+  const steps = done ? (
+    <section className="flex flex-col items-center gap-3 px-2 py-10 text-center">
+      <span className="flex size-16 items-center justify-center rounded-full bg-foreground text-background"><CheckIcon className="size-8" /></span>
+      <h2 className="text-[22px] font-bold tracking-[-0.02em]">{isOrder ? t("Order sent!") : t("You're booked!")}</h2>
+      <p className="text-[15px] first-letter:uppercase">{summary}</p>
+      <p className="text-[15px] text-muted-foreground">{isOrder ? t("{name} will get in touch to confirm the details and the price.", { name: title }) : t("{name} will contact you if anything changes.", { name: title })}</p>
+    </section>
+  ) : (
+    <form onSubmit={submit} className="flex flex-col gap-5">
+      {/* where we are: back, the step's name, and which of three it is */}
+      <div className="flex items-center gap-2">
+        {canBack && (
+          <button type="button" onClick={back} aria-label={t("Back")} className="-ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-hover"><ArrowLeftIcon className="size-[18px]" /></button>
+        )}
+        <h2 className="min-w-0 flex-1 text-[17px] font-semibold">
+          {stage === "what" ? (isOrder ? t("What would you like?") : t("Choose a service")) : stage === "when" ? (isOrder ? t("For which day?") : t("Day and time")) : t("Your contacts")}
+        </h2>
+        <span className="flex shrink-0 gap-1" aria-label={t("Step {n} of {m}", { n: stepNo, m: 3 })}>
+          {[1, 2, 3].map((n) => <span key={n} className={cn("h-1.5 rounded-full transition-all", n === stepNo ? "w-4 bg-foreground" : "w-1.5 bg-foreground/20")} />)}
+        </span>
+      </div>
+
+      {/* the chosen service, small, once past the first step */}
+      {service && stage !== "what" && (
+        <div className="flex items-center gap-3 rounded-[18px] bg-card px-4 py-3">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-medium">{service.title}</span>
+            <span className="block text-[13px] text-muted-foreground first-letter:uppercase">
+              {stage === "who" && summary ? summary.slice(service.title.length + 3) : [!isOrder && service.duration_min ? duration(service.duration_min) : "", service.price != null ? `${service.price_from ? `${t("from")} ` : ""}${money(service.price, locale)}` : ""].filter(Boolean).join(" · ")}
+            </span>
+          </span>
+          {services.length > 1 && stage === "when" && (
+            <button type="button" onClick={back} className="shrink-0 text-[14px] font-medium text-muted-foreground hover:text-foreground">{t("Change")}</button>
+          )}
+        </div>
+      )}
+
+      {/* 1. what: one inset list */}
+      {stage === "what" && (services.length ? (
+        <div className="overflow-hidden rounded-[22px] bg-card">
+          {services.map((s) => (
+            <button key={s.id} type="button" onClick={() => pick(s)}
+              className="group flex w-full items-center gap-3 pl-4 text-left active:bg-hover">
+              <span className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-3.5 pr-4 group-last:border-none">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium">{s.title}</span>
-                  {!isOrder && s.duration_min && (
-                    <span className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground"><ClockIcon className="size-3.5" />
-                      {duration(s.duration_min)}
-                    </span>
-                  )}
+                  <span className="block text-[16px] leading-snug">{s.title}</span>
+                  {!isOrder && s.duration_min && <span className="mt-0.5 block text-[13px] text-muted-foreground">{duration(s.duration_min)}</span>}
                 </span>
                 {s.price != null && (
-                  <span className="shrink-0 text-[15px] font-semibold tabular-nums">
-                    {s.price_from ? `${t("from")} ` : ""}{money(s.price, locale)}{s.unit ? <span className="font-normal text-muted-foreground"> / {s.unit}</span> : null}
+                  <span className="shrink-0 text-[15px] text-muted-foreground tabular-nums">
+                    {s.price_from ? `${t("from")} ` : ""}{money(s.price, locale)}{s.unit ? ` / ${s.unit}` : ""}
                   </span>
                 )}
-              </button>
-            ))}
-            {!services.length && <p className="rounded-[22px] apple-card px-4 py-6 text-center text-[14px] text-muted-foreground">{t("Booking isn't open yet.")}</p>}
-          </section>
+                <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground opacity-60" />
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : <p className="rounded-[22px] bg-card px-4 py-8 text-center text-[15px] text-muted-foreground">{t("Booking isn't open yet.")}</p>)}
 
-          {/* 2. when */}
-          {service && (
-            <section className="flex flex-col gap-2.5">
-              <h2 className="text-[15px] font-semibold">{isOrder ? t("For which day?") : t("Day and time")}</h2>
-              {loadError ? <p className="text-[14px] text-destructive">{loadError}</p>
-                : !open ? <p className="text-[14px] text-muted-foreground">{t("Loading...")}</p>
-                : !days.length ? <p className="rounded-[22px] apple-card px-4 py-6 text-center text-[14px] text-muted-foreground">{t("No free days in the coming weeks. Write to us and we'll find a time.")}</p>
-                : (
-                  <>
-                    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-                      {days.map((d) => (
-                        <button key={d} type="button" onClick={() => { setDay(d); setTime(null) }}
-                          className={cn("flex w-16 shrink-0 flex-col items-center gap-0.5 rounded-2xl py-2.5 ring-1 transition-colors",
-                            day === d ? "bg-foreground text-background ring-foreground" : "bg-card ring-border hover:ring-foreground/30")}>
-                          <span className={cn("text-[11px] font-medium uppercase", day === d ? "opacity-70" : "text-muted-foreground")}>{dayLabel(d, { weekday: "short" })}</span>
-                          <span className="text-[19px] font-semibold tabular-nums">{dayLabel(d, { day: "numeric" })}</span>
-                          <span className={cn("text-[11px]", day === d ? "opacity-70" : "text-muted-foreground")}>{dayLabel(d, { month: "short" })}</span>
-                        </button>
-                      ))}
-                    </div>
-                    {!isOrder && day && (
-                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                        {times.map((tm) => (
-                          <button key={tm} type="button" onClick={() => setTime(tm)}
-                            className={cn("h-11 rounded-xl text-[15px] font-medium tabular-nums ring-1 transition-colors",
-                              time === tm ? "bg-foreground text-background ring-foreground" : "bg-card ring-border hover:ring-foreground/30")}>
-                            {tm}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
+      {/* 2. when */}
+      {stage === "when" && (
+        <section className="flex flex-col gap-3">
+          {loadError ? <p className="text-[14px] text-destructive">{loadError}</p>
+            : !open ? <p className="py-6 text-center text-[14px] text-muted-foreground">{t("Loading...")}</p>
+            : !days.length ? <p className="rounded-[22px] bg-card px-4 py-8 text-center text-[15px] text-muted-foreground">{t("No free days in the coming weeks. Write to us and we'll find a time.")}</p>
+            : (
+              <>
+                <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 no-scrollbar">
+                  {days.map((d) => (
+                    <button key={d} type="button" onClick={() => { setDay(d); setTime(null) }}
+                      className={cn("flex w-[58px] shrink-0 flex-col items-center gap-0.5 rounded-[16px] py-2.5", choice(day === d))}>
+                      <span className={cn("text-[11px] font-medium uppercase", day === d ? "opacity-70" : "text-muted-foreground")}>{dayLabel(d, { weekday: "short" })}</span>
+                      <span className="text-[20px] font-semibold tabular-nums">{dayLabel(d, { day: "numeric" })}</span>
+                      <span className={cn("text-[11px]", day === d ? "opacity-70" : "text-muted-foreground")}>{dayLabel(d, { month: "short" })}</span>
+                    </button>
+                  ))}
+                </div>
+                {!isOrder && day && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {times.map((tm) => (
+                      <button key={tm} type="button" onClick={() => { setTime(tm); setWho(true) }}
+                        className={cn("h-11 rounded-full text-[15px] font-medium tabular-nums", choice(time === tm))}>{tm}</button>
+                    ))}
+                  </div>
                 )}
-            </section>
-          )}
+              </>
+            )}
 
-          {/* the order's form */}
-          {service && isOrder && day && config.orderFields && (
-            <section className="flex flex-col gap-3">
-              <h2 className="text-[15px] font-semibold">{t("Details")}</h2>
+          {error && <p className="px-1 text-[14px] text-destructive">{error}</p>}
+
+          {/* an order's details, under its day */}
+          {isOrder && day && config.orderFields && (
+            <>
               {config.orderFields.filter((f) => !f.when || details[f.when.key] === f.when.value).map((f) => (
                 <label key={f.key} className="flex flex-col gap-1.5">
-                  <span className="text-[13px] font-medium text-muted-foreground">{t(f.label)}</span>
+                  <span className="px-1 text-[13px] text-muted-foreground">{t(f.label)}</span>
                   {f.type === "choice" ? (
-                    <div role="radiogroup" aria-label={t(f.label)} className="grid h-12 grid-cols-2 gap-1 rounded-xl bg-foreground/[0.05] p-1">
+                    <div role="radiogroup" aria-label={t(f.label)} className="grid h-11 grid-cols-2 gap-1 rounded-full bg-foreground/[0.06] p-1">
                       {f.options!.map((o) => (
                         <button key={o} type="button" role="radio" aria-checked={details[f.key] === o} onClick={() => setDetails((d) => ({ ...d, [f.key]: o }))}
-                          className={cn("rounded-lg text-[14px] font-medium transition-colors", details[f.key] === o ? "bg-card shadow-sm" : "text-muted-foreground")}>
+                          className={cn("rounded-full text-[14px] font-medium transition-colors", details[f.key] === o ? "bg-card shadow-sm" : "text-muted-foreground")}>
                           {t(o)}
                         </button>
                       ))}
@@ -225,62 +253,67 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
                   )}
                 </label>
               ))}
-            </section>
+              <button type="button" onClick={() => setWho(true)}
+                className="mt-1 flex h-[52px] items-center justify-center rounded-full bg-foreground text-[17px] font-semibold text-background">{t("Next")}</button>
+            </>
           )}
-
-          {/* 3. who */}
-          {service && day && (isOrder || time) && (
-            <section className="flex flex-col gap-3">
-              <h2 className="text-[15px] font-semibold">{t("Your contacts")}</h2>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Your name")} autoComplete="name" maxLength={80} className={FIELD} aria-label={t("Your name")} />
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] font-medium text-muted-foreground">{t("How should we reach you?")}</span>
-                <div role="radiogroup" aria-label={t("How should we reach you?")} className="grid h-12 grid-cols-3 gap-1 rounded-xl bg-foreground/[0.05] p-1">
-                  {([["telegram", "Telegram"], ["viber", "Viber"], ["phone", t("Phone call")]] as const).map(([id, label]) => (
-                    <button key={id} type="button" role="radio" aria-checked={way === id} onClick={() => setWay(id)}
-                      className={cn("rounded-lg text-[14px] font-medium transition-colors", way === id ? "bg-card shadow-sm" : "text-muted-foreground")}>{label}</button>
-                  ))}
-                </div>
-              </div>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380 __ ___ __ __" type="tel" autoComplete="tel" maxLength={40} className={FIELD} aria-label={t("Phone")} />
-              {way === "telegram" && (
-                <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder={t("@username in Telegram (optional)")} maxLength={40} className={FIELD} aria-label="Telegram" />
-              )}
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={isOrder ? t("Your wishes, if you'd like") : t("A comment, if you'd like")} className={cn(FIELD, "h-auto resize-none py-3 leading-snug")} />
-              {/* a reference: the tattoo sketch, the cake they liked, the nails they want */}
-              <div className="flex flex-wrap items-center gap-2">
-                {photoUrls.map((u, i) => (
-                  <span key={u} className="relative size-16 overflow-hidden rounded-xl bg-foreground/[0.05]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={u} alt="" className="size-full object-cover" />
-                    <button type="button" aria-label={t("Remove")} onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white"><XIcon className="size-3" /></button>
-                  </span>
-                ))}
-                {photos.length < 3 && (
-                  <button type="button" onClick={() => photoInput.current?.click()}
-                    className={cn("flex items-center gap-2 rounded-xl bg-foreground/[0.05] px-4 text-[14px] font-medium text-muted-foreground hover:text-foreground", photos.length ? "size-16 justify-center px-0" : "h-12")}>
-                    <ImagePlusIcon className="size-4" />{!photos.length && t("Attach a photo or sketch")}
-                  </button>
-                )}
-                <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addPhotos(e.target.files); e.target.value = "" }} />
-              </div>
-              {/* a field people don't see; bots fill it in */}
-              <input value={company} onChange={(e) => setCompany(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="company" />
-              {error && <p className="text-[14px] text-destructive">{error}</p>}
-              <button type="submit" disabled={!ready || sending}
-                className="flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-2xl bg-foreground px-4 py-2.5 text-center text-background transition-opacity disabled:opacity-40">
-                <span className="text-[16px] font-semibold">{sending ? t("Sending…") : isOrder ? t("Place the order") : t("Book now")}</span>
-                {summary && <span className="text-[12.5px] opacity-70 first-letter:uppercase">{summary}</span>}
-              </button>
-            </section>
-          )}
-        </form>
+        </section>
       )}
-    </>
+
+      {/* 3. who: an inset form */}
+      {stage === "who" && (
+        <section className="flex flex-col gap-4">
+          <div className="overflow-hidden rounded-[22px] bg-card [&>*+*]:border-t [&>*+*]:border-border">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Your name")} autoComplete="name" maxLength={80} className={ROW} aria-label={t("Your name")} />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380 __ ___ __ __" type="tel" autoComplete="tel" maxLength={40} className={ROW} aria-label={t("Phone")} />
+            {way === "telegram" && (
+              <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder={t("@username in Telegram (optional)")} maxLength={40} className={ROW} aria-label="Telegram" />
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[13px] text-muted-foreground">{t("How should we reach you?")}</span>
+            <div role="radiogroup" aria-label={t("How should we reach you?")} className="grid h-11 grid-cols-3 gap-1 rounded-full bg-foreground/[0.06] p-1">
+              {([["telegram", "Telegram"], ["viber", "Viber"], ["phone", t("Phone call")]] as const).map(([id, label]) => (
+                <button key={id} type="button" role="radio" aria-checked={way === id} onClick={() => setWay(id)}
+                  className={cn("rounded-full text-[14px] font-medium transition-colors", way === id ? "bg-card shadow-sm" : "text-muted-foreground")}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-[22px] bg-card">
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={isOrder ? t("Your wishes, if you'd like") : t("A comment, if you'd like")}
+              className="block w-full resize-none bg-transparent px-4 py-3.5 text-[16px] leading-snug outline-none placeholder:text-muted-foreground" />
+            {/* a reference: the tattoo sketch, the cake they liked, the nails they want */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-border p-3">
+              {photoUrls.map((u, i) => (
+                <span key={u} className="relative size-16 overflow-hidden rounded-[14px] bg-hover">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="size-full object-cover" />
+                  <button type="button" aria-label={t("Remove")} onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
+                    className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white"><XIcon className="size-3" /></button>
+                </span>
+              ))}
+              {photos.length < 3 && (
+                <button type="button" onClick={() => photoInput.current?.click()}
+                  className={cn("flex items-center gap-2 rounded-[14px] text-[15px] text-muted-foreground hover:text-foreground", photos.length ? "size-16 justify-center bg-hover" : "h-10 px-1")}>
+                  <ImagePlusIcon className="size-[18px]" />{!photos.length && t("Attach a photo or sketch")}
+                </button>
+              )}
+              <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addPhotos(e.target.files); e.target.value = "" }} />
+            </div>
+          </div>
+          {/* a field people don't see; bots fill it in */}
+          <input value={company} onChange={(e) => setCompany(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="company" />
+          {error && <p className="px-1 text-[14px] text-destructive">{error}</p>}
+          <button type="submit" disabled={!ready || sending}
+            className="flex h-[52px] items-center justify-center rounded-full bg-foreground text-[17px] font-semibold text-background transition-opacity disabled:opacity-35">
+            {sending ? t("Sending…") : isOrder ? t("Place the order") : t("Book now")}
+          </button>
+        </section>
+      )}
+    </form>
   )
 
-  if (embedded) return <div className="flex flex-col gap-6">{steps}</div>
+  if (embedded) return steps
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-6 px-4 py-8 sm:py-12">
       <header className="flex flex-col items-center gap-3 text-center">
