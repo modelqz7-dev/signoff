@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
   AlignLeftIcon, CalendarCheckIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, GlobeIcon, ImagesIcon,
-  InfoIcon, MapPinIcon, MessageCircleIcon, NavigationIcon, PhoneIcon, ShareIcon, StarIcon, XIcon,
+  InfoIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, ShareIcon, StarIcon, XIcon,
 } from "lucide-react"
 import {
   ASPECT_LABEL, Avatar, BUSINESS_DETAIL_KEYS, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, Placeholder, REVIEWER_COLORS, ReviewForm, STAR, Stars,
@@ -74,7 +74,7 @@ function Row({ icon, label, value, href, onClick, external, expanded, children }
 
 /**
  * A beauty, tattoo or cake business's public page, in the app's Apple look: a cover and a centred name,
- * one big Book button with Call, Route, Message and Share under it, the work as a strip of photos,
+ * one big Book button with Phone, Message and Share under it, the work as a strip of photos,
  * the facts as an inset list, reviews as cards, and the booking in a sheet. A bar with the button
  * slides up once the top one scrolls away.
  */
@@ -171,7 +171,6 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
   const tile = "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-[var(--pg-card)] py-2.5 text-[12px] font-medium transition-transform active:scale-[0.97] [&_svg]:size-[19px]"
   const tiles: { icon: React.ReactNode; label: string; href?: string | null; onClick?: () => void; external?: boolean }[] = [
     ...(phone ? [{ icon: <PhoneIcon />, label: t("Phone"), href: phone }] : []),
-    ...(route ? [{ icon: <NavigationIcon />, label: t("Route"), href: route, external: true }] : []),
     ...(message ? [{ icon: <MessageCircleIcon />, label: t("Message"), href: message[1], external: true }] : []),
     { icon: <ShareIcon />, label: shared ? t("Link copied") : t("Share"), onClick: share },
   ]
