@@ -1,5 +1,11 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "You'll pick the business again and Nodly will set itself up anew. Each business works differently: nails, barbershop and tattoo book a time, cakes take orders for a date with filling and weight.": "Ви знову оберете бізнес, і Nodly налаштується заново. Кожен бізнес працює по-своєму: манікюр, барбершоп і тату записують на час, торти приймають замовлення на дату з начинкою й вагою.",
+  "All bookings and orders are deleted for good.": "Усі записи й замовлення буде видалено назавжди.",
+  "Your services and prices are deleted; the new business's starter ones appear.": "Ваші послуги й ціни буде видалено, натомість з'являться стартові для нового бізнесу.",
+  "Your clients stay.": "Клієнти залишаться.",
+  "Deleting…": "Видаляємо…",
+  "Delete and switch": "Видалити й змінити",
   "Every order's next step in one tap": "Наступний крок замовлення в один дотик",
   "The day, its week and what it earns. Cakes see their orders by day.": "День, його тиждень і скільки він приніс. Торти бачать замовлення по днях.",
   "Calendar of bookings or orders": "Календар записів або замовлень",
