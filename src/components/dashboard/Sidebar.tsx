@@ -152,19 +152,7 @@ function SidebarContent({ activePage, panel, onPanel, beta }: {
       <div className="flex flex-1 flex-col">
         <div className="px-4 pt-4 pb-2"><Link href="/dashboard" className="text-[15px] font-semibold">{usage?.shop.name || "Nodly"}</Link></div>
         <nav className="flex-1 px-3 pt-2 pb-4">
-          {items.map((i) => (
-            <div key={i.href}>
-              <NavItem icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={crmActive(i.page, activePage)} href={i.href} />
-              {/* on a phone there's no hover menu: My page's screens sit under it */}
-              {i.menu && crmActive(i.page, activePage) && (
-                <div className="flex flex-col pl-7">
-                  {i.menu.slice(1).map((m) => (
-                    <Link key={m.href} href={m.href} className="rounded-lg px-2.5 py-1.5 text-[14px] text-muted-foreground hover:bg-hover hover:text-foreground">{m.label}</Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+          {items.map((i) => <NavItem key={i.href} icon={<i.icon className="size-full" strokeWidth={1.6} />} label={i.label} active={crmActive(i.page, activePage)} href={i.href} />)}
         </nav>
         <PlanCard onOpen={() => setPanel("billing")} />
         <AccountRow panel={panel} onPanel={setPanel} />
@@ -442,8 +430,6 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
         { href: "/online", label: t("Online booking") },
         { href: "/link/stats", label: t("Statistics") },
         { href: "/link/qr", label: t("QR code") },
-        { href: "/link/replies", label: t("Reply templates") },
-        { href: "/link/ideas", label: t("Post ideas") },
       ],
     },
   ]
