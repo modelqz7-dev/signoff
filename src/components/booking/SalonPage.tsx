@@ -12,17 +12,17 @@ import {
 import { ACCENTS, REVIEW_ASPECTS, pageContactHref, type PageContacts, type PageData, type PageReview } from "@/lib/page"
 import { useT } from "@/lib/i18n"
 
-/** The dashboard's own colours (light and dark), so the page looks like the rest of Nodly. */
-export const SALON_BG = { light: "#f5f5f7", dark: "#161618" } as const
+/** Nodly's own colours: the app's light, and in dark the landing's and the catalog's (globals.css .dark). */
+export const SALON_BG = { light: "#f5f5f7", dark: "#191919" } as const
 function palette(data: PageData) {
   const dark = data.theme === "dark"
   const accent = dark && data.accent === ACCENTS[0] ? "#f5f5f7" : data.accent
   return {
     "--pg-bg": dark ? SALON_BG.dark : SALON_BG.light,
-    "--pg-card": dark ? "#232325" : "#ffffff",
-    "--pg-text": dark ? "#f5f5f7" : "#1d1d1f",
-    "--pg-muted": dark ? "#98989d" : "#6e6e73",
-    "--pg-border": dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    "--pg-card": dark ? "#252525" : "#ffffff",
+    "--pg-text": dark ? "#e3e3e3" : "#1d1d1f",
+    "--pg-muted": dark ? "#9b9b9b" : "#6e6e73",
+    "--pg-border": dark ? "rgba(255,255,255,0.094)" : "rgba(0,0,0,0.08)",
     "--pg-field": dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
     "--pg-accent": accent,
     "--pg-on-accent": accent === "#f5f5f7" ? "#000000" : "#ffffff",
@@ -182,7 +182,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           ) : data.avatar_url ? (
             <img src={data.avatar_url} alt="" className="size-full scale-125 object-cover opacity-60 blur-3xl" />
           ) : (
-            <div className="size-full" style={{ background: data.theme === "dark" ? "linear-gradient(135deg,#2c2c2e,#1c1c1e)" : booking.cover }} />
+            <div className="size-full" style={{ background: data.theme === "dark" ? "linear-gradient(135deg,#2f2f2f,#202020)" : booking.cover }} />
           )}
         </div>
         <div className="-mt-12 flex flex-col items-center px-6 text-center">
