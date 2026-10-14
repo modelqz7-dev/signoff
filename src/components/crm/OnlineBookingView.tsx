@@ -79,6 +79,7 @@ export function OnlineBookingView({ shop, config, onShopChanged }: { shop: Shop;
 
       <section className="flex flex-col gap-4 rounded-[22px] apple-card p-4">
         <h2 className="text-[15px] font-semibold">{isOrder ? t("When you take orders") : t("When clients can book")}</h2>
+        <p className="-mt-2 text-[13px] text-muted-foreground">{t("If your page has opening hours, clients book within them.")}</p>
         <div className="flex flex-col gap-1.5">
           <span className={LABEL}>{t("Working days")}</span>
           <div className="grid grid-cols-7 gap-1.5">
