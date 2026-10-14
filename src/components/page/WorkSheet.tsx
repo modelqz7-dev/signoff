@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { ImagePlusIcon, PlusIcon, XIcon } from "lucide-react"
 import { FILLED, FILLED_AREA, FileButton } from "@/components/page/EditorBits"
+import { ImageCropper } from "@/components/page/ImageCropper"
 import { MAX_PROJECT_PHOTOS, type PageProject } from "@/lib/page"
 import { useT } from "@/lib/i18n"
 
@@ -27,25 +28,35 @@ export function WorkSheet({ work, isNew, salon, hint, upload, onSave, onDelete, 
   const [draft, setDraft] = useState(work)
   const [busy, setBusy] = useState(false)
   const [over, setOver] = useState(false)
+  // photos picked and waiting to be framed, one after another, then uploaded
+  const [queue, setQueue] = useState<{ files: File[]; total: number } | null>(null)
   const set = (patch: Partial<PageProject>) => setDraft((d) => ({ ...d, ...patch }))
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    // while a photo is being framed, Escape belongs to the cropper
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !queue) onClose() }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [onClose])
+  }, [onClose, queue])
 
-  async function addPhotos(files: File[]) {
+  // each picked photo is framed as a square first (how the tiles show it); a GIF or SVG goes up as it is
+  const framable = (f: File) => f.type !== "image/gif" && f.type !== "image/svg+xml"
+  function addPhotos(files: File[]) {
     const room = MAX_PROJECT_PHOTOS - draft.photos.length
     const images = files.filter((f) => f.type.startsWith("image/")).slice(0, room)
-    if (!images.length) return
+    images.filter((f) => !framable(f)).forEach(uploadOne)
+    const toFrame = images.filter(framable)
+    if (toFrame.length) setQueue({ files: toFrame, total: toFrame.length })
+  }
+  async function uploadOne(f: File) {
     setBusy(true)
-    for (const f of images) {
-      const url = await upload(f)
-      if (url) setDraft((d) => ({ ...d, photos: [...d.photos, url].slice(0, MAX_PROJECT_PHOTOS) }))
-    }
+    const url = await upload(f)
+    if (url) setDraft((d) => ({ ...d, photos: [...d.photos, url].slice(0, MAX_PROJECT_PHOTOS) }))
     setBusy(false)
   }
+  const nextInQueue = () => setQueue((q) => (q && q.files.length > 1 ? { ...q, files: q.files.slice(1) } : null))
+  const current = queue?.files[0]
+
   // the chosen photo becomes the cover (the first one)
   const makeCover = (src: string) => set({ photos: [src, ...draft.photos.filter((x) => x !== src)] })
 
@@ -133,6 +144,11 @@ export function WorkSheet({ work, isNew, salon, hint, upload, onSave, onDelete, 
           )}
         </div>
       </div>
+      {current && queue && (
+        <ImageCropper key={`${current.name}-${queue.files.length}`} file={current} shape="square" title={t("Work photo")}
+          note={queue.total > 1 ? t("{n} of {total}", { n: queue.total - queue.files.length + 1, total: queue.total }) : undefined}
+          onCancel={nextInQueue} onDone={(f) => { uploadOne(f); nextInQueue() }} />
+      )}
     </div>
   )
 }

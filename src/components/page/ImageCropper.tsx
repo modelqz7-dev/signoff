@@ -4,21 +4,25 @@ import { useEffect, useRef, useState } from "react"
 import { MinusIcon, PlusIcon, RotateCwIcon } from "lucide-react"
 import { useT } from "@/lib/i18n"
 
-type Shape = "round" | "wide"
+type Shape = "round" | "wide" | "square"
 type Pt = { x: number; y: number }
 
 /** The cover is shown at about 2:1 (192px tall on a phone, 300px on a computer). */
-const ASPECT: Record<Shape, number> = { round: 1, wide: 2 }
-const OUT_WIDTH: Record<Shape, number> = { round: 800, wide: 1600 }
+const ASPECT: Record<Shape, number> = { round: 1, wide: 2, square: 1 }
+const OUT_WIDTH: Record<Shape, number> = { round: 800, wide: 1600, square: 1600 }
 const MAX_ZOOM = 4
 
 /**
  * Before a photo is uploaded: move it and zoom it inside the frame (a circle for the avatar,
  * a wide band for the cover), turn it if it came sideways, and only that part is kept.
  */
-export function ImageCropper({ file, shape, onCancel, onDone }: {
+export function ImageCropper({ file, shape, title, note, onCancel, onDone }: {
   file: File
   shape: Shape
+  /** Shown above the frame in place of the default ("Photo or logo", "Cover"). */
+  title?: string
+  /** A small line beside the title, e.g. "2 of 3". */
+  note?: string
   onCancel: () => void
   onDone: (file: File) => void
 }) {
@@ -43,7 +47,7 @@ export function ImageCropper({ file, shape, onCancel, onDone }: {
 
   // the frame fits the screen, phones included
   useEffect(() => {
-    const fit = () => setFrameW(Math.min(shape === "round" ? 340 : 520, window.innerWidth - 48))
+    const fit = () => setFrameW(Math.min(shape === "wide" ? 520 : shape === "square" ? 380 : 340, window.innerWidth - 48))
     fit()
     window.addEventListener("resize", fit)
     return () => window.removeEventListener("resize", fit)
@@ -56,6 +60,7 @@ export function ImageCropper({ file, shape, onCancel, onDone }: {
   }, [onCancel])
 
   const frameH = frameW / ASPECT[shape]
+  const heading = title ?? (shape === "round" ? t("Photo or logo") : t("Cover"))
   const base = img ? Math.max(frameW / img.naturalWidth, frameH / img.naturalHeight) : 1
   const shownW = img ? img.naturalWidth * base * zoom : 0
   const shownH = img ? img.naturalHeight * base * zoom : 0
@@ -129,11 +134,12 @@ export function ImageCropper({ file, shape, onCancel, onDone }: {
     if (blob) onDone(new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }))
   }
 
+  // clicks stay inside: it can open over another sheet that closes on a click outside
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-8 bg-black/85 px-6 backdrop-blur-xl" role="dialog" aria-modal="true"
-      aria-label={shape === "round" ? t("Photo or logo") : t("Cover")}>
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-8 bg-black/85 px-6 backdrop-blur-xl" role="dialog" onClick={(e) => e.stopPropagation()} aria-modal="true"
+      aria-label={heading}>
       <div className="relative z-10 text-center text-white">
-        <p className="text-[17px] font-semibold">{shape === "round" ? t("Photo or logo") : t("Cover")}</p>
+        <p className="text-[17px] font-semibold">{heading}{note && <span className="ml-2 text-[14px] font-normal text-white/50">{note}</span>}</p>
         <p className="mt-1 text-[13px] text-white/60">{t("Drag to move, pinch or scroll to zoom")}</p>
       </div>
 
@@ -146,7 +152,7 @@ export function ImageCropper({ file, shape, onCancel, onDone }: {
           <img src={img.src} alt="" draggable={false} className="pointer-events-none absolute top-1/2 left-1/2 max-w-none cursor-grab"
             style={{ width: shownW, height: shownH, transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` }} />
         )}
-        <div className={`pointer-events-none absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.72)] ring-2 ring-white/90 ${shape === "round" ? "rounded-full" : "rounded-[18px]"}`} />
+        <div className={`pointer-events-none absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.72)] ring-2 ring-white/90 ${shape === "round" ? "rounded-full" : shape === "square" ? "rounded-[22px]" : "rounded-[18px]"}`} />
         <div className="absolute inset-0 cursor-grab active:cursor-grabbing" />
       </div>
 
