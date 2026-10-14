@@ -190,7 +190,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           )}
         </div>
         <div className="-mt-12 flex flex-col items-center px-6 text-center">
-          <Avatar data={data} initials={initials} face={booking.face} className="size-24 text-2xl ring-4! ring-[var(--pg-bg)]! shadow-[0_6px_20px_-8px_rgba(0,0,0,0.35)]" />
+          <Avatar data={data} initials={initials} face={booking.face} className="size-24 text-2xl ring-0! shadow-[0_8px_24px_-10px_rgba(0,0,0,0.4)]" />
           <h1 className="mt-3 text-[28px] leading-tight font-bold tracking-[-0.025em]">{data.title || t("Your name")}</h1>
           {category && <p className="mt-0.5 text-[15px] text-[var(--pg-muted)]">{category}</p>}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[13.5px] text-[var(--pg-muted)]">
@@ -358,7 +358,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
       {/* a frosted bar with the button, sliding up once the big one has scrolled away */}
       <div className={`sticky bottom-0 z-20 border-t border-[var(--pg-border)] bg-[color-mix(in_srgb,var(--pg-card)_78%,transparent)] backdrop-blur-xl backdrop-saturate-150 transition-[transform,opacity] duration-300 ${scrolled ? "" : "pointer-events-none translate-y-full opacity-0"}`}>
         <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-4 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] @3xl:px-0">
-          <Avatar data={data} initials={initials} face={booking.face} className="size-10 text-sm" />
+          <Avatar data={data} initials={initials} face={booking.face} className="size-10 text-sm ring-0!" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-semibold">{data.title || t("Your name")}</span>
             {category && <span className="block truncate text-[12.5px] text-[var(--pg-muted)]">{category}</span>}
