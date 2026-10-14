@@ -22,9 +22,16 @@ async function context(slug: string) {
   const page = await loadPublicPage(slug)
   if (!page) return null
   const db = adminClient()
-  const { data: shop } = await db.from("shops")
+  const full = await db.from("shops")
     .select("id, user_id, name, niche, booking, notify_email, notify_telegram, telegram_chat_id, notify_lang")
     .eq("id", page.shopId).maybeSingle()
+  let shop = full.data
+  // an older database may lack some of these columns: book anyway, with what's there
+  if (full.error) {
+    console.error("Booking shop load error:", full.error)
+    const { data: basic } = await db.from("shops").select("id, user_id, name, niche").eq("id", page.shopId).maybeSingle()
+    shop = basic ? { ...basic, booking: {}, notify_email: null, notify_telegram: null, telegram_chat_id: null, notify_lang: null } : null
+  }
   const config = nicheConfig(shop?.niche)
   if (!shop || !config) return null
   // the page's opening hours, when filled in, are the hours clients can book in
