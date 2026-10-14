@@ -219,12 +219,14 @@ export async function chooseNiche(shopId: string, niche: CrmNiche | "smm", trans
 }
 
 /**
- * Starts the niche over: the current services are hidden (not deleted), the niche is cleared,
- * and the dashboard asks what the business is again. Clients and their history stay.
+ * Starts the niche over: every booking and order and every service are deleted for good, the
+ * niche is cleared, and the dashboard asks what the business is again. Only the clients stay.
  */
 export async function resetNiche(shopId: string) {
-  const { error: hideError } = await supabase.from("crm_services").update({ archived: true }).eq("shop_id", shopId).eq("archived", false)
-  if (hideError) throw hideError
+  const { error: bookingsError } = await supabase.from("crm_bookings").delete().eq("shop_id", shopId)
+  if (bookingsError) throw bookingsError
+  const { error: servicesError } = await supabase.from("crm_services").delete().eq("shop_id", shopId)
+  if (servicesError) throw servicesError
   const { error } = await supabase.from("shops").update({ niche: null }).eq("id", shopId)
   if (error) throw error
 }

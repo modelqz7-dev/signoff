@@ -1,5 +1,11 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "You'll pick the business again and Nodly will set itself up anew. Each business works differently: nails, barbershop and tattoo book a time, cakes take orders for a date with filling and weight.": "Вы снова выберете бизнес, и Nodly настроится заново. Каждый бизнес работает по-своему: маникюр, барбершоп и тату записывают на время, торты принимают заказы на дату с начинкой и весом.",
+  "All bookings and orders are deleted for good.": "Все записи и заказы будут удалены навсегда.",
+  "Your services and prices are deleted; the new business's starter ones appear.": "Ваши услуги и цены будут удалены, вместо них появятся стартовые для нового бизнеса.",
+  "Your clients stay.": "Клиенты останутся.",
+  "Deleting…": "Удаляем…",
+  "Delete and switch": "Удалить и сменить",
   "Every order's next step in one tap": "Следующий шаг заказа в одно касание",
   "The day, its week and what it earns. Cakes see their orders by day.": "День, его неделя и сколько он принёс. Торты видят заказы по дням.",
   "Calendar of bookings or orders": "Календарь записей или заказов",

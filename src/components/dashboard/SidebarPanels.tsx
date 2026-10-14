@@ -272,11 +272,16 @@ function ProfilePanel() {
       <Dialog isOpen={confirmNiche} onOpenChange={(v) => !v && !switching && setConfirmNiche(false)} className="rounded-2xl sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{t("Change your business?")}</DialogTitle>
-          <DialogDescription>{t("You'll pick the business again and Nodly will set itself up anew. Your current services won't carry over; clients and their history stay.")}</DialogDescription>
+          <DialogDescription>{t("You'll pick the business again and Nodly will set itself up anew. Each business works differently: nails, barbershop and tattoo book a time, cakes take orders for a date with filling and weight.")}</DialogDescription>
         </DialogHeader>
+        <ul className="flex flex-col gap-2 rounded-xl bg-destructive/[0.07] p-3 text-[13.5px]">
+          <li className="flex gap-2"><span className="text-destructive">•</span>{t("All bookings and orders are deleted for good.")}</li>
+          <li className="flex gap-2"><span className="text-destructive">•</span>{t("Your services and prices are deleted; the new business's starter ones appear.")}</li>
+          <li className="flex gap-2"><span className="text-muted-foreground">•</span>{t("Your clients stay.")}</li>
+        </ul>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onPress={() => setConfirmNiche(false)} isDisabled={switching}>{t("Cancel")}</Button>
-          <Button isDisabled={switching} onPress={async () => {
+          <Button variant="destructive" isDisabled={switching} onPress={async () => {
             if (!shop) return
             setSwitching(true)
             try {
@@ -289,7 +294,7 @@ function ProfilePanel() {
               setSwitching(false)
               setConfirmNiche(false)
             }
-          }}>{switching ? t("Saving…") : t("Switch")}</Button>
+          }}>{switching ? t("Deleting…") : t("Delete and switch")}</Button>
         </div>
       </Dialog>
 
