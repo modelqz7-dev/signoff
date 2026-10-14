@@ -1,3 +1,4 @@
+import { regionOf } from "@/lib/cities"
 import { adminClient } from "@/lib/server/notify"
 import { cleanPage } from "@/lib/page"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
@@ -10,6 +11,8 @@ export type CatalogEntry = {
   avatar: string | null
   cover: string | null
   niche: CrmNiche
+  /** Its region and town, ids from lib/cities ("" when not picked). */
+  region: string
   city: string
   rating: number | null
   reviews: number
@@ -49,6 +52,7 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
       avatar: p.data.avatar_url,
       cover: p.data.banner_url ?? p.data.projects.flatMap((x) => x.photos)[0] ?? null,
       niche: config.id,
+      region: regionOf(p.data),
       city: p.data.city,
       rating: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null,
       reviews: rs.length,

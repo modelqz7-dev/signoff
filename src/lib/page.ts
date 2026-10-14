@@ -1,7 +1,8 @@
 // The workshop's public page (a "link in bio" page): what it holds and how it is checked.
-import { CITIES } from "@/lib/cities"
+import { CITIES, REGIONS, cityById } from "@/lib/cities"
 
 const CITY_IDS = new Set(CITIES.map((c) => c.id))
+const REGION_IDS = new Set(REGIONS.map((r) => r.id))
 
 // Shared by the server (public page, request API) and the browser (editor), so no "use client".
 
@@ -70,7 +71,9 @@ export type PageData = {
   buttons: ButtonShape
   /** Shown in Nodly's catalog (the business turns it on itself). */
   listed: boolean
-  /** The city it's found by in the catalog, an id from lib/cities ("" when not picked). */
+  /** The region it's found by in the catalog, an id from lib/cities ("" when not picked). */
+  region: string
+  /** Its town, an id from lib/cities ("" when not picked or not on the list). */
   city: string
   /** Where it is, for the catalog's map; null until the business puts its pin. */
   geo: { lat: number; lng: number } | null
@@ -201,6 +204,9 @@ export function cleanPage(value: unknown, fallbackTitle = ""): PageData {
     buttons: src.buttons === "rounded" || src.buttons === "square" ? src.buttons : "pill",
     listed: src.listed === true,
     city: typeof src.city === "string" && CITY_IDS.has(src.city) ? src.city : "",
+    // a town decides its region; pages saved before regions existed get theirs from the town
+    region: (typeof src.city === "string" && cityById(src.city)?.region)
+      || (typeof src.region === "string" && REGION_IDS.has(src.region) ? src.region : ""),
     geo: cleanGeo(src.geo),
   }
 }

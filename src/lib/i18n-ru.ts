@@ -1,5 +1,13 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "Region": "Область",
+  "Town": "Город",
+  "Another town": "Другой город",
+  "Pick a region so clients nearby find you.": "Выберите область, чтобы вас нашли клиенты рядом.",
+  "Your pin is set: clients see you on the catalog map. Drag it to move it.": "Метка стоит: клиенты видят вас на карте каталога. Перетащите её, чтобы сдвинуть.",
+  "Tap the map where you work, or press “I'm here now”.": "Нажмите на карте там, где вы работаете, или «Я сейчас здесь».",
+  "All regions": "Все области",
+  "All towns": "Все города",
   "Work photo": "Фото работы",
   "{n} of {total}": "{n} из {total}",
   "Drag to move, pinch or scroll to zoom": "Перетащите, чтобы сдвинуть; щипок или колесо — масштаб",
