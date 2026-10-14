@@ -38,7 +38,15 @@ export default async function PublicPage({ params }: Props) {
   }
   // businesses with a CRM niche take bookings here instead of showing the portfolio page
   const db = adminClient()
-  const { data: shop } = await db.from("shops").select("name, niche, booking").eq("id", page.shopId).maybeSingle()
+  const full = await db.from("shops").select("name, niche, booking").eq("id", page.shopId).maybeSingle()
+  let shop = full.data
+  const shopError = full.error
+  // a database without the booking column (crm.sql not re-run) still shows the booking, with default hours
+  if (shopError) {
+    console.error("Page shop load error:", shopError)
+    const { data: basic } = await db.from("shops").select("name, niche").eq("id", page.shopId).maybeSingle()
+    shop = basic ? { ...basic, booking: {} } : null
+  }
   const config = nicheConfig(shop?.niche)
   if (shop && config) {
     const { data: services } = await db.from("crm_services").select("id, title, duration_min, price, price_from, unit")
