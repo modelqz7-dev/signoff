@@ -209,6 +209,7 @@ function Card({ entry: e, km }: { entry: CatalogEntry; km?: number | null }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {e.cover && <img src={e.cover} alt="" loading="lazy" className="size-full object-cover" />}
         <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-[#1d1d1f] backdrop-blur">{t(config.name)}</span>
+        {e.top && <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-[#1d1d1f]/85 px-2.5 py-1 text-[12px] font-medium text-white backdrop-blur"><StarIcon className="size-3 fill-current" />{t("Recommended")}</span>}
       </div>
       <div className="flex flex-1 flex-col gap-3 px-5 pb-5">
         <div className="relative z-10 -mt-8 flex items-end gap-3">

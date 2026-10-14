@@ -6,10 +6,11 @@ import { PrinterIcon } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { appointmentEnd, docNumber, money, statusLabel, type CrmBooking, type CrmClient } from "@/lib/crm"
 import { nicheConfig } from "@/lib/niches"
+import { can } from "@/lib/plans"
 import { cleanPage, type PageData } from "@/lib/page"
 import { useT } from "@/lib/i18n"
 
-type Shop = { id: string; name: string; niche: string | null; logo_url: string | null }
+type Shop = { id: string; name: string; niche: string | null; logo_url: string | null; plan: string; trial_ends_at: string | null }
 type Doc = "invoice" | "receipt"
 
 /**
@@ -36,7 +37,7 @@ function Receipt() {
       if (!booking) { setMissing(true); return }
       const b = booking as CrmBooking
       const [{ data: shop }, { data: client }, { data: page }] = await Promise.all([
-        supabase.from("shops").select("id, name, niche, logo_url").eq("id", b.shop_id).maybeSingle(),
+        supabase.from("shops").select("id, name, niche, logo_url, plan, trial_ends_at").eq("id", b.shop_id).maybeSingle(),
         b.client_id ? supabase.from("crm_clients").select("*").eq("id", b.client_id).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from("shop_pages").select("data").eq("shop_id", b.shop_id).maybeSingle(),
       ])
@@ -50,6 +51,8 @@ function Receipt() {
   if (!state) return <p className="p-10 text-center text-sm text-muted-foreground">{t("Loading...")}</p>
 
   const { booking: b, client, shop, page } = state
+  // invoices and receipts come with the Master plan
+  if (!can(shop, "documents")) return <p className="p-10 text-center text-sm text-muted-foreground">{t("Invoices and receipts come with the Master plan.")}</p>
   const config = nicheConfig(shop.niche)
   const isOrder = b.kind === "order"
   const total = b.price ?? 0

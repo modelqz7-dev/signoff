@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { PageView } from "@/components/page/PageView"
+import { can } from "@/lib/plans"
 import { BookingPage } from "@/components/booking/BookingPage"
 import { loadPageReviews, loadPublicPage } from "@/lib/server/page"
 import { adminClient } from "@/lib/server/notify"
@@ -38,14 +39,14 @@ export default async function PublicPage({ params }: Props) {
   }
   // businesses with a CRM niche take bookings here instead of showing the portfolio page
   const db = adminClient()
-  const full = await db.from("shops").select("name, niche, booking").eq("id", page.shopId).maybeSingle()
+  const full = await db.from("shops").select("name, niche, booking, plan, trial_ends_at").eq("id", page.shopId).maybeSingle()
   let shop = full.data
   const shopError = full.error
   // a database without the booking column (crm.sql not re-run) still shows the booking, with default hours
   if (shopError) {
     console.error("Page shop load error:", shopError)
     const { data: basic } = await db.from("shops").select("name, niche").eq("id", page.shopId).maybeSingle()
-    shop = basic ? { ...basic, booking: {} } : null
+    shop = basic ? { ...basic, booking: {}, plan: "free", trial_ends_at: null } : null
   }
   const config = nicheConfig(shop?.niche)
   if (shop && config) {
@@ -56,7 +57,7 @@ export default async function PublicPage({ params }: Props) {
     const isOrder = config.kind === "order"
     return (
       <main className="min-h-dvh">
-        <BookingPage data={{ ...page.data, bio: page.data.bio || cleanBooking(shop.booking).about }} slug={page.slug} reviews={reviews} isOrder={isOrder} niche={config.id}
+        <BookingPage data={{ ...page.data, bio: page.data.bio || cleanBooking(shop.booking).about }} slug={page.slug} reviews={reviews} isOrder={isOrder} niche={config.id} badge={!can(shop, "branding")}
           booking={<PublicBooking embedded slug={page.slug} title={page.data.title || shop.name} avatar={page.data.avatar_url}
             about={cleanBooking(shop.booking).about} niche={config.id} services={(services ?? []) as PublicService[]} />} />
       </main>

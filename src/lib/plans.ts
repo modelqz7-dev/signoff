@@ -5,11 +5,13 @@ export type PlanId = "free" | "go" | "pro"
 
 /** Paid features, checked with `can(shop, feature)`. */
 export type Feature = "versions" | "certificate" | "branding" | "reminders" | "brandKit" | "canvas"
+  // booking businesses: no monthly cap on online bookings, invoices/receipts/export, first in the catalog
+  | "unlimitedBookings" | "documents" | "catalogTop"
 
 export type Plan = {
   id: PlanId
   name: string
-  /** Monthly price in USD; yearly billing is 20% off. */
+  /** Monthly price in hryvnias; yearly billing is 20% off. */
   monthly: number
   /** Active projects at once (awaiting review or changes requested); null = unlimited. */
   activeOrders: number | null
@@ -36,10 +38,10 @@ export const PLANS: Plan[] = [
   },
   {
     id: "go",
-    name: "Pro",
-    monthly: 19,
+    name: "Master",
+    monthly: 299,
     activeOrders: 25,
-    features: ["versions", "certificate", "branding", "reminders", "canvas"],
+    features: ["versions", "certificate", "branding", "reminders", "canvas", "unlimitedBookings", "documents"],
     highlights: [
       "Up to 25 active projects",
       ...(FEATURES.canvas ? ["Free canvas with SMM templates"] : []),
@@ -52,9 +54,9 @@ export const PLANS: Plan[] = [
   {
     id: "pro",
     name: "Studio",
-    monthly: 39,
+    monthly: 699,
     activeOrders: null,
-    features: ["versions", "certificate", "branding", "reminders", "brandKit", "canvas"],
+    features: ["versions", "certificate", "branding", "reminders", "brandKit", "canvas", "unlimitedBookings", "documents", "catalogTop"],
     highlights: [
       "Unlimited active projects",
       "Everything in Pro",
@@ -94,10 +96,12 @@ export function planFor(feature: Feature) {
 }
 
 export function formatPrice(plan: Plan, yearly: boolean) {
-  if (!plan.monthly) return "$0"
-  const perMonth = yearly ? plan.monthly * (1 - YEARLY_DISCOUNT) : plan.monthly
-  return `$${Number.isInteger(perMonth) ? perMonth : perMonth.toFixed(2)}`
+  const perMonth = yearly ? Math.round(plan.monthly * (1 - YEARLY_DISCOUNT)) : plan.monthly
+  return `${perMonth} ₴`
 }
+
+/** Online bookings a month on the free plan (the owner's own entries don't count). */
+export const FREE_BOOKINGS = 30
 
 /** Error text raised by the order-limit trigger in supabase/plans.sql. */
 export function isPlanLimitError(error: { message?: string } | null | undefined) {
@@ -106,12 +110,12 @@ export function isPlanLimitError(error: { message?: string } | null | undefined)
 
 /**
  * What each plan offers a CRM niche (nails, barbershop, cakes): their own words, since the
- * content-plan features above don't apply to them. Not limited per plan yet.
+ * content-plan features above don't apply to them. Limits: FREE_BOOKINGS, "documents", "branding", "catalogTop".
  */
 const CRM_HIGHLIGHTS: Record<string, string[]> = {
-  free: ["Online booking through your link", "Client base with visit history", "Telegram notifications", "“Booking by Nodly” on your page"],
-  go: ["Everything in Start", "Several masters in one calendar", "Priority support"],
-  pro: ["Everything in Pro", "For salons and studios with a team", "Help with setting up"],
+  free: ["Up to 30 online bookings a month", "Your page and a place in the catalog", "Client base and Telegram notices", "“Made with Nodly” on your page"],
+  go: ["Unlimited online bookings", "Invoices, receipts and export to Excel", "No Nodly mark on your page", "Everything in Start"],
+  pro: ["First in the catalog of your city", "“Recommended” mark on your card", "Several masters in one calendar", "Everything in Master, priority support"],
 }
 
 export function planHighlights(plan: Plan, niche: string | null | undefined) {

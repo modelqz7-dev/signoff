@@ -18,7 +18,7 @@ import { currentActivity, updateProfile, uploadAvatar, useProfile } from "@/lib/
 import { isCrmNiche, nicheConfig, type NicheConfig } from "@/lib/niches"
 import { resetNiche } from "@/lib/crm"
 import { NicheIcon } from "@/components/crm/NicheIcon"
-import { planHighlights, PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
+import { FREE_BOOKINGS, planHighlights, PLANS, can, effectivePlan, trialDaysLeft, type PlanId } from "@/lib/plans"
 import { PADDLE_ENABLED, priceFor } from "@/lib/billing"
 import { openCheckout } from "@/lib/paddle-client"
 import { uploadPublicAsset, useFileUrl } from "@/lib/files"
@@ -500,7 +500,8 @@ function BillingPanel() {
         </div>
       )}
 
-      {!isCrmNiche(shop?.niche) && <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />}
+      {!isCrmNiche(shop?.niche) ? <UsageMeter used={usage.activeOrders} limit={usage.plan.activeOrders} />
+        : usage.shop && <OnlineBookingsMeter shopId={usage.shop.id} unlimited={can(usage.shop, "unlimitedBookings")} />}
 
       <div className="flex justify-center pt-1">
         <BillingCycleToggle yearly={yearly} onChange={setYearly} />
@@ -1212,4 +1213,19 @@ function BrandKit({ shop, onSaved }: { shop: Shop | null; onSaved: (shop: Shop) 
       </fieldset>
     </div>
   )
+}
+
+/** A booking business on the free plan: how many of the month's online bookings it has used. */
+function OnlineBookingsMeter({ shopId, unlimited }: { shopId: string; unlimited: boolean }) {
+  const { t } = useT()
+  const [used, setUsed] = useState<number | null>(null)
+  useEffect(() => {
+    const now = new Date()
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+    supabase.from("crm_bookings").select("id", { count: "exact", head: true })
+      .eq("shop_id", shopId).eq("details->>via", "online").gte("created_at", from)
+      .then(({ count }) => setUsed(count ?? 0))
+  }, [shopId])
+  if (used === null) return null
+  return <UsageMeter used={used} limit={unlimited ? null : FREE_BOOKINGS} label={t("Online bookings this month")} />
 }

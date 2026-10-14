@@ -67,6 +67,8 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
   const [who, setWho] = useState(false)
   // bumped to fetch the free times again, e.g. after a time was taken meanwhile
   const [reload, setReload] = useState(0)
+  // the business's free online bookings for the month are used up
+  const FULL = t("Online booking is full for this month. Write or call {name} directly.", { name: title })
 
   // the free times of the chosen service
   const serviceId = service?.id
@@ -74,7 +76,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
     if (!serviceId || preview) return
     let off = false
     fetch(`/api/book/${encodeURIComponent(slug)}?service=${serviceId}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then(async (r) => (r.ok ? r.json() : Promise.reject(new Error(((await r.json().catch(() => ({}))) as { error?: string }).error || String(r.status)))))
       .then((a: Availability) => {
         if (off) return
         setOpen(a)
@@ -82,7 +84,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
         const first = a.kind === "appointment" ? Object.keys(a.slots)[0] : a.days[0]
         setDay((d) => d ?? first ?? null)
       })
-      .catch(() => { if (!off) setLoadError(t("Couldn't load free times. Refresh the page.")) })
+      .catch((e: Error) => { if (!off) setLoadError(e.message === "limit" ? "limit" : t("Couldn't load free times. Refresh the page.")) })
     return () => { off = true }
   }, [serviceId, slug, t, reload, preview])
 
@@ -119,7 +121,8 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
       setTime(null)
       setOpen(null)
       setReload((n) => n + 1)
-    } else if (code === "slow_down") setError(t("Too many attempts. Try again in a few minutes."))
+    } else if (code === "limit") setError(FULL)
+    else if (code === "slow_down") setError(t("Too many attempts. Try again in a few minutes."))
     else setError(t("Couldn't book. Check the name and phone and try again."))
   }
 
@@ -204,7 +207,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
       {/* 2. when */}
       {stage === "when" && (
         <section className="flex flex-col gap-3">
-          {loadError ? <p className="text-[14px] text-destructive">{loadError}</p>
+          {loadError ? <p className="text-[14px] text-destructive">{loadError === "limit" ? FULL : loadError}</p>
             : !open ? <p className="py-6 text-center text-[14px] text-muted-foreground">{t("Loading...")}</p>
             : !days.length ? <p className="rounded-[22px] bg-card px-4 py-8 text-center text-[15px] text-muted-foreground">{t("No free days in the coming weeks. Write to us and we'll find a time.")}</p>
             : (

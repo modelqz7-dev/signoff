@@ -15,6 +15,7 @@ import { BookingLinkButton, OnlineBookingView } from "@/components/crm/OnlineBoo
 import { translateStarterTitles, useCrmData, type CrmBooking } from "@/lib/crm"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
 import { getOrCreateShop } from "@/lib/shop"
+import { can } from "@/lib/plans"
 import { supabase } from "@/lib/supabase"
 import { useT } from "@/lib/i18n"
 import { OPEN_NEW_BOOKING } from "@/lib/panels"
@@ -91,7 +92,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
           ) : page === "clients" ? (
             <ClientsView data={data} config={config} shopId={shop.id} onNew={newBooking} onOpen={openBooking} />
           ) : page === "history" ? (
-            <HistoryView data={data} config={config} onOpen={openBooking} />
+            <HistoryView data={data} config={config} onOpen={openBooking} docs={can(shop, "documents")} />
           ) : page === "online" ? (
             <OnlineBookingView shop={shop} config={config} onShopChanged={setShop} />
           ) : (
@@ -106,6 +107,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
         preset={dialog?.preset}
         config={config}
         shopId={shop.id}
+        docs={can(shop, "documents")}
         services={data.services}
         clients={data.clients}
         bookings={data.bookings}
