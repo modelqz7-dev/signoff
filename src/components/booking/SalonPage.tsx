@@ -12,19 +12,22 @@ import {
 import { ACCENTS, REVIEW_ASPECTS, pageContactHref, type PageContacts, type PageData, type PageReview } from "@/lib/page"
 import { useT } from "@/lib/i18n"
 
-/** iOS's grouped look: a soft grey page, white cards, hairlines; black instead of grey on a dark page. */
+/** The dashboard's own colours (light and dark), so the page looks like the rest of Nodly. */
+export const SALON_BG = { light: "#f5f5f7", dark: "#161618" } as const
 function palette(data: PageData) {
   const dark = data.theme === "dark"
   const accent = dark && data.accent === ACCENTS[0] ? "#f5f5f7" : data.accent
   return {
-    "--pg-bg": dark ? "#000000" : "#f2f2f7",
-    "--pg-card": dark ? "#1c1c1e" : "#ffffff",
+    "--pg-bg": dark ? SALON_BG.dark : SALON_BG.light,
+    "--pg-card": dark ? "#232325" : "#ffffff",
     "--pg-text": dark ? "#f5f5f7" : "#1d1d1f",
-    "--pg-muted": dark ? "rgba(235,235,245,0.6)" : "rgba(60,60,67,0.6)",
-    "--pg-border": dark ? "rgba(84,84,88,0.55)" : "rgba(60,60,67,0.14)",
-    "--pg-field": dark ? "rgba(120,120,128,0.24)" : "rgba(120,120,128,0.12)",
+    "--pg-muted": dark ? "#98989d" : "#6e6e73",
+    "--pg-border": dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    "--pg-field": dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
     "--pg-accent": accent,
     "--pg-on-accent": accent === "#f5f5f7" ? "#000000" : "#ffffff",
+    // the system font, as in the dashboard
+    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-sans), system-ui, sans-serif',
   } as React.CSSProperties
 }
 
@@ -138,7 +141,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
   // the live page paints the whole window its colour, so a bounce past either end shows no other colour
   useEffect(() => {
     if (preview) return
-    const bg = data.theme === "dark" ? "#000000" : "#f2f2f7"
+    const bg = data.theme === "dark" ? SALON_BG.dark : SALON_BG.light
     const root = document.documentElement
     const was = [root.style.backgroundColor, document.body.style.backgroundColor]
     root.style.backgroundColor = bg
@@ -179,7 +182,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           ) : data.avatar_url ? (
             <img src={data.avatar_url} alt="" className="size-full scale-125 object-cover opacity-60 blur-3xl" />
           ) : (
-            <div className="size-full" style={{ background: booking.cover }} />
+            <div className="size-full" style={{ background: data.theme === "dark" ? "linear-gradient(135deg,#2c2c2e,#1c1c1e)" : booking.cover }} />
           )}
         </div>
         <div className="-mt-12 flex flex-col items-center px-6 text-center">
