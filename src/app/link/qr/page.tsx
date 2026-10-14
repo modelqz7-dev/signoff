@@ -36,7 +36,7 @@ export default function PageQr() {
       {!loading && <PageNotice missingTable={missingTable} hasPage={!!page} />}
       {page && (
         <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-start">
-          <div className="flex w-full max-w-[340px] flex-col items-center gap-4 rounded-3xl bg-card p-6 ring-1 ring-foreground/10">
+          <div className="flex w-full max-w-[340px] flex-col items-center gap-4 rounded-[22px] apple-card p-6">
             <div className="aspect-square w-full overflow-hidden rounded-2xl bg-white">
               {png && <img src={png} alt={t("QR code")} className="size-full" />}
             </div>
@@ -50,7 +50,7 @@ export default function PageQr() {
             )}
             <div className="flex flex-wrap gap-2">
               <a href={png || undefined} download={`${file}.png`} aria-disabled={!png}
-                className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90">
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-90">
                 <DownloadIcon className="size-4" />{t("Download PNG")}
               </a>
               <a href={svgHref || undefined} download={`${file}.svg`} aria-disabled={!svg}

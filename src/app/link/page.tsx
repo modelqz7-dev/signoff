@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import {
-  CheckIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, Link2Icon, MailIcon, MessageCircleIcon, MoreHorizontalIcon, SendIcon, ShareIcon, SparklesIcon, XIcon,
+  CheckIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, MailIcon, MessageCircleIcon, MoreHorizontalIcon, SendIcon, ShareIcon, SparklesIcon, XIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
@@ -11,7 +11,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { AvatarPlaceholder } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
-import { cleanPage, pagePath, suggestSlug, type PageData } from "@/lib/page"
+import { cleanPage, pagePath, type PageData } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig } from "@/lib/niches"
 
@@ -87,7 +87,7 @@ export default function MyPage() {
   const weekday = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" })
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <Sidebar open={sidebarOpen} activePage="link" />
       <div className="flex min-w-0 flex-1 flex-col">
         {/* On a computer the page greets you itself, like the dashboard; phones keep the bar for the menu. */}
@@ -95,74 +95,69 @@ export default function MyPage() {
           <DashboardHeader shopName={shop?.name || ""} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
 
-        <div className="app-panel flex-1 px-4 pb-10 sm:px-8 lg:m-3 lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
-          <div className="mx-auto flex w-full max-w-[1216px] flex-col">
-            {/* Greeting and the address, pinned to the top */}
-            <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background pt-8 pb-4">
-              <h1 className="min-w-0 truncate text-2xl leading-7 font-bold tracking-tight">{hello}{name && `, ${name}`}</h1>
-              <div className="flex h-10 max-w-full items-center gap-2 rounded-full bg-muted pr-1.5 pl-4 text-[15px] font-medium">
-                <Link2Icon className="size-4 shrink-0" />
-                {page?.published
-                  ? <a href={pagePath(page.slug)} target="_blank" rel="noopener" className="truncate hover:underline">{host}{pagePath(page.slug)}</a>
-                  : <a href="/link/edit" className="truncate text-muted-foreground hover:underline">{host}{pagePath(page?.slug ?? (shop ? suggestSlug(shop.name) : ""))}</a>}
-                <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-full hover:bg-background">
-                  <ShareIcon className="size-4" />
-                </button>
+        <main className="flex min-w-0 flex-1 flex-col bg-background">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-5 sm:p-8">
+            {/* Title and the page's link, like the app's other screens */}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("My page")}</h1>
+                <p className="mt-1 text-[15px] text-muted-foreground">{hello}{name && `, ${name}`}</p>
               </div>
+              {page?.published && (
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={copyLink} className="flex h-10 items-center gap-1.5 rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-90">
+                    {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy Link")}
+                  </button>
+                  <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
+                    className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ShareIcon className="size-4" /></button>
+                </div>
+              )}
             </div>
 
-            {missingTable && <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
+            {missingTable && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
 
-            {/* The page card */}
-            <h2 className="mt-9 mb-6 text-xl leading-7 font-bold tracking-tight">{t("Your page")}</h2>
+            {/* The page itself: face, name, address and the way into the editor */}
             {loading ? (
-              <div className="h-[356px] w-[280px] animate-pulse rounded-3xl bg-muted" />
+              <div className="h-[104px] animate-pulse rounded-[22px] apple-card" />
             ) : (
-              <div className="relative flex h-[356px] w-[280px] max-w-full flex-col rounded-3xl bg-muted p-px">
-                {/* The preview area is 278×276, the name and buttons sit in the 78px under it. */}
-                <a href="/link/edit" aria-label={t("Edit")} className="flex h-[276px] w-[278px] max-w-full shrink-0 items-center justify-center rounded-t-[23px]">
+              <section className="flex flex-wrap items-center gap-4 rounded-[22px] apple-card p-4">
+                <a href="/link/edit" aria-label={t("Edit")} className="size-[72px] shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-foreground/10">
                   {avatar
-                    ? <img src={avatar} alt="" className="size-[164px] rounded-full object-cover" />
-                    : <AvatarPlaceholder className="size-[164px]" />}
+                    ? <img src={avatar} alt="" className="size-full object-cover" />
+                    : salon ? <img src={`/niches/${salon.id}.svg`} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}
                 </a>
-                <div className="flex flex-1 items-center gap-2 px-4 pb-px">
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-xl leading-7 font-bold tracking-tight">{name}</span>
-                    <span className="truncate text-sm text-muted-foreground">
-                      {page ? (page.published ? t("{n} links", { n: page.data.links.length }) : t("Draft")) : t("Not created yet")}
-                    </span>
-                  </div>
-                  {page && (
-                    <button type="button" onClick={() => setShareOpen(true)} aria-label={t("Share")} title={t("Share")}
-                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background/70 hover:bg-background">
-                      <ShareIcon className="size-[18px]" />
-                    </button>
-                  )}
-                  <a href="/link/edit" className="flex h-10 shrink-0 items-center rounded-full bg-background/70 px-4 text-sm font-medium hover:bg-background">
-                    {page ? t("Edit") : t("Create")}
-                  </a>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-[17px] font-semibold">{name}</span>
+                  <span className="flex min-w-0 items-center gap-2 text-[14px] text-muted-foreground">
+                    <span className={`size-2 shrink-0 rounded-full ${page?.published ? "bg-[var(--status-approved)]" : "bg-foreground/25"}`} />
+                    {page?.published
+                      ? <a href={pagePath(page.slug)} target="_blank" rel="noopener" className="truncate hover:text-foreground hover:underline">{host}{pagePath(page.slug)}</a>
+                      : <span className="truncate">{page ? t("Draft") : t("Not created yet")}</span>}
+                  </span>
                 </div>
-              </div>
+                <a href="/link/edit" className="flex h-10 shrink-0 items-center rounded-full bg-foreground/[0.06] px-5 text-[14px] font-medium hover:bg-foreground/[0.1]">
+                  {page ? t("Edit") : t("Create")}
+                </a>
+              </section>
             )}
 
             {/* This week */}
-            <h2 className="mt-[29px] mb-6 text-xl leading-7 font-bold tracking-tight">{t("In the last week")}</h2>
-            <div className="grid gap-6 md:grid-cols-2">
+            <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.01em]">{t("In the last week")}</h2>
+            <div className="grid gap-4 md:grid-cols-2">
               <StatCard title={t("Visitors")} period={t("Last 7 days")}
                 empty={totalViews === 0} emptyText={t("No activity during this time")} illustration={<GlobeArt />}
                 footer={
                   <div className="flex flex-col items-start gap-3">
-                    {tipOpen && <p className="text-sm text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>}
-                    <Pill onClick={() => setTipOpen((v) => !v)}><SparklesIcon className="size-4 text-violet-500" />{t("How do I get more visitors?")}</Pill>
+                    {tipOpen && <p className="text-[13px] text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>}
+                    <Pill onClick={() => setTipOpen((v) => !v)}><SparklesIcon className="size-4" />{t("How do I get more visitors?")}</Pill>
                   </div>
                 }>
-                <span className="text-4xl font-bold tabular-nums">{totalViews}</span>
+                <span className="text-[34px] leading-none font-semibold tabular-nums">{totalViews}</span>
                 <div className="mt-auto flex h-24 items-end gap-2">
                   {days.map((d) => (
                     <div key={d} className="flex flex-1 flex-col items-center gap-1.5">
-                      <div className="w-full rounded-md bg-primary/80" title={`${views[d] ?? 0}`}
-                        style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 70)}px`, opacity: views[d] ? 1 : 0.15 }} />
+                      <div className="w-full rounded-md bg-foreground" title={`${views[d] ?? 0}`}
+                        style={{ height: `${Math.max(4, ((views[d] ?? 0) / peak) * 70)}px`, opacity: views[d] ? 0.85 : 0.12 }} />
                       <span className="text-[11px] text-muted-foreground">{weekday(d)}</span>
                     </div>
                   ))}
@@ -173,15 +168,15 @@ export default function MyPage() {
                 footer={salon
                   ? <Pill href="/dashboard">{salon.kind === "order" ? t("Open orders") : t("Open appointments")}<ChevronRightIcon className="size-4" /></Pill>
                   : <Pill href="/requests">{t("Open requests")}<ChevronRightIcon className="size-4" /></Pill>}>
-                <span className="text-4xl font-bold tabular-nums">{requests}</span>
-                <p className="mt-2 text-sm text-muted-foreground">{salon ? (salon.kind === "order" ? t("New orders this week") : t("New appointments this week")) : t("Requests from your page")}</p>
+                <span className="text-[34px] leading-none font-semibold tabular-nums">{requests}</span>
+                <p className="mt-2 text-[14px] text-muted-foreground">{salon ? (salon.kind === "order" ? t("New orders this week") : t("New appointments this week")) : t("Requests from your page")}</p>
               </StatCard>
             </div>
             {page && !page.published && (
-              <p className="mt-4 text-sm text-muted-foreground">{t("Visits are counted once the page is live.")}</p>
+              <p className="text-[13px] text-muted-foreground">{t("Visits are counted once the page is live.")}</p>
             )}
           </div>
-        </div>
+        </main>
       </div>
       {shareOpen && <ShareSheet page={page} copied={copied} onCopy={copyLink} onClose={() => setShareOpen(false)} />}
     </div>
@@ -244,14 +239,14 @@ function StatCard({ title, period, empty, emptyText, illustration, footer, child
   title: string; period: string; empty: boolean; emptyText: string; illustration: React.ReactNode; footer: React.ReactNode; children: React.ReactNode
 }) {
   return (
-    <section className="flex min-h-[340px] flex-col rounded-3xl md:h-[340px] bg-card p-5 ring-1 ring-foreground/10">
+    <section className="flex min-h-[300px] flex-col rounded-[22px] apple-card p-4 sm:p-5 md:h-[300px]">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-bold">{title}</h3>
-        <span className="flex items-center gap-1 text-sm">{period}<ChevronRightIcon className="size-4 text-muted-foreground" /></span>
+        <h3 className="text-[15px] font-semibold">{title}</h3>
+        <span className="text-[13px] text-muted-foreground">{period}</span>
       </div>
       {empty ? (
         <>
-          <p className="mt-4 text-[15px]">{emptyText}</p>
+          <p className="mt-3 text-[14px] text-muted-foreground">{emptyText}</p>
           <div className="flex flex-1 items-center justify-center py-6 text-muted-foreground/70">{illustration}</div>
         </>
       ) : (
@@ -263,7 +258,7 @@ function StatCard({ title, period, empty, emptyText, illustration, footer, child
 }
 
 function Pill({ href, onClick, children }: { href?: string; onClick?: () => void; children: React.ReactNode }) {
-  const cls = "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm ring-1 ring-foreground/10 hover:bg-hover"
+  const cls = "inline-flex h-9 items-center gap-1.5 rounded-full bg-foreground/[0.06] px-4 text-[13.5px] font-medium hover:bg-foreground/[0.1]"
   return href ? <a href={href} className={cls}>{children}</a> : <button type="button" onClick={onClick} className={cls}>{children}</button>
 }
 

@@ -47,22 +47,24 @@ export function PageShell({ activePage, title, subtitle, shopName, actions, chil
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <Sidebar open={sidebarOpen} activePage={activePage} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="lg:hidden">
           <DashboardHeader shopName={shopName} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
-        <div className="app-panel flex-1 px-4 pb-10 sm:px-8 lg:m-3 lg:rounded-2xl lg:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:lg:ring-1 dark:lg:ring-white/[0.06]">
-          <div className="mx-auto flex w-full max-w-[1216px] flex-col">
-            <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background pt-8 pb-4">
-              <h1 className="min-w-0 truncate text-2xl leading-7 font-bold tracking-tight">{title}</h1>
+        <main className="flex min-w-0 flex-1 flex-col bg-background">
+          <div className="mx-auto flex w-full max-w-3xl flex-col p-5 sm:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{title}</h1>
+                {subtitle && <p className="mt-1 max-w-2xl text-[15px] text-muted-foreground">{subtitle}</p>}
+              </div>
               {actions}
             </div>
-            {subtitle && <p className="mt-6 max-w-2xl text-[15px] text-muted-foreground">{subtitle}</p>}
             {children}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   )
@@ -71,12 +73,12 @@ export function PageShell({ activePage, title, subtitle, shopName, actions, chil
 /** Shown in place of a screen's content when the page tables or the page itself are missing. */
 export function PageNotice({ missingTable, hasPage }: { missingTable: boolean; hasPage: boolean }) {
   const { t } = useT()
-  if (missingTable) return <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
+  if (missingTable) return <p className="mt-6 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
   if (hasPage) return null
   return (
-    <div className="mt-6 flex flex-col items-start gap-3 rounded-3xl bg-card p-6 ring-1 ring-foreground/10">
+    <div className="mt-6 flex flex-col items-start gap-3 rounded-[22px] apple-card p-5">
       <p className="text-[15px]">{t("Create your page first, then share its link anywhere.")}</p>
-      <a href="/link/edit" className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90">{t("Create page")}</a>
+      <a href="/link/edit" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-90">{t("Create page")}</a>
     </div>
   )
 }
@@ -90,7 +92,7 @@ export function CopyButton({ text, label }: { text: string; label?: string }) {
       await navigator.clipboard.writeText(text).catch(() => {})
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1500)
-    }} className="inline-flex h-8 shrink-0 items-center rounded-full px-3 text-sm font-medium ring-1 ring-foreground/15 hover:bg-hover">
+    }} className="inline-flex h-8 shrink-0 items-center rounded-full bg-foreground/[0.06] px-3.5 text-[13px] font-medium hover:bg-foreground/[0.1]">
       {copied ? t("Copied") : label ?? t("Copy")}
     </button>
   )
