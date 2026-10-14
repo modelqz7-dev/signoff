@@ -96,6 +96,12 @@ export function MapView({ center, zoom, points = [], selected, onSelect, me, pic
     if (!m) return
     for (const mk of markers.current) mk.remove()
     markers.current = []
+    // the visitor's dot first, so a business right where they stand stays on top of it
+    if (me) {
+      const dot = document.createElement("span")
+      dot.style.cssText = "width:14px;height:14px;border-radius:9999px;background:#0a84ff;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(10,132,255,.2);pointer-events:none"
+      markers.current.push(new maplibregl.Marker({ element: dot }).setLngLat([me.lng, me.lat]).addTo(m))
+    }
     for (const p of pointsRef.current) {
       const el = pin(p, p.id === selected)
       el.addEventListener("click", (e) => { e.stopPropagation(); onSelect?.(p.id) })
@@ -105,11 +111,6 @@ export function MapView({ center, zoom, points = [], selected, onSelect, me, pic
       const mk = new maplibregl.Marker({ element: ownPin(), anchor: "bottom", draggable: true }).setLngLat([picker.value.lng, picker.value.lat]).addTo(m)
       mk.on("dragend", () => { const { lat, lng } = mk.getLngLat(); pickerRef.current?.onChange({ lat, lng }) })
       markers.current.push(mk)
-    }
-    if (me) {
-      const dot = document.createElement("span")
-      dot.style.cssText = "width:16px;height:16px;border-radius:9999px;background:#0a84ff;box-shadow:0 0 0 3px #fff,0 0 0 9px rgba(10,132,255,.2)"
-      markers.current.push(new maplibregl.Marker({ element: dot }).setLngLat([me.lng, me.lat]).addTo(m))
     }
   }, [pointsKey, selected, onSelect, picker?.value, me])
 
