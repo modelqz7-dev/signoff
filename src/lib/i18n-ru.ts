@@ -1,5 +1,8 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "1. Open the bot. 2. Send it this code:": "1. Откройте бота. 2. Отправьте ему этот код:",
+  "Open the bot": "Открыть бота",
+  "Waiting for the code… This window updates by itself.": "Ждём код… Это окно обновится само.",
   "Start free. Pay when clients book often.": "Начните бесплатно. Платите, когда клиенты записываются часто.",
   "Popular": "Популярный",
   "Try 7 days free": "7 дней бесплатно",

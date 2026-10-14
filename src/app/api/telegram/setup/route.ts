@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     body: JSON.stringify({
       url: `${siteUrl}/api/telegram/webhook`,
       secret_token: secret,
-      allowed_updates: ["message"],
+      allowed_updates: ["message", "callback_query"],
     }),
   })
   return Response.json(await res.json(), { status: res.ok ? 200 : 502 })
