@@ -1,5 +1,9 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "This business isn't enabled in the database yet: run supabase/tattoo.sql in Supabase, then pick it again.": "Этот бизнес ещё не включён в базе: выполните supabase/tattoo.sql в Supabase и выберите снова.",
+  "Online booking is off: your business isn't chosen.": "Онлайн-запись выключена: не выбран ваш бизнес.",
+  "Clients see the page without booking. Choose the business and the booking form appears.": "Клиенты видят страницу без записи. Выберите бизнес, и появится форма записи.",
+  "Choose the business": "Выбрать бизнес",
   "Phone call": "Звонок",
   "How should we reach you?": "Как с вами связаться?",
   "@username in Telegram (optional)": "@никнейм в Telegram (необязательно)",

@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { AvatarPlaceholder } from "@/components/page/EditorBits"
+import { NoNicheNotice } from "@/components/page/NoNicheNotice"
 import { getOrCreateShop } from "@/lib/shop"
 import { useT } from "@/lib/i18n"
 import { cleanPage, pagePath, type PageData } from "@/lib/page"
@@ -114,6 +115,7 @@ export default function MyPage() {
               )}
             </div>
 
+            {shop && <NoNicheNotice niche={shop.niche} />}
             {missingTable && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("Run supabase/pages.sql in Supabase first, then try again.")}</p>}
 
             {/* The page itself: face, name, address and the way into the editor */}

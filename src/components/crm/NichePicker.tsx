@@ -34,7 +34,8 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
       notifyPlanChanged()
       onChosen(niche)
     } catch (e) {
-      setError((e as Error)?.message || t("Couldn't save. Try again."))
+      const message = (e as Error)?.message ?? ""
+      setError(/niche_check|check constraint/i.test(message) ? t("This business isn't enabled in the database yet: run supabase/tattoo.sql in Supabase, then pick it again.") : message || t("Couldn't save. Try again."))
       setBusy(false)
     }
   }

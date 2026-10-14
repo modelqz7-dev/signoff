@@ -1,5 +1,9 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "This business isn't enabled in the database yet: run supabase/tattoo.sql in Supabase, then pick it again.": "Цей бізнес ще не увімкнено в базі: виконайте supabase/tattoo.sql у Supabase і оберіть знову.",
+  "Online booking is off: your business isn't chosen.": "Онлайн-запис вимкнено: не обрано ваш бізнес.",
+  "Clients see the page without booking. Choose the business and the booking form appears.": "Клієнти бачать сторінку без запису. Оберіть бізнес, і з'явиться форма запису.",
+  "Choose the business": "Обрати бізнес",
   "Phone call": "Дзвінок",
   "How should we reach you?": "Як з вами зв'язатися?",
   "@username in Telegram (optional)": "@нікнейм у Telegram (необов'язково)",
