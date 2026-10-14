@@ -1,5 +1,15 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "Every order's next step in one tap": "Следующий шаг заказа в одно касание",
+  "The day, its week and what it earns. Cakes see their orders by day.": "День, его неделя и сколько он принёс. Торты видят заказы по дням.",
+  "Calendar of bookings or orders": "Календарь записей или заказов",
+  "{n} ord.": "{n} зак.",
+  "All day": "Весь день",
+  "No orders for this day.": "На этот день заказов нет.",
+  "Add an order for this day": "Добавить заказ на этот день",
+  "Today's orders": "Заказы сегодня",
+  "Day's orders": "Заказы за день",
+  "Nothing ordered ahead yet.": "Наперёд пока ничего не заказали.",
   "Tattoo studio": "Тату-студия",
   "Sessions by time, sketches and regulars": "Сеансы по времени, эскизы и постоянные клиенты",
   "Artist": "Мастер",
