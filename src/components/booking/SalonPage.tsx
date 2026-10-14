@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
-  AlignLeftIcon, CalendarCheckIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, GlobeIcon, ImagesIcon,
+  AlignLeftIcon, CalendarCheckIcon, ChevronRightIcon, ClockIcon, ExternalLinkIcon, ImagesIcon,
   InfoIcon, MapPinIcon, MessageCircleIcon, PhoneIcon, ShareIcon, StarIcon, XIcon,
 } from "lucide-react"
 import {
@@ -122,10 +122,8 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
   const route = address || data.geo
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.geo ? `${data.geo.lat},${data.geo.lng}` : address)}`
     : null
-  // every filled-in contact is listed; one that isn't a working link shows as plain text
-  const socials = (["instagram", "telegram", "viber", "whatsapp", "email"] as const).filter((k) => data.contacts[k])
-  const iconLinks = (["instagram", "telegram", "viber", "whatsapp", "email", "website"] as const)
-    .map((k) => [k, link(k)] as const).filter((x): x is readonly [typeof x[0], string] => !!x[1])
+  // every filled-in contact sits under the name; one that isn't a working link still shows, just doesn't open
+  const socials = (["instagram", "telegram", "viber", "whatsapp", "email", "website"] as const).filter((k) => data.contacts[k])
   const details = BUSINESS_DETAIL_KEYS.filter((k) => data.business[k])
   const longAbout = data.bio.length > 280 || data.bio.split("\n").length > 5
   const open = project !== null ? data.projects[project] : null
@@ -212,14 +210,16 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
         </div>
 
         {/* where else to find them: round buttons, like the editor shows them */}
-        {iconLinks.length > 0 && (
+        {socials.length > 0 && (
           <div className="mt-4 flex flex-wrap justify-center gap-2.5 px-4">
-            {iconLinks.map(([k, href]) => (
-              <a key={k} href={go(href)} target={k === "email" ? undefined : "_blank"} rel="noopener noreferrer" aria-label={CONTACT_LABEL[k]} title={CONTACT_LABEL[k]}
-                className="flex size-11 items-center justify-center rounded-full bg-[var(--pg-card)] transition-transform active:scale-95 [&_svg]:size-[20px]">
-                {CONTACT_ICON[k]}
-              </a>
-            ))}
+            {socials.map((k) => {
+              const href = link(k)
+              const cls = "flex size-11 items-center justify-center rounded-full bg-[var(--pg-card)] transition-transform active:scale-95 [&_svg]:size-[20px]"
+              const label = `${CONTACT_LABEL[k]}: ${data.contacts[k]}`
+              return href
+                ? <a key={k} href={go(href)} target={k === "email" ? undefined : "_blank"} rel="noopener noreferrer" aria-label={label} title={label} className={cls}>{CONTACT_ICON[k]}</a>
+                : <span key={k} aria-label={label} title={label} className={cls}>{CONTACT_ICON[k]}</span>
+            })}
           </div>
         )}
 
@@ -301,15 +301,9 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
             )}
             {address && <Row icon={<MapPinIcon />} label={t("Address")} value={address} href={go(route)} external />}
             {data.contacts.phone && <Row icon={<PhoneIcon />} label={t("Phone number")} value={data.contacts.phone} href={phone ? go(phone) : undefined} />}
-            {socials.map((k) => (
-              <Row key={k} icon={CONTACT_ICON[k]} label={CONTACT_LABEL[k]} value={data.contacts[k]} href={link(k) ? go(link(k)) : undefined} external={k !== "email"} />
-            ))}
-            {data.contacts.website && (
-              <Row icon={<GlobeIcon />} label={t("Website")} value={data.contacts.website.replace(/^https?:\/\//, "")} href={link("website") ? go(link("website")) : undefined} external />
-            )}
             {details.map((k) => <Row key={k} icon={BUSINESS_FIELDS[k].icon} label={t(BUSINESS_FIELDS[k].label)} value={data.business[k]} />)}
             {data.links.map((l, i) => <Row key={`l${i}`} icon={<ExternalLinkIcon />} label={l.title} value={l.url.replace(/^https?:\/\//, "")} href={go(l.url)} external />)}
-            {preview && !hasHours(data.hours) && !address && !data.contacts.phone && !data.contacts.website && !socials.length && !details.length && (
+            {preview && !hasHours(data.hours) && !address && !data.contacts.phone && !details.length && (
               <div className="p-3">
                 <Placeholder icon={<InfoIcon />} title={t("Add contacts and hours")} hint={t("Address, phone and when you work.")} onClick={() => onEdit?.("business")} />
               </div>
