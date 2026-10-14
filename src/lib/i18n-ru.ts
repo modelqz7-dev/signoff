@@ -1,5 +1,7 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "A few words about this work": "Пара слов об этой работе",
+  "City (optional)": "Город (необязательно)",
   "2 nail masters": "2 мастера маникюра",
   "3 barbers": "3 барбера",
   "Just me": "Только я",
