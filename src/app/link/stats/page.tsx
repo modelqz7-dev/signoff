@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { PageNotice, PageShell, usePageContext } from "@/components/page/PageShell"
 import { useT } from "@/lib/i18n"
-import { nicheConfig } from "@/lib/niches"
 
 /** The last `n` days, oldest first, as YYYY-MM-DD (visits are counted by UTC day). */
 function lastDays(n: number) {
@@ -20,16 +19,13 @@ export default function PageStats() {
   const [days] = useState(() => lastDays(30))
   const [views, setViews] = useState<Record<string, number>>({})
   const [requests, setRequests] = useState<Record<string, number>>({})
-  // a beauty or cake business counts bookings or orders, not requests
-  const salon = nicheConfig(shop?.niche)
-  const isOrder = salon?.kind === "order"
 
   useEffect(() => {
     if (!shop || !page) return
     const since = days[0]
     Promise.all([
       supabase.from("page_views").select("day, count").eq("shop_id", shop.id).gte("day", since),
-      supabase.from(nicheConfig(shop.niche) ? "crm_bookings" : "page_requests").select("created_at").eq("shop_id", shop.id).gte("created_at", since + "T00:00:00Z"),
+      supabase.from("page_requests").select("created_at").eq("shop_id", shop.id).gte("created_at", since + "T00:00:00Z"),
     ]).then(([v, r]) => {
       setViews(Object.fromEntries(((v.data as { day: string; count: number }[]) || []).map((x) => [x.day, x.count])))
       const byDay: Record<string, number> = {}
@@ -51,17 +47,15 @@ export default function PageStats() {
 
   return (
     <PageShell activePage="link-stats" title={t("Statistics")} shopName={shop?.name ?? ""}
-      subtitle={salon
-        ? (isOrder ? t("How many people opened your page and how many orders came in.") : t("How many people opened your page and how many bookings came in."))
-        : t("How many people opened your page and how many of them left a request.")}>
+      subtitle={t("How many people opened your page and how many of them left a request.")}>
       {!loading && <PageNotice missingTable={missingTable} hasPage={!!page} />}
       {page && (
         <>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metric label={t("Visitors, 7 days")} value={views7} />
             <Metric label={t("Visitors, 30 days")} value={views30} />
-            <Metric label={salon ? (isOrder ? t("Orders, 30 days") : t("Bookings, 30 days")) : t("Requests, 30 days")} value={req30} />
-            <Metric label={salon ? (isOrder ? t("Visitors who ordered") : t("Visitors who booked")) : t("Visitors who left a request")} value={`${conversion}%`} />
+            <Metric label={t("Requests, 30 days")} value={req30} />
+            <Metric label={t("Visitors who left a request")} value={`${conversion}%`} />
           </div>
 
           <section className="mt-6 flex flex-col gap-5 rounded-3xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">

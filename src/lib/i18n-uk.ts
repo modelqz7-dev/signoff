@@ -1760,11 +1760,4 @@ export const uk: Record<string, string> = {
   "no pin": "без точки",
   "{n} m": "{n} м",
   "{n} km": "{n} км",
-  "How many people opened your page and how many orders came in.": "Скільки людей відкрили вашу сторінку і скільки надійшло замовлень.",
-  "How many people opened your page and how many bookings came in.": "Скільки людей відкрили вашу сторінку і скільки надійшло записів.",
-  "Orders, 30 days": "Замовлення, 30 днів",
-  "Bookings, 30 days": "Записи, 30 днів",
-  "Visitors who ordered": "Відвідувачі, що замовили",
-  "Visitors who booked": "Відвідувачі, що записалися",
-  "What to post when you don't know what to post. Each idea ends with your page: that's how followers become bookings.": "Що викласти, коли не знаєш, що викласти. Кожна ідея веде на вашу сторінку: так підписники стають записами.",
 }
