@@ -227,7 +227,8 @@ export function emptyPage(title: string, logoUrl?: string | null): PageData {
 /** Link for a contact; handles "@name", bare names, numbers and full URLs. */
 export function pageContactHref(kind: keyof PageContacts, value: string): string | null {
   const v = value.trim()
-  const handle = v.replace(/^@/, "").replace(/^(https?:\/\/)?(www\.)?(t\.me|telegram\.me|instagram\.com)\//i, "").replace(/\/+$/, "")
+  // a pasted profile link keeps only its name: no "?igsh=…" share tail, no trailing slash
+  const handle = v.replace(/^@/, "").replace(/^(https?:\/\/)?(www\.|m\.)?(t\.me|telegram\.me|instagram\.com)\//i, "").replace(/[?#].*$/, "").replace(/\/+$/, "").replace(/^@/, "")
   const digits = v.replace(/[^\d+]/g, "")
   switch (kind) {
     case "instagram": return /^[\w.]+$/.test(handle) ? `https://instagram.com/${handle}` : null
