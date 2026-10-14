@@ -55,9 +55,10 @@ export default async function PublicPage({ params }: Props) {
     )
   }
   const reviews = await loadPageReviews(page.shopId)
+  // with no booking to show, the page always has a way to get in touch: the request form
   return (
     <main className="min-h-dvh">
-      <PageView data={page.data} slug={page.slug} reviews={reviews} />
+      <PageView data={{ ...page.data, requests: true }} slug={page.slug} reviews={reviews} />
     </main>
   )
 }

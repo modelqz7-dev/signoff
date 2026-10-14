@@ -267,15 +267,13 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   const btn = `flex h-9 items-center gap-2 border border-[var(--pg-border)] px-3.5 text-sm font-medium transition-colors hover:border-[var(--pg-text)] [&_svg]:size-4 ${SHAPE[data.buttons]}`
   const open = project !== null ? data.projects[project] : null
 
-  // the "Contact" card sits beside the page only for requests; a booking page keeps one column
-  const sideCard = !booking && data.requests
   // Laid out by its own width (a container), not the screen's: the editor previews it as a phone or a computer.
   return (
     <div ref={rootRef} style={palette(data)} className="@container min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
       {/* a business that takes bookings: one centred column (booking leads it), no side card on a computer */}
-      {/* one centred column; a page with the contact card gets it on the right instead */}
-      <div className={`mx-auto w-full pb-24 @3xl:px-8 @3xl:pt-6 @4xl:pb-12 ${sideCard ? "max-w-[1120px]" : "max-w-[760px]"}`}>
-        <div className={sideCard ? "@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:items-start @4xl:gap-10" : ""}>
+      {/* one centred column for every page */}
+      <div className="mx-auto w-full max-w-[760px] @3xl:px-8 @3xl:pt-6">
+        <div>
           <div className="min-w-0">
             {/* Cover: the workshop's photo; without one, its logo blurred, or a wash of the accent */}
             <div className="h-48 overflow-hidden bg-[var(--pg-field)] @3xl:h-[300px] @3xl:rounded-md">
@@ -521,11 +519,11 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
           </div>
 
           {/* "Contact" card: pinned on the right on a computer, a bar at the bottom on a phone */}
+          {/* the main button: pinned to the bottom (a booking page shows it on phones only, its form is on the page) */}
           {(data.requests || booking) && (
-            <aside className={`fixed inset-x-0 bottom-0 z-20 border-t border-[var(--pg-border)] bg-[var(--pg-bg)] p-3 @4xl:sticky ${booking ? "@3xl:hidden" : ""} @4xl:top-6 @4xl:inset-auto @4xl:z-auto @4xl:rounded-md @4xl:border @4xl:p-4`}>
-              <p className="mb-3 hidden text-sm font-medium @4xl:block">{booking ? booking.label : t("Contact {name}", { name: data.title || t("Your name") })}</p>
+            <aside className={`sticky bottom-0 z-20 -mx-0 border-t border-[var(--pg-border)] bg-[var(--pg-bg)]/95 p-3 backdrop-blur ${booking ? "@3xl:hidden" : "@3xl:rounded-t-md @3xl:border-x"}`}>
               <button type="button" onClick={() => (booking ? go("booking") : setContact(true))}
-                className={`flex h-11 w-full items-center justify-center bg-[var(--pg-accent)] text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 @4xl:h-10 ${SHAPE[data.buttons]}`}>
+                className={`flex h-11 w-full items-center justify-center bg-[var(--pg-accent)] text-sm font-semibold text-[var(--pg-on-accent)] transition-opacity hover:opacity-90 ${SHAPE[data.buttons]}`}>
                 {booking ? booking.button : data.cta || t("Send message")}
               </button>
             </aside>
