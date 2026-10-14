@@ -11,17 +11,18 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
+import { WorkSheet } from "@/components/page/WorkSheet"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { AvatarPlaceholder, Block, FILLED, FILLED_AREA, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
+import { AvatarPlaceholder, Block, FILLED, FILLED_AREA, Field, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { uploadPublicAsset } from "@/lib/files"
 import { shrinkImage } from "@/lib/image"
 import { useT } from "@/lib/i18n"
 import {
-  ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_CREDENTIALS, MAX_LINKS, MAX_PROJECT_PHOTOS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
+  ACCENTS, BUSINESS_KEYS, CONTACT_KEYS, MAX_CREDENTIALS, MAX_LINKS, MAX_PROJECTS, MAX_SERVICES, cleanPage, emptyPage,
   normalizeSlug, pagePath, slugProblem, suggestSlug, type ButtonShape, type PageBusiness, type PageContacts, type PageData,
-  type PageProject, type PageReview,
+  type PageReview,
 } from "@/lib/page"
 import type { Shop } from "@/components/dashboard/types"
 import { nicheConfig, type CrmNiche } from "@/lib/niches"
@@ -78,6 +79,9 @@ export default function PageEditor() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   // the computer preview gets a wider column than the phone one
   const [wide, setWide] = useState(false)
+  // the work open in its sheet (null index: a new one), and the tile being dragged
+  const [workSheet, setWorkSheet] = useState<{ index: number | null } | null>(null)
+  const [dragged, setDragged] = useState<number | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
@@ -200,20 +204,15 @@ export default function PageEditor() {
     setUploading(null)
   }
 
-  function updateProject(i: number, patch: Partial<PageProject>) {
-    setData((d) => (d ? { ...d, projects: d.projects.map((p, j) => (j === i ? { ...p, ...patch } : p)) } : d))
+  function moveProject(from: number, to: number) {
+    setData((d) => {
+      if (!d) return d
+      const list = [...d.projects]
+      const [item] = list.splice(from, 1)
+      list.splice(to, 0, item)
+      return { ...d, projects: list }
+    })
     setSave("dirty")
-  }
-
-  async function addProjectPhotos(i: number, files: File[]) {
-    setUploading(`project-${i}`)
-    for (const f of files) {
-      const url = await uploadImage(f, "project", 1600)
-      if (!url) continue
-      setData((d) => (d ? { ...d, projects: d.projects.map((p, j) => (j === i ? { ...p, photos: [...p.photos, url].slice(0, MAX_PROJECT_PHOTOS) } : p)) } : d))
-      setSave("dirty")
-    }
-    setUploading(null)
   }
 
   async function deleteReview(id: string) {
@@ -377,37 +376,35 @@ export default function PageEditor() {
 
                 {tab === "projects" && (
                   <>
-                    <AddButton disabled={data.projects.length >= MAX_PROJECTS} label={salon ? t("Add work") : t("Add project")}
-                      onClick={() => update({ projects: [{ title: "", city: "", description: "", photos: [] }, ...data.projects] })} />
-                    {data.projects.length === 0 && <Empty title={t("No projects yet")} text={t("Show finished work: a few images and a couple of words about each project.")} />}
-                    {data.projects.map((p, i) => (
-                      <ItemCard key={i} onUp={() => move("projects", i, -1)} onDown={() => move("projects", i, 1)} first={i === 0} last={i === data.projects.length - 1}
-                        onRemove={() => update({ projects: data.projects.filter((_, j) => j !== i) })}>
-                        <Input aria-label={t("Project name")} placeholder={t(hints?.work ?? "Instagram for a coffee shop: +2,000 followers")} value={p.title} maxLength={80}
-                          className={`font-medium ${FILLED}`} onChange={(e) => updateProject(i, { title: e.target.value })} />
-                        <Input aria-label={t("City")} placeholder={salon ? t("City (optional)") : t("City")} value={p.city} maxLength={60}
-                          className={FILLED} onChange={(e) => updateProject(i, { city: e.target.value })} />
-                        <Textarea aria-label={t("Description")} placeholder={salon ? t("A few words about this work") : t("The task, what you did, the result…")} value={p.description} maxLength={1000}
-                          className={`min-h-16 ${FILLED_AREA}`} onChange={(e) => updateProject(i, { description: e.target.value })} />
-                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                          {p.photos.map((src, k) => (
-                            <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
-                              <img src={src} alt="" className="size-full object-cover" />
-                              {k === 0 && <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] text-white">{t("Cover")}</span>}
-                              <button type="button" aria-label={t("Remove")} onClick={() => updateProject(i, { photos: p.photos.filter((x) => x !== src) })}
-                                className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"><Trash2Icon className="size-3" /></button>
-                            </div>
-                          ))}
-                          {p.photos.length < MAX_PROJECT_PHOTOS && (
-                            <FileButton multiple busy={uploading === `project-${i}`} label={t("Add photos")}
-                              onFiles={(files) => addProjectPhotos(i, files.slice(0, MAX_PROJECT_PHOTOS - p.photos.length))}
-                              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-foreground/[0.05] text-xs text-muted-foreground hover:bg-hover disabled:opacity-60">
-                              <ImagePlusIcon className="size-4" />{uploading === `project-${i}` ? "…" : t("Photos")}
-                            </FileButton>
-                          )}
-                        </div>
-                      </ItemCard>
-                    ))}
+                    {/* A gallery like an Instagram profile: tap a work to edit it, drag to reorder */}
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {data.projects.length < MAX_PROJECTS && (
+                        <button type="button" onClick={() => setWorkSheet({ index: null })}
+                          className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[22px] bg-foreground/[0.05] text-[14px] font-medium transition-colors hover:bg-foreground/[0.08]">
+                          <span className="flex size-11 items-center justify-center rounded-full bg-foreground text-background"><PlusIcon className="size-5" /></span>
+                          {salon ? t("Add work") : t("Add project")}
+                        </button>
+                      )}
+                      {data.projects.map((p, i) => (
+                        <button key={i} type="button" draggable onClick={() => setWorkSheet({ index: i })}
+                          onDragStart={(e) => { setDragged(i); e.dataTransfer.effectAllowed = "move" }}
+                          onDragOver={(e) => { if (dragged !== null) e.preventDefault() }}
+                          onDrop={(e) => { e.preventDefault(); if (dragged !== null && dragged !== i) moveProject(dragged, i); setDragged(null) }}
+                          onDragEnd={() => setDragged(null)}
+                          className={`group relative aspect-square overflow-hidden rounded-[22px] bg-foreground/[0.05] text-left transition-opacity ${dragged === i ? "opacity-40" : ""}`}>
+                          {p.photos[0]
+                            ? <img src={p.photos[0]} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                            : <span className="flex size-full items-center justify-center text-muted-foreground"><ImagePlusIcon className="size-6" /></span>}
+                          <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-3 pt-10 text-white">
+                            <span className="min-w-0 truncate text-[14px] font-medium">{p.title || t("Untitled")}</span>
+                            {p.photos.length > 1 && <span className="shrink-0 rounded-full bg-white/20 px-1.5 text-[11px] backdrop-blur">{p.photos.length}</span>}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    {data.projects.length === 0
+                      ? <p className="text-center text-[13px] text-muted-foreground">{salon ? t("Show your work: clients book after seeing the result.") : t("Show finished work: a few images and a couple of words about each project.")}</p>
+                      : data.projects.length > 1 && <p className="text-[12.5px] text-muted-foreground">{t("Drag a tile to change the order.")}</p>}
                   </>
                 )}
 
@@ -629,6 +626,20 @@ export default function PageEditor() {
         </aside>
         </div>
       </div>
+
+      {workSheet && (
+        <WorkSheet key={workSheet.index ?? "new"} isNew={workSheet.index === null} salon={!!salon}
+          hint={t(hints?.work ?? "Instagram for a coffee shop: +2,000 followers")}
+          work={workSheet.index === null ? { title: "", city: "", description: "", photos: [] } : data.projects[workSheet.index]}
+          upload={(f) => uploadImage(f, "project", 1600)}
+          onSave={(w) => {
+            const i = workSheet.index
+            update({ projects: i === null ? [w, ...data.projects] : data.projects.map((p, j) => (j === i ? w : p)) })
+            setWorkSheet(null)
+          }}
+          onDelete={workSheet.index === null ? undefined : () => { const i = workSheet.index; update({ projects: data.projects.filter((_, j) => j !== i) }); setWorkSheet(null) }}
+          onClose={() => setWorkSheet(null)} />
+      )}
 
       {contactModal && (
         <ContactModal key={contactModal === "pick" ? "pick" : contactModal.key} state={contactModal} contacts={data.contacts}
