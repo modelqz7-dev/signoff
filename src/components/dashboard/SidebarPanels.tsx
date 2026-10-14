@@ -627,18 +627,24 @@ function NotificationsPanel() {
     return true
   }
 
+  // Connecting: a 6-digit code shown here, which the owner sends to the bot.
+  const [linkCode, setLinkCode] = useState<string | null>(null)
   async function connectTelegram() {
     setConnecting(true)
-    const code = crypto.randomUUID().replace(/-/g, "")
-    // Open the tab right away (popup blockers), then point it at the bot once the code is saved.
-    const tab = window.open("", "_blank")
-    if (await save({ telegram_link_code: code })) {
-      const link = `https://t.me/${TELEGRAM_BOT}?start=${code}`
-      if (tab) tab.location.href = link
-      else window.location.href = link
-    } else tab?.close()
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000)
+    if (await save({ telegram_link_code: code })) setLinkCode(code)
     setConnecting(false)
   }
+  // while the code is up, check every few seconds whether the bot took it
+  useEffect(() => {
+    if (!linkCode || !shop || shop.telegram_chat_id) return
+    const id = shop.id
+    const timer = window.setInterval(async () => {
+      const { data } = await supabase.from("shops").select("*").eq("id", id).maybeSingle()
+      if (data?.telegram_chat_id) { setShop(data as Shop); setLinkCode(null) }
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [linkCode, shop, setShop])
 
   if (loading) return <p className="text-muted-foreground">{t("Loading...")}</p>
 
@@ -683,11 +689,24 @@ function NotificationsPanel() {
               />
             </div>
           ) : (
-            <Button size="sm" variant="outline" onPress={connectTelegram} isDisabled={!shop || !TELEGRAM_BOT || connecting}>
+            !linkCode && <Button size="sm" variant="outline" onPress={connectTelegram} isDisabled={!shop || !TELEGRAM_BOT || connecting}>
               {t("Connect Telegram")}
             </Button>
           )}
         </div>
+        {/* the two steps: open the bot, send it the code */}
+        {linkCode && !telegramConnected && (
+          <div className="flex flex-col gap-3 py-3">
+            <p className="text-[13px] text-muted-foreground">{t("1. Open the bot. 2. Send it this code:")}</p>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => navigator.clipboard.writeText(linkCode).catch(() => {})} title={t("Copy")}
+                className="rounded-xl bg-foreground/[0.06] px-4 py-2 font-mono text-[24px] font-semibold tracking-[0.25em] tabular-nums">{linkCode}</button>
+              <a href={`https://t.me/${TELEGRAM_BOT}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-90">{t("Open the bot")}</a>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("Waiting for the code… This window updates by itself.")}</p>
+          </div>
+        )}
 
         {!isCrmNiche(shop?.niche) && <Row label={t("Live updates on the order page")}><span className="text-chart-4">{t("On")}</span></Row>}
       </div>

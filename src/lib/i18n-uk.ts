@@ -1,5 +1,8 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "1. Open the bot. 2. Send it this code:": "1. Відкрийте бота. 2. Надішліть йому цей код:",
+  "Open the bot": "Відкрити бота",
+  "Waiting for the code… This window updates by itself.": "Чекаємо код… Це вікно оновиться само.",
   "Start free. Pay when clients book often.": "Почніть безкоштовно. Платіть, коли клієнти записуються часто.",
   "Popular": "Популярний",
   "Try 7 days free": "7 днів безкоштовно",
