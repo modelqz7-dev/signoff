@@ -2,7 +2,7 @@
 // takes, the services a new account starts with and the fields an order asks for. The
 // dashboard, the clients and the services screens are shared.
 
-export type CrmNiche = "nails" | "barber" | "cakes"
+export type CrmNiche = "nails" | "barber" | "tattoo" | "cakes"
 export type Niche = CrmNiche | "smm"
 /** How a niche takes bookings: at a time (appointments) or for a date (orders). */
 export type BookingKind = "appointment" | "order"
@@ -67,6 +67,20 @@ export const NICHES: NicheConfig[] = [
       { title: "Haircut + beard", duration_min: 90, price: 650 },
       { title: "Kids' haircut", duration_min: 45, price: 350 },
       { title: "Head shave", duration_min: 30, price: 300 },
+    ],
+  },
+  {
+    id: "tattoo",
+    name: "Tattoo studio",
+    hint: "Sessions by time, sketches and regulars",
+    kind: "appointment",
+    staffWord: "Artist",
+    services: [
+      { title: "Mini tattoo", duration_min: 60, price: 1200 },
+      { title: "Tattoo up to 10 cm", duration_min: 120, price: 2500, price_from: true },
+      { title: "Tattoo session", duration_min: 300, price: 6000, price_from: true },
+      { title: "Cover-up", duration_min: 180, price: 4000, price_from: true },
+      { title: "Custom sketch", duration_min: 60, price: 800 },
     ],
   },
   {

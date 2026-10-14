@@ -9,6 +9,7 @@ import type { CrmNiche } from "@/lib/niches"
 export const NICHE_COVER: Record<CrmNiche, string> = {
   nails: "linear-gradient(135deg,#f6e7e4,#ece6f3)",
   barber: "linear-gradient(135deg,#e6e9ee,#e9e4dc)",
+  tattoo: "linear-gradient(135deg,#e4e4e7,#ebe6e1)",
   cakes: "linear-gradient(135deg,#f7eadb,#f3e3ea)",
 }
 

@@ -138,7 +138,7 @@ function Hero({ t, start, startLabel }: { t: T; start: string; startLabel: strin
           <Cta href={start}>{startLabel}<ArrowRightIcon className="size-4" /></Cta>
           <Cta href="#how" light>{t("How it works")}</Cta>
         </div>
-        <p className="mt-4 text-[13px] text-muted-foreground">{t("Nails · barbershops · cakes to order")}</p>
+        <p className="mt-4 text-[13px] text-muted-foreground">{t("Nails · barbershops · tattoo · cakes to order")}</p>
       </div>
 
       {/* the stage: the owner's calendar as it is */}
@@ -157,6 +157,7 @@ function Niches({ t }: { t: T }) {
   const items: { id: CrmNiche; tab: string; title: string; points: string[] }[] = [
     { id: "nails", tab: t("Nails"), title: t("For nail masters"), points: [t("Services with time and price"), t("Only free windows on the page"), t("Every client's history")] },
     { id: "barber", tab: t("Barbershop"), title: t("For barbershops"), points: [t("Haircuts and beards by the slot"), t("No double bookings"), t("Regulars found by phone")] },
+    { id: "tattoo", tab: t("Tattoo"), title: t("For tattoo artists"), points: [t("Long sessions in the calendar"), t("Sketch, placement and size in the notes"), t("Regulars and their work history")] },
     { id: "cakes", tab: t("Cakes"), title: t("For cakes to order"), points: [t("Orders by day, not by hour"), t("Filling, weight, inscription"), t("A board from new to delivered")] },
   ]
   const [on, setOn] = useState<CrmNiche>("nails")
@@ -330,7 +331,7 @@ function Closing({ t, start, startLabel }: { t: T; start: string; startLabel: st
         {/* the closing call in the other theme's colours, like the catalog's call to masters */}
         <div className="surface-invert flex flex-col items-center gap-6 rounded-[32px] bg-background px-6 py-14 text-center sm:py-20">
           <div className="flex -space-x-3">
-            {(["nails", "barber", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-14 ring-4 ring-background" />)}
+            {(["nails", "barber", "tattoo", "cakes"] as CrmNiche[]).map((n) => <NicheIcon key={n} niche={n} className="size-14 ring-4 ring-background" />)}
           </div>
           <h2 className={cn(H, "max-w-2xl text-[40px] leading-[1.02] sm:text-[56px]")}>{t("Your link is five minutes away.")}</h2>
           <p className="max-w-lg text-[17px] text-muted-foreground">{t("Sign up, pick your business and send the link to your first client today.")}</p>

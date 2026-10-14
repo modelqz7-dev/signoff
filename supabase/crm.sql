@@ -12,7 +12,7 @@ $$;
 
 -- What the business does; picks its dashboard. Empty until chosen; 'smm' for the approvals side.
 alter table public.shops
-  add column if not exists niche text check (niche in ('smm', 'nails', 'barber', 'cakes'));
+  add column if not exists niche text check (niche in ('smm', 'nails', 'barber', 'tattoo', 'cakes'));
 -- Online booking: working days and hours, slot step, how far ahead clients can book (lib/booking.ts).
 -- Clients book on the shop's public page (/@name); the site's server checks the time and saves it.
 alter table public.shops

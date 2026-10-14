@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CakeIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  CakeIcon, PenToolIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
   SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
@@ -416,7 +416,7 @@ function useKnownNiche(usage: ReturnType<typeof usePlanUsage>) {
 
 /** The CRM's screens: bookings (the home), clients and what the business offers. */
 function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
-  const offerIcon = crm.id === "cakes" ? CakeIcon : crm.id === "barber" ? ScissorsIcon : SparklesIcon
+  const offerIcon = crm.id === "cakes" ? CakeIcon : crm.id === "barber" ? ScissorsIcon : crm.id === "tattoo" ? PenToolIcon : SparklesIcon
   return [
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },

@@ -41,7 +41,7 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col items-center justify-center px-5 py-12">
-      <div className="flex w-full max-w-[880px] flex-col items-center gap-10">
+      <div className="flex w-full max-w-[1080px] flex-col items-center gap-10">
         <header className="flex flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-bottom-2 duration-700">
           <LogoMark className="size-12" />
           <div className="flex flex-col gap-3">
@@ -50,7 +50,7 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
           </div>
         </header>
 
-        <div role="radiogroup" aria-label={t("What's your business?")} className="grid w-full gap-3 sm:grid-cols-3 sm:gap-4">
+        <div role="radiogroup" aria-label={t("What's your business?")} className="grid w-full gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {NICHES.map((n, i) => {
             const on = picked === n.id
             return (
