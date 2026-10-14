@@ -99,7 +99,7 @@ export function NodlyMark({ brand, full, className }: { brand: PortalBrand | nul
   if (!brand?.badge) return null
   return (
     <Link
-      href="/?ref=portal"
+      href="/business?ref=portal"
       target="_blank"
       title={t("Client portal by Nodly")}
       className={cn("flex w-fit shrink-0 items-baseline gap-1.5 text-foreground transition-opacity hover:opacity-80", className)}
@@ -118,7 +118,7 @@ export function MadeWithNodly({ brand, className }: { brand: PortalBrand | null;
   if (!brand?.badge) return null
   return (
     <Link
-      href="/?ref=portal-done"
+      href="/business?ref=portal-done"
       target="_blank"
       className={cn("flex w-full items-center justify-center gap-1.5 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground", className)}
     >
