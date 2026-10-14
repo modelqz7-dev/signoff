@@ -65,11 +65,11 @@ export default function PostIdeas() {
       subtitle={t("What to post when you don't know what to post. Each idea ends with your page: that's how followers become requests.")}>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {IDEAS.map((idea, i) => (
-          <section key={idea.title} className="flex flex-col gap-3 rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
+          <section key={idea.title} className="flex flex-col gap-3 rounded-[22px] apple-card p-5">
             <div className="flex items-start gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold tabular-nums">{i + 1}</span>
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground/[0.06] text-sm font-semibold tabular-nums">{i + 1}</span>
               <div className="flex flex-col gap-1">
-                <h2 className="text-base font-bold">{t(idea.title)}</h2>
+                <h2 className="text-[15px] font-semibold">{t(idea.title)}</h2>
                 <p className="text-sm text-muted-foreground">{t(idea.how)}</p>
               </div>
             </div>

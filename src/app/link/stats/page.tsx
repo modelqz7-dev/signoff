@@ -58,9 +58,9 @@ export default function PageStats() {
             <Metric label={t("Visitors who left a request")} value={`${conversion}%`} />
           </div>
 
-          <section className="mt-6 flex flex-col gap-5 rounded-3xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
+          <section className="mt-6 flex flex-col gap-5 rounded-[22px] apple-card p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-bold">{t("Visitors by day")}</h2>
+              <h2 className="text-[15px] font-semibold">{t("Visitors by day")}</h2>
               <span className="text-sm text-muted-foreground">{t("Last 30 days")}</span>
             </div>
             {views30 === 0 ? (
@@ -69,7 +69,7 @@ export default function PageStats() {
               <div className="flex h-48 items-end gap-1">
                 {days.map((d) => (
                   <div key={d} className="group relative flex h-full flex-1 flex-col justify-end">
-                    <div className="w-full rounded-t-md bg-primary/80 group-hover:bg-primary"
+                    <div className="w-full rounded-t-md bg-foreground/85 group-hover:bg-foreground"
                       style={{ height: `${Math.max(2, ((views[d] ?? 0) / peak) * 100)}%`, opacity: views[d] ? 1 : 0.15 }} />
                     <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-foreground px-1.5 py-0.5 text-[11px] whitespace-nowrap text-background group-hover:block">
                       {label(d)}: {views[d] ?? 0}
@@ -91,9 +91,9 @@ export default function PageStats() {
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="flex flex-col gap-3 rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
+    <div className="flex flex-col gap-3 rounded-[22px] apple-card p-5">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-3xl font-bold tabular-nums">{value}</span>
+      <span className="text-[34px] leading-none font-semibold tabular-nums">{value}</span>
     </div>
   )
 }

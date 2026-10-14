@@ -55,9 +55,9 @@ export default function ReplyTemplates() {
         {TEMPLATES.map((tpl) => {
           const text = fill(tpl.text)
           return (
-            <section key={tpl.title} className="flex flex-col gap-3 rounded-3xl bg-card p-5 ring-1 ring-foreground/10">
+            <section key={tpl.title} className="flex flex-col gap-3 rounded-[22px] apple-card p-5">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-bold">{t(tpl.title)}</h2>
+                <h2 className="text-[15px] font-semibold">{t(tpl.title)}</h2>
                 <CopyButton text={text} />
               </div>
               <p className="text-[15px] leading-6 whitespace-pre-line text-muted-foreground">{text}</p>

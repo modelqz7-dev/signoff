@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon,
-  LayoutListIcon, PaletteIcon, PlusIcon, SettingsIcon, Share2Icon, Trash2Icon, UserRoundIcon, XIcon,
+  ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, ExternalLinkIcon, EyeIcon, ImagePlusIcon, PlusIcon, Trash2Icon, XIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -12,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageView, BUSINESS_FIELDS, CONTACT_ICON, CONTACT_LABEL, weekdays, type PageEditTarget } from "@/components/page/PageView"
 import { DevicePreview } from "@/components/page/DevicePreview"
+import { Sidebar } from "@/components/dashboard/Sidebar"
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { AvatarPlaceholder, Block, FILLED, FILLED_AREA, Field, FileButton, IconBtn, ImagePick, Toggle } from "@/components/page/EditorBits"
 import { getOrCreateShop } from "@/lib/shop"
 import { uploadPublicAsset } from "@/lib/files"
@@ -74,15 +75,7 @@ export default function PageEditor() {
   const [tab, setTab] = useState<ContentTab>("projects")
   const [reviews, setReviews] = useState<PageReview[]>([])
   const [uploading, setUploading] = useState<string | null>(null)
-  const [shareOpen, setShareOpen] = useState(false)
-  const [pillOpen, setPillOpen] = useState(false)
-  const pillRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!pillOpen) return
-    const onDown = (e: MouseEvent) => { if (!pillRef.current?.contains(e.target as Node)) setPillOpen(false) }
-    document.addEventListener("mousedown", onDown)
-    return () => document.removeEventListener("mousedown", onDown)
-  }, [pillOpen])
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [contactModal, setContactModal] = useState<ContactModalState>(null)
   const [copied, setCopied] = useState(false)
@@ -260,103 +253,63 @@ export default function PageEditor() {
   }
 
 
+  const host = typeof window !== "undefined" ? window.location.host : ""
+  const sections: [Section, string][] = [["content", t("Content")], ["header", t("Header")], ["design", t("Look")], ["settings", t("Settings")]]
+
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-background/90 px-3 backdrop-blur sm:px-5 lg:h-[72px] lg:border-none lg:bg-background lg:pr-3 lg:pl-0 lg:backdrop-blur-none">
-        {/* Same 92px column as the section rail below, so the arrow sits right above its buttons */}
-        <div className="flex shrink-0 lg:w-[92px] lg:justify-center">
-          <a href="/link" aria-label={t("Back")} className="flex size-10 items-center justify-center rounded-full hover:bg-hover lg:bg-muted"><ArrowLeftIcon className="size-4" /></a>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar open={sidebarOpen} activePage="link" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="lg:hidden">
+          <DashboardHeader shopName={shop?.name || ""} title={t("Edit page")} sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         </div>
-        {/* Address pill, 187×40 like the reference: names longer than 14 letters are cut */}
-        <div ref={pillRef} className="relative mx-auto">
-          <button type="button" onClick={() => setPillOpen((v) => !v)} aria-haspopup="menu" aria-expanded={pillOpen}
-            className="flex h-10 w-[187px] items-center gap-1.5 rounded-full bg-muted pr-2 pl-1.5 text-[13px] font-medium hover:bg-hover-strong">
-            <span className="size-7 shrink-0 overflow-hidden rounded-full bg-card">{data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}</span>
-            <span className="min-w-0 flex-1 truncate text-left">{slug.slug.length > 14 ? slug.slug.slice(0, 14) + "…" : slug.slug || "…"}</span>
-            <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${pillOpen ? "rotate-180" : ""}`} />
-          </button>
-          {pillOpen && (
-            <div role="menu" className="absolute top-12 left-1/2 z-40 flex w-60 -translate-x-1/2 flex-col gap-0.5 rounded-2xl bg-popover p-1.5 shadow-xl ring-1 ring-foreground/10">
-              <p className="truncate px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">{published ? t("Live") : t("Draft")} · {pagePath(slug.slug)}</p>
-              {published && savedSlug && (
-                <a role="menuitem" href={pagePath(savedSlug)} target="_blank" rel="noopener" onClick={() => setPillOpen(false)}
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm hover:bg-hover"><ExternalLinkIcon className="size-4" />{t("Open page")}</a>
-              )}
-              {published && savedSlug && (
-                <button type="button" role="menuitem" onClick={() => { copyLink(); setPillOpen(false) }}
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover"><CopyIcon className="size-4" />{t("Copy Link")}</button>
-              )}
-              <button type="button" role="menuitem" onClick={() => { setSection("settings"); setPillOpen(false) }}
-                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-hover"><SettingsIcon className="size-4" />{t("Page address")}</button>
-              <a role="menuitem" href="/link" className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm hover:bg-hover"><ArrowLeftIcon className="size-4" />{t("Back to My page")}</a>
-            </div>
-          )}
-        </div>
-        <div className="relative">
-          <button type="button" onClick={() => setShareOpen((v) => !v)}
-            aria-label={t("Share")}
-            className="flex h-10 items-center gap-2 rounded-full bg-muted px-3 text-[15px] font-medium hover:bg-hover-strong sm:px-4"><Share2Icon className="size-4" /><span className="hidden sm:inline">{t("Share")}</span></button>
-          {shareOpen && (
-            <div className="absolute right-0 top-12 z-40 flex w-80 flex-col gap-3 rounded-2xl bg-popover p-4 shadow-xl ring-1 ring-foreground/10">
+        <div className="flex min-w-0 flex-1">
+        <main className="min-w-0 flex-1 p-5 pb-24 sm:p-8 xl:pb-8">
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+            {/* Title, where the page lives and the way to share it, like the app's other screens */}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0">
+                <a href="/link" className="mb-1 inline-flex items-center gap-1 text-[13.5px] text-muted-foreground hover:text-foreground"><ChevronLeftIcon className="size-4" />{t("My page")}</a>
+                <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.02em] sm:text-[34px]">{t("Edit page")}</h1>
+                <p className="mt-1 flex items-center gap-2 text-[15px] text-muted-foreground">
+                  <span className={`size-2 shrink-0 rounded-full ${published ? "bg-[var(--status-approved)]" : "bg-foreground/25"}`} />
+                  <span className="truncate">{published ? `${host}${pagePath(slug.slug)}` : t("Draft")}</span>
+                  <span className="shrink-0 text-[13px]">· {save === "saving" || save === "dirty" ? t("Saving…") : save === "error" ? t("Not saved") : t("Saved")}</span>
+                </p>
+              </div>
               {published && savedSlug ? (
-                <>
-                  <p className="text-sm font-medium">{t("Your page is live")}</p>
-                  <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
-                    <span className="min-w-0 flex-1 truncate">{publicUrl.replace(/^https?:\/\//, "")}</span>
-                    <IconBtn label={t("Copy Link")} onClick={copyLink}>{copied ? <CheckIcon /> : <CopyIcon />}</IconBtn>
-                  </div>
-                  <div className="flex gap-2">
-                    <a href={pagePath(savedSlug)} target="_blank" rel="noopener" className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium hover:bg-hover"><ExternalLinkIcon className="size-4" />{t("Open page")}</a>
-                    <Button variant="outline" size="sm" className="h-8" onPress={() => persist(false)}>{t("Hide page")}</Button>
-                  </div>
-                  <p className="text-[12.5px] text-muted-foreground">{t("Put this link in your Instagram bio and send it to clients.")}</p>
-                </>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={copyLink} className="flex h-10 items-center gap-1.5 rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-90">
+                    {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}{copied ? t("Copied") : t("Copy Link")}
+                  </button>
+                  <a href={pagePath(savedSlug)} target="_blank" rel="noopener" aria-label={t("Open page")} title={t("Open page")}
+                    className="flex size-10 items-center justify-center rounded-full ring-1 ring-border hover:bg-hover"><ExternalLinkIcon className="size-4" /></a>
+                </div>
               ) : (
-                <>
-                  <p className="text-sm font-medium">{t("Publish your page to share it")}</p>
-                  <p className="text-[12.5px] text-muted-foreground">{t("Until then only you can see it here.")}</p>
-                  <Button onPress={async () => { if (await persist(true)) setShareOpen(true) }} isDisabled={slug.status !== "ok"}>{t("Publish")}</Button>
-                  {slug.status !== "ok" && <p className="text-xs text-destructive">{t("Choose a free page address first")}</p>}
-                </>
+                <button type="button" onClick={() => persist(true)} disabled={slug.status !== "ok"}
+                  className="h-10 rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-90 disabled:opacity-40">{t("Publish")}</button>
               )}
             </div>
-          )}
-        </div>
-      </header>
 
-      {(missingTable || saveError) && (
-        <p className="mx-3 mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-5">{saveError || t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
-      )}
+            {(missingTable || saveError) && (
+              <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{saveError || t("Run supabase/pages.sql in Supabase first, then try again.")}</p>
+            )}
 
-      <div className="flex flex-1 flex-col lg:relative lg:flex-row lg:items-start">
-        {/* Section rail */}
-        {/* Section rail: 92px wide on a computer, items in the middle and settings at the bottom */}
-        <nav className="flex shrink-0 gap-1 overflow-x-auto px-3 pt-3 lg:sticky lg:top-[72px] lg:h-[calc(100dvh-72px)] lg:w-[92px] lg:flex-col lg:items-center lg:justify-center lg:gap-4 lg:overflow-visible lg:px-0 lg:pt-0">
-          {([
-            ["content", t("Content"), <LayoutListIcon key="c" />],
-            ["header", t("Header"), <UserRoundIcon key="h" />],
-            ["design", t("Look"), <PaletteIcon key="d" />],
-            ["settings", t("Settings"), <SettingsIcon key="s" />],
-          ] as [Section, string, React.ReactNode][]).map(([id, label, icon]) => (
-            <button key={id} type="button" onClick={() => setSection(id)} aria-label={label}
-              className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm lg:flex-col lg:gap-1.5 lg:rounded-none lg:px-0 lg:py-0 lg:text-xs ${id === "settings" ? "lg:absolute lg:bottom-4" : ""}`}>
-              <span className={`flex items-center justify-center rounded-full transition-colors [&_svg]:size-4 lg:size-11 lg:[&_svg]:size-5 ${section === id ? "text-foreground lg:bg-foreground lg:text-background" : "text-muted-foreground lg:bg-muted lg:text-foreground"}`}>{icon}</span>
-              <span className={`${section === id ? "font-medium text-foreground" : "text-muted-foreground lg:text-foreground"} ${id === "settings" ? "lg:hidden" : ""}`}>{label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Panel */}
-        {/* The white panel: 851×856 on a full-size screen, scrolls inside */}
-        <main className="min-w-0 flex-1 px-3 py-4 sm:px-6 lg:mt-[10px] lg:h-[calc(100dvh-88px)] lg:w-[851px] lg:max-w-[851px] lg:flex-none lg:overflow-y-auto lg:rounded-t-[32px] lg:bg-card lg:px-8 lg:pt-12 lg:pb-10 lg:ring-1 lg:ring-foreground/10">
-          <div className="mx-auto flex w-full max-w-[580px] flex-col gap-4">
-            <h1 className="hidden text-[28px] leading-tight font-semibold tracking-[-0.02em] lg:block">{{ content: t("Content"), header: t("Header"), design: t("Look"), settings: t("Settings") }[section]}</h1>
+            {/* The editor's parts, as one segmented control */}
+            <div role="tablist" className="flex gap-1 overflow-x-auto rounded-full bg-foreground/[0.05] p-1 text-[14px] whitespace-nowrap no-scrollbar">
+              {sections.map(([id, label]) => (
+                <button key={id} type="button" role="tab" aria-selected={section === id} onClick={() => setSection(id)}
+                  className={`h-9 flex-1 shrink-0 rounded-full px-4 transition-colors ${section === id ? "bg-card font-medium shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muted-foreground hover:text-foreground"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
             {section === "content" && (
               <>
-                <div className="flex items-center gap-4">
-                  <div className="size-16 shrink-0 overflow-hidden rounded-full bg-muted">
-                    {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}
+                <div className="flex items-center gap-4 rounded-[22px] apple-card p-4">
+                  <div className="size-16 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-foreground/10">
+                    {data.avatar_url ? <img src={data.avatar_url} alt="" className="size-full object-cover" />
+                      : salon ? <img src={`/niches/${salon}.svg`} alt="" className="size-full object-cover" /> : <AvatarPlaceholder className="size-full" />}
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <p className="truncate text-lg font-medium">{data.title || shop?.name}</p>
@@ -373,11 +326,11 @@ export default function PageEditor() {
                   </div>
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto rounded-full bg-foreground/[0.05] p-1 text-[13.5px] whitespace-nowrap no-scrollbar">
+                <div className="flex gap-1 self-start overflow-x-auto rounded-full bg-foreground/[0.05] p-1 text-[13.5px] whitespace-nowrap no-scrollbar">
                   {(([["projects", salon ? t("Work") : t("Projects")], ["services", t("Services & prices")], ["reviews", t("Reviews")], ["credentials", t("Credentials")], ["links", t("Links")]] as [ContentTab, string][])
                     .filter(([id]) => !salon || (id !== "services" && id !== "credentials"))).map(([id, label]) => (
                     <button key={id} type="button" onClick={() => setTab(id)}
-                      className={`h-8 flex-1 shrink-0 rounded-full px-3 transition-colors ${tab === id ? "bg-card font-medium shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muted-foreground hover:text-foreground"}`}>
+                      className={`h-8 shrink-0 rounded-full px-4 transition-colors ${tab === id ? "bg-card font-medium shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muted-foreground hover:text-foreground"}`}>
                       {label}
                     </button>
                   ))}
@@ -668,17 +621,11 @@ export default function PageEditor() {
           </div>
         </main>
 
-        {/* Live preview: a phone or a computer */}
-        <aside className="hidden min-w-0 flex-1 lg:flex lg:h-[calc(100dvh-72px)] lg:px-6">
-          <DevicePreview side={published && savedSlug && (
-            <div className="flex flex-col gap-1 rounded-full bg-muted p-1">
-              <IconBtn label={t("Copy Link")} onClick={copyLink}>{copied ? <CheckIcon /> : <CopyIcon />}</IconBtn>
-              <IconBtn label={t("Open page")} onClick={() => window.open(pagePath(savedSlug), "_blank", "noopener")}><ExternalLinkIcon /></IconBtn>
-            </div>
-          )}>
-            {preview}
-          </DevicePreview>
+        {/* Live preview: a phone or a computer, beside the editor on a wide screen */}
+        <aside className="sticky top-0 hidden h-screen w-[440px] shrink-0 py-6 pr-6 xl:flex">
+          <DevicePreview>{preview}</DevicePreview>
         </aside>
+        </div>
       </div>
 
       {contactModal && (
@@ -691,13 +638,13 @@ export default function PageEditor() {
 
       {/* Phones: preview on demand */}
       <button type="button" onClick={() => setPreviewOpen(true)}
-        className="fixed bottom-5 left-1/2 z-30 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-xl lg:hidden">
+        className="fixed bottom-5 left-1/2 z-30 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background shadow-xl xl:hidden">
         <EyeIcon className="size-4" />{t("Preview")}
       </button>
       {previewOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background lg:hidden">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background xl:hidden">
           <button type="button" aria-label={t("Close")} onClick={() => setPreviewOpen(false)}
-            className="fixed top-3 right-3 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><XIcon className="size-5" /></button>
+            className="fixed top-3 right-3 z-10 flex size-10 items-center justify-center rounded-full bg-foreground text-background shadow-lg"><XIcon className="size-5" /></button>
           {preview}
         </div>
       )}
