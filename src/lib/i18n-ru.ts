@@ -1,5 +1,8 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "Drag to move, pinch or scroll to zoom": "Перетащите, чтобы сдвинуть; щипок или колесо — масштаб",
+  "Zoom": "Масштаб",
+  "Rotate": "Повернуть",
   "New work": "Новая работа",
   "Edit work": "Работа",
   "Edit project": "Проект",
