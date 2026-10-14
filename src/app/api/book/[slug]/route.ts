@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto"
-import { adminClient, notifyShop, shopLang, type NotifyShop } from "@/lib/server/notify"
+import { adminClient, notifyShop, sendTelegram, shopLang, type NotifyShop } from "@/lib/server/notify"
 import { FILES_BUCKET } from "@/lib/storage-path"
 import { clientIp, overLimit } from "@/lib/server/portal"
 import { loadPublicPage } from "@/lib/server/page"
 import { cleanBooking, freeSlots, orderDays, phoneKey, zonedTime, type Busy } from "@/lib/booking"
 import { nicheConfig, type NicheConfig } from "@/lib/niches"
 import { can, FREE_BOOKINGS } from "@/lib/plans"
+import { sessionAccount } from "@/lib/server/client-session"
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -131,8 +132,10 @@ export async function POST(request: Request, { params }: Params) {
   const note = text(body.note, 500)
   const day = text(body.day, 10)
   const time = text(body.time, 5)
-  const way = text(body.contact, 10)
-  const nick = text(body.telegram, 40).replace(/^@?/, "@")
+  // a client signed in with Telegram: their profile goes with the booking
+  const me = await sessionAccount(request).catch(() => null)
+  const way = me?.username ? "telegram" : text(body.contact, 10)
+  const nick = (me?.username || text(body.telegram, 40)).replace(/^@?/, "@")
   if (!name || phoneKey(phone).length < 9 || !DAY_RE.test(day)) return Response.json({ error: "invalid" }, { status: 400 })
   const isOrder = ctx.config.kind === "order"
   if (!isOrder && !TIME_RE.test(time)) return Response.json({ error: "invalid" }, { status: 400 })
@@ -164,6 +167,7 @@ export async function POST(request: Request, { params }: Params) {
   const details: Record<string, string> = isOrder ? orderDetails(ctx.config, body.details) : {}
   // made through the page, not by the owner: counts toward the free plan's monthly bookings
   details.via = "online"
+  if (me) details.account = me.id
   // how the client wants to be reached: Telegram, Viber or a call
   if (way === "telegram" || way === "viber" || way === "phone") details.contact = way
   if (way === "telegram" && nick.length > 1) details.telegram = nick
@@ -210,5 +214,10 @@ export async function POST(request: Request, { params }: Params) {
     note: [extra, note, photoLine].filter(Boolean).join("\n"),
   }, `${siteUrl}/dashboard`).catch((e) => console.error("Notify error:", e))
 
+  // the client's own confirmation, in the bot they signed in with
+  if (me?.chat_id) {
+    const ru = lang === "ru"
+    await sendTelegram(me.chat_id, `✅ ${ru ? "Вы записаны" : "Ви записані"}: <b>${s.title.replace(/</g, "&lt;")}</b>\n${whenText(lang, day, isOrder ? (TIME_RE.test(time) ? time : "") : time)}\n${ctx.shop.name.replace(/</g, "&lt;")}`).catch(() => {})
+  }
   return Response.json({ ok: true })
 }

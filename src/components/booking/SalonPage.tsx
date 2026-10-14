@@ -341,7 +341,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ background: REVIEWER_COLORS[(r.name.length + i) % REVIEWER_COLORS.length] }}>{initialsOf(r.name)}</span>
                     <span className="min-w-0 flex-1">
                       <figcaption className="truncate text-[14px] font-semibold">{r.name}</figcaption>
-                      <span className="block text-[12px] text-[var(--pg-muted)]">{new Date(r.created_at).toLocaleDateString(locale, { day: "numeric", month: "long" })}</span>
+                      <span className="block text-[12px] text-[var(--pg-muted)]">{new Date(r.created_at).toLocaleDateString(locale, { day: "numeric", month: "long" })}{r.verified && <span className="font-medium text-[#248a3d]"> · ✓ {t("Verified visit")}</span>}</span>
                     </span>
                     <Stars value={r.rating} className="size-3" />
                   </div>

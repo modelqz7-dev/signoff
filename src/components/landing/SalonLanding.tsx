@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  ArrowRightIcon, BellIcon, CalendarDaysIcon, CheckIcon, Link2Icon, PlusIcon, QrCodeIcon, StarIcon, UsersIcon,
+  ArrowRightIcon, BellIcon, UserRoundIcon, CalendarDaysIcon, CheckIcon, Link2Icon, PlusIcon, QrCodeIcon, StarIcon, UsersIcon,
 } from "lucide-react"
 import { Logo } from "@/components/Logo"
 import { NicheIcon } from "@/components/crm/NicheIcon"
@@ -88,6 +88,11 @@ export function Header({ t, signedIn, variant = "catalog" }: { t: T; signedIn: b
         </nav>
         <div className="flex items-center gap-1.5">
           <LangToggle />
+          {/* a client's own bookings (signed in with Telegram) */}
+          {variant === "catalog" && (
+            <Link href="/me" aria-label={t("My bookings")} title={t("My bookings")}
+              className="flex size-10 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"><UserRoundIcon className="size-5" /></Link>
+          )}
           {signedIn ? (
             <Link href="/dashboard" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium whitespace-nowrap text-background hover:opacity-85">{t("Open dashboard")}</Link>
           ) : (
