@@ -345,9 +345,9 @@ export default function PageEditor() {
                     {data.links.map((l, i) => (
                       <ItemCard key={i} onUp={() => move("links", i, -1)} onDown={() => move("links", i, 1)} first={i === 0} last={i === data.links.length - 1}
                         onRemove={() => update({ links: data.links.filter((_, j) => j !== i) })}>
-                        <Input aria-label={t("Title")} placeholder={t("Title")} value={l.title} maxLength={80} className="h-9 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0"
+                        <Input aria-label={t("Title")} placeholder={t("Title")} value={l.title} maxLength={80} className={`font-medium ${FILLED}`}
                           onChange={(e) => update({ links: data.links.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} />
-                        <Input aria-label="URL" placeholder="https://" value={l.url} maxLength={600} className="h-8 border-none px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+                        <Input aria-label="URL" placeholder="https://" value={l.url} maxLength={600} className={FILLED}
                           onChange={(e) => update({ links: data.links.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)) })} />
                       </ItemCard>
                     ))}
@@ -362,13 +362,13 @@ export default function PageEditor() {
                       <ItemCard key={i} onUp={() => move("services", i, -1)} onDown={() => move("services", i, 1)} first={i === 0} last={i === data.services.length - 1}
                         onRemove={() => update({ services: data.services.filter((_, j) => j !== i) })}>
                         <div className="flex gap-3">
-                          <Input aria-label={t("Service")} placeholder={t("Service")} value={s.name} maxLength={80} className="h-9 flex-1 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0"
+                          <Input aria-label={t("Service")} placeholder={t("Service")} value={s.name} maxLength={80} className={`flex-1 font-medium ${FILLED}`}
                             onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)) })} />
-                          <Input aria-label={t("Price")} placeholder={t("from $500")} value={s.price} maxLength={40} className="h-9 w-32 border-none px-0 text-right text-sm shadow-none focus-visible:ring-0"
+                          <Input aria-label={t("Price")} placeholder={t("from $500")} value={s.price} maxLength={40} className={`w-32 text-right ${FILLED}`}
                             onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)) })} />
                         </div>
                         <Input aria-label={t("Description")} placeholder={t("What's included: content plan, 12 posts, 20 stories, 2 rounds of revisions…")} value={s.description} maxLength={300}
-                          className="h-8 border-none px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+                          className={FILLED}
                           onChange={(e) => update({ services: data.services.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)) })} />
                       </ItemCard>
                     ))}
@@ -384,12 +384,12 @@ export default function PageEditor() {
                       <ItemCard key={i} onUp={() => move("projects", i, -1)} onDown={() => move("projects", i, 1)} first={i === 0} last={i === data.projects.length - 1}
                         onRemove={() => update({ projects: data.projects.filter((_, j) => j !== i) })}>
                         <Input aria-label={t("Project name")} placeholder={t(hints?.work ?? "Instagram for a coffee shop: +2,000 followers")} value={p.title} maxLength={80}
-                          className="h-9 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { title: e.target.value })} />
-                        <Input aria-label={t("City")} placeholder={t("City")} value={p.city} maxLength={60}
-                          className="h-8 border-none px-0 text-sm shadow-none focus-visible:ring-0" onChange={(e) => updateProject(i, { city: e.target.value })} />
-                        <Textarea aria-label={t("Description")} placeholder={t("The task, what you did, the result…")} value={p.description} maxLength={1000}
+                          className={`font-medium ${FILLED}`} onChange={(e) => updateProject(i, { title: e.target.value })} />
+                        <Input aria-label={t("City")} placeholder={salon ? t("City (optional)") : t("City")} value={p.city} maxLength={60}
+                          className={FILLED} onChange={(e) => updateProject(i, { city: e.target.value })} />
+                        <Textarea aria-label={t("Description")} placeholder={salon ? t("A few words about this work") : t("The task, what you did, the result…")} value={p.description} maxLength={1000}
                           className={`min-h-16 ${FILLED_AREA}`} onChange={(e) => updateProject(i, { description: e.target.value })} />
-                        <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
                           {p.photos.map((src, k) => (
                             <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                               <img src={src} alt="" className="size-full object-cover" />
@@ -430,7 +430,7 @@ export default function PageEditor() {
                             }}
                             onClear={() => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, image_url: null } : x)) })} />
                           <Input aria-label={t("Title")} placeholder={t("Meta Blueprint certificate")} value={c.title} maxLength={80}
-                            className="h-9 flex-1 border-none px-0 text-[15px] font-medium shadow-none focus-visible:ring-0"
+                            className={`flex-1 font-medium ${FILLED}`}
                             onChange={(e) => update({ credentials: data.credentials.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} />
                         </div>
                       </ItemCard>
@@ -693,8 +693,8 @@ function ItemCard({ children, onUp, onDown, onRemove, first, last }: {
 }) {
   const { t } = useT()
   return (
-    <div className="flex items-start gap-2 rounded-[22px] apple-card p-3 pl-4">
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+    <div className="flex items-start gap-2 rounded-[22px] apple-card p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">{children}</div>
       <div className="flex shrink-0 flex-col items-center sm:flex-row">
         <IconBtn label={t("Move up")} onClick={onUp} disabled={first}><ArrowUpIcon /></IconBtn>
         <IconBtn label={t("Move down")} onClick={onDown} disabled={last}><ArrowDownIcon /></IconBtn>
