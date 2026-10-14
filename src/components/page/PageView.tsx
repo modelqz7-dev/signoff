@@ -180,7 +180,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   preview?: boolean
   /**
    * A beauty or cake business's booking (its services, free times and the form). With it the page
-   * leads with Booking, its button books instead of sending a message, and the sections a salon
+   * opens the booking in a sheet from its buttons instead of sending a message, and the sections a salon
    * doesn't use (services as text, areas, credentials) stay out.
    */
   booking?: {
@@ -201,6 +201,10 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   const [added, setAdded] = useState<PageReview[]>([])
   const [writing, setWriting] = useState(false)
   const [contact, setContact] = useState(false)
+  // a booking page: its steps open in a sheet; the pinned button shows once the top one scrolls away
+  const [sheet, setSheet] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const bookRef = useRef<HTMLButtonElement>(null)
   const [active, setActive] = useState("")
   const openNow = useOpenNow(data.hours)
   const today = useSyncExternalStore(noop, () => (new Date().getDay() + 6) % 7, () => -1)
@@ -222,7 +226,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   const sid = (s: string) => (preview ? `pg-${s}-preview` : `pg-${s}`)
   const salon = !!booking
   const tabs = ([
-    ...(booking ? [[true, "booking", booking.label]] : []),
     [!!data.bio || !!data.category, "about", t("About us")],
     [data.projects.length > 0, "projects", salon ? t("Work") : t("Projects")],
     [true, "business", t("Business")],
@@ -250,6 +253,25 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
     return () => io.disconnect()
   }, [tabs.length])
 
+  useEffect(() => {
+    const el = bookRef.current
+    if (!el || typeof IntersectionObserver === "undefined") return
+    const io = new IntersectionObserver(([e]) => setScrolled(!e.isIntersecting && e.boundingClientRect.top < 0))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [booking])
+
+  // the sheet: Escape closes it, the page under it stays put
+  useEffect(() => {
+    if (!sheet) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSheet(false) }
+    window.addEventListener("keydown", onKey)
+    const body = preview ? null : document.body
+    const was = body?.style.overflow
+    if (body) body.style.overflow = "hidden"
+    return () => { window.removeEventListener("keydown", onKey); if (body) body.style.overflow = was ?? "" }
+  }, [sheet, preview])
+
   async function share() {
     if (preview) return
     const url = window.location.href
@@ -270,7 +292,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
   // Laid out by its own width (a container), not the screen's: the editor previews it as a phone or a computer.
   return (
     <div ref={rootRef} style={palette(data)} className="@container min-h-full bg-[var(--pg-bg)] text-[var(--pg-text)]">
-      {/* a business that takes bookings: one centred column (booking leads it), no side card on a computer */}
       {/* one centred column for every page */}
       <div className="mx-auto w-full max-w-[760px] @3xl:px-8 @3xl:pt-6">
         <div>
@@ -304,6 +325,12 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 px-5 pt-5 @3xl:px-0">
+              {booking && (
+                <button ref={bookRef} type="button" onClick={() => setSheet(true)}
+                  className="flex h-9 items-center rounded-full bg-[var(--pg-accent)] px-5 text-sm font-semibold text-[var(--pg-on-accent)] transition-transform active:scale-[0.98]">
+                  {booking.button}
+                </button>
+              )}
               <button type="button" onClick={writeReview} className={btn}><StarIcon />{t("Write a review")}</button>
               <button type="button" onClick={share} className={btn}><Share2Icon />{shared ? t("Link copied") : t("Share")}</button>
               {openNow && (
@@ -325,16 +352,6 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
                 </button>
               ))}
             </nav>
-
-            {booking && (
-              <Section id={sid("booking")} title={booking.label}>
-                {/* the booking speaks in the app's words: its colours follow the page's own */}
-                <div style={{
-                  "--background": "var(--pg-bg)", "--foreground": "var(--pg-text)", "--card": "var(--pg-card)", "--card-foreground": "var(--pg-text)",
-                  "--muted-foreground": "var(--pg-muted)", "--border": "var(--pg-border)", "--hover": "var(--pg-field)",
-                } as React.CSSProperties}>{booking.node}</div>
-              </Section>
-            )}
 
             {(data.bio || data.category || preview) && (
               <Section id={sid("about")} title={t("About us")}>
@@ -518,11 +535,10 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
             </a>
           </div>
 
-          {/* "Contact" card: pinned on the right on a computer, a bar at the bottom on a phone */}
-          {/* the main button: pinned to the bottom (a booking page shows it on phones only, its form is on the page) */}
+          {/* the main button, pinned to the bottom; a booking page shows it once its top button scrolls away */}
           {(data.requests || booking) && (
-            <aside className={`pointer-events-none sticky bottom-0 z-20 flex justify-center bg-gradient-to-t from-[var(--pg-bg)] via-[var(--pg-bg)]/85 to-transparent px-4 pt-8 pb-[max(16px,env(safe-area-inset-bottom))] ${booking ? "@3xl:hidden" : ""}`}>
-              <button type="button" onClick={() => (booking ? go("booking") : setContact(true))}
+            <aside className={`pointer-events-none sticky bottom-0 z-20 flex justify-center bg-gradient-to-t from-[var(--pg-bg)] via-[var(--pg-bg)]/85 to-transparent px-4 pt-8 pb-[max(16px,env(safe-area-inset-bottom))] transition-all duration-300 ${booking && !scrolled ? "invisible translate-y-4 opacity-0" : ""}`}>
+              <button type="button" onClick={() => (booking ? setSheet(true) : setContact(true))}
                 className="pointer-events-auto flex h-12 w-full max-w-[380px] items-center justify-center rounded-full bg-[var(--pg-accent)] text-[15px] font-semibold text-[var(--pg-on-accent)] shadow-[0_12px_32px_-10px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.98]">
                 {booking ? booking.button : data.cta || t("Send message")}
               </button>
@@ -530,6 +546,30 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit, bo
           )}
         </div>
       </div>
+
+      {/* booking: a sheet from the bottom on a phone, a window on a computer; kept mounted so a closed sheet keeps its choices */}
+      {booking && (
+        <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/45 backdrop-blur-[2px] @3xl:items-center @3xl:p-8 ${sheet ? "" : "hidden"}`}
+          role="dialog" aria-modal="true" aria-label={booking.button} onClick={() => setSheet(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[92%] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--pg-bg)] shadow-[0_-10px_40px_-12px_rgba(0,0,0,0.35)] @3xl:rounded-[28px]">
+            <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-[var(--pg-border)] @3xl:hidden" />
+            <header className="flex shrink-0 items-center gap-3 px-5 pt-3 pb-2 @3xl:pt-5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[20px] leading-tight font-semibold tracking-[-0.01em]">{booking.label}</p>
+                <p className="truncate text-[13px] text-[var(--pg-muted)]">{data.title}</p>
+              </div>
+              <button type="button" aria-label={t("Close")} onClick={() => setSheet(false)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--pg-field)] text-[var(--pg-muted)] hover:text-[var(--pg-text)]"><XIcon className="size-4" /></button>
+            </header>
+            {/* the booking speaks in the app's words: its colours follow the page's own */}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]" style={{
+              "--background": "var(--pg-bg)", "--foreground": "var(--pg-text)", "--card": "var(--pg-card)", "--card-foreground": "var(--pg-text)",
+              "--muted-foreground": "var(--pg-muted)", "--border": "var(--pg-border)", "--hover": "var(--pg-field)",
+            } as React.CSSProperties}>{booking.node}</div>
+          </div>
+        </div>
+      )}
 
       {contact && (
         <ContactModal data={data} slug={slug} preview={preview} rating={rating} count={allReviews.length} initials={initials} onClose={() => setContact(false)} />

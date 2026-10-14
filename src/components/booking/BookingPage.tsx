@@ -13,7 +13,7 @@ export const NICHE_COVER: Record<CrmNiche, string> = {
   cakes: "linear-gradient(135deg,#f7eadb,#f3e3ea)",
 }
 
-/** A beauty or cake business's page: the Link page in its own design, with booking as its first section. */
+/** A beauty or cake business's page: the Link page in its own design, its booking in a sheet behind one button. */
 export function BookingPage({ data, slug, reviews, isOrder, niche, booking, preview, onEdit }: {
   data: PageData
   niche: CrmNiche
