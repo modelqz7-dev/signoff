@@ -31,6 +31,8 @@ export type PageProject = { title: string; city: string; description: string; ph
 export type PageReview = {
   id: string; name: string; rating: number; text: string; created_at: string
   quality?: number | null; communication?: number | null; value?: number | null
+  /** Written by a signed-in client after a visit. */
+  verified?: boolean
 }
 export const REVIEW_ASPECTS = ["quality", "communication", "value"] as const
 
@@ -101,7 +103,7 @@ export function splitList(value: string) {
 const RESERVED = new Set([
   "admin", "api", "app", "dashboard", "orders", "requests", "link", "login", "signup", "logout", "portal", "p",
   "terms", "privacy", "refund", "help", "support", "settings", "billing", "nodly", "www", "mail", "blog", "about",
-  "pricing", "forgot-password", "reset-password", "static", "assets", "_next", "catalog", "business",
+  "pricing", "forgot-password", "reset-password", "static", "assets", "_next", "catalog", "business", "me",
 ])
 
 export function normalizeSlug(value: string) {

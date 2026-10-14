@@ -7,6 +7,8 @@ import { shrinkImage } from "@/lib/image"
 import { NICHES, type CrmNiche } from "@/lib/niches"
 import { cn } from "@/lib/utils"
 import { NicheIcon } from "@/components/crm/NicheIcon"
+import { TelegramIcon, TelegramSignIn } from "@/components/booking/TelegramSignIn"
+import { useClientAccount } from "@/lib/client-account"
 import { useT } from "@/lib/i18n"
 
 export type PublicService = { id: string; title: string; duration_min: number | null; price: number | null; price_from: boolean; unit: string }
@@ -44,7 +46,10 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
   const [day, setDay] = useState<string | null>(null)
   const [time, setTime] = useState<string | null>(null)
   const [details, setDetails] = useState<Record<string, string>>({})
-  const [name, setName] = useState("")
+  const [typedName, setName] = useState<string | null>(null)
+  // a signed-in client's own account: their name and Telegram go with the booking
+  const client = useClientAccount()
+  const name = typedName ?? client.account?.name ?? ""
   const [phone, setPhone] = useState("")
   const [note, setNote] = useState("")
   const [company, setCompany] = useState("")
@@ -150,6 +155,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
       <h2 className="text-[22px] font-bold tracking-[-0.02em]">{isOrder ? t("Order sent!") : t("You're booked!")}</h2>
       <p className="text-[15px] first-letter:uppercase">{summary}</p>
       <p className="text-[15px] text-muted-foreground">{isOrder ? t("{name} will get in touch to confirm the details and the price.", { name: title }) : t("{name} will contact you if anything changes.", { name: title })}</p>
+      {client.account && <Link href="/me" className="mt-2 text-[15px] font-medium underline underline-offset-4">{t("My bookings")}</Link>}
     </section>
   ) : (
     <form onSubmit={submit} className="flex flex-col gap-5">
@@ -266,14 +272,30 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
       {/* 3. who: an inset form */}
       {stage === "who" && (
         <section className="flex flex-col gap-4">
+          {/* signed in with Telegram: the master gets this profile; otherwise one tap to sign in */}
+          {client.account ? (
+            <div className="flex items-center gap-3 rounded-[22px] bg-card px-4 py-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><TelegramIcon className="size-5" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-medium">{client.account.name || t("Your Telegram")}</span>
+                <span className="block truncate text-[13px] text-muted-foreground">{client.account.username ? `@${client.account.username}` : t("Telegram profile attached")}</span>
+              </span>
+              <button type="button" onClick={client.signOut} className="shrink-0 text-[13px] text-muted-foreground hover:text-foreground">{t("Sign out")}</button>
+            </div>
+          ) : !preview && (
+            <div className="flex flex-col gap-2 rounded-[22px] bg-card p-3">
+              <TelegramSignIn className="h-11" />
+              <p className="px-1 text-center text-[12.5px] text-muted-foreground">{t("Optional: your name fills in, the master sees your Telegram, and your bookings are kept in your profile.")}</p>
+            </div>
+          )}
           <div className="overflow-hidden rounded-[22px] bg-card [&>*+*]:border-t [&>*+*]:border-border">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Your name")} autoComplete="name" maxLength={80} className={ROW} aria-label={t("Your name")} />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380 __ ___ __ __" type="tel" autoComplete="tel" maxLength={40} className={ROW} aria-label={t("Phone")} />
-            {way === "telegram" && (
+            {way === "telegram" && !client.account && (
               <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder={t("@username in Telegram (optional)")} maxLength={40} className={ROW} aria-label="Telegram" />
             )}
           </div>
-          <div className="flex flex-col gap-1.5">
+          {!client.account && <div className="flex flex-col gap-1.5">
             <span className="px-1 text-[13px] text-muted-foreground">{t("How should we reach you?")}</span>
             <div role="radiogroup" aria-label={t("How should we reach you?")} className="grid h-11 grid-cols-3 gap-1 rounded-full bg-foreground/[0.06] p-1">
               {([["telegram", "Telegram"], ["viber", "Viber"], ["phone", t("Phone call")]] as const).map(([id, label]) => (
@@ -281,7 +303,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
                   className={cn("rounded-full text-[14px] font-medium transition-colors", way === id ? "bg-card shadow-sm" : "text-muted-foreground")}>{label}</button>
               ))}
             </div>
-          </div>
+          </div>}
           <div className="overflow-hidden rounded-[22px] bg-card">
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={isOrder ? t("Your wishes, if you'd like") : t("A comment, if you'd like")}
               className="block w-full resize-none bg-transparent px-4 py-3.5 text-[16px] leading-snug outline-none placeholder:text-muted-foreground" />

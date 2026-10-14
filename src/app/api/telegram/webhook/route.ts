@@ -1,6 +1,7 @@
 import { adminClient, secretMatches, webhookSecret } from "@/lib/server/notify"
 import { overLimit } from "@/lib/server/portal"
 import { OwnerBot, tg } from "@/lib/server/telegram-bot"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 /**
  * Telegram bot updates. The owner opens the bot and sends the 6-digit code shown in
@@ -9,7 +10,7 @@ import { OwnerBot, tg } from "@/lib/server/telegram-bot"
  * with its next steps, and a link to the CRM. "/stop" disconnects.
  */
 type Chat = { id: number }
-type From = { language_code?: string }
+type From = { id?: number; language_code?: string; username?: string; first_name?: string; last_name?: string }
 type Update = {
   message?: { chat: Chat; text?: string; from?: From }
   callback_query?: { id: string; data?: string; from?: From; message?: { chat: Chat; message_id: number } }
@@ -50,6 +51,12 @@ export async function POST(request: Request) {
 
   if (command === "/stop") { await bot.stop(); return Response.json({ ok: true }) }
 
+  // a client signing in on the site: t.me/<bot>?start=login_<token>
+  if (command === "/start" && arg?.startsWith("login_") && message.from?.id) {
+    await clientLogin(db, bot, chatId, message.from, arg.slice(6))
+    return Response.json({ ok: true })
+  }
+
   // a code: the 6 digits from Nodly (or an older link's code after /start)
   const code = /^\d[\d\s-]{4,}\d$/.test(text) ? text.replace(/\D/g, "") : command === "/start" && arg ? arg : null
   if (code) {
@@ -73,4 +80,24 @@ export async function POST(request: Request) {
   else if (text.startsWith("/")) await bot.menu()
   else await bot.search(shop, text)
   return Response.json({ ok: true })
+}
+
+/** The bot confirms a client's sign-in: their Telegram becomes (or finds) their Nodly account. */
+async function clientLogin(db: SupabaseClient, bot: OwnerBot, chatId: string, from: From, token: string) {
+  const ru = from.language_code?.startsWith("ru")
+  const name = [from.first_name, from.last_name].filter(Boolean).join(" ").slice(0, 120)
+  const { data: account, error } = await db.from("client_accounts")
+    .upsert({ tg_id: from.id, name, username: from.username ?? "", chat_id: chatId }, { onConflict: "tg_id" })
+    .select("id").single()
+  if (error || !account) {
+    console.error("Client account error:", error)
+    await bot.send(ru ? "Не получилось войти. Попробуйте ещё раз на сайте." : "Не вдалося увійти. Спробуйте ще раз на сайті.")
+    return
+  }
+  const since = new Date(Date.now() - 10 * 60_000).toISOString()
+  const { data: login } = await db.from("client_logins").update({ account_id: account.id })
+    .eq("token", token).is("account_id", null).gte("created_at", since).select("token").maybeSingle()
+  await bot.send(login
+    ? (ru ? "✅ Вы вошли в Nodly. Вернитесь на сайт — всё уже готово.\n\nСюда будут приходить подтверждения ваших записей." : "✅ Ви увійшли в Nodly. Поверніться на сайт — усе вже готово.\n\nСюди надходитимуть підтвердження ваших записів.")
+    : (ru ? "Ссылка для входа устарела. Нажмите «Войти через Telegram» на сайте ещё раз." : "Посилання для входу застаріло. Натисніть «Увійти через Telegram» на сайті ще раз."))
 }

@@ -12,6 +12,8 @@ import {
   type PageHours, type PageReview,
 } from "@/lib/page"
 import { shrinkImage } from "@/lib/image"
+import { useClientAccount } from "@/lib/client-account"
+import { TelegramSignIn } from "@/components/booking/TelegramSignIn"
 
 /** Colours of the page itself: it keeps its own look whatever theme the visitor uses on Nodly. */
 function palette(data: PageData) {
@@ -568,30 +570,46 @@ export function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; p
   const { t } = useT()
   const [rating, setRating] = useState(0)
   const [marks, setMarks] = useState<Record<string, number>>({})
-  const [name, setName] = useState("")
   const [text, setText] = useState("")
   const [trap, setTrap] = useState("")
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // reviews come from clients signed in with Telegram, after a visit
+  const client = useClientAccount()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (preview) return
     if (!rating) { setError(t("Choose a rating")); return }
-    if (!name.trim() || text.trim().length < 3) { setError(t("Enter your name and a few words")); return }
+    if (text.trim().length < 3) { setError(t("Enter your name and a few words")); return }
     setSending(true)
     setError(null)
     const res = await fetch(`/api/page/${encodeURIComponent(slug)}/review`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, ...marks, name: name.trim(), text: text.trim(), company: trap }),
+      body: JSON.stringify({ rating, ...marks, name: client.account?.name ?? "", text: text.trim(), company: trap }),
     }).catch(() => null)
     setSending(false)
     const body = await res?.json().catch(() => null)
     if (res?.ok && body?.review) { onSent(body.review); return }
-    setError(res?.status === 429 ? t("Too many requests. Try again in a few minutes.") : t("Couldn't send the review. Try again."))
+    const code = (body as { error?: string } | null)?.error
+    setError(res?.status === 429 ? t("Too many requests. Try again in a few minutes.")
+      : code === "no_visit" ? t("Reviews are for clients who have been here. After your visit you can leave one.")
+      : code === "already" ? t("You've already left a review here.")
+      : code === "login" ? t("Sign in with Telegram to leave a review.")
+      : t("Couldn't send the review. Try again."))
   }
 
   const field = "w-full rounded-xl bg-[var(--pg-field)] px-4 py-3 text-[16px] text-[var(--pg-text)] outline-none ring-1 ring-transparent placeholder:text-[var(--pg-muted)] focus:ring-[var(--pg-muted)] sm:text-[15px]"
+  if (!preview && client.loaded && !client.account) {
+    return (
+      <div className="mb-5 flex flex-col gap-3 rounded-[22px] bg-[var(--pg-card)] p-5 ring-1 ring-[var(--pg-border)]">
+        <p className="text-[15px] font-semibold">{t("Reviews from real clients")}</p>
+        <p className="text-[14px] text-[var(--pg-muted)]">{t("Sign in with Telegram. You can review a place after a visit there, and your review gets a “Verified visit” mark.")}</p>
+        <TelegramSignIn />
+        <button type="button" onClick={onClose} className="text-[13px] text-[var(--pg-muted)] hover:text-[var(--pg-text)]">{t("Cancel")}</button>
+      </div>
+    )
+  }
   return (
     <form onSubmit={submit} className="mb-5 flex flex-col gap-3 rounded-[22px] bg-[var(--pg-card)] p-4 ring-1 ring-[var(--pg-border)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -604,7 +622,7 @@ export function ReviewForm({ slug, preview, onClose, onSent }: { slug: string; p
           <StarPicker key={`${k}-s`} value={marks[k] ?? 0} onChange={(v) => setMarks((m) => ({ ...m, [k]: v }))} size="size-5" label={t(ASPECT_LABEL[k])} />,
         ])}
       </div>
-      <input className={field} placeholder={t("Your name")} value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="name" />
+      {client.account && <p className="text-[13px] text-[var(--pg-muted)]">{t("As {name}", { name: client.account.name || `@${client.account.username}` })}</p>}
       <textarea className={`${field} min-h-24 resize-y`} placeholder={t("What did they make for you? How did it go?")} value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} />
       <input className="hidden" tabIndex={-1} autoComplete="off" aria-hidden value={trap} onChange={(e) => setTrap(e.target.value)} name="company" />
       {error && <p className="text-sm text-[#c2410c]">{error}</p>}
