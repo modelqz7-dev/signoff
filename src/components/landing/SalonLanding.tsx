@@ -158,7 +158,7 @@ function Niches({ t }: { t: T }) {
     { id: "nails", tab: t("Nails"), title: t("For nail masters"), points: [t("Services with time and price"), t("Only free windows on the page"), t("Every client's history")] },
     { id: "barber", tab: t("Barbershop"), title: t("For barbershops"), points: [t("Haircuts and beards by the slot"), t("No double bookings"), t("Regulars found by phone")] },
     { id: "tattoo", tab: t("Tattoo"), title: t("For tattoo artists"), points: [t("Long sessions in the calendar"), t("Sketch, placement and size in the notes"), t("Regulars and their work history")] },
-    { id: "cakes", tab: t("Cakes"), title: t("For cakes to order"), points: [t("Orders by day, not by hour"), t("Filling, weight, inscription"), t("A board from new to delivered")] },
+    { id: "cakes", tab: t("Cakes"), title: t("For cakes to order"), points: [t("Orders by day, not by hour"), t("Filling, weight, inscription"), t("Every order's next step in one tap")] },
   ]
   const [on, setOn] = useState<CrmNiche>("nails")
   const cur = items.find((i) => i.id === on)!
@@ -228,7 +228,7 @@ function How({ t }: { t: T }) {
 function Features({ t }: { t: T }) {
   const rows = [
     { icon: Link2Icon, title: t("Your page with online booking"), text: t("Work, reviews, contacts and booking, open day and night.") },
-    { icon: CalendarDaysIcon, title: t("A calendar that fills itself"), text: t("The day by the hour and what it earns. Cakes get an order board.") },
+    { icon: CalendarDaysIcon, title: t("A calendar that fills itself"), text: t("The day, its week and what it earns. Cakes see their orders by day.") },
     { icon: UsersIcon, title: t("Client base"), text: t("Phone, notes and every visit, gathered on their own.") },
     { icon: BellIcon, title: t("Telegram notices"), text: t("A message the moment someone books.") },
     { icon: QrCodeIcon, title: t("QR code"), text: t("For cards and the counter.") },
@@ -261,7 +261,7 @@ function Features({ t }: { t: T }) {
 
 function Price({ t, start, startLabel }: { t: T; start: string; startLabel: string }) {
   const included = [
-    t("Your page with online booking"), t("Unlimited bookings and clients"), t("Calendar or order board"),
+    t("Your page with online booking"), t("Unlimited bookings and clients"), t("Calendar of bookings or orders"),
     t("Telegram notices"), t("QR code and statistics"), t("Works on the phone and the computer"),
   ]
   return (

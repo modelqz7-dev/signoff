@@ -41,7 +41,7 @@ function lanes(items: CrmBooking[]) {
   return out
 }
 
-/** Nails and barbershop: the day's appointments on a timeline, a week strip and the day's money. */
+/** Nails, barbershop and tattoo: the day's appointments on a timeline, a week strip and the day's money. */
 export function AppointmentsHome({ data, onNew, onOpen, cta }: {
   data: CrmData
   /** The main button: the booking link. */
@@ -146,7 +146,7 @@ export function AppointmentsHome({ data, onNew, onOpen, cta }: {
             </div>
             <div className="relative flex-1 cursor-copy" onClick={clickSlot} title={t("Click a free time to book it")}>
               {Array.from({ length: to - from }, (_, i) => (
-                <div key={i} className="border-t border-border/70" style={{ height: HOUR_PX }}>
+                <div key={i} className={cn(i > 0 && "border-t border-border/70")} style={{ height: HOUR_PX }}>
                   <div className="h-1/2 border-b border-dashed border-border/40" />
                 </div>
               ))}

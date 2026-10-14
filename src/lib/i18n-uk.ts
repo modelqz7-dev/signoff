@@ -1,5 +1,15 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "Every order's next step in one tap": "Наступний крок замовлення в один дотик",
+  "The day, its week and what it earns. Cakes see their orders by day.": "День, його тиждень і скільки він приніс. Торти бачать замовлення по днях.",
+  "Calendar of bookings or orders": "Календар записів або замовлень",
+  "{n} ord.": "{n} зам.",
+  "All day": "Весь день",
+  "No orders for this day.": "На цей день замовлень немає.",
+  "Add an order for this day": "Додати замовлення на цей день",
+  "Today's orders": "Замовлення сьогодні",
+  "Day's orders": "Замовлення за день",
+  "Nothing ordered ahead yet.": "Наперед поки нічого не замовили.",
   "Tattoo studio": "Тату-студія",
   "Sessions by time, sketches and regulars": "Сеанси за часом, ескізи й постійні клієнти",
   "Artist": "Майстер",
