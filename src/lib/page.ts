@@ -101,7 +101,7 @@ export function splitList(value: string) {
 const RESERVED = new Set([
   "admin", "api", "app", "dashboard", "orders", "requests", "link", "login", "signup", "logout", "portal", "p",
   "terms", "privacy", "refund", "help", "support", "settings", "billing", "nodly", "www", "mail", "blog", "about",
-  "pricing", "forgot-password", "reset-password", "static", "assets", "_next", "catalog",
+  "pricing", "forgot-password", "reset-password", "static", "assets", "_next", "catalog", "business",
 ])
 
 export function normalizeSlug(value: string) {

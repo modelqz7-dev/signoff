@@ -488,7 +488,7 @@ export function PageView({ data, slug, reviews = [], preview = false, onEdit }: 
               </div>
             </Section>
 
-            <a href={preview ? undefined : "/?ref=page"} className="mt-6 block text-center text-xs text-[var(--pg-muted)] transition-colors hover:text-[var(--pg-text)]">
+            <a href={preview ? undefined : "/business?ref=page"} className="mt-6 block text-center text-xs text-[var(--pg-muted)] transition-colors hover:text-[var(--pg-text)]">
               {t("Made with Nodly")}
             </a>
           </div>

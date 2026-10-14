@@ -613,7 +613,7 @@ export default function PageEditor() {
                       {data.geo ? t("Your pin is set: clients see you on the catalog map. Drag it to move it.") : t("Tap the map where you work, or press “I'm here now”.")}
                     </p>
                     {data.listed && !published && <p className="text-[12.5px] text-muted-foreground">{t("The page shows in the catalog once it's published.")}</p>}
-                    <a href="/catalog" target="_blank" rel="noopener" className="text-[14px] font-medium underline underline-offset-2">{t("Open the catalog")}</a>
+                    <a href="/" target="_blank" rel="noopener" className="text-[14px] font-medium underline underline-offset-2">{t("Open the catalog")}</a>
                   </Block>
                 )}
                 <Block title={t("Page address")}>

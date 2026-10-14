@@ -352,7 +352,7 @@ export function SalonPage({ data, slug, reviews = [], preview = false, onEdit, b
           )}
         </Group>
 
-        <a href={preview ? undefined : "/?ref=page"} className="mt-10 block text-center text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-text)]">
+        <a href={preview ? undefined : "/business?ref=page"} className="mt-10 block text-center text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-text)]">
           {t("Made with Nodly")}
         </a>
       </div>

@@ -41,7 +41,7 @@ export function SalonLanding() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header t={t} signedIn={signedIn} />
+      <Header t={t} signedIn={signedIn} variant="landing" />
       <main>
         <Hero t={t} start={start} startLabel={startLabel} />
         <Niches t={t} />
@@ -56,8 +56,11 @@ export function SalonLanding() {
   )
 }
 
-/** The site's top bar, shared by the landing and the catalog. */
-export function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
+/**
+ * The site's top bar. On the catalog (the home page, for clients) it is just the logo and
+ * "For masters"; on the masters' landing it has the landing's sections and a way back to the catalog.
+ */
+export function Header({ t, signedIn, variant = "catalog" }: { t: T; signedIn: boolean; variant?: "catalog" | "landing" }) {
   // a floating capsule; it gains a shadow once the page scrolls under it
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -66,7 +69,9 @@ export function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
     window.addEventListener("scroll", on, { passive: true })
     return () => window.removeEventListener("scroll", on)
   }, [])
-  const links = [["/catalog", t("Catalog")], ["/#how", t("How it works")], ["/#features", t("What's inside")], ["/#price", t("Pricing")], ["/#faq", t("FAQ")]] as const
+  const links = variant === "landing"
+    ? [["/", t("Catalog")], ["/business#how", t("How it works")], ["/business#features", t("What's inside")], ["/business#price", t("Pricing")], ["/business#faq", t("FAQ")]] as const
+    : []
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
       <div className={cn(
@@ -82,11 +87,14 @@ export function Header({ t, signedIn }: { t: T; signedIn: boolean }) {
         <div className="flex items-center gap-1.5">
           <LangToggle />
           {signedIn ? (
-            <Link href="/dashboard" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-85">{t("Open dashboard")}</Link>
+            <Link href="/dashboard" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium whitespace-nowrap text-background hover:opacity-85">{t("Open dashboard")}</Link>
           ) : (
             <>
               <Link href="/login" className="hidden h-10 items-center rounded-full px-4 text-[14px] text-foreground/80 transition-colors hover:bg-foreground/[0.06] hover:text-foreground sm:inline-flex">{t("Sign in")}</Link>
-              <Link href="/signup" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium text-background hover:opacity-85">{t("Start free")}</Link>
+              {/* clients never sign up: on the catalog the one button is for masters */}
+              {variant === "catalog"
+                ? <Link href="/business" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium whitespace-nowrap text-background hover:opacity-85">{t("For masters")}</Link>
+                : <Link href="/signup" className="inline-flex h-10 items-center rounded-full bg-foreground px-5 text-[14px] font-medium whitespace-nowrap text-background hover:opacity-85">{t("Start free")}</Link>}
             </>
           )}
         </div>

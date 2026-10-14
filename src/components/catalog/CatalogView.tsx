@@ -183,8 +183,8 @@ export function CatalogView({ entries, initialNiche, initialCity, initialRegion 
             <h2 className="text-[28px] leading-tight font-semibold tracking-[-0.03em] sm:text-[36px]">{t("Are you a master?")}</h2>
             <p className="mt-2 max-w-md text-[16px] opacity-70">{t("Make your page with online booking and get into the catalog. It's free.")}</p>
           </div>
-          <Link href={signedIn ? "/link/edit" : "/signup"} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-[#1d1d1f] hover:opacity-90 dark:bg-[#1d1d1f] dark:text-white">
-            {signedIn ? t("Set up my page") : t("Start free")}<ArrowRightIcon className="size-4" />
+          <Link href={signedIn ? "/link/edit" : "/business"} className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-[#1d1d1f] hover:opacity-90 dark:bg-[#1d1d1f] dark:text-white">
+            {signedIn ? t("Set up my page") : t("Learn more")}<ArrowRightIcon className="size-4" />
           </Link>
         </div>
       </main>

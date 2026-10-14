@@ -331,7 +331,7 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
       {steps}
 
       <p className="mt-auto pt-4 text-center text-[12px] text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">{t("Booking by Nodly")}</Link>
+        <Link href="/business" className="hover:text-foreground">{t("Booking by Nodly")}</Link>
       </p>
     </div>
   )

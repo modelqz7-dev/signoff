@@ -1,18 +1,11 @@
-import type { Metadata } from "next"
-import { CatalogView } from "@/components/catalog/CatalogView"
-import { loadCatalog } from "@/lib/server/catalog"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "Каталог майстрів — Nodly",
-  description: "Майстри манікюру, барбершопи й торти на замовлення у вашому місті. Онлайн-запис за хвилину.",
-}
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
-// fresh on every visit: a business that turns the catalog on shows up at once
-export const dynamic = "force-dynamic"
-
-type Props = { searchParams: Promise<{ niche?: string; city?: string; region?: string }> }
-
+/** The catalog moved to the home page; old links (with their filters) land there. */
 export default async function CatalogPage({ searchParams }: Props) {
-  const [entries, params] = await Promise.all([loadCatalog(), searchParams])
-  return <CatalogView entries={entries} initialNiche={params.niche ?? ""} initialCity={params.city ?? ""} initialRegion={params.region ?? ""} />
+  const params = new URLSearchParams()
+  for (const [k, v] of Object.entries(await searchParams)) if (typeof v === "string") params.set(k, v)
+  const q = params.toString()
+  redirect(q ? `/?${q}` : "/")
 }
