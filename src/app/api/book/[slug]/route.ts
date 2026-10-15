@@ -195,7 +195,8 @@ export async function POST(request: Request, { params }: Params) {
     status: isOrder ? "new" : "booked",
     price: s.price_from ? null : s.price,
     details,
-    notes: note,
+    // the client's "about me" from their profile goes along, so the master sees it with the booking
+    notes: [note, me?.about ? `👤 ${me.about}` : ""].filter(Boolean).join("\n").slice(0, 2000),
   })
   if (error) {
     console.error("Booking save error:", error)

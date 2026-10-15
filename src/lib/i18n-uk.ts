@@ -1,5 +1,8 @@
 // Ukrainian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const uk: Record<string, string> = {
+  "My profile": "Мій профіль",
+  "About me": "Про себе",
+  "What the master should know: allergies, wishes, how you like it.": "Що варто знати майстру: алергії, побажання, як вам подобається.",
   "Waiting for Telegram…": "Чекаємо Telegram…",
   "Sign in with Telegram": "Увійти через Telegram",
   "Press “Start” in the bot, then come back here.": "Натисніть «Start» у боті й поверніться сюди.",
