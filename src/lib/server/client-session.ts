@@ -7,7 +7,7 @@ import { adminClient } from "@/lib/server/notify"
 export const CLIENT_COOKIE = "nodly_client"
 const DAYS = 90
 
-export type ClientAccount = { id: string; tg_id: number; name: string; username: string; chat_id: string | null }
+export type ClientAccount = { id: string; tg_id: number; name: string; username: string; chat_id: string | null; avatar_url?: string | null; phone?: string; about?: string }
 
 function key() {
   const base = process.env.CLIENT_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || ""
@@ -36,7 +36,7 @@ export function sessionId(request: Request) {
 export async function sessionAccount(request: Request): Promise<ClientAccount | null> {
   const id = sessionId(request)
   if (!id) return null
-  const { data } = await adminClient().from("client_accounts").select("id, tg_id, name, username, chat_id").eq("id", id).maybeSingle()
+  const { data } = await adminClient().from("client_accounts").select("*").eq("id", id).maybeSingle()
   return (data as ClientAccount | null) ?? null
 }
 

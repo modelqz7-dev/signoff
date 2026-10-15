@@ -50,7 +50,8 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
   // a signed-in client's own account: their name and Telegram go with the booking
   const client = useClientAccount()
   const name = typedName ?? client.account?.name ?? ""
-  const [phone, setPhone] = useState("")
+  const [typedPhone, setPhone] = useState<string | null>(null)
+  const phone = typedPhone ?? client.account?.phone ?? ""
   const [note, setNote] = useState("")
   const [company, setCompany] = useState("")
   // how to reach the client, and reference photos (a sketch, a cake they liked)
@@ -275,7 +276,10 @@ export function PublicBooking({ slug, title, avatar, about, niche, services, emb
           {/* signed in with Telegram: the master gets this profile; otherwise one tap to sign in */}
           {client.account ? (
             <div className="flex items-center gap-3 rounded-[22px] bg-card px-4 py-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><TelegramIcon className="size-5" /></span>
+              {client.account.avatar_url
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={client.account.avatar_url} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+                : <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2aabee] text-white"><TelegramIcon className="size-5" /></span>}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-medium">{client.account.name || t("Your Telegram")}</span>
                 <span className="block truncate text-[13px] text-muted-foreground">{client.account.username ? `@${client.account.username}` : t("Telegram profile attached")}</span>

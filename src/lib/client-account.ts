@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react"
 // A client's own account (signed in with Telegram through the Nodly bot), shared by every
 // component on the page: the booking sheet, the review form and the "My bookings" page.
 
-export type ClientAccount = { id: string; name: string; username: string }
+export type ClientAccount = { id: string; name: string; username: string; avatar_url?: string | null; phone?: string; about?: string }
 export type ClientBooking = {
   id: string; shop_id: string; kind: string; title: string; starts_at: string | null; due_on: string | null; due_time: string
   status: string; price: number | null; business: string; slug: string | null; avatar: string | null; reviewed: boolean

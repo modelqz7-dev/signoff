@@ -1,5 +1,8 @@
 // Russian UI strings. Keys are the English text used in the code (see useT in ./i18n).
 export const ru: Record<string, string> = {
+  "My profile": "Мой профиль",
+  "About me": "О себе",
+  "What the master should know: allergies, wishes, how you like it.": "Что стоит знать мастеру: аллергии, пожелания, как вам нравится.",
   "Waiting for Telegram…": "Ждём Telegram…",
   "Sign in with Telegram": "Войти через Telegram",
   "Press “Start” in the bot, then come back here.": "Нажмите «Start» в боте и вернитесь сюда.",

@@ -30,3 +30,10 @@ create unique index if not exists page_reviews_one_per_client on public.page_rev
 create index if not exists crm_bookings_account_idx on public.crm_bookings ((details->>'account'));
 
 notify pgrst, 'reload schema';
+
+-- ── The client's own profile: a photo, a phone and a few words for the master ──
+alter table public.client_accounts add column if not exists avatar_url text;
+alter table public.client_accounts add column if not exists phone text not null default '' check (char_length(phone) <= 40);
+alter table public.client_accounts add column if not exists about text not null default '' check (char_length(about) <= 500);
+
+notify pgrst, 'reload schema';

@@ -24,7 +24,23 @@ export async function GET(request: Request) {
     avatar: page.get(b.shop_id)?.data?.avatar_url ?? null,
     reviewed: reviewed.has(b.shop_id),
   }))
-  return Response.json({ account: { id: me.id, name: me.name, username: me.username }, bookings }, { headers: { "cache-control": "no-store" } })
+  const account = { id: me.id, name: me.name, username: me.username, avatar_url: me.avatar_url ?? null, phone: me.phone ?? "", about: me.about ?? "" }
+  return Response.json({ account, bookings }, { headers: { "cache-control": "no-store" } })
+}
+
+/** The client edits their profile: name, phone and a few words for the master. */
+export async function PATCH(request: Request) {
+  const me = await sessionAccount(request)
+  if (!me) return Response.json({ error: "login" }, { status: 401 })
+  const body = await request.json().catch(() => null) as { name?: unknown; phone?: unknown; about?: unknown } | null
+  const patch: Record<string, string> = {}
+  if (typeof body?.name === "string") patch.name = body.name.trim().slice(0, 120)
+  if (typeof body?.phone === "string") patch.phone = body.phone.trim().slice(0, 40)
+  if (typeof body?.about === "string") patch.about = body.about.trim().slice(0, 500)
+  if (patch.name === "") return Response.json({ error: "invalid" }, { status: 400 })
+  const { error } = await adminClient().from("client_accounts").update(patch).eq("id", me.id)
+  if (error) { console.error("Client update error:", error); return Response.json({ error: "failed" }, { status: 500 }) }
+  return Response.json({ ok: true })
 }
 
 /** Sign out. */
