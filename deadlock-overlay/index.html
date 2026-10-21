@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://assets-bucket.deadlock-api.com data:;">
+  <title>Deadlock Overlay</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="panel">
+    <header class="bar">
+      <span class="title">Deadlock · что купить</span>
+      <span class="hint">F8 скрыть · Esc скрыть</span>
+      <button id="quit" class="quit" title="Закрыть программу">✕</button>
+    </header>
+
+    <input id="search" type="text" placeholder="Герой врага (начни печатать имя)..." autocomplete="off" spellcheck="false">
+
+    <section id="grid" class="grid"></section>
+
+    <section id="detail" class="detail" hidden>
+      <div class="hero-head">
+        <img id="heroImg" class="hero-img" alt="">
+        <div>
+          <h2 id="heroName"></h2>
+          <p id="heroMeta" class="meta"></p>
+        </div>
+      </div>
+      <nav class="tabs">
+        <button id="tabAgainst" class="tab active">Против него</button>
+        <button id="tabOwn" class="tab">Что берёт он сам</button>
+      </nav>
+      <div id="against"></div>
+      <div id="own" hidden></div>
+    </section>
+  </main>
+  <script src="data/data.js"></script>
+  <script src="data/rules.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
