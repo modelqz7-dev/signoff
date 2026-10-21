@@ -848,6 +848,7 @@ async function showHeroPage(h) {
 
   const banner = el("div", "hero-banner");
   if (h.bg) banner.append(img(h.bg, "hero-banner-img"));
+  if (h.art) banner.append(img(h.art, "hero-banner-art"));
   const shade = el("div", "hero-banner-shade");
   banner.append(shade, nameArt(h, "hero-banner-name"));
   view.append(banner);
