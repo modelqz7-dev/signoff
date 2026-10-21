@@ -717,9 +717,10 @@ function nameArt(h, className) {
   return wrap;
 }
 
-function heroCard(h, st) {
+function heroCard(h, st, index) {
   const card = el("button", "hcard");
-  card.append(img(h.art || h.icon, "hcard-art"));
+  card.style.setProperty("--i", String(Math.min(index || 0, 24)));
+  card.append(img(h.art || h.icon, "hcard-art"), el("span", "hcard-shine"));
   if (st) card.append(el("span", `hcard-tag ${st.wr >= 50 ? "up" : "down"}`, `${st.wr}% побед`));
   const foot = el("div", "hcard-foot");
   foot.append(el("div", "hcard-role", TYPE_RU[h.type] || h.type || ""), nameArt(h, "hcard-name"));
@@ -734,6 +735,19 @@ function heroCard(h, st) {
   }
   card.append(foot);
   card.addEventListener("click", () => showHeroPage(h));
+  card.addEventListener("mousemove", (e) => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    card.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
+    card.style.setProperty("--rx", `${(-y * 9).toFixed(2)}deg`);
+    card.style.setProperty("--gx", `${((x + 0.5) * 100).toFixed(0)}%`);
+    card.style.setProperty("--gy", `${((y + 0.5) * 100).toFixed(0)}%`);
+  });
+  card.addEventListener("mouseleave", () => {
+    card.style.removeProperty("--ry");
+    card.style.removeProperty("--rx");
+  });
   return card;
 }
 
@@ -765,7 +779,7 @@ async function heroesPage() {
       const sa = stats.map.get(a.id), sb = stats.map.get(b.id);
       return ((sb && sb[state.sort]) || 0) - ((sa && sa[state.sort]) || 0);
     });
-    grid.replaceChildren(...list.map((h) => heroCard(h, stats.map.get(h.id))));
+    grid.replaceChildren(...list.map((h, i) => heroCard(h, stats.map.get(h.id), i)));
   };
   for (const [key, label] of sorts) {
     const b = el("button", `chip${state.sort === key ? " active" : ""}`, label);

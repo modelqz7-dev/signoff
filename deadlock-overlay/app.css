@@ -254,3 +254,37 @@ td img { width: 30px; height: 30px; object-fit: cover; border-radius: 5px; }
 .dash.two { grid-template-columns: 1fr 1fr; }
 .dash-row .muted.small { min-width: 34px; text-align: right; }
 @media (max-width: 1000px) { .hero-cols { grid-template-columns: 1fr; } }
+
+/* ---- hero card motion ---- */
+.hcard {
+  --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 30%;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.35s;
+  animation: card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+  will-change: transform;
+}
+.hcard:hover { transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-6px); border-color: rgba(255, 255, 255, 0.4); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55); }
+.hcard:active { transform: perspective(900px) translateY(-2px) scale(0.99); }
+.hcard-art { transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s; filter: saturate(0.92); }
+.hcard:hover .hcard-art { transform: scale(1.08); filter: saturate(1.12) brightness(1.04); }
+.hcard-shine { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(260px circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.16), transparent 60%); }
+.hcard:hover .hcard-shine { opacity: 1; }
+.hcard-name, .hcard-role { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
+.hcard:hover .hcard-name { transform: translateY(-3px); }
+.hcard:hover .hcard-role { color: rgba(255, 255, 255, 0.95); }
+.hcard-tag { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s; }
+.hcard:hover .hcard-tag { transform: translateY(2px) scale(1.06); background: rgba(0, 0, 0, 0.9); }
+.hcard-bar span { transform-origin: left; animation: bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 28ms + 0.25s); }
+.hero-banner { animation: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.hero-banner-img { animation: banner-zoom 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.hero-info, .hero-stat-col .stat { animation: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.hero-stat-col .stat:nth-child(2) { animation-delay: 0.06s; }
+.hero-stat-col .stat:nth-child(3) { animation-delay: 0.12s; }
+@keyframes card-in { from { opacity: 0; transform: perspective(900px) translateY(18px) scale(0.97); } }
+@keyframes bar-grow { from { transform: scaleX(0); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }
+@keyframes banner-zoom { from { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+  .hcard, .hcard-art, .hcard-bar span, .hero-banner, .hero-banner-img, .hero-info, .hero-stat-col .stat { animation: none; transition: none; }
+}
