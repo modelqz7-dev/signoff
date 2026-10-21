@@ -50,6 +50,13 @@ for h in heroes_raw:
         "gun": h.get("gun_tag"),
         "color": (h.get("colors") or {}).get("style_hex"),
         "icon": img.get("icon_hero_card_webp") or img.get("icon_hero_card"),
+        "art": img.get("icon_hero_card_webp") or img.get("icon_hero_card"),
+        "bg": img.get("background_image_webp") or img.get("background_image"),
+        "nameImg": img.get("name_image"),
+        "role": (h.get("description") or {}).get("role"),
+        "playstyle": (h.get("description") or {}).get("playstyle"),
+        "lore": (h.get("description") or {}).get("lore"),
+        "complexity": h.get("complexity"),
         "small": img.get("icon_image_small_webp") or img.get("icon_image_small"),
         "popular": {ph: popular(h, ph) for ph in ("early_game", "mid_game", "late_game")},
     })

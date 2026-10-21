@@ -17,6 +17,14 @@ async function applyNames() {
   const names = await window.overlay.getNames();
   if (!names) return;
   for (const h of heroes) if (names.heroes[h.id]) h.name = names.heroes[h.id];
+  for (const h of heroes) {
+    const d = names.desc && names.desc[h.id];
+    if (d) {
+      h.role = d.role || h.role;
+      h.playstyle = d.playstyle || h.playstyle;
+      h.lore = d.lore || h.lore;
+    }
+  }
   for (const it of itemByApiId.values()) if (names.items[it.id]) it.name = names.items[it.id];
 }
 
@@ -471,10 +479,7 @@ const pages = {
   },
 
   heroes() {
-    view.replaceChildren(el("h1", "", "Герои"));
-    const body = el("div");
-    view.append(body);
-    metaHeroes(body);
+    heroesPage();
   },
 
   items() {
@@ -654,7 +659,7 @@ async function loadLeaderboard(container, region) {
   const res = await window.overlay.api(`/v1/leaderboard/${region}`, {});
   body.replaceChildren();
   if (!res.ok) return body.append(message(res.error, "error"));
-  const entries = (res.data.entries || []).filter((e) => e.rank).sort((a, b) => a.rank - b.rank).slice(0, 10);
+  const entries = (Array.isArray(res.data) ? res.data : res.data.entries || []).filter((e) => e.rank).sort((a, b) => a.rank - b.rank).slice(0, 10);
   if (!entries.length) return body.append(message("Нет данных."));
   for (const e of entries) {
     const row = el("div", "lb-row");
@@ -674,6 +679,225 @@ function openProfile(p) {
   go("player");
 }
 
+
+
+/* ---------- heroes: card grid + hero page ---------- */
+
+const TYPE_RU = { brawler: "Боец", marksman: "Стрелок", assassin: "Ассасин", mystic: "Мистик" };
+let heroStatsPromise = null;
+
+function getHeroStats() {
+  if (!heroStatsPromise) {
+    heroStatsPromise = window.overlay.api("/v1/analytics/hero-stats", {}).then((res) => {
+      const map = new Map();
+      if (!res.ok) {
+        heroStatsPromise = null;
+        return { error: res.error, map };
+      }
+      const by = sumBy(res.data, "hero_id");
+      let total = 0;
+      for (const v of by.values()) total += v.matches;
+      for (const [id, v] of by) if (v.matches >= 100) map.set(id, { wr: pct(v.wins, v.matches), pick: pct(v.matches, total), matches: v.matches });
+      return { map };
+    });
+  }
+  return heroStatsPromise;
+}
+
+function nameArt(h, className) {
+  const wrap = el("span", className);
+  if (h.nameImg) {
+    const im = img(h.nameImg, "name-img");
+    im.alt = h.name;
+    im.addEventListener("error", () => wrap.replaceChildren(document.createTextNode(h.name)));
+    wrap.append(im);
+  } else {
+    wrap.append(document.createTextNode(h.name));
+  }
+  return wrap;
+}
+
+function heroCard(h, st) {
+  const card = el("button", "hcard");
+  card.append(img(h.art || h.icon, "hcard-art"));
+  if (st) card.append(el("span", `hcard-tag ${st.wr >= 50 ? "up" : "down"}`, `${st.wr}% побед`));
+  const foot = el("div", "hcard-foot");
+  foot.append(el("div", "hcard-role", TYPE_RU[h.type] || h.type || ""), nameArt(h, "hcard-name"));
+  if (st) {
+    const bar = el("div", "hcard-bar");
+    const fill = el("span", st.wr >= 50 ? "up" : "down");
+    fill.style.width = `${Math.max(4, Math.min(100, ((st.wr - 40) / 20) * 100))}%`;
+    bar.append(fill);
+    const nums = el("div", "hcard-nums");
+    nums.append(el("span", "", `${st.pick}% выбор`), el("span", "", `${num(st.matches)} матчей`));
+    foot.append(bar, nums);
+  }
+  card.append(foot);
+  card.addEventListener("click", () => showHeroPage(h));
+  return card;
+}
+
+async function heroesPage() {
+  const token = ++renderToken;
+  view.replaceChildren();
+  const head = el("div", "page-head");
+  const titles = el("div");
+  titles.append(el("h1", "", "Герои"), el("p", "muted", "Винрейт и выбор героев за последние 30 дней."));
+  const q = el("input");
+  q.type = "text";
+  q.placeholder = "Поиск героя";
+  q.className = "mini-search";
+  head.append(titles, q);
+
+  const state = { sort: "name", q: "" };
+  const controls = el("div", "controls");
+  controls.append(el("span", "controls-label", "Сортировка"));
+  const sorts = [["name", "А–Я"], ["wr", "Винрейт"], ["pick", "Выбор"], ["matches", "Матчи"]];
+  const grid = el("div", "hero-cards");
+  const stats = await getHeroStats();
+  if (token !== renderToken) return;
+
+  const draw = () => {
+    const needle = state.q.trim().toLowerCase();
+    const list = heroes.filter((h) => !needle || `${h.name} ${h.en}`.toLowerCase().includes(needle));
+    list.sort((a, b) => {
+      if (state.sort === "name") return a.name.localeCompare(b.name, "ru");
+      const sa = stats.map.get(a.id), sb = stats.map.get(b.id);
+      return ((sb && sb[state.sort]) || 0) - ((sa && sa[state.sort]) || 0);
+    });
+    grid.replaceChildren(...list.map((h) => heroCard(h, stats.map.get(h.id))));
+  };
+  for (const [key, label] of sorts) {
+    const b = el("button", `chip${state.sort === key ? " active" : ""}`, label);
+    b.addEventListener("click", () => {
+      state.sort = key;
+      controls.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === b));
+      draw();
+    });
+    controls.append(b);
+  }
+  q.addEventListener("input", () => { state.q = q.value; draw(); });
+  view.append(head, controls);
+  if (stats.error) view.append(message(stats.error, "error"));
+  view.append(grid);
+  draw();
+}
+
+function paragraphs(text, className) {
+  const box = el("div");
+  for (const part of String(text || "").split(/<br\s*\/?>/i)) {
+    const clean = part.replace(/<[^>]+>/g, "").trim();
+    if (clean) box.append(el("p", className, clean));
+  }
+  return box;
+}
+
+function chip(text) {
+  return el("span", "tag", text);
+}
+
+function itemLine(key, extra) {
+  const it = items[key];
+  if (!it) return null;
+  const row = el("div", "dash-row");
+  row.append(img(it.img, "dash-img"), el("span", "dash-name", it.name), el("span", "muted small", extra));
+  return row;
+}
+
+async function showHeroPage(h) {
+  const token = ++renderToken;
+  view.replaceChildren();
+  const back = el("button", "link", "← Все герои");
+  back.addEventListener("click", () => heroesPage());
+  view.append(back);
+
+  const banner = el("div", "hero-banner");
+  if (h.bg) banner.append(img(h.bg, "hero-banner-img"));
+  const shade = el("div", "hero-banner-shade");
+  banner.append(shade, nameArt(h, "hero-banner-name"));
+  view.append(banner);
+
+  const tabs = el("div", "tabs");
+  const body = el("div");
+  const defs = [["Обзор", () => overview(body)], ["Винрейт и предметы", () => perf(body)]];
+  defs.forEach(([label, fn], i) => {
+    const b = el("button", i === 0 ? "active" : "", label);
+    b.addEventListener("click", () => {
+      tabs.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      fn();
+    });
+    tabs.append(b);
+  });
+  view.append(tabs, body);
+
+  const stats = await getHeroStats();
+  if (token !== renderToken) return;
+  const st = stats.map.get(h.id);
+
+  function overview(container) {
+    container.replaceChildren();
+    const cols = el("div", "hero-cols");
+    const left = el("div", "hero-info");
+    if (h.role) left.append(el("h2", "hero-role", h.role));
+    const tags = el("div", "tags");
+    tags.append(chip(TYPE_RU[h.type] || h.type || "—"));
+    if (h.gun) tags.append(chip(h.gun));
+    if (h.complexity) tags.append(chip(`Сложность ${h.complexity} из 3`));
+    for (const t of h.tags || []) tags.append(chip(t));
+    left.append(tags);
+    if (h.playstyle) left.append(paragraphs(h.playstyle, "hero-text"));
+    if (h.lore) left.append(el("h2", "", "История"), paragraphs(h.lore, "hero-text muted"));
+    const right = el("div", "hero-stat-col");
+    right.append(
+      statCell("Винрейт", st ? `${st.wr}%` : "нет данных"),
+      statCell("Выбор", st ? `${st.pick}%` : "нет данных"),
+      statCell("Матчей за 30 дней", st ? num(st.matches) : "нет данных"),
+    );
+    cols.append(left, right);
+    container.append(cols);
+  }
+
+  async function perf(container) {
+    container.replaceChildren(message("Загружаю..."));
+    const res = await window.overlay.api("/v1/analytics/hero-counter-stats", {});
+    if (token !== renderToken) return;
+    container.replaceChildren();
+    const grid = el("div", "dash");
+    const phases = [["early_game", "Начало игры"], ["mid_game", "Середина"], ["late_game", "Поздняя игра"]];
+    for (const [phase, label] of phases) {
+      const card = el("div", "dash-card");
+      card.append(el("h2", "", `Предметы: ${label.toLowerCase()}`));
+      const list = (h.popular && h.popular[phase]) || [];
+      if (!list.length) card.append(message("Нет данных."));
+      for (const p of list) {
+        const row = itemLine(p.item, `${p.pick}% · ${p.wr}%`);
+        if (row) card.append(row);
+      }
+      grid.append(card);
+    }
+    container.append(grid);
+    if (!res.ok) return container.append(message(res.error, "error"));
+    const rows = res.data
+      .filter((r) => r.hero_id === h.id && r.matches_played >= 200 && heroById.has(r.enemy_hero_id))
+      .map((r) => ({ enemy: heroById.get(r.enemy_hero_id), wr: pct(r.wins, r.matches_played), n: r.matches_played }));
+    const duel = el("div", "dash two");
+    const col = (title, list) => {
+      const card = el("div", "dash-card");
+      card.append(el("h2", "", title));
+      for (const r of list) {
+        const row = el("div", "dash-row");
+        row.append(img(r.enemy.small, "dash-img"), el("span", "dash-name", r.enemy.name), el("span", `dash-val ${r.wr >= 50 ? "up" : "down"}`, `${r.wr}%`), el("span", "muted small", `${r.n}`));
+        card.append(row);
+      }
+      if (!list.length) card.append(message("Мало данных."));
+      return card;
+    };
+    duel.append(col("Сильнее всего против", [...rows].sort((a, b) => b.wr - a.wr).slice(0, 6)), col("Слабее всего против", [...rows].sort((a, b) => a.wr - b.wr).slice(0, 6)));
+    container.append(el("h2", "section-gap", "Матчапы"), duel);
+  }
+
+  overview(body);
+}
 
 /* ---------- navigation ---------- */
 

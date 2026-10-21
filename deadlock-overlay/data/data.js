@@ -12,6 +12,13 @@ window.DATA = {
    "gun": "Shotgun",
    "color": "#2092AE",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/abrams_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/abrams.svg",
+   "role": "Charges into close combat",
+   "playstyle": "Abrams has the bulk and sustain to lead from the front, often running into the middle of his foes and watching them scatter. If his enemies waste their fire on him, his backline teammates can lay out damage with impunity.",
+   "lore": "Hard hitting, hard headed, and hard drinking; Detective Abrams has been a fixture on the New York investigating scene for years.  From stolen art, to missing persons, to ritual murders; Abrams didn't just take any case that came across his desk... he solved them.<br><br>But his days of following cheating spouses came to an end the day he opened his office door and found The Tome sitting on his desk.<br><br>No instruction was left for him save for a brief note scrawled in onyx blood that read \"Don't let them have it\".  Abrams hasn't figured where the thing came from; but seeing as his home has been broken into, his office tossed on 3 different occasions, and his car firebombed he has a vested interest in figuring out what the hell is going on.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_sm.webp",
    "popular": {
     "early_game": [
@@ -124,6 +131,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#FF3333",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/fencer_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/fencer_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/fencer_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/fencer.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "A land of beauty, tradition and conflict; North Ixia is no stranger to brutal political violence. So when Apollo was told that it was for his own safety he was being sent to New York for school, he knew the situation was serious.<br><br>Adjusting to life at Blackmore Academy didn't come easy to Apollo. His school was supposed to be filled with The Cursed Apple's best and brightest but all he saw, with few exceptions, was a sea of aggressive mediocrity. Electing not to waste his time with frivolous things like parties and dances, he instead put his energy on the piste, where he rigorously trains as captain of the Blackmore fencing team.<br><br>However, at the end of the day Apollo does not fret too much on the tedium of life in New York. He knows that eventually the time will come when his father will call on him to come home and he will get to show that he is worthy of wielding his family's ancestral blade.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/fencer_sm.webp",
    "popular": {
     "early_game": [
@@ -236,6 +250,13 @@ window.DATA = {
    "gun": "Beam Weapon",
    "color": "#9F4734",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/bebop_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/bebop.svg",
+   "role": "Hooks an enemy for a knockout combo",
+   "playstyle": "Bebop can string together his abilities in many different ways. Disrupting enemy positions, saving an ally or dealing bursts of damage. When the situation doesn't require subtlety his giant laser still solves many problems.",
+   "lore": "Forged by the hands of a widowed junk yard attendant; Bebop was more than just some scrap golem laborer... he was the son she couldn't have.  Together they would work in the iron yard during the day, and listen to jazz at night. It was a predictable, if not comforting routine.  But now, Bebop's creator has fallen ill and while Miss Shelly wouldn't approve of the activities that Bebop does at night to pay for her medicine, what she doesn't know can't hurt her.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_sm.webp",
    "popular": {
     "early_game": [
@@ -348,6 +369,13 @@ window.DATA = {
    "gun": "Close Range",
    "color": "#D4AD0E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/punkgoat_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/punkgoat_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/billy_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/billy.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "Billy is a white hot ball of rage, furious at the very notion of...something.  Maybe it's the cops. Maybe it's magic regulations. Maybe it's the service at the gyro place downtown.  (Not the good one.  The other one.)<br><br>Don't ask him how he got the goat head.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/punkgoat_sm.webp",
    "popular": {
     "early_game": [
@@ -460,6 +488,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#572798",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nano_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nano_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/calico_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/calico.svg",
+   "role": "Wreaks havoc from the sidelines",
+   "playstyle": "Calico uses the shadows to her advantage, weaving in and out of combat to hunt down her enemies one by one.",
+   "lore": "Once a decorated member of The Baxter Society, Calico left the august order once she realized that killing monsters for free was less profitable than killing people for money.<br><br>Now an in demand contract killer, Calico is living her best life ending someone else's.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nano_sm.webp",
    "popular": {
     "early_game": [
@@ -572,6 +607,13 @@ window.DATA = {
    "gun": "Burst Fire",
    "color": "#BBA9E1",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/unicorn_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/unicorn_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/unicorn_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/unicorn.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "Even in a world of magic, some things are still rare and unusual. So what is a unicorn to do? Announce her presence to the world and potentially have poachers looking to saw off her horn? Or hide in plain sight at a Coney Island Side Show where most folk would assume her appearance was just part of an act?<br><br>Over the years \"The Dazzling Celeste\" has grown into one of the more popular attractions on Coney, and while the applause from a cheering audience is appreciated; what keeps her waking up in the morning is the found family she's made at work.<br><br>Keruba the Mermaid.<br><br>Blockhead Lenny.<br><br>Chickenwing.<br><br>Ted.<br><br>These were her people. So when she discovered that one of her own sold part of their soul in order to cover a gambling debt, Celeste knew it was time to step out of the shadows and do whatever it takes to get it back. Is revealing her power to The Patrons a risk? Yes. But that's tomorrow's problem... her family needs help today.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/unicorn_sm.webp",
    "popular": {
     "early_game": [
@@ -684,6 +726,13 @@ window.DATA = {
    "gun": null,
    "color": "#CE8D2A",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/deadpack_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/deadpack_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/deadpack_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/deadpack.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "\"Ladies and Gentlemen, I'm going to tell you a shocking secret: at Fairfax Industries we know nothing about safety. Now let me tell you something even MORE shocking... that's a good thing! Now in my tenure here I have been shot, stabbed, impaled, defenestrated, blown up, atomized, and decapitated-not once. not twice. not thrice. but quice. That's right, my head has been cut off enough times that I had to use a made up word to quantify it.<br><br>But I put myself through figurative and sometimes literal hell because it's not enough to THINK about how things go wrong, we need to KNOW how things go wrong.<br><br>Now the demonstration you are about to witness is extremely dangerous. So sit back. Put on your safety googles. And bear witness to the miracle of flight courtesy of Fairfax Industries, and the Chimera Mark 1.\"<br><br><span class=\"italics\">- This transcription of Danny's opening remarks at The Military Technology Expo has been provided by Fairfax Industries</span>",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/deadpack_sm.webp",
    "popular": {
     "early_game": [
@@ -796,6 +845,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#9D2C2B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/drifter_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/drifter_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/drifter_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/drifter.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "An ancient vampire roaming across America, the nameless monstrosity known as The Drifter has been preying on the living for generations.\n\nUnlike most vampires, Drifter doesn’t value finery or titles and has naked contempt for vampiric laws and tradition.  This refusal to toe the line has made him a marked man all over the North American Baronies; but while Viscounts and Elders cry for his execution, Drifter continues to do what he pleases...",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/drifter_sm.webp",
    "popular": {
     "early_game": [
@@ -908,6 +964,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#D0B945",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/dynamo_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/dynamo.svg",
+   "role": "Locks down the enemy team",
+   "playstyle": "Dynamo keeps himself and his allies healthy while waiting for his moment. Few things can warp a team fight more than a well-coordinated use of Singularity.",
+   "lore": "As a Scientist, Professor Dynamo always had an inquisitive mind.  So when a rift in space and time opened up in central park he was first on the scene to investigate - and while he expected such a majestic sight to be life changing, he was thinking more in a metaphorical way as opposed to having his body atomized and reduced to a tiny dying star.<br><br>But while his body is gone, his spirit and lust for knowledge lives on.  A tenured professor at Columbia College, Dynamo looks to learn more about his condition while maintaining his class load, after all: he has future minds to inspire.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_sm.webp",
    "popular": {
     "early_game": [
@@ -1020,6 +1083,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#D9F334",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/necro_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/necro_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/necro_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/necro.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "The daughter of high-power defense attorneys, Darcy Graves grew up in a home where every conversation was a debate, argument, or negotiation. It was exhausting. But while her parents were often too busy meeting with clients or working on cases to bond with her, the dead were always there to listen.<br><br>Graves enjoyed her time in the cemetery.  It was a quiet place to calm her thoughts and talk through her problems...but one day her one-sided conversations started to change.<br><br>It began with a faint whisper.  A woman's voice that seemed to respond to Graves' complaints.  Intrigued, the teenager listened...and followed the voice's instructions until it guided her to a lead-lined box buried in Van Cortlandt Park.  But while most high school students would freak out if they were to unearth a severed lich hand, Graves was certainly not most teens.  The hand now free of its prison, the lich's voice grew stronger... It had spent years looking to find a student she could pass her knowledge to, and Graves was eager to learn.<br><br>Now a fledgling necromancer, Darcy balances not only her homework at Blackmore Academy...but the demands of graveyard denizens, each of whom have their own unfinished business that they seek her aid in resolving.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/necro_sm.webp",
    "popular": {
     "early_game": [
@@ -1132,6 +1202,13 @@ window.DATA = {
    "gun": "Bow",
    "color": "#5EB083",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/archer_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/archer_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/grey_talon_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/grey_talon.svg",
+   "role": "Delivers long range skill-shots",
+   "playstyle": "A cunning predator, Grey Talon uses a combination of deadly accuracy, traps, and clever positioning to bring down the toughest of opponents.",
+   "lore": "A founding member of \"The Baxter Society\", Wesley Grey Talon spent close to 40 years hunting monsters that preyed on man before finally deciding to find a replacement and lay down his bow. Grey Talon's duties had meant that he never spent much time with his wife and kid, and now that his son had started a family of his own he realized that this was his last chance to reconnect with the people he loved.<br><br>Retirement suited Wesley.  He made up for lost time with his wife.  He doted on his grandkids.  He cooked dinner for the whole family every Wednesday.  He was happy.<br><br>Then he got the call.<br><br>The authorities claimed that it was a freak accident... that the fire consumed his son's house before anyone got a chance to escape.  But Wesley knew better.  His son's wife was an Ixian who could snuff out flame with a thought.  If their bodies were found burned they had to be dead long before there was a fire.<br><br>And so Grey Talon has picked up his bow once more, and when he finds who's responsible there will be a bloody reckoning.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/archer_sm.webp",
    "popular": {
     "early_game": [
@@ -1244,6 +1321,13 @@ window.DATA = {
    "gun": "Rapid Fire",
    "color": "#AC6133",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/haze_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/haze.svg",
+   "role": "Sneaks in and sprays bullets",
+   "playstyle": "When Haze fixates on a target she can hold her own in a firefight. She prefers to create one sided exchanges, avoiding damage then picking off unsuspecting targets up close.",
+   "lore": "The Occult Security and Investigation Commission is a black box government organization that makes the CIA look transparent.  It falls on the men, women, and entities of the OSIC to keep the country safe from sinister forces that are beyond the capabilities of local law enforcement.<br><br>As a member of the notorious Sandman Division, Haze is routinely tasked with infiltrating the dreams of persons of interest, to assess their threat level, and if needed... to put them to sleep.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_sm.webp",
    "popular": {
     "early_game": [
@@ -1356,6 +1440,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#A35A1B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/astro_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/astro_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/astro_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/holliday.svg",
+   "role": "Bounces about dispensing trick shots",
+   "playstyle": "Holliday depends on her skills as a crack shot, shooting things she's bounced into the air. With good aim she can lay out heavy damage. Her movement skills let her isolate her enemies or beat a hasty retreat.",
+   "lore": "There are people who spent their whole lives dreaming about moving to New York.  Holliday isn't one of those people.  Content with being a Sheriff in a small town, Holliday enjoyed a career where the only time she had to use her gun was when trick shooting at the county fair...then the murders started.<br><br>Grisly and inhumane; the bodies were found with their ribcages ripped open... their innards picked apart as if by birds.  Holliday tracked down the killer, a travelling folk musician that the media dubbed \"The Troubadour\", but when she confronted him he exploded into a murder of crows and flew away.<br><br>That was 6 months ago, and while the murders in central Illinois have stopped, Holliday's investigation has not.  She believes that The Troubadour is travelling to New York, and when she finds him she's going to kill that evil son of a bitch.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/astro_sm.webp",
    "popular": {
     "early_game": [
@@ -1468,6 +1559,13 @@ window.DATA = {
    "gun": "Rapid Fire",
    "color": "#C93C26",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/infernus_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/infernus.svg",
+   "role": "Lights up enemies and watches them burn",
+   "playstyle": "Infernus has many ways to deal damage over time, burning foes before swooping in for the kill. Due to Infernus' blazing speed, his enemies won't be able to escape the flames.",
+   "lore": "Like most teenagers; Infernus was wild, rebellious, and impetuous.  Unlike most teenagers, Infernus was a creature from another plane and had a supernatural mastery over fire.  Needless to say:  his youth was filled with no small amount of arson, murder, and evidence disposal.  But that was then.  Now an adult, Infernus has mellowed out considerably.  He's happy working at a bar with good live music, and talking to interesting people.  That being said when someone at the bar gets belligerent or violent, he's not afraid to dust off the skills he once honed.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_sm.webp",
    "popular": {
     "early_game": [
@@ -1580,6 +1678,13 @@ window.DATA = {
    "gun": "Rapid Fire",
    "color": "#9D8CA9",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/tengu_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/tengu_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/ivy_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/ivy.svg",
+   "role": "Sets up a power duo with a lucky ally",
+   "playstyle": "Ivy has disruptive combat tricks that slow and stun enemies. She's most effective when linking up with an ally, empowering her and her ally's guns as well as sharing heals.",
+   "lore": "The gargoyle didn't know what was happening when it sprang to life...  just that a big human and a small human were being hurt.  And so the gargoyle leapt to action, sending the attackers fleeing in horror.  The small human said thank you and asked the gargoyle's name.  The gargoyle didn't have one.  And so the small human said, \"I'm going to call you Ivy.\"  The gargoyle, being covered in ivy at the time, thought it was a bit obvious, but decided to go along with it for the small human's sake.<br><br>The humans asked if Ivy would come home with them so they could show their appreciation, and so Ivy walked with them.  That night she learned much.  The family were called The Arroyo's.  The little one, Sophia.  Mofongo is what they called a plate of deliciousness.  But most importantly, she learned that the people attacking them were called \"The Mendoza Syndicate\", and they were hurting people...nice people like The Arroyo's.<br><br>18 years have passed since the day the Arroyo's took Ivy home... and during that time she made it her mission to dismantle the Mendoza Syndicate and free Spanish Harlem from its grasp.  However the thing about dedicating your life to a single pursuit for nearly 2 decades is that you don't really know what to do once you achieve it.  For the first time in her life, Ivy is prepared to venture outside of Spanish Harlem and see what the world has to offer beyond vigilante justice.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/tengu_sm.webp",
    "popular": {
     "early_game": [
@@ -1692,6 +1797,13 @@ window.DATA = {
    "gun": "Heavy Hitter",
    "color": "#74ABBC",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/kelvin_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/kelvin.svg",
+   "role": "Freezes enemies in their tracks",
+   "playstyle": "Timely heals and splitting a teamfight properly is the difference between an easy victory or a ruinous defeat. Gliding around slowing enemies gives Kelvin's team the maneuvering advantage to make this happen.",
+   "lore": "A famed adventuring scientist, Kelvin made it his life's mission to explore and understand the unknowable.  So naturally when rumors surfaced regarding an 8th astral gate hidden in the arctic, Kelvin couldn't build an expedition team fast enough.  Assembling the brightest minds of his generation, Kelvin and his team set forth with much fanfare.<br><br>They never returned.<br><br>A year and a half later the frozen body of Kelvin was found by a fishing trawler, his corpse clutching a rock etched with glowing runes.  The crew chipped away at the ice, looking to get a closer look at the body and were shocked when Kelvin opened his eyes.  They checked his vitals... there was no pulse.  They sought to bandage his open wounds... there was no blood.  And yet, impossibly, Kelvin was \"alive\".<br><br>Having no memory of what happened on the expedition, Kelvin is looking for answers.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_sm.webp",
    "popular": {
     "early_game": [
@@ -1804,6 +1916,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#218440",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/spectre_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/spectre_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/geist_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/lady_geist.svg",
+   "role": "Sacrifices health then drains it back",
+   "playstyle": "Expending health to achieve devastating effects is the source of Lady Geist's power. When running low, she can drain the life out of her rivals.",
+   "lore": "Once, Lady Jeanne Geist was the toast of the town.  But as time passed and her beauty faded she found herself further and further from her glory days in High Society until finally she was nothing more than a frail woman in a nursing home, telling stories of a glorious past.  And that's when Oathkeeper revealed himself.  A powerful spirit from another plane, Oathkeeper offered her a path to reclaim her past glories... he could restore her youth; all she had to do was drain the essence of the living to sustain herself. <br><br>Geist was torn.  Obviously murder was ghoulish business, and undoubtedly Oathkeeper was not an entity that could be trusted... but still, the thought of having a second chance of reliving her youth was too good to pass up.  And so she concocted a plan: after making a pact with Oathkeeper she would bind and ward him, limiting his influence and pull over her.  Oathkeeper would still get fed; but on her terms, not his.<br><br>However, as years have turned to decades; the strength of the Ward has weakened, and Oathkeeper hungers more than he ever has in the past...",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/spectre_sm.webp",
    "popular": {
     "early_game": [
@@ -1916,6 +2035,13 @@ window.DATA = {
    "gun": "Burst Fire",
    "color": "#4174BB",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/lash_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/lash.svg",
+   "role": "Dives down to stomp his foes",
+   "playstyle": "Lash gives his enemies little room to breathe, either by flying in from long distances to initiate combat with unsuspecting enemies, or pursuing said enemies when they try to run.",
+   "lore": "Jacob Lash is an asshole.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_sm.webp",
    "popular": {
     "early_game": [
@@ -2028,6 +2154,13 @@ window.DATA = {
    "gun": "Heavy Artillery",
    "color": "#23549D",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/engineer_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/engineer_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/mcginnis_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/mcginnis.svg",
+   "role": "Controls the battle with combat turrets",
+   "playstyle": "Precise placement is everything for McGinnis, whether she's creating a killzone or splitting the enemy team. She can help keep her team running making them hard to dislodge when entrenched.",
+   "lore": "Maggie McGinnis always had a knack for building things. At 4 she was using Lincoln Logs to recreate architectural marvels. At 10 she built and rewired a custom light fixture for her parents' anniversary. At 15 she designed a machine that refined the souls of the dead...that last one got a little more attention than the Lincoln Logs.<br><br>Now the head of Fairfax Industries Military R&D department, McGinnis spends her time in the machine shop, not in a lab. She's not interested in theory, to her science is magic you can touch.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/engineer_sm.webp",
    "popular": {
     "early_game": [
@@ -2140,6 +2273,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#A9171E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/vampirebat_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/vampirebat_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/mina_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/mina.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "Mina Ha had it all...rich parents, elite education, and an arranged marriage that would see her ascend from run-of-the-mill upper class to American royalty.  She was happy.<br><br>Then her betrothed was assassinated.<br><br>Mina wept; not for the life of her fiancé, but for the future that was stolen from her.  Why couldn't the killer just wait until after the wedding? Then she'd have the last name she always dreamed of and no one would even have to pretend to love anyone.  It could have been perfect, but life wasn't fair...and so Mina did what she always does when things don't go her way: she told her parents to fix it.<br><br>Mr. And Mrs. Ha knew that the only way to appease their daughter was to offer her something greater than what she lost... and marrying into one of the world's most lauded families was a tall order to top.  They had to think big.  They had to think outside of the box.  They had to promise their daughter immortality.<br><br>It took a small fortune, but eventually they found a vampire who was willing to turn her.  Unsurprisingly, Mina thought the idea of eternal youth and a trust fund was an acceptable plan B and happily agreed to the proposal.  Now a fledgling vampire, Mina is quickly discovering that the clout she held as a human has no weight in vampire high society...and while at first that annoyed her, if there is one thing Mina has a knack for, it's learning the rules so she can subvert them.  She will be the Viscount of New York, the other vampires just don't know it yet.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/vampirebat_sm.webp",
    "popular": {
     "early_game": [
@@ -2252,6 +2392,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#6A2E68",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/mirage_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/mirage.svg",
+   "role": "Times his shots and catches fleeing targets",
+   "playstyle": "Mirage can envelop himself in a violent tornado to catch up to enemies and lift them up. His scarabs help him sustain against multiple enemies, and he's always ready to help an ally or punish an enemy anywhere.",
+   "lore": "The Djinn are one of the more curious groups of people in the modern world.  Possessing great power in controlled doses, Djinn are incapable of maintaining corporeal form for longer than 48 minutes without resting within a vessel.  As a result, most Djinn employ human bodyguards for transport, protection, and companionship.<br><br>Mirage is one such bodyguard.  Employed by Djinn ambassador Nashala Dion, Mirage is in New York on a diplomatic mission.  It's the hope of the Djinn that they can negotiate with the US government for a sale of part of Wyoming so that they can build a sovereign nation for their people.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_sm.webp",
    "popular": {
     "early_game": [
@@ -2364,6 +2511,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#C58428",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/digger_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/digger_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/krill_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/mo_krill.svg",
+   "role": "Burrows underneath his enemies",
+   "playstyle": "By burrowing through the ground, Mo and Krill can get the drop on almost anyone; and once they get in close the results can be devastating.",
+   "lore": "Mo and Krill are members of The Tunnel Rats, a group that help facilitate illicit trade and commerce between the boroughs thanks to a network of underground tunnels.  But while most denizens of the New York underworld respect the work The Rats do, every once in a while a gang tries to exploit the tunnel system for personal vendettas...that's when Mo and Krill step in and remind the city what happens to those who disrespect their hospitality.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/digger_sm.webp",
    "popular": {
     "early_game": [
@@ -2476,6 +2630,13 @@ window.DATA = {
    "gun": "Projectile",
    "color": "#55C9BA",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nurse_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nurse_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/nurse_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/nurse.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "A respected pillar at the Marble Hill Possession Ward, Nurse Harrow has dedicated her life to combating the horrors of supernatural possession. A blend of care, severity, and detached pragmatism; Harrow has been called a saint by some of her patients, and a cruel governess by others. Both are probably true.<br><br>But while any sane person would question how and why Harrow keeps the pain of her patients stored in her medical bag,  none can question the results of her treatment program... cruel though it may be.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nurse_sm.webp",
    "popular": {
     "early_game": [
@@ -2588,6 +2749,13 @@ window.DATA = {
    "gun": "Projectile",
    "color": "#258F63",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bookworm_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bookworm_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/patience_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/paige.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "The daughter of a rare book dealer, Paige grew up in a loving home that prioritized kindness, magic, and storytelling.  But while Paige took naturally to her parents' values, her little brother Bryce did not.\n\nA rebellious teen, Bryce resented not only his family’s saccharine attitude, but also their refusal to let him dabble in magics that they deemed too dangerous.  Paige tried everything she could think of to keep him out of trouble, but like most teenagers, the more his big sister tried to tell him what was best for him, the more he turned away.\n\nPaige doesn't know what Bryce did to get kicked out of the house...just that she came home from the library to find her brother gone and her parents crying.\n\nDays turned to weeks, to months, to years.  Paige grew to become a talented bibliomancer, making a living as a storyteller reading at libraries across the five boroughs; and while her parents have remained silent about what happened with Bryce, Paige's obsession with finding him has only grown.  She will discover what happened to her brother... and no man or god is going to stand in her way.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bookworm_sm.webp",
    "popular": {
     "early_game": [
@@ -2700,6 +2868,13 @@ window.DATA = {
    "gun": "Burst Fire",
    "color": "#983952",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/paradox_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/paradox.svg",
+   "role": "Manipulates Space and Time",
+   "playstyle": "Manipulating time lets Paradox outpace an enemy in one on one combat. She thrives by subjecting her enemies to timely swaps into a waiting pulse grenade, her wall, or into the middle of her teammates.",
+   "lore": "Paradox.  An artifact of time, and the name of a notorious thieves' guild... one that prides themselves on constructing elaborate heists that target the most untouchable of individuals and institutions.  What does Paradox do with the countless artifacts, state secrets, and celebrity paternity tests that they have stolen?  Put it on display at pop-up museums, so that they can show the world that no one is out of Paradox's reach.<br><br>Shrouded in mystery, each member of Paradox dons a mask and takes on the organization's name.  They are everywhere.  They are nowhere.  And if they want something, they are inevitable.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_sm.webp",
    "popular": {
     "early_game": [
@@ -2812,6 +2987,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#858617",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/synth_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/synth_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/pocket_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/pocket.svg",
+   "role": "Infiltrates and disrupts the backline",
+   "playstyle": "With a powerful shotgun and a thin frame, Pocket relies on their ability to briefly escape into a mystic suitcase and teleport via a flying cloak in order to survive close encounters.",
+   "lore": "Arin Fairfax, the eldest heir to Fairfax Industries, has been living in hiding for the past 5 years after being shot and left for dead on their 18th birthday.  Arin doesn't know who is trying to keep them from taking control of their parent's company... but in the avarice fueled viper's nest that is Fairfax Industries it could be anyone.<br><br>Taking on the name \"Pocket\", Arin desperately wants to keep their true identity a secret... not only for their own protection; but because they want to forge their own identity separate from their parents.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/synth_sm.webp",
    "popular": {
     "early_game": [
@@ -2924,6 +3106,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#733033",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/ratking_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/ratking_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/ratking_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/ratking.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "The cryptid ruler of the New York Warrens, The Rat King towers over his subjects in size, strength, and ambition. No longer content with hiding underground, the king has revealed his bold vision for a future where he and his subjects can walk the surface without fear of the pest control vans that roam the streets of New York (or as the rats call them: human death squads)<br><br>Step 1: Take control of Long Island<br>Step 2: Declare Long Island as the new sovereign nation of Ratannia<br>Step 3: Execute every human that refuses to leave this new rat utopia<br><br>But air tight as this plan is, the king of rats didn't want to take chances: and so he's decided to summon the patron to help hedge his bets.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/ratking_sm.webp",
    "popular": {
     "early_game": [
@@ -3036,6 +3225,13 @@ window.DATA = {
    "gun": null,
    "color": "#5383D1",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/familiar_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/familiar_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/familiar_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/familiar.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "An accidental stowaway from the world of dreams, Rem has found himself stranded in the city that never sleeps.  Driven by his curious nature, Rem and his helpful friends have been seen wandering across the five boroughs in search of a way back home.<br><br>So if you ever find yourself dozing off while taking the Blue line home from work, maybe you've just had an encounter with one of the Cursed Apple's newest denizens.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/familiar_sm.webp",
    "popular": {
     "early_game": [
@@ -3148,6 +3344,13 @@ window.DATA = {
    "gun": "Burst Fire",
    "color": "#CC861E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/gigawatt_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/gigawatt_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/seven_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/seven.svg",
+   "role": "Electrocutes crowds of enemies",
+   "playstyle": "Seven thrives in a skirmish waiting for the time to strike. Then he rolls into the fight like a storm and batters his enemies with a cascade of lightning.",
+   "lore": "When mystic energy awoke on Earth, the world changed... anything was possible.  But just because anything WAS possible, didn't mean that anything SHOULD be possible.  And so the government made rules.   Laws.  A means for US citizens to enjoy the benefits of the supernatural world in safety.  But rules and laws are for lesser men.  Men with limitations.  Men who were not Seven.  <br><br>There are many rumors about what Seven did to land himself in Lost Whisper, an oubliette for the most dangerous of occultists.  But there is no doubt about what happened on the night of his execution. <br><br>Wards placed by the most powerful ritualists of 7 different nations... wards designed to not just prevent mystical interference with the execution, but to simultaneously obliterate Seven's soul so that it could never be contacted, resurrected, or otherwise be used by someone looking to follow in his footsteps... failed.<br><br>Onlookers viewed in horror as the strongest mentalist employed by the US Army's head popped like a grape.  They screamed as Scotland Yard's premiere occult investigator, the one who allegedly captured Seven, crumbled to ash.  Seven's body buckled and writhed against his restraints; his skin burning from eldritch electricity... and yet he would not die.  He laughed.<br><br>He laughed as he tore himself free from his bondage.<br><br>He laughed as his captors cowered in fear.<br><br>He laughed as he massacred his tormentors.<br><br>He laughed as he tasted the fresh air that was denied to him for years.<br><br>And he laughed when he thought about what he was going to do once he reached New York City.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/gigawatt_sm.webp",
    "popular": {
     "early_game": [
@@ -3260,6 +3463,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#E52A68",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/shiv_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/shiv.svg",
+   "role": "Bleeds out foes, then goes in for a kill",
+   "playstyle": "Shiv has zero interest in playing fair, which is why he relies on hit and run tactics to weaken enemies before he dives in for the kill.",
+   "lore": "A loyal member of \"The Baxter Society\", an international order of monster hunters, Shiv travels across North America looking to put down creatures that prey on the living.<br><br>While his less polished nature and criminal past make some of the more traditional members of the Society wary, no one can deny his effectiveness.",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_sm.webp",
    "popular": {
     "early_game": [
@@ -3372,6 +3582,13 @@ window.DATA = {
    "gun": "Long Range",
    "color": "#BFBC9F",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/werewolf_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/werewolf_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/werewolf_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/werewolf.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "Lilah Silver is a mess.  She drinks too much, she smokes too much, and the less is said about her personal life the better.   But despite Silver's flaws she has managed to carve out a career as a successful bounty hunter, and while she would like to think that her successes are solely because she has incredible intuition, the fact that she's a werewolf doesn't hurt.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/werewolf_sm.webp",
    "popular": {
     "early_game": [
@@ -3484,6 +3701,13 @@ window.DATA = {
    "gun": "Burst Fire",
    "color": "#6B6B6B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/magician_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/sinclair.svg",
+   "role": "Misdirect and hex enemies",
+   "playstyle": "With the help of their unwilling assistant, <i>The Magnificent Sinclair</i> can confuse enemies with curving hexes and rapid bolts.",
+   "lore": "Henry's parents told him he was too young and impulsive to mess with real magic, and so they gave him a deck of cards to play with.  He took to sleight of hand naturally and soon was dazzling his classmates with fantastic feats of illusions that were done without mystic artifacts or incantation.<br><br>When he was in high school he met Savannah, and their mutual love of stage magic sparked a whirlwind romance.  Soon they fell in love and created an act together.  Obviously they were meant to be; and so at prom, Henry proposed to Savannah and they married soon after graduation.<br><br>Unsurprisingly both sets of parents were not thrilled at this prospect, but Henry and Savannah knew they were soulmates.  And so they cemented their love for one another by having a blood mystic bind their souls for eternity.<br><br>When an on-stage accident claimed both their lives, no one was sure who to blame.  Henry claims Savannah was out of position.  Savannah says Henry didn't wait for his cue.  But one thing's for sure, since their souls are tied to each other neither one of them have been able to move on.  Now a bickering pair of ghosts, Henry and Savannah need to work together if they want to have any chance of undoing their eternal union.",
+   "complexity": 4,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_sm.webp",
    "popular": {
     "early_game": [
@@ -3596,6 +3820,13 @@ window.DATA = {
    "gun": "Projectile",
    "color": "#AA9E7E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chessmaster_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chessmaster_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/chessmaster_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/solomon.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "In a world that moves too fast, Solomon is content to stop and listen. Offering a friendly ear and good counsel, Solomon has found himself sitting across the chess table from tourists, criminals, and titans of industry.  But no matter his opponent, Solomon remains un-phased... because to him, chess is so much more than a game. It's an equalizer. A way for him to connect to people from all walks of life on an even playing field.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chessmaster_sm.webp",
    "popular": {
     "early_game": [
@@ -3708,6 +3939,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#B77528",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/doorman_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/doorman_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/doorman_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/doorman.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "He's proper, he's polite, but the humble Doorman of The Baroness Hotel is more than meets the eye.<br><br>While he had only planned to experience life on this plane for a few weeks, The Doorman quickly discovered that the New York service industry was a great way to see the strange demands that please humans.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/doorman_sm.webp",
    "popular": {
     "early_game": [
@@ -3820,6 +4058,13 @@ window.DATA = {
    "gun": "Crossbow",
    "color": "#BD3599",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/priest_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/priest_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/priest_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/priest.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "The Venators of St. Benedict are a Vatican-sanctioned order whose members are deployed to regions with a high concentration of supernatural predators. Few in number, their modus operandi is to observe, identify, and exterminate. They are methodical, they are precise, and once they identify a threat to the flock they are relentless.<br><br>But even amongst those who are called The Sword Of St. Benedict, one stands apart from the others. A man whose hardened heart has allowed him to pay terrible prices in the name of the greater good... and he has once again been dispatched to New York.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/priest_sm.webp",
    "popular": {
     "early_game": [
@@ -3932,6 +4177,13 @@ window.DATA = {
    "gun": "Pistol",
    "color": "#658B6F",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/frank_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/frank_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/victor_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/victor.svg",
+   "role": null,
+   "playstyle": null,
+   "lore": "A lot of people spend their whole lives wondering who they really are. For Victor, this existential question is made more complicated as he woke up on a mortuary table with no knowledge of his creator, why he was made, and whom he is made of.\n\nNow searching the five boroughs for answers, Victor is hoping to find someone who can identify any part of him.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/frank_sm.webp",
    "popular": {
     "early_game": [
@@ -4044,6 +4296,13 @@ window.DATA = {
    "gun": "Long Range",
    "color": "#A2C7E5",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/vindicta_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/vindicta.svg",
+   "role": "Snipes the unsuspecting",
+   "playstyle": "Vindicta has the mobility to engage at her leisure, picking at her prey and bleeding them out slowly. Injured enemies at any distance should fear being picked off when she is on the map.",
+   "lore": "A victim of John Hathorne during the Salem Witch Trials, Vindicta got a second chance of life when her spirit was brought back to the mortal plane during the first Maelstrom (the event that introduced the supernatural to the public at large).<br><br>Waging a one ghost war against \"The Friends of Humanity\", a neo inquisition formed by Hathorne's descendants; Vindicta looks to keep the supernatural safe from Hathorne's ilk, and she isn't afraid to stack as many bodies as needed to do it.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_sm.webp",
    "popular": {
     "early_game": [
@@ -4156,6 +4415,13 @@ window.DATA = {
    "gun": "Projectile",
    "color": "#319826",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/viscous_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/viscous.svg",
+   "role": "Rolls around deflecting bullets",
+   "playstyle": "Viscous vexes his opponents through clever evasion and strategic uses of healing, enabling him to withstand the most brutal of enemy attacks.",
+   "lore": "The Bermuda Triangle was never a myth, it was a shadowline nexus deep underneath the Atlantic Ocean.  For the most part, the things that escaped this astral gate were benign (like Nessie), but now something dark and predatory known only as The Adversary hunts the seas... and ocean denizens are scared to death.<br><br>One of those inhabitants, a psychic sea anemone, wants to do something about it.  Summoning an ectoplasmic goo body to traverse the surface, Viscous is desperately trying to summon the Patrons in order to keep The Deep safe from the horror that lurks below.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_sm.webp",
    "popular": {
     "early_game": [
@@ -4268,6 +4534,13 @@ window.DATA = {
    "gun": "Rapid Fire",
    "color": "#A7AD00",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kali_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kali_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/vyper_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/vyper.svg",
+   "role": "Slither in and assassinate enemies",
+   "playstyle": "With a powerful weapon (and deadly venom to match), Vyper can slither into the back of teams and assassinate high-priority targets in a storm of bullets.",
+   "lore": "When it comes to breaking the law, not getting caught is a pretty important part of the job.  Vyper never got that memo.  Luckily for her, if there's one thing she's better at than being arrested, it's escaping out of jail.<br><br>Having done time in every major prison in the tri-state area, Vyper has built an impressive network of street level lowlifes that owe her one.  She's also built an impressive network of street level lowlifes that want her dead, but she tries to focus on the positive.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kali_sm.webp",
    "popular": {
     "early_game": [
@@ -4380,6 +4653,13 @@ window.DATA = {
    "gun": "Heavy Hitter",
    "color": "#4D68A3",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/warden_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/warden.svg",
+   "role": "Weakens his enemies and chases them down",
+   "playstyle": "Warden leads from the front, jumping into the fray and hindering his opponents' ability to fight effectively. But what Warden considers brave, others consider reckless, and if he's not careful he can easily find himself in over his head.",
+   "lore": "Most people think the supernatural came into the world 50 years ago.  They're wrong.  Its presence shaped folklore for generations... and as long as there have been people afraid of the shadows, there have been those who dedicated their lives to fighting in them.<br><br>Coming from a lineage of militant alchemists, Warden's family always trained for the day they would have to stave off a mystic apocalypse... but as time passed the importance of the lessons seemed less and less important.  What once was viewed as a sincere warning slowly morphed into being perceived as amusing anecdotes told by their superstitious grandparents.<br><br>When the portal opened in Central Park, Warden's parents realized not only was everything they were told was true, they were unprepared.  Refusing to let the next generation fall asleep on the job, Warden was trained since birth to be a supernatural killing machine with one purpose: stopping the Patrons from ever entering our world.",
+   "complexity": 2,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_sm.webp",
    "popular": {
     "early_game": [
@@ -4492,6 +4772,13 @@ window.DATA = {
    "gun": "Rapid Fire",
    "color": "#944D78",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/wraith_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/wraith.svg",
+   "role": "Melts isolated targets",
+   "playstyle": "Excelling at one-on-one combat, Wraith isolates targets, eliminating them with ruthless efficiency. Then teleporting away before anyone can retaliate.",
+   "lore": "The cornerstone of the New York gambling scene, Wraith's organization is about as open a secret as it comes.  However, thanks to a non-trivial amount of bribes, shakedowns, and blackmail, Wraith knows that she's above the law.",
+   "complexity": 1,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_sm.webp",
    "popular": {
     "early_game": [
@@ -4604,6 +4891,13 @@ window.DATA = {
    "gun": "Spreadshot",
    "color": "#625789",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/yamato_card.webp",
+   "art": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/yamato_card.webp",
+   "bg": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/yamato_bg.webp",
+   "nameImg": "https://assets-bucket.deadlock-api.com/assets-api-res/icons/heroes/hero_names/yamato.svg",
+   "role": "Delivers charged attacks with finesse",
+   "playstyle": "Yamato uses precise strikes to decimate her rivals. However, such damaging attacks often will leave her exposed, so she needs to make every shot count.",
+   "lore": "犯罪組織のボスの家に生まれた花桜梨とその兄の大和にとって、<br>父の死後に「セブンスムーン」の跡目を継ぐのは自明のことでもあった。<br>そして何年もの間、かれらは対等の立場で組織を率いて利益と成功を<br>もたらし、やがてはアメリカへの進出をも目論むようになった。<br><br>思い描いていた計画は単純で、 大和がアメリカに渡って花桜梨の<br>国際的な存在感を高め、その間花桜梨は日本に残って国内を統制する、<br>といったものだった。 兄妹にとって不運だったのは、花桜梨が日本で<br>指揮をとるという計画を快く思わない部下たちがいたことだった。<br><br>そして迅速かつ暴力的な形で、反乱は発生した。大和は花桜梨を<br>守るために命を落とし、花桜梨と数人の忠実な部下たちは、<br>その大和の犠牲のおかげもあって、日本からアメリカへと<br>逃げ延びることに成功した。<br><br>アメリカに着いた花桜梨たちを出迎えたのは、本来であれば大和が<br>会う予定となっていた男であった。彼は日本人の名前になじみが<br>なかったため性別の区別がついておらず、花桜梨のことを<br>「ヤマト」と呼んだ。花桜梨は男の間違いを正そうと思ったが、<br>結局そのままにした。兄の記憶を残し続けるためにも、その名を名乗り、<br>その夢を受け継ぐことが最善の道であろうと考えたからだ。",
+   "complexity": 3,
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/yamato_sm.webp",
    "popular": {
     "early_game": [

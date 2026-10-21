@@ -27,7 +27,7 @@ function writeSettings(next) {
 const NAMES_TTL = 7 * 24 * 3600 * 1000;
 
 async function loadNames() {
-  const file = path.join(app.getPath("userData"), "names-ru.json");
+  const file = path.join(app.getPath("userData"), "names-ru-2.json");
   try {
     const cached = JSON.parse(fs.readFileSync(file, "utf8"));
     if (Date.now() - cached.at < NAMES_TTL) return cached.names;
@@ -36,8 +36,9 @@ async function loadNames() {
     api.call("/v1/assets/heroes", { language: "russian" }),
     api.call("/v1/assets/items", { language: "russian" }),
   ]);
-  const names = { heroes: {}, items: {} };
+  const names = { heroes: {}, items: {}, desc: {} };
   for (const h of heroes) if (h.name) names.heroes[h.id] = h.name;
+  for (const h of heroes) if (h.description) names.desc[h.id] = h.description;
   for (const i of items) if (i.name) names.items[i.id] = i.name;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify({ at: Date.now(), names }));
