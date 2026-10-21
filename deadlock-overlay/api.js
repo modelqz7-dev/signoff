@@ -1,14 +1,16 @@
 const BASE = "https://api.deadlock-api.com";
-const ALLOWED = new Set([
-  "/v1/analytics/item-stats",
-  "/v1/analytics/hero-stats",
-  "/v1/analytics/hero-counter-stats",
-]);
+const ALLOWED = [
+  /^\/v1\/analytics\/item-stats$/,
+  /^\/v1\/analytics\/hero-stats$/,
+  /^\/v1\/analytics\/hero-counter-stats$/,
+  /^\/v1\/players\/steam-search$/,
+  /^\/v1\/players\/\d{1,10}\/match-history$/,
+];
 const CACHE_MS = 10 * 60 * 1000;
 const cache = new Map();
 
 async function call(endpoint, params = {}) {
-  if (!ALLOWED.has(endpoint)) throw new Error(`Endpoint not allowed: ${endpoint}`);
+  if (!ALLOWED.some((re) => re.test(endpoint))) throw new Error(`Endpoint not allowed: ${endpoint}`);
   const url = new URL(BASE + endpoint);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));

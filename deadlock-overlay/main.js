@@ -1,13 +1,55 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require("electron");
+const fs = require("fs");
 const path = require("path");
 const api = require("./api");
 
 const TOGGLE_KEY = "F8";
-let win;
+let mainWin;
+let overlayWin;
 
-function createWindow() {
+function settingsFile() {
+  return path.join(app.getPath("userData"), "settings.json");
+}
+
+function readSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function writeSettings(next) {
+  fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
+  fs.writeFileSync(settingsFile(), JSON.stringify(next, null, 2));
+}
+
+const webPreferences = () => ({
+  contextIsolation: true,
+  nodeIntegration: false,
+  sandbox: true,
+  preload: path.join(__dirname, "preload.js"),
+});
+
+function createMainWindow() {
+  mainWin = new BrowserWindow({
+    width: 1180,
+    height: 780,
+    minWidth: 900,
+    minHeight: 600,
+    backgroundColor: "#0e1110",
+    title: "Deadlock Tracker",
+    autoHideMenuBar: true,
+    webPreferences: webPreferences(),
+  });
+  mainWin.removeMenu();
+  mainWin.loadFile("app.html");
+  mainWin.on("closed", () => app.quit());
+}
+
+function createOverlayWindow() {
   const { width } = screen.getPrimaryDisplay().workAreaSize;
-  win = new BrowserWindow({
+  overlayWin = new BrowserWindow({
     width: 420,
     height: 720,
     x: width - 440,
@@ -19,38 +61,41 @@ function createWindow() {
     resizable: false,
     hasShadow: false,
     show: false,
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      preload: path.join(__dirname, "preload.js"),
-    },
+    webPreferences: webPreferences(),
   });
-  win.setAlwaysOnTop(true, "screen-saver");
-  win.loadFile("index.html");
-  win.once("ready-to-show", showOverlay);
+  overlayWin.setAlwaysOnTop(true, "screen-saver");
+  overlayWin.loadFile("index.html");
 }
 
 function showOverlay() {
-  win.show();
-  win.focus();
-  win.webContents.send("focus-search");
+  overlayWin.show();
+  overlayWin.focus();
+  overlayWin.webContents.send("focus-search");
 }
 
 function toggleOverlay() {
-  if (win.isVisible()) win.hide();
+  if (overlayWin.isVisible()) overlayWin.hide();
   else showOverlay();
 }
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  app.on("second-instance", () => {
+    if (mainWin) {
+      if (mainWin.isMinimized()) mainWin.restore();
+      mainWin.focus();
+    }
+  });
+
   app.whenReady().then(() => {
-    createWindow();
+    createMainWindow();
+    createOverlayWindow();
     if (!globalShortcut.register(TOGGLE_KEY, toggleOverlay)) {
       console.error(`Could not register global shortcut ${TOGGLE_KEY}`);
     }
   });
+
   ipcMain.handle("api", async (_e, endpoint, params) => {
     try {
       return { ok: true, data: await api.call(endpoint, params) };
@@ -58,8 +103,16 @@ if (!app.requestSingleInstanceLock()) {
       return { ok: false, error: err.message };
     }
   });
-  ipcMain.on("hide", () => win && win.hide());
+  ipcMain.handle("settings:get", () => readSettings());
+  ipcMain.handle("settings:set", (_e, patch) => {
+    const next = { ...readSettings(), ...patch };
+    writeSettings(next);
+    return next;
+  });
+  ipcMain.on("overlay:toggle", toggleOverlay);
+  ipcMain.on("hide", () => overlayWin && overlayWin.hide());
   ipcMain.on("quit", () => app.quit());
+
   app.on("will-quit", () => globalShortcut.unregisterAll());
   app.on("window-all-closed", () => app.quit());
 }

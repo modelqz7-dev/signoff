@@ -184,7 +184,7 @@ document.addEventListener("keydown", (e) => {
 });
 $("tabAgainst").addEventListener("click", () => setTab(false));
 $("tabOwn").addEventListener("click", () => setTab(true));
-$("quit").addEventListener("click", () => window.overlay.quit());
+$("quit").addEventListener("click", () => window.overlay.hide());
 
 window.overlay.onFocusSearch(() => {
   search.focus();

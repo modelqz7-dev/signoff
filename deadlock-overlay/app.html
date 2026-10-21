@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https://assets-bucket.deadlock-api.com https://*.steamstatic.com https://*.akamaihd.net;">
+  <title>Deadlock Tracker</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <aside class="side">
+    <div class="brand">Deadlock Tracker</div>
+    <nav id="nav" class="nav">
+      <button data-page="home" class="active">Главная</button>
+      <button data-page="meta">Мета</button>
+      <button data-page="player">Игрок</button>
+      <button data-page="settings">Настройки</button>
+    </nav>
+    <div class="side-foot">
+      <button id="openOverlay" class="primary">Открыть оверлей</button>
+      <p class="muted small">Горячая клавиша: F8</p>
+    </div>
+  </aside>
+  <main id="view" class="view"></main>
+  <script src="data/data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
