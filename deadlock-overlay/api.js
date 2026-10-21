@@ -4,6 +4,8 @@ const ALLOWED = [
   /^\/v1\/analytics\/hero-stats$/,
   /^\/v1\/analytics\/hero-counter-stats$/,
   /^\/v1\/assets\/(heroes|items)$/,
+  /^\/v1\/matches\/active$/,
+  /^\/v1\/leaderboard\/(Europe|Asia|NAmerica|SAmerica|Oceania)$/,
   /^\/v1\/players\/steam-search$/,
   /^\/v1\/players\/hero-stats$/,
   /^\/v1\/players\/\d{1,10}\/match-history$/,

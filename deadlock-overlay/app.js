@@ -342,17 +342,47 @@ function searchBox(placeholder, onPick, pickLabel, big) {
 
 const pages = {
   home() {
-    view.replaceChildren(el("h1", "", "Главная"));
+    view.replaceChildren();
+    const top = el("section", "home-hero");
+    const left = el("div", "home-left");
+    left.append(
+      el("div", "kicker", "Deadlock"),
+      el("h1", "home-title", "Трекер матчей и меты"),
+      el("p", "home-lead", "Статистика героев и предметов, профили игроков, лидерборд и оверлей, который подсказывает, что покупать против врага."),
+      searchBox("Ник или ID игрока", openProfile, null, true),
+    );
+    const actions = el("div", "home-actions");
+    for (const [label, page] of [["Мой профиль", "me"], ["Герои", "heroes"], ["Предметы", "items"]]) {
+      const b = el("button", "ghost", label);
+      b.addEventListener("click", () => go(page));
+      actions.append(b);
+    }
+    const ov = el("button", "ghost", "Открыть оверлей");
+    ov.addEventListener("click", () => window.overlay.toggleOverlay());
+    actions.append(ov);
+    left.append(actions);
+    const live = el("div", "live-card");
+    top.append(left, live);
+
+    const lower = el("div", "home-lower");
+    const lb = el("div", "panel-card");
+    const meta = el("div");
+    lower.append(lb, meta);
+    view.append(top, lower);
+    loadLive(live);
+    loadLeaderboard(lb, "Europe");
+    metaHome(meta, true);
+  },
+
+  me() {
+    view.replaceChildren(el("h1", "", "Мой профиль"));
     if (!settings.account) {
       const banner = el("div", "banner");
-      banner.append(el("span", "", "Привяжи свой профиль, и здесь появятся твои матчи и статистика."));
+      banner.append(el("span", "", "Профиль не привязан. Найди себя по нику или ID в настройках."));
       const btn = el("button", "ghost", "Открыть настройки");
       btn.addEventListener("click", () => go("settings"));
       banner.append(btn);
-      view.replaceChildren(el("h1", "", "Мета сейчас"), banner);
-      const box = el("div");
-      view.append(box);
-      metaHome(box);
+      view.append(banner);
       return;
     }
     const box = el("div");
@@ -377,6 +407,11 @@ const pages = {
       renderPlayer(out, p);
     };
 
+    if (pendingProfile) {
+      const p = pendingProfile;
+      pendingProfile = null;
+      return showProfile(p);
+    }
     view.replaceChildren();
     const page = el("div", "search-page");
     const hero = el("div", "search-hero");
@@ -543,7 +578,7 @@ function dashPanel(title, rows, linkText, page) {
   return card;
 }
 
-async function metaHome(container) {
+async function metaHome(container, stacked) {
   container.replaceChildren(message("Загружаю мету..."));
   const [hs, is] = await Promise.all([
     window.overlay.api("/v1/analytics/hero-stats", {}),
@@ -559,7 +594,7 @@ async function metaHome(container) {
   const toRow = (r, value, cls) => ({ icon: r.hero.small, name: r.hero.name, value, cls });
   const best = [...heroRows].sort((a, b) => b.wr - a.wr).slice(0, 8).map((r) => toRow(r, `${r.wr}%`, r.wr >= 50 ? "up" : "down"));
   const popular = [...heroRows].sort((a, b) => b.pick - a.pick).slice(0, 8).map((r) => toRow(r, `${r.pick}%`));
-  const grid = el("div", "dash");
+  const grid = el("div", stacked ? "dash stack" : "dash");
   grid.append(dashPanel("Лучшие герои по винрейту", best, "Все герои →", "heroes"), dashPanel("Самые популярные герои", popular, "Все герои →", "heroes"));
   if (is.ok) {
     const itemRows = [...sumBy(is.data, "item_id")]
@@ -572,6 +607,73 @@ async function metaHome(container) {
   }
   container.replaceChildren(grid);
 }
+
+
+/* ---------- home: live matches, leaderboard ---------- */
+
+let pendingProfile = null;
+const REGIONS = [["Europe", "Европа"], ["NAmerica", "Сев. Америка"], ["Asia", "Азия"], ["SAmerica", "Юж. Америка"], ["Oceania", "Океания"]];
+const MODE_RU = { Ranked: "Ранговый", Unranked: "Обычный", PrivateLobby: "Пользовательский", CoopBot: "С ботами" };
+const kfmt = (n) => (n >= 1000 ? `${Math.round(n / 1000)}K` : String(n || 0));
+
+async function loadLive(container) {
+  container.replaceChildren(message("Загружаю матчи..."));
+  const res = await window.overlay.api("/v1/matches/active", {});
+  if (!res.ok) return container.replaceChildren(message(res.error, "error"));
+  const list = res.data.filter((m) => m.players && m.players.length).sort((a, b) => (b.start_time || 0) - (a.start_time || 0));
+  const head = el("div", "live-head");
+  head.append(el("span", "live-dot"), el("span", "live-tag", "Сейчас"), el("span", "live-title", `${list.length} матчей в игре`));
+  container.replaceChildren(head);
+  for (const m of list.slice(0, 7)) {
+    const row = el("div", "live-row");
+    const t0 = (m.team_stats || []).find((t) => t.team === 0);
+    const t1 = (m.team_stats || []).find((t) => t.team === 1);
+    row.append(
+      el("span", "live-time", fmtDuration(m.duration_s || 0)),
+      el("span", "live-score", `${kfmt(m.net_worth_team_0 ?? (t0 && t0.net_worth))} — ${kfmt(m.net_worth_team_1 ?? (t1 && t1.net_worth))}`),
+      el("span", "muted", MODE_RU[m.match_mode_parsed] || m.match_mode_parsed || "Матч"),
+      el("span", "muted small live-spec", m.spectators ? `${m.spectators} зрителей` : ""),
+    );
+    container.append(row);
+  }
+  if (!list.length) container.append(message("Сейчас нет данных о текущих матчах."));
+  container.append(el("p", "muted small", "Показаны матчи из вкладки просмотра игры (топ-200)."));
+}
+
+async function loadLeaderboard(container, region) {
+  const body = el("div", "lb-body");
+  const chips = el("div", "chips");
+  for (const [id, label] of REGIONS) {
+    const c = el("button", `chip${id === region ? " active" : ""}`, label);
+    c.addEventListener("click", () => loadLeaderboard(container, id));
+    chips.append(c);
+  }
+  container.replaceChildren(el("div", "lb-head"), chips, body);
+  container.firstChild.append(el("h2", "", "Топ игроков"), el("span", "muted small", "рейтинг в игре"));
+  body.append(message("Загружаю..."));
+  const res = await window.overlay.api(`/v1/leaderboard/${region}`, {});
+  body.replaceChildren();
+  if (!res.ok) return body.append(message(res.error, "error"));
+  const entries = (res.data.entries || []).filter((e) => e.rank).sort((a, b) => a.rank - b.rank).slice(0, 10);
+  if (!entries.length) return body.append(message("Нет данных."));
+  for (const e of entries) {
+    const row = el("div", "lb-row");
+    row.append(el("span", "lb-rank", String(e.rank)), el("span", "lb-name", e.account_name || "Скрыт"));
+    const heroesBox = el("span", "lb-heroes");
+    for (const id of (e.top_hero_ids || []).slice(0, 3)) {
+      const hh = heroById.get(id);
+      if (hh) heroesBox.append(img(hh.small, "lb-hero"));
+    }
+    row.append(heroesBox);
+    body.append(row);
+  }
+}
+
+function openProfile(p) {
+  pendingProfile = p;
+  go("player");
+}
+
 
 /* ---------- navigation ---------- */
 
