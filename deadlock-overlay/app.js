@@ -1001,7 +1001,10 @@ function buildStage(h) {
         setTimeout(() => show("art"), 2200);
       };
       mv.addEventListener("load", () => status.remove());
-      mv.addEventListener("error", () => fail("файл не прочитан"));
+      mv.addEventListener("error", (e) => {
+        const src = e.detail && e.detail.sourceError;
+        fail(src ? String(src.message || src).replace(/\s+/g, " ").slice(0, 140) : "файл не прочитан");
+      });
       holder.append(mv, status);
       assetBlobUrl(state.model, "model/gltf-binary").then((u) => mv.setAttribute("src", u)).catch((e) => fail(e.message));
     } else if (state.art) {
