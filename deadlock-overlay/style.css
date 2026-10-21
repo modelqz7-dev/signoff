@@ -112,3 +112,7 @@ h3 { margin: 14px 0 6px; font-family: var(--head); font-weight: 700; font-size: 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--frame); border-radius: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+.hero-btn .wr { font-family: var(--head); font-weight: 700; font-size: 10px; letter-spacing: 0.03em; }
+.hero-btn .wr.up { color: var(--green); }
+.hero-btn .wr.down { color: #e4605e; }

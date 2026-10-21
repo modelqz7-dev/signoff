@@ -16,6 +16,7 @@ for i in items_raw:
         continue
     key = i["class_name"].removeprefix("upgrade_")
     items[key] = {
+        "id": i["id"],
         "name": i["name"],
         "slot": i.get("item_slot_type"),
         "tier": i.get("item_tier"),

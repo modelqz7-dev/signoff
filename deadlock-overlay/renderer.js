@@ -30,6 +30,76 @@ function itemRow(key, why, extra) {
   return row;
 }
 
+const itemByApiId = new Map(Object.entries(items).map(([key, it]) => [it.id, key]));
+const heroStats = new Map();
+let baseline = null;
+let liveToken = 0;
+
+function sumBy(rows, idField) {
+  const out = new Map();
+  for (const r of rows) {
+    const cur = out.get(r[idField]) || { wins: 0, matches: 0 };
+    cur.wins += r.wins;
+    cur.matches += r.matches;
+    out.set(r[idField], cur);
+  }
+  return out;
+}
+
+async function loadHeroStats() {
+  const res = await window.overlay.api("/v1/analytics/hero-stats", {});
+  if (!res.ok) return;
+  const by = sumBy(res.data, "hero_id");
+  let total = 0;
+  for (const v of by.values()) total += v.matches;
+  for (const [id, v] of by) {
+    if (v.matches < 100) continue;
+    heroStats.set(id, {
+      wr: Math.round((v.wins / v.matches) * 1000) / 10,
+      pick: Math.round((v.matches / total) * 1000) / 10,
+    });
+  }
+  renderGrid(search.value);
+}
+
+async function loadLive(h) {
+  const box = $("live");
+  const token = ++liveToken;
+  box.replaceChildren(el("h3", "", "По данным игроков, 30 дней"), el("p", "empty", "Загружаю..."));
+  const [base, vs] = await Promise.all([
+    baseline ? { ok: true, data: baseline } : window.overlay.api("/v1/analytics/item-stats", {}),
+    window.overlay.api("/v1/analytics/item-stats", { enemy_hero_ids: h.id, min_matches: 100 }),
+  ]);
+  if (token !== liveToken) return;
+  box.replaceChildren(el("h3", "", "По данным игроков, 30 дней"));
+  if (!base.ok || !vs.ok) {
+    box.append(el("p", "empty", (base.ok ? vs.error : base.error) || "Данные недоступны."));
+    return;
+  }
+  baseline = base.data;
+  const baseMap = sumBy(baseline, "item_id");
+  const rows = [];
+  for (const [apiId, v] of sumBy(vs.data, "item_id")) {
+    const key = itemByApiId.get(apiId);
+    const b = baseMap.get(apiId);
+    if (!key || !b || v.matches < 150 || b.matches < 500) continue;
+    const wrVs = (v.wins / v.matches) * 100;
+    const wrBase = (b.wins / b.matches) * 100;
+    rows.push({ key, lift: wrVs - wrBase, wrVs, matches: v.matches });
+  }
+  rows.sort((a, b) => b.lift - a.lift);
+  if (!rows.length) {
+    box.append(el("p", "empty", "Мало данных по этому герою."));
+    return;
+  }
+  const line = (r) => `винрейт ${r.wrVs.toFixed(1)}% (${r.lift >= 0 ? "+" : ""}${r.lift.toFixed(1)} к обычному) · ${r.matches} матчей`;
+  box.append(el("p", "note", "Что лучше работает против него, чем в среднем:"));
+  for (const r of rows.slice(0, 8)) box.append(itemRow(r.key, null, line(r)));
+  const worst = rows.slice(-3).reverse();
+  box.append(el("p", "note", "Что работает хуже:"));
+  for (const r of worst) box.append(itemRow(r.key, null, line(r)));
+}
+
 function renderGrid(filter) {
   grid.replaceChildren();
   const q = filter.trim().toLowerCase();
@@ -41,6 +111,11 @@ function renderGrid(filter) {
     img.src = h.small || h.icon;
     img.alt = h.name;
     btn.append(img, el("span", "", h.name));
+    const st = heroStats.get(h.id);
+    if (st) {
+      btn.title = `${h.name}: винрейт ${st.wr}% · пикрейт ${st.pick}%`;
+      btn.append(el("span", "wr " + (st.wr >= 50 ? "up" : "down"), `${st.wr}%`));
+    }
     btn.addEventListener("click", () => showHero(h));
     grid.append(btn);
   }
@@ -80,6 +155,7 @@ function showOwn(h) {
 
 function setTab(own) {
   $("against").hidden = own;
+  $("live").hidden = own;
   $("own").hidden = !own;
   $("tabAgainst").classList.toggle("active", !own);
   $("tabOwn").classList.toggle("active", own);
@@ -93,6 +169,7 @@ function showHero(h) {
   showAgainst(h);
   showOwn(h);
   setTab(false);
+  loadLive(h);
 }
 
 search.addEventListener("input", () => renderGrid(search.value));
@@ -115,3 +192,4 @@ window.overlay.onFocusSearch(() => {
 });
 
 renderGrid("");
+loadHeroStats();

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require("electron");
 const path = require("path");
+const api = require("./api");
 
 const TOGGLE_KEY = "F8";
 let win;
@@ -48,6 +49,13 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     if (!globalShortcut.register(TOGGLE_KEY, toggleOverlay)) {
       console.error(`Could not register global shortcut ${TOGGLE_KEY}`);
+    }
+  });
+  ipcMain.handle("api", async (_e, endpoint, params) => {
+    try {
+      return { ok: true, data: await api.call(endpoint, params) };
+    } catch (err) {
+      return { ok: false, error: err.message };
     }
   });
   ipcMain.on("hide", () => win && win.hide());
