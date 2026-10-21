@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
-where node >nul 2>nul || (echo Node.js не найден. Установи его с https://nodejs.org и запусти этот файл снова. & pause & exit /b 1)
+where node >nul 2>nul || (echo Node.js not found. Install it from https://nodejs.org and run this file again. & pause & exit /b 1)
 if not exist node_modules (
-  echo Первый запуск: ставлю зависимости, это займёт пару минут...
-  call npm install || (echo Ошибка установки. & pause & exit /b 1)
+  echo First run: installing dependencies, this takes a couple of minutes...
+  call npm install || (echo Install failed. & pause & exit /b 1)
 )
 call npm start
