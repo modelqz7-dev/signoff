@@ -869,7 +869,7 @@ const unit = (v) => String(v == null ? "" : v).replace(/(\d)\.0(?=\D|$)/g, "$1")
 function abilitiesBlock(h) {
   const list = h.abilities || [];
   const box = el("div", "abil");
-  if (!list.length) return box.appendChild(message("Нет данных о способностях.")) && box;
+  if (!list.length) return { row: message("Нет данных о способностях."), panel: el("div") };
   const row = el("div", "abil-row");
   const panel = el("div", "abil-panel");
   let sel = 0;
@@ -906,8 +906,7 @@ function abilitiesBlock(h) {
     if (tiers.children.length) panel.append(tiers);
   };
   draw();
-  box.append(row, panel);
-  return box;
+  return { row, panel };
 }
 
 function statRank(key, value, lowerIsBetter) {
@@ -958,23 +957,50 @@ function statsBlock(h) {
   return wrap;
 }
 
+function buildStage(h) {
+  const stage = el("div", "stage");
+  const holder = el("div", "stage-holder");
+  const controls = el("div", "stage-controls");
+  const show = (mode) => {
+    holder.replaceChildren();
+    controls.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+    if (mode === "3d" && h.model) {
+      const mv = document.createElement("model-viewer");
+      mv.className = "mv";
+      for (const [k, v] of Object.entries({
+        src: h.model, "camera-controls": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
+        exposure: "1.1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
+      })) mv.setAttribute(k, v);
+      const status = el("div", "stage-status", "Загружаю 3D-модель...");
+      mv.addEventListener("progress", (e) => { status.textContent = `Загрузка модели ${Math.round(e.detail.totalProgress * 100)}%`; });
+      mv.addEventListener("load", () => status.remove());
+      mv.addEventListener("error", () => show("art"));
+      holder.append(mv, status);
+    } else if (h.art) {
+      holder.append(img(h.art, "stage-art"));
+    }
+  };
+  for (const [mode, label] of [["3d", "3D"], ["art", "Арт"]]) {
+    if (mode === "3d" && !h.model) continue;
+    const b = el("button", "chip", label);
+    b.dataset.mode = mode;
+    b.addEventListener("click", () => show(mode));
+    controls.append(b);
+  }
+  stage.append(holder, controls, nameArt(h, "stage-name"));
+  show(h.model ? "3d" : "art");
+  return stage;
+}
+
 async function showHeroPage(h) {
   const token = ++renderToken;
   view.replaceChildren();
+  const bar = el("div", "hero-head-bar");
   const back = el("button", "link", "← Все герои");
   back.addEventListener("click", () => heroesPage());
-  view.append(back);
-
-  const banner = el("div", "hero-banner");
-  if (h.bg) banner.append(img(h.bg, "hero-banner-img"));
-  if (h.art) banner.append(img(h.art, "hero-banner-art"));
-  const shade = el("div", "hero-banner-shade");
-  banner.append(shade, nameArt(h, "hero-banner-name"));
-  view.append(banner);
-
-  const tabs = el("div", "tabs");
+  const tabs = el("div", "tabs inline");
   const body = el("div");
-  const defs = [["Обзор", () => overview(body)], ["Винрейт и предметы", () => perf(body)], ["3D", () => viewer(body)]];
+  const defs = [["Обзор", () => overview(body)], ["Винрейт и предметы", () => perf(body)]];
   defs.forEach(([label, fn], i) => {
     const b = el("button", i === 0 ? "active" : "", label);
     b.addEventListener("click", () => {
@@ -983,7 +1009,8 @@ async function showHeroPage(h) {
     });
     tabs.append(b);
   });
-  view.append(tabs, body);
+  bar.append(back, tabs);
+  view.append(bar, body);
 
   const stats = await getHeroStats();
   if (token !== renderToken) return;
@@ -991,25 +1018,48 @@ async function showHeroPage(h) {
 
   function overview(container) {
     container.replaceChildren();
-    const cols = el("div", "hero-cols");
-    const left = el("div", "hero-info");
+    const wrap = el("div", "stage-wrap");
+    if (h.bg) wrap.append(img(h.bg, "stage-bg"));
+    wrap.append(el("div", "stage-shade"));
+    const grid = el("div", "hero-stage");
+
+    const left = el("div", "hs-left");
+    const row = (label, node) => {
+      const r = el("div", "info-row");
+      r.append(el("span", "info-label", label), node);
+      return r;
+    };
+    const dots = el("span", "dots");
+    for (let i = 1; i <= 3; i++) dots.append(el("i", i <= (h.complexity || 0) ? "on" : ""));
+    dots.append(el("span", "", ` ${h.complexity || 0} из 3`));
+    const tagBox = el("div", "tags");
+    for (const t of h.tags || []) tagBox.append(chip(t));
+    left.append(row("Тип", chip(TYPE_RU[h.type] || h.type || "—")), row("Сложность", dots));
+    if (h.gun) left.append(row("Оружие", chip(h.gun)));
+    left.append(row("Теги", tagBox));
+    const nums = el("div", "hs-nums");
+    for (const [label, value] of [["Винрейт", st ? `${st.wr}%` : "—"], ["Выбор", st ? `${st.pick}%` : "—"], ["Матчей", st ? num(st.matches) : "—"]]) {
+      const c = el("div");
+      c.append(el("div", "hs-num", value), el("div", "hs-num-label", label));
+      nums.append(c);
+    }
+    left.append(nums);
     if (h.role) left.append(el("h2", "hero-role", h.role));
-    const tags = el("div", "tags");
-    tags.append(chip(TYPE_RU[h.type] || h.type || "—"));
-    if (h.gun) tags.append(chip(h.gun));
-    if (h.complexity) tags.append(chip(`Сложность ${h.complexity} из 3`));
-    for (const t of h.tags || []) tags.append(chip(t));
-    left.append(tags);
     if (h.playstyle) left.append(paragraphs(h.playstyle, "hero-text"));
-    if (h.lore) left.append(el("h2", "", "История"), paragraphs(h.lore, "hero-text muted"));
-    const right = el("div", "hero-stat-col");
-    right.append(
-      statCell("Винрейт", st ? `${st.wr}%` : "нет данных"),
-      statCell("Выбор", st ? `${st.pick}%` : "нет данных"),
-      statCell("Матчей за 30 дней", st ? num(st.matches) : "нет данных"),
-    );
-    cols.append(left, right);
-    container.append(cols, el("h2", "section-gap", "Способности"), abilitiesBlock(h), el("h2", "section-gap", "Характеристики"), statsBlock(h));
+    if (h.lore) {
+      const lore = el("div", "lore-box");
+      lore.append(el("h2", "", "История"), paragraphs(h.lore, "hero-text muted"));
+      left.append(lore);
+    }
+
+    const parts = abilitiesBlock(h);
+    const center = el("div", "hs-center");
+    center.append(buildStage(h), parts.row);
+    const right = el("div", "hs-right");
+    right.append(parts.panel);
+    grid.append(left, center, right);
+    wrap.append(grid);
+    container.append(wrap, el("h2", "section-gap", "Характеристики"), statsBlock(h));
   }
 
   async function perf(container) {
@@ -1052,43 +1102,6 @@ async function showHeroPage(h) {
   }
 
 
-  function viewer(container) {
-    container.replaceChildren();
-    if (!h.model) return container.append(message("Для этого героя нет 3D-модели."));
-    const wrap = el("div", "viewer");
-    const mv = document.createElement("model-viewer");
-    mv.className = "mv";
-    for (const [k, v] of Object.entries({
-      src: h.model, "camera-controls": "", "auto-rotate": "", "auto-rotate-delay": "0", "rotation-per-second": "22deg",
-      "shadow-intensity": "1", exposure: "1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
-    })) mv.setAttribute(k, v);
-    const status = el("div", "viewer-status", "Загружаю модель...");
-    const bar = el("div", "viewer-bar");
-    mv.addEventListener("progress", (e) => { status.textContent = `Загрузка модели ${Math.round(e.detail.totalProgress * 100)}%`; });
-    mv.addEventListener("error", () => { status.textContent = "Не удалось загрузить 3D-модель."; });
-    mv.addEventListener("load", () => {
-      status.remove();
-      const anims = mv.availableAnimations || [];
-      if (anims.length) {
-        bar.append(el("span", "muted small", "Анимации:"));
-        for (const name of anims) {
-          const b = el("button", "chip", name);
-          b.addEventListener("click", () => { mv.animationName = name; mv.play(); });
-          bar.append(b);
-        }
-      } else {
-        bar.append(el("span", "muted small", "Это статичная поза: вращай мышью, колесо приближает."));
-      }
-      const spin = el("button", "chip active", "Вращение");
-      spin.addEventListener("click", () => {
-        spin.classList.toggle("active");
-        if (mv.hasAttribute("auto-rotate")) mv.removeAttribute("auto-rotate"); else mv.setAttribute("auto-rotate", "");
-      });
-      bar.append(spin);
-    });
-    wrap.append(mv, status);
-    container.append(wrap, bar);
-  }
 
   overview(body);
 }
