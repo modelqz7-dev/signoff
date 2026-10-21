@@ -719,35 +719,23 @@ function nameArt(h, className) {
 
 function heroCard(h, st, index) {
   const card = el("button", "hcard");
-  card.style.setProperty("--i", String(Math.min(index || 0, 24)));
-  card.append(img(h.art || h.icon, "hcard-art"), el("span", "hcard-shine"));
+  card.append(img(h.art || h.icon, "hcard-art"));
   if (st) card.append(el("span", `hcard-tag ${st.wr >= 50 ? "up" : "down"}`, `${st.wr}% побед`));
   const foot = el("div", "hcard-foot");
   foot.append(el("div", "hcard-role", TYPE_RU[h.type] || h.type || ""), nameArt(h, "hcard-name"));
   if (st) {
     const bar = el("div", "hcard-bar");
     const fill = el("span", st.wr >= 50 ? "up" : "down");
-    fill.style.width = `${Math.max(4, Math.min(100, ((st.wr - 40) / 20) * 100))}%`;
-    bar.append(fill);
+    const w = Math.min(50, (Math.abs(st.wr - 50) / 12) * 100);
+    fill.style.width = `${w}%`;
+    fill.style.left = st.wr >= 50 ? "50%" : `${50 - w}%`;
+    bar.append(el("i", "hcard-mid"), fill);
     const nums = el("div", "hcard-nums");
     nums.append(el("span", "", `${st.pick}% выбор`), el("span", "", `${num(st.matches)} матчей`));
     foot.append(bar, nums);
   }
   card.append(foot);
   card.addEventListener("click", () => showHeroPage(h));
-  card.addEventListener("mousemove", (e) => {
-    const r = card.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    card.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
-    card.style.setProperty("--rx", `${(-y * 9).toFixed(2)}deg`);
-    card.style.setProperty("--gx", `${((x + 0.5) * 100).toFixed(0)}%`);
-    card.style.setProperty("--gy", `${((y + 0.5) * 100).toFixed(0)}%`);
-  });
-  card.addEventListener("mouseleave", () => {
-    card.style.removeProperty("--ry");
-    card.style.removeProperty("--rx");
-  });
   return card;
 }
 

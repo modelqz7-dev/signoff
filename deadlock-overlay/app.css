@@ -221,17 +221,19 @@ td img { width: 30px; height: 30px; object-fit: cover; border-radius: 5px; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 14px; margin-bottom: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
 .controls-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-right: 6px; }
 .hero-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.hcard { position: relative; aspect-ratio: 3 / 4.1; padding: 0; overflow: hidden; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer; text-align: left; }
-.hcard:hover { border-color: var(--muted); }
-.hcard-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hcard { position: relative; aspect-ratio: 3 / 4.1; padding: 0; overflow: hidden; background: var(--panel); border: 1px solid #333; border-radius: 10px; cursor: pointer; text-align: left; transition: transform 0.25s ease, border-color 0.2s ease, box-shadow 0.25s ease; }
+.hcard:hover { transform: translateY(-3px); border-color: rgba(245, 245, 247, 0.75); box-shadow: 0 0 0 1px rgba(245, 245, 247, 0.5), 0 0 24px rgba(245, 245, 247, 0.35); }
+.hcard-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+.hcard:hover .hcard-art { transform: scale(1.08); }
 .hcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 42%, rgba(0,0,0,0.88) 100%); pointer-events: none; }
 .hcard-tag { position: absolute; top: 8px; right: 8px; z-index: 2; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.72); font-family: var(--head); font-weight: 600; font-size: 12px; letter-spacing: 0.04em; }
 .hcard-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 12px 12px 10px; }
 .hcard-role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
 .hcard-name { display: block; min-height: 26px; font-family: var(--head); font-weight: 700; font-size: 22px; text-transform: uppercase; color: var(--strong); letter-spacing: 0.03em; }
 .name-img { display: block; height: 26px; width: auto; max-width: 100%; filter: brightness(0) invert(1); }
-.hcard-bar { height: 3px; margin: 10px 0 6px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
-.hcard-bar span { display: block; height: 100%; }
+.hcard-bar { position: relative; height: 3px; margin: 10px 0 6px; background: rgba(255,255,255,0.15); border-radius: 2px; }
+.hcard-bar span { position: absolute; top: 0; bottom: 0; }
+.hcard-mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgba(255,255,255,0.55); }
 .hcard-bar span.up { background: var(--accent); }
 .hcard-bar span.down { background: var(--loss); }
 .hcard-nums { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.75); font-variant-numeric: tabular-nums; }
@@ -255,36 +257,5 @@ td img { width: 30px; height: 30px; object-fit: cover; border-radius: 5px; }
 .dash-row .muted.small { min-width: 34px; text-align: right; }
 @media (max-width: 1000px) { .hero-cols { grid-template-columns: 1fr; } }
 
-/* ---- hero card motion ---- */
-.hcard {
-  --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 30%;
-  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.35s;
-  animation: card-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-  animation-delay: calc(var(--i, 0) * 28ms);
-  will-change: transform;
-}
-.hcard:hover { transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-6px); border-color: rgba(255, 255, 255, 0.4); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55); }
-.hcard:active { transform: perspective(900px) translateY(-2px) scale(0.99); }
-.hcard-art { transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s; filter: saturate(0.92); }
-.hcard:hover .hcard-art { transform: scale(1.08); filter: saturate(1.12) brightness(1.04); }
-.hcard-shine { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(260px circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.16), transparent 60%); }
-.hcard:hover .hcard-shine { opacity: 1; }
-.hcard-name, .hcard-role { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
-.hcard:hover .hcard-name { transform: translateY(-3px); }
-.hcard:hover .hcard-role { color: rgba(255, 255, 255, 0.95); }
-.hcard-tag { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s; }
-.hcard:hover .hcard-tag { transform: translateY(2px) scale(1.06); background: rgba(0, 0, 0, 0.9); }
-.hcard-bar span { transform-origin: left; animation: bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 28ms + 0.25s); }
-.hero-banner { animation: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
-.hero-banner-img { animation: banner-zoom 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
-.hero-info, .hero-stat-col .stat { animation: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
-.hero-stat-col .stat:nth-child(2) { animation-delay: 0.06s; }
-.hero-stat-col .stat:nth-child(3) { animation-delay: 0.12s; }
-@keyframes card-in { from { opacity: 0; transform: perspective(900px) translateY(18px) scale(0.97); } }
-@keyframes bar-grow { from { transform: scaleX(0); } }
-@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } }
-@keyframes banner-zoom { from { transform: scale(1.08); } }
-@media (prefers-reduced-motion: reduce) {
-  .hcard, .hcard-art, .hcard-bar span, .hero-banner, .hero-banner-img, .hero-info, .hero-stat-col .stat { animation: none; transition: none; }
-}
+
+@media (prefers-reduced-motion: reduce) { .hcard, .hcard-art { transition: none; } }
