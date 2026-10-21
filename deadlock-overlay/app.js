@@ -25,6 +25,16 @@ async function applyNames() {
       h.lore = d.lore || h.lore;
     }
   }
+  for (const h of heroes) {
+    for (const ab of h.abilities || []) {
+      const r = names.abil && names.abil[ab.id];
+      if (!r) continue;
+      ab.name = r.name || ab.name;
+      ab.desc = r.desc || ab.desc;
+      ab.tiers = r.t || ab.tiers;
+      for (const t of ab.tiles) if (r.labels && r.labels[t.prop]) t.label = r.labels[t.prop];
+    }
+  }
   for (const it of itemByApiId.values()) if (names.items[it.id]) it.name = names.items[it.id];
 }
 
@@ -839,6 +849,115 @@ function itemLine(key, extra) {
   return row;
 }
 
+
+function plainText(html) {
+  return String(html || "").replace(/<[^>]+>/g, "");
+}
+
+function richText(html, className) {
+  const p = el("p", className);
+  for (const part of String(html || "").split(/(<span class="highlight">.*?<\/span>)/)) {
+    if (!part) continue;
+    if (part.startsWith('<span class="highlight">')) p.append(el("strong", "", plainText(part)));
+    else p.append(document.createTextNode(plainText(part)));
+  }
+  return p;
+}
+
+const unit = (v) => String(v == null ? "" : v).replace(/(\d)\.0(?=\D|$)/g, "$1").replace(/(\d)s$/, "$1 с").replace(/(\d)m$/, "$1 м");
+
+function abilitiesBlock(h) {
+  const list = h.abilities || [];
+  const box = el("div", "abil");
+  if (!list.length) return box.appendChild(message("Нет данных о способностях.")) && box;
+  const row = el("div", "abil-row");
+  const panel = el("div", "abil-panel");
+  let sel = 0;
+  const draw = () => {
+    row.replaceChildren(...list.map((a, i) => {
+      const b = el("button", `abil-btn${i === sel ? " active" : ""}`);
+      const icon = el("span", "abil-icon");
+      icon.append(img(a.img), el("span", "abil-num", String(i + 1)));
+      b.append(icon, el("span", "abil-name", a.name));
+      b.addEventListener("click", () => { sel = i; draw(); });
+      return b;
+    }));
+    const a = list[sel];
+    const head = el("div", "abil-head");
+    head.append(el("h3", "abil-title", a.name));
+    if (a.cooldown) head.append(el("span", "pill", `Перезарядка ${unit(a.cooldown)}`));
+    panel.replaceChildren(head, richText(a.desc, "abil-desc"));
+    if (a.tiles && a.tiles.length) {
+      const tiles = el("div", "abil-tiles");
+      for (const t of a.tiles) {
+        const c = el("div", "abil-tile");
+        c.append(el("div", "abil-val", unit(t.value)), el("div", "abil-label", t.label));
+        tiles.append(c);
+      }
+      panel.append(tiles);
+    }
+    const tiers = el("div", "abil-tiers");
+    (a.tiers || []).forEach((t, i) => {
+      if (!t) return;
+      const c = el("div", "abil-tier");
+      c.append(el("div", "abil-tier-head", `Улучшение ${i + 1} · ${[1, 2, 5][i]} ${i === 0 ? "очко" : i === 1 ? "очка" : "очков"}`), el("div", "", plainText(t)));
+      tiers.append(c);
+    });
+    if (tiers.children.length) panel.append(tiers);
+  };
+  draw();
+  box.append(row, panel);
+  return box;
+}
+
+function statRank(key, value, lowerIsBetter) {
+  if (value == null) return "";
+  let better = 0;
+  for (const x of heroes) {
+    const v = x.stats && x.stats[key];
+    if (v == null) continue;
+    if (lowerIsBetter ? v < value : v > value) better++;
+  }
+  return `#${better + 1}`;
+}
+
+function statsBlock(h) {
+  const s = h.stats || {};
+  const wrap = el("div", "stat-cards");
+  const card = (title, big, rows) => {
+    const c = el("div", "stat-card");
+    const head = el("div", "stat-card-head");
+    head.append(el("span", "", title), el("span", "stat-card-big", big));
+    c.append(head);
+    for (const [label, value, key, low] of rows) {
+      if (value == null || value === "") continue;
+      const r = el("div", "stat-row");
+      r.append(el("span", "stat-row-label", label), el("span", "stat-row-val", String(value)), el("span", "stat-row-rank", key ? statRank(key, s[key], low) : ""));
+      c.append(r);
+    }
+    return c;
+  };
+  const f = (v, d = 1) => (v == null ? null : Number(v).toFixed(d).replace(/\.0+$/, ""));
+  wrap.append(
+    card("Оружие", s.dps != null ? `${f(s.dps)} DPS` : "", [
+      ["Урон пули", f(s.bulletDamage), "bulletDamage"],
+      ["Пуль в секунду", f(s.bps, 2), "bps"],
+      ["Боезапас", s.ammo, "ammo"],
+      ["Перезарядка", s.reload != null ? `${f(s.reload, 2)} с` : null, "reload", true],
+      ["Лёгкий удар", f(s.lightMelee), "lightMelee"],
+      ["Тяжёлый удар", f(s.heavyMelee), "heavyMelee"],
+    ]),
+    card("Живучесть", s.health != null ? `${f(s.health)} HP` : "", [
+      ["Здоровье", f(s.health), "health"],
+      ["Регенерация", s.regen != null ? `${f(s.regen)} /с` : null, "regen"],
+      ["Скорость", s.moveSpeed != null ? `${f(s.moveSpeed)} м/с` : null, "moveSpeed"],
+      ["Прибавка спринта", s.sprint != null ? `${f(s.sprint)} м/с` : null, "sprint"],
+      ["Выносливость", s.stamina, "stamina"],
+    ]),
+  );
+  return wrap;
+}
+
 async function showHeroPage(h) {
   const token = ++renderToken;
   view.replaceChildren();
@@ -890,7 +1009,7 @@ async function showHeroPage(h) {
       statCell("Матчей за 30 дней", st ? num(st.matches) : "нет данных"),
     );
     cols.append(left, right);
-    container.append(cols);
+    container.append(cols, el("h2", "section-gap", "Способности"), abilitiesBlock(h), el("h2", "section-gap", "Характеристики"), statsBlock(h));
   }
 
   async function perf(container) {
