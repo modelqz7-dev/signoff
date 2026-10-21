@@ -957,29 +957,58 @@ function statsBlock(h) {
   return wrap;
 }
 
+const blobCache = new Map();
+const treeCache = new Map();
+
+async function assetBlobUrl(url, type) {
+  if (blobCache.has(url)) return blobCache.get(url);
+  const res = await window.overlay.asset(url);
+  if (!res.ok) throw new Error(res.error);
+  const blob = URL.createObjectURL(new Blob([res.data], { type }));
+  blobCache.set(url, blob);
+  return blob;
+}
+
+async function assetList(kind) {
+  if (!treeCache.has(kind)) {
+    treeCache.set(kind, window.overlay.api(`/v1/assets/${kind}`, {}).then((res) => (res.ok ? flattenTree(res.data, "", []) : [])));
+  }
+  return treeCache.get(kind);
+}
+
 function buildStage(h) {
+  const box = el("div", "stage-box");
   const stage = el("div", "stage");
   const holder = el("div", "stage-holder");
   const controls = el("div", "stage-controls");
+  const picker = el("div", "stage-picker");
+  picker.hidden = true;
+  const state = { art: h.art, model: h.model };
+
   const show = (mode) => {
     holder.replaceChildren();
-    controls.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    if (mode === "3d" && h.model) {
+    controls.querySelectorAll("button[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+    if (mode === "3d" && state.model) {
+      const status = el("div", "stage-status", "Загружаю 3D-модель...");
       const mv = document.createElement("model-viewer");
       mv.className = "mv";
       for (const [k, v] of Object.entries({
-        src: h.model, "camera-controls": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
+        "camera-controls": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
         exposure: "1.1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
       })) mv.setAttribute(k, v);
-      const status = el("div", "stage-status", "Загружаю 3D-модель...");
-      mv.addEventListener("progress", (e) => { status.textContent = `Загрузка модели ${Math.round(e.detail.totalProgress * 100)}%`; });
+      const fail = (why) => {
+        status.textContent = `Не удалось показать 3D-модель (${why}). Показываю арт.`;
+        setTimeout(() => show("art"), 2200);
+      };
       mv.addEventListener("load", () => status.remove());
-      mv.addEventListener("error", () => show("art"));
+      mv.addEventListener("error", () => fail("файл не прочитан"));
       holder.append(mv, status);
-    } else if (h.art) {
-      holder.append(img(h.art, "stage-art"));
+      assetBlobUrl(state.model, "model/gltf-binary").then((u) => mv.setAttribute("src", u)).catch((e) => fail(e.message));
+    } else if (state.art) {
+      holder.append(img(state.art, "stage-art"));
     }
   };
+
   for (const [mode, label] of [["3d", "3D"], ["art", "Арт"]]) {
     if (mode === "3d" && !h.model) continue;
     const b = el("button", "chip", label);
@@ -987,9 +1016,45 @@ function buildStage(h) {
     b.addEventListener("click", () => show(mode));
     controls.append(b);
   }
+  const more = el("button", "chip", "Варианты");
+  more.addEventListener("click", async () => {
+    picker.hidden = !picker.hidden;
+    more.classList.toggle("active", !picker.hidden);
+    if (!picker.hidden && !picker.dataset.ready) {
+      picker.dataset.ready = "1";
+      picker.replaceChildren(message("Ищу изображения и 3D-позы героя..."));
+      const needles = [h.code, (h.en || "").toLowerCase().replace(/[^a-z0-9]+/g, "")].filter((n) => n && n.length > 2);
+      const match = (s) => needles.some((n) => `${s.path} ${s.url}`.toLowerCase().includes(n));
+      const [images, models] = await Promise.all([assetList("images"), assetList("models")]);
+      const imgs = images.filter((s) => /\.(png|webp|jpg|jpeg)(\?|$)/i.test(s.url) && match(s)).slice(0, 80);
+      const poses = models.filter((s) => /\.glb(\?|$)/i.test(s.url) && match(s)).slice(0, 40);
+      picker.replaceChildren(el("h2", "", `3D-позы (${poses.length})`));
+      const poseBox = el("div", "pose-list");
+      for (const s of poses) {
+        const b = el("button", "chip", s.path.split("/").slice(-2).join("/"));
+        b.title = s.path;
+        b.addEventListener("click", () => { state.model = s.url; show("3d"); });
+        poseBox.append(b);
+      }
+      if (!poses.length) poseBox.append(message("3D-поз не найдено."));
+      picker.append(poseBox, el("h2", "", `Изображения (${imgs.length})`));
+      const grid = el("div", "pick-grid");
+      for (const s of imgs) {
+        const b = el("button", "pick");
+        b.title = s.path;
+        b.append(img(s.url, "pick-img"), el("span", "pick-path", s.path.split("/").slice(-2).join("/")));
+        b.addEventListener("click", () => { state.art = s.url; show("art"); });
+        grid.append(b);
+      }
+      if (!imgs.length) grid.append(message("Изображений не найдено."));
+      picker.append(grid);
+    }
+  });
+  controls.append(more);
   stage.append(holder, controls, nameArt(h, "stage-name"));
+  box.append(stage, picker);
   show(h.model ? "3d" : "art");
-  return stage;
+  return box;
 }
 
 async function showHeroPage(h) {

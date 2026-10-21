@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("overlay", {
   quit: () => ipcRenderer.send("quit"),
   toggleOverlay: () => ipcRenderer.send("overlay:toggle"),
   api: (endpoint, params) => ipcRenderer.invoke("api", endpoint, params),
+  asset: (url) => ipcRenderer.invoke("asset", url),
   getNames: () => ipcRenderer.invoke("names"),
   getSettings: () => ipcRenderer.invoke("settings:get"),
   setSettings: (patch) => ipcRenderer.invoke("settings:set", patch),

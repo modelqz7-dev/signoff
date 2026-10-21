@@ -135,6 +135,17 @@ if (!app.requestSingleInstanceLock()) {
     if (!namesPromise) namesPromise = loadNames().catch(() => null);
     return namesPromise;
   });
+  ipcMain.handle("asset", async (_e, url) => {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "https:" || u.hostname !== "assets-bucket.deadlock-api.com") throw new Error("host not allowed");
+      const res = await fetch(url, { signal: AbortSignal.timeout(90000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return { ok: true, data: new Uint8Array(await res.arrayBuffer()) };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
   ipcMain.handle("settings:get", () => readSettings());
   ipcMain.handle("settings:set", (_e, patch) => {
     const next = { ...readSettings(), ...patch };

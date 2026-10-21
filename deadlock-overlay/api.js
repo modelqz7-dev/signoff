@@ -3,7 +3,7 @@ const ALLOWED = [
   /^\/v1\/analytics\/item-stats$/,
   /^\/v1\/analytics\/hero-stats$/,
   /^\/v1\/analytics\/hero-counter-stats$/,
-  /^\/v1\/assets\/(heroes|items|ranks|sounds)$/,
+  /^\/v1\/assets\/(heroes|items|ranks|sounds|images|models)$/,
   /^\/v1\/players\/\d{1,10}\/rank$/,
   /^\/v1\/matches\/active$/,
   /^\/v1\/leaderboard\/(Europe|Asia|NAmerica|SAmerica|Oceania)$/,

@@ -345,3 +345,13 @@ td img { width: 30px; height: 30px; object-fit: cover; border-radius: 5px; }
 .hs-right .abil-title { font-size: 21px; }
 @media (max-width: 1250px) { .hero-stage { grid-template-columns: 260px minmax(0, 1fr); } .hs-right { grid-column: 1 / -1; } }
 @media (max-width: 900px) { .hero-stage { grid-template-columns: 1fr; } .stage { height: 380px; } }
+
+.stage-box { min-width: 0; }
+.stage-picker { margin-top: 10px; padding: 14px; background: rgba(18, 18, 20, 0.9); border: 1px solid var(--line-2); border-radius: 10px; max-height: 340px; overflow-y: auto; }
+.stage-picker h2 { margin: 6px 0 8px; }
+.pose-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.pick { display: flex; flex-direction: column; gap: 4px; padding: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; text-align: left; }
+.pick:hover { border-color: var(--muted); }
+.pick-img { width: 100%; height: 100px; object-fit: contain; background: #1a1a1d; border-radius: 4px; }
+.pick-path { font-size: 10px; color: var(--muted); word-break: break-all; line-height: 1.25; }
