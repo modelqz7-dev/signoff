@@ -280,13 +280,36 @@ function drawFullHistory(container, account, data, state) {
 
 /* ---------- player search (shared by Player page and Settings) ---------- */
 
-function searchBox(placeholder, onPick, pickLabel) {
-  const wrap = el("div");
-  const field = el("div", "field");
+function svgIcon(paths) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  for (const d of paths) {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d);
+    svg.append(p);
+  }
+  return svg;
+}
+
+function playerRow(p, pickLabel, onPick) {
+  const row = el("button", "result-row");
+  const info = el("div", "result-info");
+  info.append(el("div", "pname", p.personaname || `ID ${p.account_id}`), el("div", "muted small", `ID ${p.account_id}`));
+  row.append(img(p.avatar, "avatar"), info);
+  if (typeof p.matches_played_last_30d === "number") row.append(el("span", "muted small", `${p.matches_played_last_30d} матчей за 30 дней`));
+  if (pickLabel) row.append(el("span", "pick", pickLabel));
+  row.addEventListener("click", () => onPick(p));
+  return row;
+}
+
+function searchBox(placeholder, onPick, pickLabel, big) {
+  const wrap = el("div", big ? "search-big" : "search-compact");
+  const field = el("div", "sfield");
+  field.append(svgIcon(["M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z", "m20 20-4.9-4.9"]));
   const input = el("input");
   input.type = "text";
   input.placeholder = placeholder;
-  const go = el("button", "ghost", "Найти");
+  const go = el("button", "sgo", "Найти");
   field.append(input, go);
   const results = el("div", "results");
   wrap.append(field, results);
@@ -298,17 +321,12 @@ function searchBox(placeholder, onPick, pickLabel) {
     const res = await window.overlay.api("/v1/players/steam-search", { search_query: q, limit: 10, min_matches_played_last_30d: 0 });
     results.replaceChildren();
     if (!res.ok) return results.append(message(res.error, "error"));
-    if (!res.data.length) return results.append(message("Ничего не найдено."));
-    for (const p of res.data) {
-      const row = el("button", "result-row");
-      row.append(img(p.avatar, "avatar"), el("span", "pname", p.personaname), el("span", "muted small", `ID ${p.account_id}`));
-      if (pickLabel) row.append(el("span", "muted small", pickLabel));
-      row.addEventListener("click", () => onPick(p));
-      results.append(row);
-    }
+    if (!res.data.length) return results.append(message("Ничего не найдено. Попробуй ID (код дружбы) вместо ника."));
+    for (const p of res.data) results.append(playerRow(p, pickLabel, onPick));
   }
   go.addEventListener("click", run);
   input.addEventListener("keydown", (e) => e.key === "Enter" && run());
+  setTimeout(() => input.focus(), 0);
   return wrap;
 }
 
@@ -330,9 +348,40 @@ const pages = {
   },
 
   player() {
-    view.replaceChildren(el("h1", "", "Игрок"));
-    const out = el("div");
-    view.append(searchBox("Ник или ID игрока", (p) => renderPlayer(out, p)), out);
+    const remember = async (p) => {
+      const recent = [{ account_id: p.account_id, personaname: p.personaname, avatar: p.avatar, avatarfull: p.avatarfull }]
+        .concat((settings.recent || []).filter((r) => r.account_id !== p.account_id))
+        .slice(0, 6);
+      settings = await window.overlay.setSettings({ recent });
+    };
+
+    const showProfile = (p) => {
+      remember(p);
+      view.replaceChildren();
+      const top = searchBox("Ник или ID игрока", showProfile, null, false);
+      const out = el("div", "profile-out");
+      view.append(top, out);
+      renderPlayer(out, p);
+    };
+
+    view.replaceChildren();
+    const page = el("div", "search-page");
+    const hero = el("div", "search-hero");
+    hero.append(el("div", "kicker", "Deadlock"), el("h1", "search-title", "Поиск игрока"), el("p", "muted", "Найди профиль по нику или ID: код дружбы из игры тоже подходит."));
+    const box = searchBox("Ник или ID игрока", showProfile, null, true);
+    page.append(hero, box);
+
+    const quick = el("div", "quick");
+    if (settings.account) {
+      quick.append(el("div", "quick-label", "Мой профиль"));
+      quick.append(playerRow(settings.account, null, showProfile));
+    }
+    if ((settings.recent || []).length) {
+      quick.append(el("div", "quick-label", "Недавние"));
+      for (const r of settings.recent) quick.append(playerRow(r, null, showProfile));
+    }
+    if (quick.children.length) page.append(quick);
+    view.append(page);
   },
 
   settings() {
