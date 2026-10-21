@@ -1,18 +1,18 @@
 :root {
-  --bg: #0e1110;
-  --bg-2: #101a17;
-  --panel: #141918;
-  --frame: #232b28;
-  --frame-soft: #232b28;
-  --green: #5ec28f;
-  --green-dim: #5ec28f;
-  --orange: #e08a1e;
-  --purple: #b07cf0;
-  --cream: #eef2f0;
-  --ink: #14110f;
-  --text: #d9e4df;
-  --muted: #7f9a92;
-  --warn: #e8a13a;
+  --bg: #0b0b0c;
+  --bg-2: #131315;
+  --panel: #1c1c1e;
+  --frame: #38383a;
+  --frame-soft: #2c2c2e;
+  --green: #f5f5f7;
+  --green-dim: #8e8e93;
+  --orange: #ff9f0a;
+  --purple: #bf5af2;
+  --cream: #f5f5f7;
+  --ink: #0b0b0c;
+  --text: #e5e5ea;
+  --muted: #8e8e93;
+  --warn: #ffd60a;
   --head: "Oswald", "Arial Narrow", sans-serif;
   --body: "Fira Sans Condensed", "Arial Narrow", sans-serif;
 }
@@ -26,7 +26,7 @@ html, body { margin: 0; height: 100%; background: transparent; font-family: var(
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  background: rgba(14, 17, 16, 0.96);
+  background: rgba(11, 11, 12, 0.97);
   border: 1px solid var(--frame);
   border-radius: 4px;
   overflow: hidden;
@@ -35,7 +35,7 @@ html, body { margin: 0; height: 100%; background: transparent; font-family: var(
 .bar { display: flex; align-items: center; gap: 8px; -webkit-app-region: drag; }
 .title { font-family: var(--head); font-weight: 700; font-size: 19px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cream); flex: 1; }
 .hint { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-kbd { font-family: var(--head); font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: #32413d; color: var(--cream); border: 1px solid #4a5f59; }
+kbd { font-family: var(--head); font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: #2c2c2e; color: var(--cream); border: 1px solid #48484a; }
 .quit { -webkit-app-region: no-drag; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; }
 .quit:hover { color: #ff6b6b; }
 
@@ -81,7 +81,7 @@ h3 { margin: 14px 0 6px; font-family: var(--head); font-weight: 700; font-size: 
   border: 1px solid var(--frame-soft); border-left: 4px solid #667;
 }
 .item.weapon { border-left-color: var(--orange); }
-.item.vitality { border-left-color: var(--green); }
+.item.vitality { border-left-color: #30d158; }
 .item.spirit { border-left-color: var(--purple); }
 .item-img { width: 40px; height: 40px; object-fit: contain; flex: none; }
 .item-body { flex: 1; min-width: 0; }
@@ -100,5 +100,5 @@ h3 { margin: 14px 0 6px; font-family: var(--head); font-weight: 700; font-size: 
 ::-webkit-scrollbar-track { background: transparent; }
 
 .hero-btn .wr { font-family: var(--head); font-weight: 700; font-size: 10px; letter-spacing: 0.03em; }
-.hero-btn .wr.up { color: var(--green); }
-.hero-btn .wr.down { color: #e4605e; }
+.hero-btn .wr.up { color: #30d158; }
+.hero-btn .wr.down { color: #ff453a; }

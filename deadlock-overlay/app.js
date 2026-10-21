@@ -181,7 +181,6 @@ function heroList(heroStats, selected, onSelect) {
     const b = el("button", `hero-row${selected === id ? " active" : ""}`);
     const bar = el("span", "hero-bar");
     bar.style.width = id == null ? "0%" : `${Math.max(6, (count / max) * 100)}%`;
-    bar.style.background = color || "var(--neutral)";
     const label = el("span", "hero-row-label");
     if (icon) label.append(img(icon, "hero-row-img"));
     label.append(el("span", "", name), el("span", "muted small", id == null ? "" : String(count)));
@@ -374,22 +373,18 @@ const pages = {
     view.append(about);
   },
 
-  meta() {
-    view.replaceChildren(el("h1", "", "Мета"));
-    const tabs = el("div", "tabs");
+  heroes() {
+    view.replaceChildren(el("h1", "", "Герои"));
     const body = el("div");
-    const defs = [["Герои", metaHeroes], ["Предметы", metaItems]];
-    defs.forEach(([label, fn], i) => {
-      const b = el("button", i === 0 ? "active" : "", label);
-      b.addEventListener("click", () => {
-        tabs.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
-        fn(body);
-      });
-      tabs.append(b);
-    });
-    view.append(tabs, body);
+    view.append(body);
     metaHeroes(body);
+  },
+
+  items() {
+    view.replaceChildren(el("h1", "", "Предметы"));
+    const body = el("div");
+    view.append(body);
+    metaItems(body);
   },
 };
 
