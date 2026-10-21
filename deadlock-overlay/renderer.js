@@ -1,4 +1,13 @@
 const { heroes, items } = window.DATA;
+for (const h of heroes) h.en = h.name;
+
+async function applyNames() {
+  const names = await window.overlay.getNames();
+  if (!names) return;
+  for (const h of heroes) if (names.heroes[h.id]) h.name = names.heroes[h.id];
+  for (const it of Object.values(items)) if (names.items[it.id]) it.name = names.items[it.id];
+  heroes.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+}
 const rules = window.RULES || {};
 
 const $ = (id) => document.getElementById(id);
@@ -103,7 +112,7 @@ async function loadLive(h) {
 function renderGrid(filter) {
   grid.replaceChildren();
   const q = filter.trim().toLowerCase();
-  const list = q ? heroes.filter((h) => h.name.toLowerCase().includes(q)) : heroes;
+  const list = q ? heroes.filter((h) => `${h.name} ${h.en}`.toLowerCase().includes(q)) : heroes;
   for (const h of list) {
     const btn = el("button", "hero-btn");
     btn.title = h.name;
@@ -125,7 +134,7 @@ function renderGrid(filter) {
 function showAgainst(h) {
   const box = $("against");
   box.replaceChildren();
-  const r = rules[h.name];
+  const r = rules[h.en];
   if (!r) {
     box.append(el("p", "empty", "Для этого героя правил пока нет. Добавь их в data/rules.js."));
     return;
@@ -191,5 +200,8 @@ window.overlay.onFocusSearch(() => {
   search.select();
 });
 
-renderGrid("");
-loadHeroStats();
+(async () => {
+  await applyNames();
+  renderGrid("");
+  loadHeroStats();
+})();

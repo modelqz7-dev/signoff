@@ -24,6 +24,26 @@ function writeSettings(next) {
   fs.writeFileSync(settingsFile(), JSON.stringify(next, null, 2));
 }
 
+const NAMES_TTL = 7 * 24 * 3600 * 1000;
+
+async function loadNames() {
+  const file = path.join(app.getPath("userData"), "names-ru.json");
+  try {
+    const cached = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (Date.now() - cached.at < NAMES_TTL) return cached.names;
+  } catch {}
+  const [heroes, items] = await Promise.all([
+    api.call("/v1/assets/heroes", { language: "russian" }),
+    api.call("/v1/assets/items", { language: "russian" }),
+  ]);
+  const names = { heroes: {}, items: {} };
+  for (const h of heroes) if (h.name) names.heroes[h.id] = h.name;
+  for (const i of items) if (i.name) names.items[i.id] = i.name;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ at: Date.now(), names }));
+  return names;
+}
+
 const webPreferences = () => ({
   contextIsolation: true,
   nodeIntegration: false,
@@ -102,6 +122,11 @@ if (!app.requestSingleInstanceLock()) {
     } catch (err) {
       return { ok: false, error: err.message };
     }
+  });
+  let namesPromise = null;
+  ipcMain.handle("names", () => {
+    if (!namesPromise) namesPromise = loadNames().catch(() => null);
+    return namesPromise;
   });
   ipcMain.handle("settings:get", () => readSettings());
   ipcMain.handle("settings:set", (_e, patch) => {

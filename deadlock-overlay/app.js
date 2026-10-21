@@ -1,4 +1,5 @@
 const { heroes, items } = window.DATA;
+for (const h of heroes) h.en = h.name;
 const heroById = new Map(heroes.map((h) => [h.id, h]));
 const itemByApiId = new Map(Object.values(items).map((it) => [it.id, it]));
 const SLOT = { weapon: "Оружие", vitality: "Живучесть", spirit: "Дух" };
@@ -10,6 +11,13 @@ function matchKind(m) {
   const teams = [0, 1];
   if (teams.includes(m.match_result) && teams.includes(m.player_team)) return m.match_result === m.player_team ? "win" : "loss";
   return "neutral";
+}
+
+async function applyNames() {
+  const names = await window.overlay.getNames();
+  if (!names) return;
+  for (const h of heroes) if (names.heroes[h.id]) h.name = names.heroes[h.id];
+  for (const it of itemByApiId.values()) if (names.items[it.id]) it.name = names.items[it.id];
 }
 
 const view = document.getElementById("view");
@@ -336,10 +344,15 @@ const pages = {
   home() {
     view.replaceChildren(el("h1", "", "Главная"));
     if (!settings.account) {
-      view.append(message("Профиль не привязан. Привяжи свой профиль в настройках, и здесь появятся твои матчи."));
+      const banner = el("div", "banner");
+      banner.append(el("span", "", "Привяжи свой профиль, и здесь появятся твои матчи и статистика."));
       const btn = el("button", "ghost", "Открыть настройки");
       btn.addEventListener("click", () => go("settings"));
-      view.append(btn);
+      banner.append(btn);
+      view.replaceChildren(el("h1", "", "Мета сейчас"), banner);
+      const box = el("div");
+      view.append(box);
+      metaHome(box);
       return;
     }
     const box = el("div");
@@ -513,6 +526,53 @@ async function metaItems(container) {
   ], rows, "wr");
 }
 
+
+/* ---------- meta dashboard (home without a linked profile) ---------- */
+
+function dashPanel(title, rows, linkText, page) {
+  const card = el("div", "dash-card");
+  card.append(el("h2", "", title));
+  for (const r of rows) {
+    const row = el("div", "dash-row");
+    row.append(img(r.icon, "dash-img"), el("span", "dash-name", r.name), el("span", `dash-val ${r.cls || ""}`, r.value));
+    card.append(row);
+  }
+  const link = el("button", "link", linkText);
+  link.addEventListener("click", () => go(page));
+  card.append(link);
+  return card;
+}
+
+async function metaHome(container) {
+  container.replaceChildren(message("Загружаю мету..."));
+  const [hs, is] = await Promise.all([
+    window.overlay.api("/v1/analytics/hero-stats", {}),
+    window.overlay.api("/v1/analytics/item-stats", {}),
+  ]);
+  if (!hs.ok) return container.replaceChildren(message(hs.error, "error"));
+  const by = sumBy(hs.data, "hero_id");
+  let total = 0;
+  for (const v of by.values()) total += v.matches;
+  const heroRows = [...by]
+    .filter(([id, v]) => heroById.has(id) && v.matches >= 300)
+    .map(([id, v]) => ({ hero: heroById.get(id), wr: pct(v.wins, v.matches), pick: pct(v.matches, total) }));
+  const toRow = (r, value, cls) => ({ icon: r.hero.small, name: r.hero.name, value, cls });
+  const best = [...heroRows].sort((a, b) => b.wr - a.wr).slice(0, 8).map((r) => toRow(r, `${r.wr}%`, r.wr >= 50 ? "up" : "down"));
+  const popular = [...heroRows].sort((a, b) => b.pick - a.pick).slice(0, 8).map((r) => toRow(r, `${r.pick}%`));
+  const grid = el("div", "dash");
+  grid.append(dashPanel("Лучшие герои по винрейту", best, "Все герои →", "heroes"), dashPanel("Самые популярные герои", popular, "Все герои →", "heroes"));
+  if (is.ok) {
+    const itemRows = [...sumBy(is.data, "item_id")]
+      .filter(([id, v]) => itemByApiId.has(id) && v.matches >= 2000)
+      .map(([id, v]) => ({ it: itemByApiId.get(id), wr: pct(v.wins, v.matches) }))
+      .sort((a, b) => b.wr - a.wr)
+      .slice(0, 8)
+      .map((r) => ({ icon: r.it.img, name: r.it.name, value: `${r.wr}%`, cls: r.wr >= 50 ? "up" : "down" }));
+    grid.append(dashPanel("Лучшие предметы", itemRows, "Все предметы →", "items"));
+  }
+  container.replaceChildren(grid);
+}
+
 /* ---------- navigation ---------- */
 
 function go(name) {
@@ -529,5 +589,6 @@ document.getElementById("openOverlay").addEventListener("click", () => window.ov
 
 (async () => {
   settings = await window.overlay.getSettings();
+  await applyNames();
   go("home");
 })();
