@@ -9,17 +9,28 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <aside class="side">
-    <div class="brand">Deadlock Tracker</div>
-    <nav id="nav" class="nav">
-      <button data-page="home" class="active">Главная</button>
-      <button data-page="meta">Мета</button>
-      <button data-page="player">Игрок</button>
-      <button data-page="settings">Настройки</button>
+  <aside class="rail">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>
+    </div>
+    <nav id="nav" class="rail-nav">
+      <button data-page="home" data-label="Главная" aria-label="Главная" class="active">
+        <svg viewBox="0 0 24 24"><path d="M3.5 11 12 3.8 20.5 11"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg>
+      </button>
+      <button data-page="meta" data-label="Мета" aria-label="Мета">
+        <svg viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6 20.5V11"/><path d="M12 20.5V4.5"/><path d="M18 20.5v-6.5"/></svg>
+      </button>
+      <button data-page="player" data-label="Поиск игрока" aria-label="Поиск игрока">
+        <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.9-4.9"/></svg>
+      </button>
+      <button data-page="settings" data-label="Настройки" aria-label="Настройки">
+        <svg viewBox="0 0 24 24"><path d="M3.5 7H11M16 7h4.5"/><circle cx="13.5" cy="7" r="2.3"/><path d="M3.5 17H8M13 17h7.5"/><circle cx="10.5" cy="17" r="2.3"/></svg>
+      </button>
     </nav>
-    <div class="side-foot">
-      <button id="openOverlay" class="primary">Открыть оверлей</button>
-      <p class="muted small">Горячая клавиша: F8</p>
+    <div class="rail-foot">
+      <button id="openOverlay" data-label="Оверлей (F8)" aria-label="Открыть оверлей">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/><rect x="12.5" y="12.5" width="6" height="4" rx="0.8"/></svg>
+      </button>
     </div>
   </aside>
   <main id="view" class="view"></main>
