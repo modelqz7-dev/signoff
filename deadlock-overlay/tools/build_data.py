@@ -48,6 +48,7 @@ for h in heroes_raw:
         "type": h.get("hero_type"),
         "tags": h.get("tags", []),
         "gun": h.get("gun_tag"),
+        "color": (h.get("colors") or {}).get("style_hex"),
         "icon": img.get("icon_hero_card_webp") or img.get("icon_hero_card"),
         "small": img.get("icon_image_small_webp") or img.get("icon_image_small"),
         "popular": {ph: popular(h, ph) for ph in ("early_game", "mid_game", "late_game")},

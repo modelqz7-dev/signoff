@@ -4,6 +4,7 @@ const ALLOWED = [
   /^\/v1\/analytics\/hero-stats$/,
   /^\/v1\/analytics\/hero-counter-stats$/,
   /^\/v1\/players\/steam-search$/,
+  /^\/v1\/players\/hero-stats$/,
   /^\/v1\/players\/\d{1,10}\/match-history$/,
 ];
 const CACHE_MS = 10 * 60 * 1000;

@@ -42,60 +42,225 @@ function message(text, className = "empty") {
   return el("p", className, text);
 }
 
-/* ---------- player (matches + stats) ---------- */
+/* ---------- player profile (like the in-game profile) ---------- */
+
+const MODE = { 1: "Обычный матч", 2: "Пользовательский", 3: "Матч с ботами", 4: "Ранговый" };
+const PAGE_SIZE = 16;
+const STRIP_COUNT = 8;
+const PLAYER_TTL = 5 * 60 * 1000;
+const playerCache = new Map();
+const num = (v) => Math.round(v).toLocaleString("ru-RU");
+
+async function loadPlayer(id) {
+  const hit = playerCache.get(id);
+  if (hit && Date.now() - hit.at < PLAYER_TTL) return hit.value;
+  const [hist, hs] = await Promise.all([
+    window.overlay.api(`/v1/players/${id}/match-history`, {}),
+    window.overlay.api("/v1/players/hero-stats", { account_ids: id }),
+  ]);
+  if (!hist.ok) return { ok: false, error: hist.error };
+  const value = {
+    ok: true,
+    matches: [...hist.data].sort((a, b) => b.start_time - a.start_time),
+    heroStats: hs.ok ? hs.data : [],
+    statsError: hs.ok ? null : hs.error,
+  };
+  playerCache.set(id, { at: Date.now(), value });
+  return value;
+}
+
+function matchCard(m, big) {
+  const kind = OUTCOME[m.player_match_outcome] || "neutral";
+  const hero = heroById.get(m.hero_id);
+  const card = el("div", `mcard ${kind}${big ? " big" : ""}`);
+  const top = el("div", "mtop");
+  top.append(
+    el("span", "mres", kind === "win" ? "Победа" : kind === "loss" ? "Поражение" : "Не учтён"),
+    el("span", "mmode", MODE[m.match_mode] || "Матч"),
+  );
+  const text = el("div", "mtext");
+  text.append(
+    top,
+    el("div", "mhero", hero ? hero.name : `Герой ${m.hero_id}`),
+    el("div", "mdur", fmtDuration(m.match_duration_s)),
+    el("div", "mkda", `${m.player_kills} / ${m.player_deaths} / ${m.player_assists}`),
+    el("div", "mdate", fmtDate(m.start_time)),
+  );
+  const side = el("div", "mside");
+  side.append(img(hero && hero.small, "mhero-img"));
+  const worth = el("div", "mworth", `${Math.round(m.net_worth / 1000)} т.`);
+  worth.title = "Души";
+  side.append(worth);
+  card.append(text, side);
+  return card;
+}
+
+function sumStats(list) {
+  const t = { matches: 0, wins: 0, kills: 0, deaths: 0, assists: 0, damage: 0, boss: 0, time: 0, denies: 0, dpmW: 0, npmW: 0, cpmW: 0, accW: 0 };
+  for (const s of list) {
+    const tp = s.time_played || 0;
+    t.matches += s.matches_played;
+    t.wins += s.wins;
+    t.kills += s.kills;
+    t.deaths += s.deaths;
+    t.assists += s.assists;
+    t.damage += s.total_player_damage;
+    t.boss += s.total_boss_damage;
+    t.time += tp;
+    t.denies += s.denies_per_match * s.matches_played;
+    t.dpmW += s.damage_per_min * tp;
+    t.npmW += s.networth_per_min * tp;
+    t.cpmW += s.creeps_per_min * tp;
+    t.accW += s.accuracy * s.matches_played;
+  }
+  return t;
+}
+
+function statCell(label, value) {
+  const c = el("div", "stat");
+  c.append(el("div", "stat-value", value), el("div", "stat-label", label));
+  return c;
+}
+
+function statsPanel(heroStats, heroId) {
+  const panel = el("div", "stats");
+  const list = heroId == null ? heroStats : heroStats.filter((s) => s.hero_id === heroId);
+  const t = sumStats(list);
+  const hero = heroId == null ? null : heroById.get(heroId);
+  panel.append(el("div", "stats-kicker", "Статистика за всё время"), el("div", "stats-title", hero ? hero.name : "Все герои"));
+  if (!t.matches) {
+    panel.append(message("Нет данных."));
+    return panel;
+  }
+  const secPerMatch = t.time / t.matches;
+  const toSeconds = secPerMatch > 300 ? 1 : 60;
+  const seconds = t.time * toSeconds;
+  const perMin = (w) => (t.time ? w / t.time : 0);
+  const acc = t.accW / t.matches;
+
+  const body = el("div", "stats-body");
+  const metrics = el("div", "metrics");
+  metrics.append(
+    statCell("Сыграно матчей", num(t.matches)),
+    statCell("Выиграно матчей", num(t.wins)),
+    statCell("Винрейт", `${pct(t.wins, t.matches)}%`),
+    statCell("Время в игре", `${Math.floor(seconds / 3600)} ч ${Math.floor((seconds % 3600) / 60)} мин`),
+    statCell("Урон в минуту", num(perMin(t.dpmW))),
+    statCell("Души в минуту", num(perMin(t.npmW))),
+    statCell("Добивания в минуту", perMin(t.cpmW).toFixed(1)),
+    statCell("Укр. шаров", num(t.denies)),
+  );
+  const tiles = el("div", "tiles");
+  tiles.append(
+    statCell("Убийства", num(t.kills)),
+    statCell("Помощь", num(t.assists)),
+    statCell("Смерти", num(t.deaths)),
+    statCell("Урон героям", num(t.damage)),
+    statCell("Урон по боссам", num(t.boss)),
+    statCell("Точность", `${(acc <= 1 ? acc * 100 : acc).toFixed(1)}%`),
+  );
+  body.append(metrics, tiles);
+  panel.append(body);
+  return panel;
+}
+
+function heroList(heroStats, selected, onSelect) {
+  const list = el("div", "hero-list");
+  const rows = [...heroStats].filter((s) => s.matches_played > 0).sort((a, b) => b.matches_played - a.matches_played);
+  const max = rows.length ? rows[0].matches_played : 1;
+  const mk = (id, name, icon, color, count) => {
+    const b = el("button", `hero-row${selected === id ? " active" : ""}`);
+    const bar = el("span", "hero-bar");
+    bar.style.width = id == null ? "0%" : `${Math.max(6, (count / max) * 100)}%`;
+    bar.style.background = color || "var(--neutral)";
+    const label = el("span", "hero-row-label");
+    if (icon) label.append(img(icon, "hero-row-img"));
+    label.append(el("span", "", name), el("span", "muted small", id == null ? "" : String(count)));
+    b.append(bar, label);
+    b.addEventListener("click", () => onSelect(id));
+    return b;
+  };
+  list.append(mk(null, "Все герои", null, null, 0));
+  for (const s of rows) {
+    const h = heroById.get(s.hero_id);
+    list.append(mk(s.hero_id, h ? h.name : `Герой ${s.hero_id}`, h && h.small, h && h.color, s.matches_played));
+  }
+  return list;
+}
 
 async function renderPlayer(container, account) {
   const token = ++renderToken;
-  container.replaceChildren();
+  container.replaceChildren(message("Загружаю профиль..."));
+  const data = await loadPlayer(account.account_id);
+  if (token !== renderToken) return;
+  if (!data.ok) return container.replaceChildren(message(data.error, "error"));
+  drawProfile(container, account, data, { hero: null });
+}
 
+function profileHead(account) {
   const head = el("div", "profile");
   head.append(img(account.avatarfull || account.avatar, "avatar"));
   const info = el("div");
   info.append(el("div", "name", account.personaname || `ID ${account.account_id}`), el("div", "muted small", `ID ${account.account_id}`));
   head.append(info);
-  container.append(head, message("Загружаю матчи...", "empty"));
+  return head;
+}
 
-  const res = await window.overlay.api(`/v1/players/${account.account_id}/match-history`, {});
-  if (token !== renderToken) return;
-  container.lastChild.remove();
-  if (!res.ok) return container.append(message(res.error, "error"));
-  const list = [...res.data].sort((a, b) => b.start_time - a.start_time);
-  if (!list.length) return container.append(message("Матчей не найдено."));
+function drawProfile(container, account, data, state) {
+  container.replaceChildren(profileHead(account));
+  if (!data.matches.length) return container.append(message("Матчей не найдено."));
 
-  const scored = list.filter((m) => OUTCOME[m.player_match_outcome]);
-  const wins = scored.filter((m) => m.player_match_outcome === 1).length;
-  const sum = (f) => scored.reduce((acc, m) => acc + m[f], 0);
-  const deaths = Math.max(1, sum("player_deaths"));
-  const cards = el("div", "cards");
-  for (const [label, value] of [
-    ["Матчи", scored.length],
-    ["Победы", wins],
-    ["Винрейт", `${pct(wins, scored.length)}%`],
-    ["KDA", ((sum("player_kills") + sum("player_assists")) / deaths).toFixed(2)],
-  ]) {
-    const card = el("div", "card");
-    card.append(el("div", "label", label), el("div", "value", String(value)));
-    cards.append(card);
+  const bar = el("div", "section-bar");
+  const full = el("button", "link", "Полная история матчей →");
+  full.addEventListener("click", () => drawFullHistory(container, account, data, { filter: "all", page: 0 }));
+  bar.append(el("h2", "", "История матчей"), full);
+  const strip = el("div", "strip");
+  for (const m of data.matches.slice(0, STRIP_COUNT)) strip.append(matchCard(m, false));
+  container.append(bar, strip);
+
+  if (data.statsError) return container.append(message(data.statsError, "error"));
+  const split = el("div", "split");
+  const right = el("div", "right");
+  const draw = () => {
+    split.replaceChildren(heroList(data.heroStats, state.hero, (id) => { state.hero = id; draw(); }), right);
+    right.replaceChildren(statsPanel(data.heroStats, state.hero));
+  };
+  container.append(split);
+  draw();
+}
+
+function drawFullHistory(container, account, data, state) {
+  const filtered = data.matches.filter((m) => state.filter === "all" || OUTCOME[m.player_match_outcome] === state.filter);
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  state.page = Math.min(state.page, pages - 1);
+
+  const back = el("button", "link", "← Профиль");
+  back.addEventListener("click", () => drawProfile(container, account, data, { hero: null }));
+  const select = el("select");
+  for (const [value, label] of [["all", "Все матчи"], ["win", "Победы"], ["loss", "Поражения"]]) {
+    const o = el("option", "", label);
+    o.value = value;
+    o.selected = value === state.filter;
+    select.append(o);
   }
-  container.append(cards, el("p", "muted small", `Статистика по последним ${scored.length} учтённым матчам`));
+  select.addEventListener("change", () => drawFullHistory(container, account, data, { filter: select.value, page: 0 }));
+  const bar = el("div", "section-bar");
+  bar.append(el("h1", "", "История матчей"), select);
 
-  container.append(el("h2", "", "Последние матчи"));
-  const box = el("div", "matches");
-  for (const m of list.slice(0, 20)) {
-    const kind = OUTCOME[m.player_match_outcome] || "neutral";
-    const hero = heroById.get(m.hero_id);
-    const row = el("div", `match ${kind}`);
-    row.append(
-      el("div", "bar"),
-      img(hero && hero.small, ""),
-      el("div", "hero", hero ? hero.name : `Герой ${m.hero_id}`),
-      el("div", "result", kind === "win" ? "Победа" : kind === "loss" ? "Поражение" : "Не учтён"),
-      el("div", "kda", `${m.player_kills} / ${m.player_deaths} / ${m.player_assists}`),
-      el("div", "when", `${fmtDuration(m.match_duration_s)} · ${fmtDate(m.start_time)}`),
-    );
-    box.append(row);
-  }
-  container.append(box);
+  const grid = el("div", "mgrid");
+  for (const m of filtered.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE)) grid.append(matchCard(m, true));
+  if (!filtered.length) grid.append(message("Нет матчей."));
+
+  const prev = el("button", "ghost", "Назад");
+  const next = el("button", "ghost", "След.");
+  prev.disabled = state.page === 0;
+  next.disabled = state.page >= pages - 1;
+  prev.addEventListener("click", () => drawFullHistory(container, account, data, { ...state, page: state.page - 1 }));
+  next.addEventListener("click", () => drawFullHistory(container, account, data, { ...state, page: state.page + 1 }));
+  const pager = el("div", "pager");
+  pager.append(prev, el("span", "muted", `Страница ${state.page + 1} из ${pages} · ${filtered.length} матчей`), next);
+
+  container.replaceChildren(profileHead(account), back, bar, grid, pager);
 }
 
 /* ---------- player search (shared by Player page and Settings) ---------- */

@@ -10,6 +10,7 @@ window.DATA = {
     "Bull-Headed"
    ],
    "gun": "Shotgun",
+   "color": "#2092AE",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_sm.webp",
    "popular": {
@@ -121,6 +122,7 @@ window.DATA = {
     "A Cut Above"
    ],
    "gun": "Spreadshot",
+   "color": "#FF3333",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/fencer_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/fencer_sm.webp",
    "popular": {
@@ -232,6 +234,7 @@ window.DATA = {
     "Punch"
    ],
    "gun": "Beam Weapon",
+   "color": "#9F4734",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_sm.webp",
    "popular": {
@@ -343,6 +346,7 @@ window.DATA = {
     "G.O.A.T."
    ],
    "gun": "Close Range",
+   "color": "#D4AD0E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/punkgoat_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/punkgoat_sm.webp",
    "popular": {
@@ -454,6 +458,7 @@ window.DATA = {
     "Burst Damage"
    ],
    "gun": "Spreadshot",
+   "color": "#572798",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nano_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nano_sm.webp",
    "popular": {
@@ -565,6 +570,7 @@ window.DATA = {
     "Dazzling"
    ],
    "gun": "Burst Fire",
+   "color": "#BBA9E1",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/unicorn_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/unicorn_sm.webp",
    "popular": {
@@ -676,6 +682,7 @@ window.DATA = {
     "Explosive"
    ],
    "gun": null,
+   "color": "#CE8D2A",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/deadpack_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/deadpack_sm.webp",
    "popular": {
@@ -787,6 +794,7 @@ window.DATA = {
     "Cruel"
    ],
    "gun": "Spreadshot",
+   "color": "#9D2C2B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/drifter_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/drifter_sm.webp",
    "popular": {
@@ -898,6 +906,7 @@ window.DATA = {
     "Clutch"
    ],
    "gun": "Pistol",
+   "color": "#D0B945",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_sm.webp",
    "popular": {
@@ -1009,6 +1018,7 @@ window.DATA = {
     "Necromancer"
    ],
    "gun": "Pistol",
+   "color": "#D9F334",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/necro_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/necro_sm.webp",
    "popular": {
@@ -1120,6 +1130,7 @@ window.DATA = {
     "Area Denial"
    ],
    "gun": "Bow",
+   "color": "#5EB083",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/archer_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/archer_sm.webp",
    "popular": {
@@ -1231,6 +1242,7 @@ window.DATA = {
     "Lethal"
    ],
    "gun": "Rapid Fire",
+   "color": "#AC6133",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_sm.webp",
    "popular": {
@@ -1342,6 +1354,7 @@ window.DATA = {
     "Apprehender"
    ],
    "gun": "Pistol",
+   "color": "#A35A1B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/astro_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/astro_sm.webp",
    "popular": {
@@ -1453,6 +1466,7 @@ window.DATA = {
     "Burn Rubber"
    ],
    "gun": "Rapid Fire",
+   "color": "#C93C26",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_sm.webp",
    "popular": {
@@ -1564,6 +1578,7 @@ window.DATA = {
     "Rock Solid"
    ],
    "gun": "Rapid Fire",
+   "color": "#9D8CA9",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/tengu_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/tengu_sm.webp",
    "popular": {
@@ -1675,6 +1690,7 @@ window.DATA = {
     "Ice Cold"
    ],
    "gun": "Heavy Hitter",
+   "color": "#74ABBC",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_sm.webp",
    "popular": {
@@ -1786,6 +1802,7 @@ window.DATA = {
     "Fatale"
    ],
    "gun": "Pistol",
+   "color": "#218440",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/spectre_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/spectre_sm.webp",
    "popular": {
@@ -1897,6 +1914,7 @@ window.DATA = {
     "Arrogant"
    ],
    "gun": "Burst Fire",
+   "color": "#4174BB",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_sm.webp",
    "popular": {
@@ -2008,6 +2026,7 @@ window.DATA = {
     "Disruption"
    ],
    "gun": "Heavy Artillery",
+   "color": "#23549D",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/engineer_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/engineer_sm.webp",
    "popular": {
@@ -2119,6 +2138,7 @@ window.DATA = {
     "Vexing"
    ],
    "gun": "Pistol",
+   "color": "#A9171E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/vampirebat_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/vampirebat_sm.webp",
    "popular": {
@@ -2230,6 +2250,7 @@ window.DATA = {
     "Focused"
    ],
    "gun": "Pistol",
+   "color": "#6A2E68",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_sm.webp",
    "popular": {
@@ -2341,6 +2362,7 @@ window.DATA = {
     "Burrower"
    ],
    "gun": "Spreadshot",
+   "color": "#C58428",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/digger_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/digger_sm.webp",
    "popular": {
@@ -2452,6 +2474,7 @@ window.DATA = {
     "Savior"
    ],
    "gun": "Projectile",
+   "color": "#55C9BA",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nurse_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/nurse_sm.webp",
    "popular": {
@@ -2563,6 +2586,7 @@ window.DATA = {
     "Booksmart"
    ],
    "gun": "Projectile",
+   "color": "#258F63",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bookworm_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bookworm_sm.webp",
    "popular": {
@@ -2674,6 +2698,7 @@ window.DATA = {
     "Tactician"
    ],
    "gun": "Burst Fire",
+   "color": "#983952",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_sm.webp",
    "popular": {
@@ -2785,6 +2810,7 @@ window.DATA = {
     "Frogs"
    ],
    "gun": "Spreadshot",
+   "color": "#858617",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/synth_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/synth_sm.webp",
    "popular": {
@@ -2896,6 +2922,7 @@ window.DATA = {
     "Tenacious"
    ],
    "gun": "Spreadshot",
+   "color": "#733033",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/ratking_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/ratking_sm.webp",
    "popular": {
@@ -3007,6 +3034,7 @@ window.DATA = {
     "zZzzZ"
    ],
    "gun": null,
+   "color": "#5383D1",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/familiar_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/familiar_sm.webp",
    "popular": {
@@ -3118,6 +3146,7 @@ window.DATA = {
     "Area Denial"
    ],
    "gun": "Burst Fire",
+   "color": "#CC861E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/gigawatt_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/gigawatt_sm.webp",
    "popular": {
@@ -3229,6 +3258,7 @@ window.DATA = {
     "Repeat"
    ],
    "gun": "Spreadshot",
+   "color": "#E52A68",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_sm.webp",
    "popular": {
@@ -3340,6 +3370,7 @@ window.DATA = {
     "Transformation"
    ],
    "gun": "Long Range",
+   "color": "#BFBC9F",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/werewolf_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/werewolf_sm.webp",
    "popular": {
@@ -3451,6 +3482,7 @@ window.DATA = {
     "Versatile"
    ],
    "gun": "Burst Fire",
+   "color": "#6B6B6B",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_sm.webp",
    "popular": {
@@ -3562,6 +3594,7 @@ window.DATA = {
     "Checkmate"
    ],
    "gun": "Projectile",
+   "color": "#AA9E7E",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chessmaster_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chessmaster_sm.webp",
    "popular": {
@@ -3673,6 +3706,7 @@ window.DATA = {
     "Mind Games"
    ],
    "gun": "Pistol",
+   "color": "#B77528",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/doorman_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/doorman_sm.webp",
    "popular": {
@@ -3784,6 +3818,7 @@ window.DATA = {
     "Tactical"
    ],
    "gun": "Crossbow",
+   "color": "#BD3599",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/priest_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/priest_sm.webp",
    "popular": {
@@ -3895,6 +3930,7 @@ window.DATA = {
     "Kill Me"
    ],
    "gun": "Pistol",
+   "color": "#658B6F",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/frank_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/frank_sm.webp",
    "popular": {
@@ -4006,6 +4042,7 @@ window.DATA = {
     "One Shot Kill"
    ],
    "gun": "Long Range",
+   "color": "#A2C7E5",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_sm.webp",
    "popular": {
@@ -4117,6 +4154,7 @@ window.DATA = {
     "Gooey"
    ],
    "gun": "Projectile",
+   "color": "#319826",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_sm.webp",
    "popular": {
@@ -4228,6 +4266,7 @@ window.DATA = {
     "Rat-a-Tat"
    ],
    "gun": "Rapid Fire",
+   "color": "#A7AD00",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kali_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kali_sm.webp",
    "popular": {
@@ -4339,6 +4378,7 @@ window.DATA = {
     "One Man Army"
    ],
    "gun": "Heavy Hitter",
+   "color": "#4D68A3",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_sm.webp",
    "popular": {
@@ -4450,6 +4490,7 @@ window.DATA = {
     "Telekinetic"
    ],
    "gun": "Rapid Fire",
+   "color": "#944D78",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_sm.webp",
    "popular": {
@@ -4561,6 +4602,7 @@ window.DATA = {
     "Pursuer"
    ],
    "gun": "Spreadshot",
+   "color": "#625789",
    "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/yamato_card.webp",
    "small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/yamato_sm.webp",
    "popular": {
