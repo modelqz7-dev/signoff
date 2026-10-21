@@ -232,6 +232,9 @@ function profileHead(account) {
 
 function drawProfile(container, account, data, state) {
   container.replaceChildren(profileHead(account));
+  const rankBox = el("div", "rank-card");
+  container.append(rankBox);
+  loadRank(rankBox, account.account_id);
   if (!data.matches.length) return container.append(message("Матчей не найдено."));
   const ageDays = (Date.now() / 1000 - data.matches[0].start_time) / 86400;
   if (ageDays > 7) {
@@ -292,6 +295,32 @@ function drawFullHistory(container, account, data, state) {
   pager.append(prev, el("span", "muted", `Страница ${state.page + 1} из ${pages} · ${filtered.length} матчей`), next);
 
   container.replaceChildren(profileHead(account), back, bar, grid, pager);
+}
+
+
+/* ---------- rank badge ---------- */
+
+let ranksPromise = null;
+function getRanks() {
+  if (!ranksPromise) {
+    ranksPromise = window.overlay.api("/v1/assets/ranks", { language: "russian" }).then((res) => {
+      if (!res.ok) ranksPromise = null;
+      return res.ok ? res.data : [];
+    });
+  }
+  return ranksPromise;
+}
+
+async function loadRank(box, accountId) {
+  const [res, ranks] = await Promise.all([window.overlay.api(`/v1/players/${accountId}/rank`, {}), getRanks()]);
+  if (!res.ok || !res.data || !res.data.rank) return box.remove();
+  const def = ranks.find((r) => r.tier === res.data.rank);
+  const sub = res.data.subrank;
+  const src = def && def.images && (def.images[`large_subrank${sub}_webp`] || def.images.large_webp || def.images.large);
+  box.append(img(src, "rank-img"));
+  const info = el("div");
+  info.append(el("div", "rank-name", `${def ? def.name : `Ранг ${res.data.rank}`}${sub ? ` ${sub}` : ""}`), el("div", "muted small", "Ранг по последнему рейтинговому матчу"));
+  box.append(info);
 }
 
 /* ---------- player search (shared by Player page and Settings) ---------- */
@@ -480,6 +509,10 @@ const pages = {
 
   heroes() {
     heroesPage();
+  },
+
+  sounds() {
+    soundsPage();
   },
 
   items() {
@@ -821,7 +854,7 @@ async function showHeroPage(h) {
 
   const tabs = el("div", "tabs");
   const body = el("div");
-  const defs = [["Обзор", () => overview(body)], ["Винрейт и предметы", () => perf(body)]];
+  const defs = [["Обзор", () => overview(body)], ["Винрейт и предметы", () => perf(body)], ["3D", () => viewer(body)]];
   defs.forEach(([label, fn], i) => {
     const b = el("button", i === 0 ? "active" : "", label);
     b.addEventListener("click", () => {
@@ -898,7 +931,111 @@ async function showHeroPage(h) {
     container.append(el("h2", "section-gap", "Матчапы"), duel);
   }
 
+
+  function viewer(container) {
+    container.replaceChildren();
+    if (!h.model) return container.append(message("Для этого героя нет 3D-модели."));
+    const wrap = el("div", "viewer");
+    const mv = document.createElement("model-viewer");
+    mv.className = "mv";
+    for (const [k, v] of Object.entries({
+      src: h.model, "camera-controls": "", "auto-rotate": "", "auto-rotate-delay": "0", "rotation-per-second": "22deg",
+      "shadow-intensity": "1", exposure: "1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
+    })) mv.setAttribute(k, v);
+    const status = el("div", "viewer-status", "Загружаю модель...");
+    const bar = el("div", "viewer-bar");
+    mv.addEventListener("progress", (e) => { status.textContent = `Загрузка модели ${Math.round(e.detail.totalProgress * 100)}%`; });
+    mv.addEventListener("error", () => { status.textContent = "Не удалось загрузить 3D-модель."; });
+    mv.addEventListener("load", () => {
+      status.remove();
+      const anims = mv.availableAnimations || [];
+      if (anims.length) {
+        bar.append(el("span", "muted small", "Анимации:"));
+        for (const name of anims) {
+          const b = el("button", "chip", name);
+          b.addEventListener("click", () => { mv.animationName = name; mv.play(); });
+          bar.append(b);
+        }
+      } else {
+        bar.append(el("span", "muted small", "Это статичная поза: вращай мышью, колесо приближает."));
+      }
+      const spin = el("button", "chip active", "Вращение");
+      spin.addEventListener("click", () => {
+        spin.classList.toggle("active");
+        if (mv.hasAttribute("auto-rotate")) mv.removeAttribute("auto-rotate"); else mv.setAttribute("auto-rotate", "");
+      });
+      bar.append(spin);
+    });
+    wrap.append(mv, status);
+    container.append(wrap, bar);
+  }
+
   overview(body);
+}
+
+
+/* ---------- sounds explorer ---------- */
+
+let soundsPromise = null;
+let audio = null;
+
+function flattenTree(node, prefix, out) {
+  if (typeof node === "string") {
+    if (/^https?:/.test(node)) out.push({ path: prefix, url: node });
+    return out;
+  }
+  if (node && typeof node === "object") for (const [k, v] of Object.entries(node)) flattenTree(v, prefix ? `${prefix}/${k}` : k, out);
+  return out;
+}
+
+function getSounds() {
+  if (!soundsPromise) {
+    soundsPromise = window.overlay.api("/v1/assets/sounds", {}).then((res) => {
+      if (!res.ok) {
+        soundsPromise = null;
+        return { error: res.error, list: [] };
+      }
+      return { list: flattenTree(res.data, "", []) };
+    });
+  }
+  return soundsPromise;
+}
+
+async function soundsPage() {
+  const token = ++renderToken;
+  view.replaceChildren(el("h1", "", "Звуки"), message("Загружаю список звуков..."));
+  const data = await getSounds();
+  if (token !== renderToken) return;
+  view.replaceChildren(el("h1", "", "Звуки"));
+  if (data.error) return view.append(message(data.error, "error"));
+  view.append(el("p", "muted", `Всего файлов: ${num(data.list.length)}. Введи часть названия (например, имя героя) и нажми на звук, чтобы прослушать.`));
+  const input = el("input");
+  input.type = "text";
+  input.placeholder = "Поиск по названию, например abrams";
+  input.className = "mini-search wide";
+  const results = el("div", "results sounds");
+  view.append(input, results);
+  const draw = () => {
+    const q = input.value.trim().toLowerCase();
+    results.replaceChildren();
+    if (!q) return results.append(message("Начни вводить название."));
+    const hits = data.list.filter((s) => s.path.toLowerCase().includes(q)).slice(0, 120);
+    if (!hits.length) return results.append(message("Ничего не найдено."));
+    for (const s of hits) {
+      const row = el("button", "result-row");
+      row.append(el("span", "sound-play", "▶"), el("span", "pname sound-path", s.path));
+      row.addEventListener("click", () => {
+        if (audio) audio.pause();
+        audio = new Audio(s.url);
+        audio.volume = 0.6;
+        audio.play().catch(() => row.querySelector(".sound-path").append(" (не удалось воспроизвести)"));
+      });
+      results.append(row);
+    }
+  };
+  input.addEventListener("input", draw);
+  draw();
+  input.focus();
 }
 
 /* ---------- navigation ---------- */

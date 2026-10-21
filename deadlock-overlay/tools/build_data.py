@@ -57,6 +57,7 @@ for h in heroes_raw:
         "playstyle": (h.get("description") or {}).get("playstyle"),
         "lore": (h.get("description") or {}).get("lore"),
         "complexity": h.get("complexity"),
+        "model": (h.get("models") or {}).get("hero_select"),
         "small": img.get("icon_image_small_webp") or img.get("icon_image_small"),
         "popular": {ph: popular(h, ph) for ph in ("early_game", "mid_game", "late_game")},
     })
