@@ -127,3 +127,5 @@ button.link:hover { color: var(--strong); }
 .tiles .stat { background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 12px 8px; text-align: center; }
 .stat-value { font-family: var(--head); font-weight: 700; font-size: 22px; color: var(--strong); font-variant-numeric: tabular-nums; }
 .stat-label { margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+.notice { color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--neutral); border-radius: 3px; padding: 10px 12px; margin: 0 0 6px; max-width: 760px; line-height: 1.35; }

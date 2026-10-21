@@ -4,6 +4,14 @@ const itemByApiId = new Map(Object.values(items).map((it) => [it.id, it]));
 const SLOT = { weapon: "Оружие", vitality: "Живучесть", spirit: "Дух" };
 const OUTCOME = { 1: "win", 2: "loss" };
 
+function matchKind(m) {
+  if (OUTCOME[m.player_match_outcome]) return OUTCOME[m.player_match_outcome];
+  if (m.player_match_outcome === 5) return "neutral";
+  const teams = [0, 1];
+  if (teams.includes(m.match_result) && teams.includes(m.player_team)) return m.match_result === m.player_team ? "win" : "loss";
+  return "neutral";
+}
+
 const view = document.getElementById("view");
 const nav = document.getElementById("nav");
 let settings = {};
@@ -70,9 +78,10 @@ async function loadPlayer(id) {
 }
 
 function matchCard(m, big) {
-  const kind = OUTCOME[m.player_match_outcome] || "neutral";
+  const kind = matchKind(m);
   const hero = heroById.get(m.hero_id);
   const card = el("div", `mcard ${kind}${big ? " big" : ""}`);
+  card.title = `outcome ${m.player_match_outcome}, result ${m.match_result}, team ${m.player_team}`;
   const top = el("div", "mtop");
   top.append(
     el("span", "mres", kind === "win" ? "Победа" : kind === "loss" ? "Поражение" : "Не учтён"),
@@ -209,6 +218,13 @@ function profileHead(account) {
 function drawProfile(container, account, data, state) {
   container.replaceChildren(profileHead(account));
   if (!data.matches.length) return container.append(message("Матчей не найдено."));
+  const ageDays = (Date.now() / 1000 - data.matches[0].start_time) / 86400;
+  if (ageDays > 7) {
+    container.append(message(
+      `Последний матч в данных API: ${fmtDate(data.matches[0].start_time)}. Свежие матчи API получает только если аккаунт добавлен в друзья его боту или матчи загружены через их Data Ingest на deadlock-api.com.`,
+      "notice",
+    ));
+  }
 
   const bar = el("div", "section-bar");
   const full = el("button", "link", "Полная история матчей →");
@@ -230,7 +246,7 @@ function drawProfile(container, account, data, state) {
 }
 
 function drawFullHistory(container, account, data, state) {
-  const filtered = data.matches.filter((m) => state.filter === "all" || OUTCOME[m.player_match_outcome] === state.filter);
+  const filtered = data.matches.filter((m) => state.filter === "all" || matchKind(m) === state.filter);
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   state.page = Math.min(state.page, pages - 1);
 
