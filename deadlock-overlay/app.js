@@ -521,6 +521,43 @@ const pages = {
     window.overlay.heroArtList().then((r) => { where.textContent = `Папка: ${r.dir} · файлов: ${r.files.length}`; });
     view.append(artBlock);
 
+    const pBlock = el("div", "settings-block");
+    pBlock.append(el("h2", "", "Портреты героев"));
+    pBlock.append(el("p", "muted", "Портрет каждого героя создаётся из 3D-модели один раз и хранится на диске. Здесь можно создать их сразу для всех героев (несколько минут, окно приложения лучше не закрывать)."));
+    const pInfo = el("p", "muted small", "Проверяю, что уже готово...");
+    const pBtn = el("button", "ghost", "Подготовить все портреты");
+    pBlock.append(pInfo, pBtn);
+    view.append(pBlock);
+    const withModel = heroes.filter((h) => h.model);
+    const countDone = async () => {
+      let n = 0;
+      for (const h of withModel) if (await window.overlay.getPortrait(h.id)) n++;
+      return n;
+    };
+    countDone().then((n) => { pInfo.textContent = `Готово ${n} из ${withModel.length}`; });
+    let running = false;
+    pBtn.addEventListener("click", async () => {
+      if (running) return;
+      running = true;
+      pBtn.disabled = true;
+      let done = 0, failed = 0;
+      for (const h of withModel) {
+        pInfo.textContent = `Готово ${done} из ${withModel.length}${failed ? `, ошибок ${failed}` : ""}. Сейчас: ${h.name}...`;
+        try {
+          if (!(await window.overlay.getPortrait(h.id))) {
+            const bytes = await renderPortrait(h, () => {});
+            await window.overlay.savePortrait(h.id, bytes);
+          }
+          done++;
+        } catch (e) {
+          failed++;
+        }
+      }
+      pInfo.textContent = `Готово ${done} из ${withModel.length}${failed ? `, ошибок ${failed}` : ""}.`;
+      pBtn.disabled = false;
+      running = false;
+    });
+
     const about = el("div", "settings-block");
     about.append(el("h2", "", "О программе"));
     about.append(el("p", "muted", "Данные: deadlock-api.com. Проект не связан с Valve и не одобрен ею."));
