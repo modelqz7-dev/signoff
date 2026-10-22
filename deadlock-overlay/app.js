@@ -960,11 +960,36 @@ function statsBlock(h) {
 const blobCache = new Map();
 const treeCache = new Map();
 
+const glbInfoCache = new Map();
+
+function glbInfo(bytes) {
+  const size = `${Math.round(bytes.byteLength / 1024)} КБ`;
+  if (bytes.byteLength < 24) return { ok: false, text: `файл слишком мал (${bytes.byteLength} Б)` };
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (dv.getUint32(0, true) !== 0x46546c67) {
+    const head = new TextDecoder().decode(bytes.subarray(0, 40)).replace(/\s+/g, " ");
+    return { ok: false, text: `это не GLB (${size}), начало: "${head}"` };
+  }
+  try {
+    const json = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + dv.getUint32(12, true))));
+    const ext = (json.extensionsUsed || []).join(", ") || "нет";
+    return { ok: true, text: `GLB ${size}; сцен: ${(json.scenes || []).length}, мешей: ${(json.meshes || []).length}, анимаций: ${(json.animations || []).length}; расширения: ${ext}` };
+  } catch (e) {
+    return { ok: false, text: `GLB ${size}, заголовок не читается` };
+  }
+}
+
 async function assetBlobUrl(url, type) {
   if (blobCache.has(url)) return blobCache.get(url);
   const res = await window.overlay.asset(url);
   if (!res.ok) throw new Error(res.error);
-  const blob = URL.createObjectURL(new Blob([res.data], { type }));
+  const bytes = res.data instanceof Uint8Array ? res.data : new Uint8Array(res.data && res.data.buffer ? res.data.buffer : Object.values(res.data || {}));
+  if (type === "model/gltf-binary") {
+    const info = glbInfo(bytes);
+    glbInfoCache.set(url, info.text);
+    if (!info.ok) throw new Error(info.text);
+  }
+  const blob = URL.createObjectURL(new Blob([bytes], { type }));
   blobCache.set(url, blob);
   return blob;
 }
@@ -997,8 +1022,10 @@ function buildStage(h) {
         exposure: "1.1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
       })) mv.setAttribute(k, v);
       const fail = (why) => {
-        status.textContent = `Не удалось показать 3D-модель (${why}). Показываю арт.`;
-        setTimeout(() => show("art"), 2200);
+        const info = glbInfoCache.get(state.model);
+        status.textContent = `Не удалось показать 3D-модель (${why}).${info && !String(why).includes(info) ? ` Файл: ${info}.` : ""} Показываю арт.`;
+        status.classList.add("stage-error");
+        setTimeout(() => show("art"), 9000);
       };
       mv.addEventListener("load", () => status.remove());
       mv.addEventListener("error", (e) => {
