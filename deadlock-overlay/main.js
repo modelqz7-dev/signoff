@@ -70,6 +70,7 @@ function createMainWindow() {
     webPreferences: webPreferences(),
   });
   mainWin.removeMenu();
+  mainWin.on("page-title-updated", (e) => e.preventDefault());
   mainWin.loadFile("app.html");
   mainWin.on("closed", () => app.quit());
 }
@@ -163,6 +164,7 @@ if (!app.requestSingleInstanceLock()) {
       return false;
     }
   });
+  ipcMain.handle("version", () => app.getVersion());
   ipcMain.handle("settings:get", () => readSettings());
   ipcMain.handle("settings:set", (_e, patch) => {
     const next = { ...readSettings(), ...patch };

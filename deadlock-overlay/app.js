@@ -514,6 +514,9 @@ const pages = {
     const about = el("div", "settings-block");
     about.append(el("h2", "", "О программе"));
     about.append(el("p", "muted", "Данные: deadlock-api.com. Проект не связан с Valve и не одобрен ею."));
+    const ver = el("p", "muted small", "Версия: ...");
+    about.append(ver);
+    window.overlay.getVersion().then((v) => { ver.textContent = `Версия: ${v}`; });
     view.append(about);
   },
 
