@@ -1148,7 +1148,18 @@ function buildStage(h) {
       const [images, models] = await Promise.all([assetList("images"), assetList("models")]);
       const imgs = images.filter((s) => /\.(png|webp|jpg|jpeg)(\?|$)/i.test(s.url) && match(s)).slice(0, 80);
       const poses = models.filter((s) => /\.glb(\?|$)/i.test(s.url) && match(s)).slice(0, 40);
-      picker.replaceChildren(el("h2", "", `3D-позы (${poses.length}). Выбери позу, затем нажми «Пересоздать портрет»`));
+      picker.replaceChildren(el("h2", "", "Картинки героя из API (нажми, чтобы поставить на сцену)"));
+      const known = el("div", "pick-grid");
+      const LABELS = { card: "Карточка", critical: "Карточка (критический удар)", gloat: "Карточка (насмешка)", vertical: "Вертикальная", small: "Малая", bg: "Фон" };
+      for (const [key, url] of Object.entries(h.pics || {})) {
+        if (!url) continue;
+        const b = el("button", "pick");
+        b.title = url;
+        b.append(img(url, "pick-img"), el("span", "pick-path", LABELS[key] || key));
+        b.addEventListener("click", () => { state.art = url; show("art"); });
+        known.append(b);
+      }
+      picker.append(known, el("h2", "", `3D-позы (${poses.length}). Выбери позу, затем нажми «Пересоздать портрет»`));
       const poseBox = el("div", "pose-list");
       for (const s of poses) {
         const b = el("button", "chip", s.path.split("/").slice(-2).join("/"));

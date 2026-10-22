@@ -109,6 +109,7 @@ for h in heroes_raw:
         "lore": (h.get("description") or {}).get("lore"),
         "complexity": h.get("complexity"),
         "model": (h.get("models") or {}).get("hero_select"),
+        "pics": {k: (img.get(v + "_webp") or img.get(v)) for k, v in (("card", "icon_hero_card"), ("critical", "hero_card_critical"), ("gloat", "hero_card_gloat"), ("vertical", "top_bar_vertical_image"), ("small", "icon_image_small"), ("bg", "background_image"))},
         "code": (h.get("class_name") or "").removeprefix("hero_"),
         "abilities": [e for e in (ability_entry((h.get("items") or {}).get(f"signature{n}")) for n in (1, 2, 3, 4)) if e],
         "stats": hero_stats(h),
