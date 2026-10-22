@@ -1001,6 +1001,25 @@ async function assetList(kind) {
   return treeCache.get(kind);
 }
 
+const GOOD_WORDS = ["fullbody", "full_body", "full-body", "render", "hero_select", "portrait", "cutout", "transparent", "splash", "key_art", "standing", "pose", "body"];
+const BAD_WORDS = ["card", "icon", "minimap", "_sm", "small", "background", "_bg", "name", "critical", "gloat", "vertical", "thumb", "button", "logo", "ability", "item", "upgrade", "emoji"];
+
+function pickFullBody(h, list) {
+  const needles = [h.code, (h.en || "").toLowerCase().replace(/[^a-z0-9]+/g, "")].filter((n) => n && n.length > 2);
+  let best = null;
+  for (const s of list) {
+    if (!/\.(png|webp)(\?|$)/i.test(s.url)) continue;
+    const p = `${s.path} ${s.url}`.toLowerCase();
+    if (!needles.some((n) => p.includes(n))) continue;
+    const good = GOOD_WORDS.filter((w) => p.includes(w)).length;
+    const bad = BAD_WORDS.filter((w) => p.includes(w)).length;
+    if (!good || bad) continue;
+    const score = good * 2 + (p.endsWith(".png") ? 1 : 0);
+    if (!best || score > best.score) best = { score, url: s.url };
+  }
+  return best;
+}
+
 function buildStage(h) {
   const box = el("div", "stage-box");
   const stage = el("div", "stage");
@@ -1008,7 +1027,7 @@ function buildStage(h) {
   const controls = el("div", "stage-controls");
   const picker = el("div", "stage-picker");
   picker.hidden = true;
-  const state = { art: h.art, model: h.model };
+  const state = { art: h.art, model: h.model, rotate: false, touched: false };
 
   const show = (mode) => {
     holder.replaceChildren();
@@ -1018,7 +1037,7 @@ function buildStage(h) {
       const mv = document.createElement("model-viewer");
       mv.className = "mv";
       for (const [k, v] of Object.entries({
-        "camera-controls": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
+        "disable-zoom": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
         exposure: "1.1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
       })) mv.setAttribute(k, v);
       const fail = (why) => {
@@ -1027,6 +1046,7 @@ function buildStage(h) {
         status.classList.add("stage-error");
         setTimeout(() => show("art"), 9000);
       };
+      if (state.rotate) mv.setAttribute("camera-controls", "");
       mv.addEventListener("load", () => status.remove());
       mv.addEventListener("error", (e) => {
         const src = e.detail && e.detail.sourceError;
@@ -1043,8 +1063,23 @@ function buildStage(h) {
     if (mode === "3d" && !h.model) continue;
     const b = el("button", "chip", label);
     b.dataset.mode = mode;
-    b.addEventListener("click", () => show(mode));
+    b.addEventListener("click", () => { state.touched = true; show(mode); });
     controls.append(b);
+  }
+  if (h.model) {
+    const rot = el("button", "chip", "Крутить");
+    rot.addEventListener("click", () => {
+      state.touched = true;
+      state.rotate = !state.rotate;
+      rot.classList.toggle("active", state.rotate);
+      const mv = holder.querySelector("model-viewer");
+      if (mv) {
+        if (state.rotate) mv.setAttribute("camera-controls", ""); else mv.removeAttribute("camera-controls");
+      } else {
+        show("3d");
+      }
+    });
+    controls.append(rot);
   }
   const more = el("button", "chip", "Варианты");
   more.addEventListener("click", async () => {
@@ -1083,7 +1118,16 @@ function buildStage(h) {
   controls.append(more);
   stage.append(holder, controls, nameArt(h, "stage-name"));
   box.append(stage, picker);
-  show(h.model ? "3d" : "art");
+  holder.append(el("div", "stage-status", "Загружаю..."));
+  let started = false;
+  const start = (best) => {
+    if (started) return;
+    started = true;
+    if (best) state.art = best.url;
+    show(best || !h.model ? "art" : "3d");
+  };
+  assetList("images").then((list) => start(pickFullBody(h, list))).catch(() => start(null));
+  setTimeout(() => start(null), 5000);
   return box;
 }
 
