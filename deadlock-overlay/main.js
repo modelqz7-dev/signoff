@@ -65,7 +65,7 @@ function createMainWindow() {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: "#0e1110",
-    title: "Deadlock Tracker",
+    title: `Deadlock Tracker ${require("./package.json").version}`,
     autoHideMenuBar: true,
     webPreferences: webPreferences(),
   });
