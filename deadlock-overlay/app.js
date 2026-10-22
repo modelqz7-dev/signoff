@@ -1035,9 +1035,9 @@ async function renderPortrait(h, say) {
   say("Скачиваю 3D-модель...");
   const url = await assetBlobUrl(h.model, "model/gltf-binary");
   const mv = document.createElement("model-viewer");
-  Object.assign(mv.style, { position: "fixed", left: "0", top: "0", width: "1100px", height: "1300px", opacity: "0.01", pointerEvents: "none", zIndex: "-1" });
+  Object.assign(mv.style, { position: "fixed", left: "0", top: "0", width: "1600px", height: "1600px", opacity: "0.01", pointerEvents: "none", zIndex: "-1" });
   for (const [k, v] of Object.entries({
-    src: url, "camera-orbit": "0deg 80deg auto", "field-of-view": "26deg", exposure: "1.15", "shadow-intensity": "0",
+    src: url, "camera-orbit": "0deg 80deg 160%", "field-of-view": "30deg", exposure: "1.25", "shadow-intensity": "0",
     "environment-image": "neutral", "interaction-prompt": "none", loading: "eager", reveal: "auto", autoplay: "",
   })) mv.setAttribute(k, v);
   document.body.append(mv);

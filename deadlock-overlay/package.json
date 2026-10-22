@@ -1,6 +1,6 @@
 {
   "name": "deadlock-overlay",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "Overlay for Deadlock: what to buy against an enemy hero and why",
   "main": "main.js",
   "scripts": {

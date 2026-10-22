@@ -146,7 +146,7 @@ if (!app.requestSingleInstanceLock()) {
       return { ok: false, error: err.message };
     }
   });
-  const portraitFile = (id) => path.join(app.getPath("userData"), "portraits", `${Number(id)}-v1.png`);
+  const portraitFile = (id) => path.join(app.getPath("userData"), "portraits", `${Number(id)}-v2.png`);
   ipcMain.handle("portrait:get", (_e, id) => {
     try {
       return fs.readFileSync(portraitFile(id));
