@@ -1266,6 +1266,13 @@ async function soundsPage() {
   input.focus();
 }
 
+/* ---------- 3D: local meshopt decoder for compressed models ---------- */
+
+customElements.whenDefined("model-viewer").then(() => {
+  const ctor = customElements.get("model-viewer");
+  if (ctor && !ctor.meshoptDecoderLocation) ctor.meshoptDecoderLocation = new URL("vendor/meshopt_decoder.js", location.href).href;
+});
+
 /* ---------- navigation ---------- */
 
 function go(name) {
