@@ -1001,23 +1001,60 @@ async function assetList(kind) {
   return treeCache.get(kind);
 }
 
-const GOOD_WORDS = ["fullbody", "full_body", "full-body", "render", "hero_select", "portrait", "cutout", "transparent", "splash", "key_art", "standing", "pose", "body"];
-const BAD_WORDS = ["card", "icon", "minimap", "_sm", "small", "background", "_bg", "name", "critical", "gloat", "vertical", "thumb", "button", "logo", "ability", "item", "upgrade", "emoji"];
-
-function pickFullBody(h, list) {
-  const needles = [h.code, (h.en || "").toLowerCase().replace(/[^a-z0-9]+/g, "")].filter((n) => n && n.length > 2);
-  let best = null;
-  for (const s of list) {
-    if (!/\.(png|webp)(\?|$)/i.test(s.url)) continue;
-    const p = `${s.path} ${s.url}`.toLowerCase();
-    if (!needles.some((n) => p.includes(n))) continue;
-    const good = GOOD_WORDS.filter((w) => p.includes(w)).length;
-    const bad = BAD_WORDS.filter((w) => p.includes(w)).length;
-    if (!good || bad) continue;
-    const score = good * 2 + (p.endsWith(".png") ? 1 : 0);
-    if (!best || score > best.score) best = { score, url: s.url };
+async function cropTransparent(blob) {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement("canvas");
+  c.width = bmp.width;
+  c.height = bmp.height;
+  const g = c.getContext("2d");
+  g.drawImage(bmp, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      if (d[(y * c.width + x) * 4 + 3] > 10) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
   }
-  return best;
+  if (x1 < 0) throw new Error("пустой снимок модели");
+  const pad = 10;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(c.width - 1, x1 + pad); y1 = Math.min(c.height - 1, y1 + pad);
+  const out = document.createElement("canvas");
+  out.width = x1 - x0 + 1;
+  out.height = y1 - y0 + 1;
+  out.getContext("2d").drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return new Promise((resolve) => out.toBlob(resolve, "image/png"));
+}
+
+async function renderPortrait(h, say) {
+  say("Скачиваю 3D-модель...");
+  const url = await assetBlobUrl(h.model, "model/gltf-binary");
+  const mv = document.createElement("model-viewer");
+  Object.assign(mv.style, { position: "fixed", left: "0", top: "0", width: "1100px", height: "1300px", opacity: "0.01", pointerEvents: "none", zIndex: "-1" });
+  for (const [k, v] of Object.entries({
+    src: url, "camera-orbit": "0deg 80deg auto", "field-of-view": "26deg", exposure: "1.15", "shadow-intensity": "0",
+    "environment-image": "neutral", "interaction-prompt": "none", loading: "eager", reveal: "auto", autoplay: "",
+  })) mv.setAttribute(k, v);
+  document.body.append(mv);
+  try {
+    say("Готовлю портрет...");
+    await new Promise((resolve, reject) => {
+      mv.addEventListener("load", resolve, { once: true });
+      mv.addEventListener("error", (e) => reject(new Error(String((e.detail && e.detail.sourceError && e.detail.sourceError.message) || "модель не прочитана"))), { once: true });
+      setTimeout(() => reject(new Error("таймаут загрузки модели")), 90000);
+    });
+    await new Promise((r) => setTimeout(r, 900));
+    const blob = await mv.toBlob({ mimeType: "image/png" });
+    const cropped = await cropTransparent(blob);
+    return new Uint8Array(await cropped.arrayBuffer());
+  } finally {
+    mv.remove();
+  }
 }
 
 function buildStage(h) {
@@ -1027,26 +1064,27 @@ function buildStage(h) {
   const controls = el("div", "stage-controls");
   const picker = el("div", "stage-picker");
   picker.hidden = true;
-  const state = { art: h.art, model: h.model, rotate: false, touched: false };
+  const state = { art: h.art, model: h.model, portrait: null, rotate: false };
 
   const show = (mode) => {
     holder.replaceChildren();
     controls.querySelectorAll("button[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    if (mode === "3d" && state.model) {
+    if (mode === "portrait" && state.portrait) {
+      holder.append(img(state.portrait, "stage-portrait"));
+    } else if (mode === "3d" && state.model) {
       const status = el("div", "stage-status", "Загружаю 3D-модель...");
       const mv = document.createElement("model-viewer");
       mv.className = "mv";
       for (const [k, v] of Object.entries({
-        "disable-zoom": "", "camera-orbit": "0deg 78deg auto", "field-of-view": "28deg", "shadow-intensity": "0",
-        exposure: "1.1", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
+        "disable-zoom": "", "camera-orbit": "0deg 80deg auto", "field-of-view": "26deg", "shadow-intensity": "0", exposure: "1.15",
+        "environment-image": "neutral", "interaction-prompt": "none", autoplay: "", loading: "eager", alt: h.name,
       })) mv.setAttribute(k, v);
-      const fail = (why) => {
-        const info = glbInfoCache.get(state.model);
-        status.textContent = `Не удалось показать 3D-модель (${why}).${info && !String(why).includes(info) ? ` Файл: ${info}.` : ""} Показываю арт.`;
-        status.classList.add("stage-error");
-        setTimeout(() => show("art"), 9000);
-      };
       if (state.rotate) mv.setAttribute("camera-controls", "");
+      const fail = (why) => {
+        status.textContent = `Не удалось показать 3D-модель (${why}). Показываю арт.`;
+        status.classList.add("stage-error");
+        setTimeout(() => show("art"), 6000);
+      };
       mv.addEventListener("load", () => status.remove());
       mv.addEventListener("error", (e) => {
         const src = e.detail && e.detail.sourceError;
@@ -1059,27 +1097,44 @@ function buildStage(h) {
     }
   };
 
-  for (const [mode, label] of [["3d", "3D"], ["art", "Арт"]]) {
+  for (const [mode, label] of [["portrait", "Портрет"], ["3d", "3D"], ["art", "Арт"]]) {
     if (mode === "3d" && !h.model) continue;
     const b = el("button", "chip", label);
     b.dataset.mode = mode;
-    b.addEventListener("click", () => { state.touched = true; show(mode); });
+    b.addEventListener("click", () => {
+      if (mode === "portrait" && !state.portrait) return;
+      show(mode);
+    });
     controls.append(b);
   }
   if (h.model) {
     const rot = el("button", "chip", "Крутить");
     rot.addEventListener("click", () => {
-      state.touched = true;
       state.rotate = !state.rotate;
       rot.classList.toggle("active", state.rotate);
       const mv = holder.querySelector("model-viewer");
       if (mv) {
         if (state.rotate) mv.setAttribute("camera-controls", ""); else mv.removeAttribute("camera-controls");
-      } else {
-        show("3d");
       }
     });
     controls.append(rot);
+  }
+  if (h.model) {
+    const redo = el("button", "chip", "Пересоздать портрет");
+    redo.addEventListener("click", async () => {
+      holder.replaceChildren(el("div", "stage-status", "Готовлю портрет..."));
+      const statusEl = holder.firstChild;
+      try {
+        const bytes = await renderPortrait({ ...h, model: state.model }, (t) => { statusEl.textContent = t; });
+        window.overlay.savePortrait(h.id, bytes);
+        state.portrait = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+        show("portrait");
+      } catch (e) {
+        statusEl.textContent = `Портрет не получился (${e.message}).`;
+        statusEl.classList.add("stage-error");
+      }
+    });
+    controls.append(redo);
   }
   const more = el("button", "chip", "Варианты");
   more.addEventListener("click", async () => {
@@ -1093,7 +1148,7 @@ function buildStage(h) {
       const [images, models] = await Promise.all([assetList("images"), assetList("models")]);
       const imgs = images.filter((s) => /\.(png|webp|jpg|jpeg)(\?|$)/i.test(s.url) && match(s)).slice(0, 80);
       const poses = models.filter((s) => /\.glb(\?|$)/i.test(s.url) && match(s)).slice(0, 40);
-      picker.replaceChildren(el("h2", "", `3D-позы (${poses.length})`));
+      picker.replaceChildren(el("h2", "", `3D-позы (${poses.length}). Выбери позу, затем нажми «Пересоздать портрет»`));
       const poseBox = el("div", "pose-list");
       for (const s of poses) {
         const b = el("button", "chip", s.path.split("/").slice(-2).join("/"));
@@ -1118,16 +1173,25 @@ function buildStage(h) {
   controls.append(more);
   stage.append(holder, controls, nameArt(h, "stage-name"));
   box.append(stage, picker);
-  holder.append(el("div", "stage-status", "Загружаю..."));
-  let started = false;
-  const start = (best) => {
-    if (started) return;
-    started = true;
-    if (best) state.art = best.url;
-    show(best || !h.model ? "art" : "3d");
-  };
-  assetList("images").then((list) => start(pickFullBody(h, list))).catch(() => start(null));
-  setTimeout(() => start(null), 5000);
+
+  const status = el("div", "stage-status", "Готовлю портрет...");
+  holder.append(status);
+  (async () => {
+    try {
+      let bytes = await window.overlay.getPortrait(h.id);
+      if (!bytes) {
+        if (!h.model) throw new Error("нет 3D-модели");
+        bytes = await renderPortrait(h, (t) => { status.textContent = t; });
+        window.overlay.savePortrait(h.id, bytes);
+      }
+      state.portrait = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+      show("portrait");
+    } catch (e) {
+      status.textContent = `Портрет не получился (${e.message}).`;
+      status.classList.add("stage-error");
+      setTimeout(() => show(h.model ? "3d" : "art"), 3500);
+    }
+  })();
   return box;
 }
 

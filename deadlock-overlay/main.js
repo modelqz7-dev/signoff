@@ -146,6 +146,23 @@ if (!app.requestSingleInstanceLock()) {
       return { ok: false, error: err.message };
     }
   });
+  const portraitFile = (id) => path.join(app.getPath("userData"), "portraits", `${Number(id)}-v1.png`);
+  ipcMain.handle("portrait:get", (_e, id) => {
+    try {
+      return fs.readFileSync(portraitFile(id));
+    } catch {
+      return null;
+    }
+  });
+  ipcMain.handle("portrait:save", (_e, id, bytes) => {
+    try {
+      fs.mkdirSync(path.dirname(portraitFile(id)), { recursive: true });
+      fs.writeFileSync(portraitFile(id), Buffer.from(bytes));
+      return true;
+    } catch {
+      return false;
+    }
+  });
   ipcMain.handle("settings:get", () => readSettings());
   ipcMain.handle("settings:set", (_e, patch) => {
     const next = { ...readSettings(), ...patch };
