@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const api = require("./api");
@@ -163,6 +163,26 @@ if (!app.requestSingleInstanceLock()) {
     } catch {
       return false;
     }
+  });
+  const artDir = () => path.join(app.getPath("userData"), "hero-art");
+  ipcMain.handle("heroart:list", () => {
+    try {
+      fs.mkdirSync(artDir(), { recursive: true });
+      return { dir: artDir(), files: fs.readdirSync(artDir()).filter((f) => /\.(png|webp|jpe?g)$/i.test(f)) };
+    } catch {
+      return { dir: artDir(), files: [] };
+    }
+  });
+  ipcMain.handle("heroart:get", (_e, name) => {
+    try {
+      return fs.readFileSync(path.join(artDir(), path.basename(String(name))));
+    } catch {
+      return null;
+    }
+  });
+  ipcMain.handle("heroart:open", () => {
+    fs.mkdirSync(artDir(), { recursive: true });
+    return shell.openPath(artDir());
   });
   ipcMain.handle("version", () => app.getVersion());
   ipcMain.handle("settings:get", () => readSettings());

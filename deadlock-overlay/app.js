@@ -511,6 +511,16 @@ const pages = {
     ov.append(el("p", "", "Горячая клавиша: F8 (показать и скрыть). Оверлей виден поверх игры только в режиме «окно без рамки»."));
     view.append(ov);
 
+    const artBlock = el("div", "settings-block");
+    artBlock.append(el("h2", "", "Свой арт героев"));
+    artBlock.append(el("p", "muted", "Если положить в эту папку картинку героя (имя файла как у героя на английском, например Abrams.webp или GreyTalon.png), она появится на странице героя. Папка находится на твоём компьютере и в программу не входит."));
+    const where = el("p", "muted small", "Папка: ...");
+    const open = el("button", "ghost", "Открыть папку");
+    open.addEventListener("click", () => window.overlay.heroArtOpen());
+    artBlock.append(where, open);
+    window.overlay.heroArtList().then((r) => { where.textContent = `Папка: ${r.dir} · файлов: ${r.files.length}`; });
+    view.append(artBlock);
+
     const about = el("div", "settings-block");
     about.append(el("h2", "", "О программе"));
     about.append(el("p", "muted", "Данные: deadlock-api.com. Проект не связан с Valve и не одобрен ею."));
@@ -1060,6 +1070,21 @@ async function renderPortrait(h, say) {
   }
 }
 
+let heroArtIndex = null;
+
+async function customArtFor(h) {
+  if (!heroArtIndex) heroArtIndex = window.overlay.heroArtList();
+  const idx = await heroArtIndex;
+  const norm = (s) => String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+  const keys = [norm(h.en), norm(h.code)].filter(Boolean);
+  const file = idx.files.find((f) => keys.includes(norm(f.replace(/\.[^.]+$/, ""))));
+  if (!file) return null;
+  const bytes = await window.overlay.heroArtGet(file);
+  if (!bytes) return null;
+  const ext = file.split(".").pop().toLowerCase();
+  return URL.createObjectURL(new Blob([bytes], { type: ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg" }));
+}
+
 function buildStage(h) {
   const box = el("div", "stage-box");
   const stage = el("div", "stage");
@@ -1067,12 +1092,14 @@ function buildStage(h) {
   const controls = el("div", "stage-controls");
   const picker = el("div", "stage-picker");
   picker.hidden = true;
-  const state = { art: h.art, model: h.model, portrait: null, rotate: false };
+  const state = { art: h.art, model: h.model, portrait: null, custom: null, rotate: false };
 
   const show = (mode) => {
     holder.replaceChildren();
     controls.querySelectorAll("button[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    if (mode === "portrait" && state.portrait) {
+    if (mode === "custom" && state.custom) {
+      holder.append(img(state.custom, "stage-portrait"));
+    } else if (mode === "portrait" && state.portrait) {
       holder.append(img(state.portrait, "stage-portrait"));
     } else if (mode === "3d" && state.model) {
       const status = el("div", "stage-status", "Загружаю 3D-модель...");
@@ -1192,6 +1219,16 @@ function buildStage(h) {
   holder.append(status);
   (async () => {
     try {
+      const custom = await customArtFor(h).catch(() => null);
+      if (custom) {
+        state.custom = custom;
+        const b = el("button", "chip", "Свой арт");
+        b.dataset.mode = "custom";
+        b.addEventListener("click", () => show("custom"));
+        controls.prepend(b);
+        show("custom");
+        return;
+      }
       let bytes = await window.overlay.getPortrait(h.id);
       if (!bytes) {
         if (!h.model) throw new Error("нет 3D-модели");
