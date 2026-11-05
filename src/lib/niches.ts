@@ -111,8 +111,8 @@ export const NICHES: NicheConfig[] = [
 /** Any business that keeps daily takings and expenses; not a booking niche, so it stays out of NICHES (the catalog and booking pages). */
 export const BUSINESS: NicheConfig = {
   id: "business",
-  name: "Business",
-  hint: "Daily takings and expenses, totals by month and year",
+  name: "Any business",
+  hint: "Takings and expenses by day",
   kind: "appointment",
   staffWord: "Employee",
   services: [],

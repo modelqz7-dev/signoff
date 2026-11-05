@@ -1945,4 +1945,7 @@ export const ru: Record<string, string> = {
   "Enter cash, card and expenses every day. Month and year totals count themselves.": "Вносите наличные, карту и затраты каждый день. Итоги за месяц и год считаются сами.",
   "Daily takings and expenses, totals by month and year": "Выручка и расходы каждый день, итоги по месяцам и годам",
   "Employee": "Сотрудник",
+  "Any business": "Любой бизнес",
+  "Takings and expenses by day": "Выручка и расходы по дням",
+  "Save takings": "Сохранить выручку",
 }

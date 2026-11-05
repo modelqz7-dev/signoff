@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { Stat } from "@/components/crm/AppointmentsHome"
 import { FIELD } from "@/components/crm/BookingDialog"
 import { DatePicker, Picker } from "@/components/crm/Pickers"
@@ -19,10 +19,14 @@ export function LedgerView({ shopId }: { shopId: string }) {
   const [tab, setTab] = useState<Tab>("day")
   const [day, setDay] = useState(() => dayKey(new Date()))
   const [error, setError] = useState<string | null>(null)
+  // a day's unsaved figures are saved before the screen moves on
+  const flushRef = useRef<() => void>(() => {})
+  const go = (d: string) => { flushRef.current(); setDay(d) }
+  const goTab = (id: Tab) => { flushRef.current(); setTab(id) }
 
   const tabs: [Tab, string][] = [["day", t("Day")], ["month", t("Month")], ["year", t("Year")]]
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? t("Couldn't save"))
-  const open = (d: string) => { setDay(d); setTab("day") }
+  const open = (d: string) => { flushRef.current(); setDay(d); setTab("day") }
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-5 sm:p-8">
@@ -33,7 +37,7 @@ export function LedgerView({ shopId }: { shopId: string }) {
 
       <div role="tablist" className="flex w-fit gap-1 rounded-full bg-foreground/[0.05] p-1 text-[13.5px]">
         {tabs.map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => goTab(id)}
             className={cn("h-8 rounded-full px-5 transition-colors", tab === id ? "bg-card font-medium shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muted-foreground hover:text-foreground")}>{label}</button>
         ))}
       </div>
@@ -41,7 +45,7 @@ export function LedgerView({ shopId }: { shopId: string }) {
       {(error || ledger.error) && <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-[13.5px] text-destructive">{error || ledger.error}{ledger.error && ` — ${t("Run supabase/ledger.sql in Supabase.")}`}</p>}
 
       {ledger.loading ? <p className="py-10 text-center text-sm text-muted-foreground">{t("Loading...")}</p>
-        : tab === "day" ? <DayTab key={day} day={day} onDay={setDay} ledger={ledger} onError={fail} />
+        : tab === "day" ? <DayTab key={day} day={day} onDay={go} flushRef={flushRef} ledger={ledger} onError={fail} />
         : tab === "month" ? <MonthTab ledger={ledger} initial={day.slice(0, 7)} onOpen={open} />
         : <YearTab ledger={ledger} initial={Number(day.slice(0, 4))} />}
     </div>
@@ -53,7 +57,7 @@ function shift(day: string, by: number) {
   return dayKey(new Date(y, m - 1, d + by))
 }
 
-function DayTab({ day, onDay, ledger, onError }: { day: string; onDay: (d: string) => void; ledger: ReturnType<typeof useLedger>; onError: (e: unknown) => void }) {
+function DayTab({ day, onDay, flushRef, ledger, onError }: { day: string; onDay: (d: string) => void; flushRef: React.RefObject<() => void>; ledger: ReturnType<typeof useLedger>; onError: (e: unknown) => void }) {
   const { t, locale } = useT()
   const saved = ledger.days.find((x) => x.day === day)
   const [cash, setCash] = useState(saved?.cash ? String(saved.cash) : "")
@@ -68,7 +72,10 @@ function DayTab({ day, onDay, ledger, onError }: { day: string; onDay: (d: strin
   const revenue = parseAmount(cash) + parseAmount(card)
   const spentSum = spent.reduce((s, x) => s + x.amount, 0)
 
+  const dirty = parseAmount(cash) !== (saved?.cash ?? 0) || parseAmount(card) !== (saved?.card ?? 0)
   const commit = () => ledger.saveDay(day, parseAmount(cash), parseAmount(card)).catch(onError)
+  useEffect(() => { flushRef.current = () => { if (dirty) commit() } })
+  useEffect(() => () => { flushRef.current = () => {} }, [flushRef])
   const add = async () => {
     const value = parseAmount(amount)
     if (!value || busy) return
@@ -87,11 +94,17 @@ function DayTab({ day, onDay, ledger, onError }: { day: string; onDay: (d: strin
 
       <div className="grid gap-3 rounded-[22px] apple-card p-5 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-[13px] text-muted-foreground">{t("Cash")}
-          <input value={cash} onChange={(e) => setCash(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} inputMode="decimal" placeholder="0" className={cn(FIELD, "h-14 text-[20px] font-semibold tabular-nums")} />
+          <input value={cash} onChange={(e) => setCash(e.target.value)} onKeyDown={(e) => e.key === "Enter" && commit()} inputMode="decimal" placeholder="0" className={cn(FIELD, "h-14 text-[20px] font-semibold tabular-nums")} />
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] text-muted-foreground">{t("Card")}
-          <input value={card} onChange={(e) => setCard(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} inputMode="decimal" placeholder="0" className={cn(FIELD, "h-14 text-[20px] font-semibold tabular-nums")} />
+          <input value={card} onChange={(e) => setCard(e.target.value)} onKeyDown={(e) => e.key === "Enter" && commit()} inputMode="decimal" placeholder="0" className={cn(FIELD, "h-14 text-[20px] font-semibold tabular-nums")} />
         </label>
+        <div className="flex items-center justify-between gap-3 sm:col-span-2">
+          <span className={cn("text-[13px]", dirty ? "text-foreground" : "text-muted-foreground")}>
+            {dirty ? t("Not saved") : saved ? <span className="flex items-center gap-1.5"><CheckIcon className="size-4" />{t("Saved")}</span> : ""}
+          </span>
+          <button type="button" onClick={commit} disabled={!dirty} className="h-11 rounded-full bg-foreground px-6 text-[14px] font-medium text-background hover:opacity-90 disabled:opacity-30">{t("Save takings")}</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -181,6 +194,7 @@ function MonthTab({ ledger, initial, onOpen }: { ledger: ReturnType<typeof useLe
           ))}
         </div>
       )}
+      <MonthGrid month={month} rows={rows} onOpen={onOpen} />
       <div className="overflow-hidden rounded-[22px] apple-card">
         {rows.length ? rows.map(([d, r], i) => (
           <button key={d} type="button" onClick={() => onOpen(d)} className={cn("flex w-full items-center gap-3 px-4 py-3 text-left text-[13.5px] hover:bg-hover", i > 0 && "border-t border-border/70")}>
@@ -227,6 +241,40 @@ function Period({ label, onPrev, onNext }: { label: string; onPrev: () => void; 
       <button type="button" onClick={onPrev} aria-label={t("Previous")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
       <span className="flex-1 text-center text-[16px] font-medium capitalize">{label}</span>
       <button type="button" onClick={onNext} aria-label={t("Next")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
+    </div>
+  )
+}
+
+/** The month as a calendar: each day with its takings and expenses; a tap opens the day. */
+function MonthGrid({ month, rows, onOpen }: { month: string; rows: [string, { cash: number; card: number; spent: number }][]; onOpen: (d: string) => void }) {
+  const { locale } = useT()
+  const [y, m] = month.split("-").map(Number)
+  const byDay = new Map(rows)
+  const today = dayKey(new Date())
+  const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7
+  const count = new Date(y, m, 0).getDate()
+  const short = (v: number) => new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(v)
+  const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i).toLocaleDateString(locale, { weekday: "short" }))
+  return (
+    <div className="rounded-[22px] apple-card p-3 sm:p-4">
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {weekdays.map((w) => <span key={w} className="pb-1 text-[11px] font-medium text-muted-foreground uppercase">{w}</span>)}
+        {Array.from({ length: lead }, (_, i) => <span key={`e${i}`} />)}
+        {Array.from({ length: count }, (_, i) => {
+          const k = `${month}-${String(i + 1).padStart(2, "0")}`
+          const r = byDay.get(k)
+          const revenue = r ? r.cash + r.card : 0
+          return (
+            <button key={k} type="button" onClick={() => onOpen(k)} aria-label={k}
+              className={cn("flex min-h-14 flex-col items-center justify-start gap-0.5 rounded-lg px-0.5 py-1.5 text-[11px] tabular-nums transition-colors sm:min-h-[4.5rem] sm:text-[12px]",
+                r ? "bg-foreground/[0.07] hover:bg-foreground/[0.12]" : "hover:bg-hover", k === today && "ring-1 ring-foreground/50")}>
+              <span className={cn("text-[13px]", k === today ? "font-semibold" : "text-muted-foreground")}>{i + 1}</span>
+              {revenue > 0 && <span className="font-medium">{short(revenue)}</span>}
+              {r && r.spent > 0 && <span className="text-muted-foreground">−{short(r.spent)}</span>}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
