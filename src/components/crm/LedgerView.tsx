@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { Stat } from "@/components/crm/AppointmentsHome"
 import { FIELD } from "@/components/crm/BookingDialog"
-import { Picker } from "@/components/crm/Pickers"
+import { DatePicker, Picker } from "@/components/crm/Pickers"
 import { dayKey, money } from "@/lib/crm"
 import { EXPENSE_CATEGORIES, parseAmount, totals, useLedger, type Expense } from "@/lib/ledger"
 import { cn } from "@/lib/utils"
@@ -63,8 +63,6 @@ function DayTab({ day, onDay, ledger, onError }: { day: string; onDay: (d: strin
   const [note, setNote] = useState("")
   const [busy, setBusy] = useState(false)
 
-  const [y, m, d] = day.split("-").map(Number)
-  const title = new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
   const spent = ledger.expenses.filter((x) => x.day === day)
   const today = dayKey(new Date())
   const revenue = parseAmount(cash) + parseAmount(card)
@@ -82,10 +80,7 @@ function DayTab({ day, onDay, ledger, onError }: { day: string; onDay: (d: strin
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => onDay(shift(day, -1))} aria-label={t("Previous day")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
-        <label className="relative flex-1 text-center">
-          <span className="block text-[16px] font-medium capitalize">{title}</span>
-          <input type="date" value={day} onChange={(e) => e.target.value && onDay(e.target.value)} aria-label={t("Date")} className="absolute inset-0 cursor-pointer opacity-0" />
-        </label>
+        <DatePicker value={day} onChange={onDay} label={t("Date")} className="flex-1" />
         <button type="button" onClick={() => onDay(shift(day, 1))} aria-label={t("Next day")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
         {day !== today && <button type="button" onClick={() => onDay(today)} className="h-10 rounded-full bg-foreground/[0.05] px-4 text-[13.5px] hover:bg-hover">{t("Today")}</button>}
       </div>

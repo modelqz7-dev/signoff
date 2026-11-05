@@ -12,6 +12,7 @@ export const NICHE_COVER: Record<CrmNiche, string> = {
   barber: "linear-gradient(135deg,#e6e9ee,#e9e4dc)",
   tattoo: "linear-gradient(135deg,#e4e4e7,#ebe6e1)",
   cakes: "linear-gradient(135deg,#f7eadb,#f3e3ea)",
+  business: "linear-gradient(135deg,#e6e9ee,#e4e4e7)",
 }
 
 /** A beauty or cake business's page: the Link page in its own design, in the app's Apple look, its booking in a sheet. */

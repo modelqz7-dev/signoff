@@ -69,7 +69,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
   const replace = (b: CrmBooking) => data.setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]))
 
   const titles: Record<CrmPage, string> = { home: config.kind === "order" ? t("Orders") : t("Appointments"), clients: t("Clients"), services: config.kind === "order" ? t("Products") : t("Services"), online: t("Online booking"), history: t("History"), ledger: t("Takings") }
-  const activePage = page === "home" ? "dashboard" : page
+  const activePage = page === "home" || config.ledgerOnly ? "dashboard" : page
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -86,6 +86,8 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
               <p className="font-medium text-foreground">{t("Couldn't load the data")}</p>
               <p className="mt-1">{data.error}</p>
             </div>
+          ) : config.ledgerOnly || page === "ledger" ? (
+            <LedgerView shopId={shop.id} />
           ) : page === "home" ? (
             config.kind === "order"
               ? <OrdersHome data={data} onNew={newBooking} onOpen={openBooking} onChanged={replace} cta={<BookingLinkButton shopId={shop.id} />} />
@@ -94,8 +96,6 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
             <ClientsView data={data} config={config} shopId={shop.id} onNew={newBooking} onOpen={openBooking} />
           ) : page === "history" ? (
             <HistoryView data={data} config={config} onOpen={openBooking} docs={can(shop, "documents")} />
-          ) : page === "ledger" ? (
-            <LedgerView shopId={shop.id} />
           ) : page === "online" ? (
             <OnlineBookingView shop={shop} config={config} onShopChanged={setShop} />
           ) : (
@@ -104,7 +104,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
         </main>
       </div>
 
-      <BookingDialog
+      {!config.ledgerOnly && <BookingDialog
         open={!!dialog}
         booking={dialog?.booking}
         preset={dialog?.preset}
@@ -118,7 +118,7 @@ export function CrmApp({ shop: initialShop, page }: { shop: Shop; page: CrmPage 
         onSaved={replace}
         onDeleted={(id) => data.setBookings((prev) => prev.filter((b) => b.id !== id))}
         onClientAdded={(c) => data.setClients((prev) => (prev.some((x) => x.id === c.id) ? prev.map((x) => (x.id === c.id ? c : x)) : [...prev, c].sort((a, b) => a.name.localeCompare(b.name))))}
-      />
+      />}
     </div>
   )
 }

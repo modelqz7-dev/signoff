@@ -205,7 +205,7 @@ export async function chooseNiche(shopId: string, niche: CrmNiche | "smm", trans
   const { error } = await supabase.from("shops").update({ niche }).eq("id", shopId)
   if (error) throw error
   const config = nicheConfig(niche)
-  if (!config) return
+  if (!config || config.ledgerOnly) return
   // starter services only when there are none of this niche's kind (switching nails → cakes adds the cakes)
   const { count } = await supabase.from("crm_services").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("kind", config.kind).eq("archived", false)
   if (count) return

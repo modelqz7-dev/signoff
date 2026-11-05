@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { CheckIcon } from "lucide-react"
-import { NICHES, type CrmNiche } from "@/lib/niches"
+import { BUSINESS, NICHES, type CrmNiche } from "@/lib/niches"
 import { chooseNiche } from "@/lib/crm"
 import { cn } from "@/lib/utils"
 import { notifyPlanChanged } from "@/lib/use-plan"
@@ -35,7 +35,7 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
       onChosen(niche)
     } catch (e) {
       const message = (e as Error)?.message ?? ""
-      setError(/niche_check|check constraint/i.test(message) ? t("This business isn't enabled in the database yet: run supabase/tattoo.sql in Supabase, then pick it again.") : message || t("Couldn't save. Try again."))
+      setError(/niche_check|check constraint/i.test(message) ? t("This business isn't enabled in the database yet: run supabase/business.sql in Supabase, then pick it again.") : message || t("Couldn't save. Try again."))
       setBusy(false)
     }
   }
@@ -51,8 +51,8 @@ export function NichePicker({ shopId, onChosen }: { shopId: string; onChosen: (n
           </div>
         </header>
 
-        <div role="radiogroup" aria-label={t("What's your business?")} className="grid w-full gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-          {NICHES.map((n, i) => {
+        <div role="radiogroup" aria-label={t("What's your business?")} className="grid w-full gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+          {[...NICHES, BUSINESS].map((n, i) => {
             const on = picked === n.id
             return (
               <button

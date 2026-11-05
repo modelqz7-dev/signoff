@@ -2,7 +2,7 @@
 // takes, the services a new account starts with and the fields an order asks for. The
 // dashboard, the clients and the services screens are shared.
 
-export type CrmNiche = "nails" | "barber" | "tattoo" | "cakes"
+export type CrmNiche = "nails" | "barber" | "tattoo" | "cakes" | "business"
 export type Niche = CrmNiche | "smm"
 /** How a niche takes bookings: at a time (appointments) or for a date (orders). */
 export type BookingKind = "appointment" | "order"
@@ -38,6 +38,8 @@ export type NicheConfig = {
   staffWord: string
   services: StarterService[]
   orderFields?: OrderField[]
+  /** No bookings, clients or services: only the daily takings and expenses. */
+  ledgerOnly?: boolean
 }
 
 export const NICHES: NicheConfig[] = [
@@ -106,8 +108,19 @@ export const NICHES: NicheConfig[] = [
   },
 ]
 
+/** Any business that keeps daily takings and expenses; not a booking niche, so it stays out of NICHES (the catalog and booking pages). */
+export const BUSINESS: NicheConfig = {
+  id: "business",
+  name: "Business",
+  hint: "Daily takings and expenses, totals by month and year",
+  kind: "appointment",
+  staffWord: "Employee",
+  services: [],
+  ledgerOnly: true,
+}
+
 export function nicheConfig(niche: string | null | undefined): NicheConfig | null {
-  return NICHES.find((n) => n.id === niche) ?? null
+  return niche === BUSINESS.id ? BUSINESS : NICHES.find((n) => n.id === niche) ?? null
 }
 
 export function isCrmNiche(niche: string | null | undefined): niche is CrmNiche {
