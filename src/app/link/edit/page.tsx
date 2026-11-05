@@ -61,6 +61,7 @@ const SALON_HINTS: Record<CrmNiche, { work: string; category: string; tagline: s
   barber: { work: "e.g. Fade with a beard trim", category: "Barbershop", tagline: "Men's haircuts · Lviv, centre", bio: "e.g. Haircuts, beards and hot towel shaves. Coffee or a drink while you wait.", team: "3 barbers", payment: "Cash or card" },
   tattoo: { work: "e.g. Fine-line rose on the forearm", category: "Tattoo studio", tagline: "Tattoo artist · Kyiv, Podil", bio: "e.g. Fine line, blackwork and cover-ups. Sterile single-use needles, a free consultation before the session.", team: "2 tattoo artists", payment: "Deposit to book, the rest after the session" },
   cakes: { work: "e.g. Bento cake for a birthday", category: "Cakes to order", tagline: "Home bakery · Odesa", bio: "e.g. Cakes from natural ingredients. Pickup at Lvivska 12 or delivery around the city.", team: "Just me", payment: "50% upfront, the rest on pickup" },
+  business: { work: "e.g. Our best seller", category: "Shop", tagline: "Shop · Kyiv, centre", bio: "e.g. What we sell and where to find us.", team: "3 employees", payment: "Cash or card" },
 }
 const SALON_BUSINESS: (keyof PageBusiness)[] = ["since", "team", "address", "payment"]
 

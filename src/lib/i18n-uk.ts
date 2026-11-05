@@ -1943,4 +1943,6 @@ export const uk: Record<string, string> = {
   "Utilities": "Комунальні",
   "Run supabase/ledger.sql in Supabase.": "Виконайте supabase/ledger.sql у Supabase.",
   "Enter cash, card and expenses every day. Month and year totals count themselves.": "Вносьте готівку, картку та витрати щодня. Підсумки за місяць і рік рахуються самі.",
+  "Daily takings and expenses, totals by month and year": "Виручка та витрати щодня, підсумки за місяцями й роками",
+  "Employee": "Співробітник",
 }

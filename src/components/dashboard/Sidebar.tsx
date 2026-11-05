@@ -293,9 +293,9 @@ function Rail({ activePage, panel, onPanel, beta }: {
         <nav className="flex flex-col items-center gap-1.5">
           {crmNav(crm, t).map((i) => <RailItem key={i.href} label={i.label} href={i.href} active={crmActive(i.page, activePage)} icon={i.icon} menu={i.menu} />)}
         </nav>
-        <div className="my-4 h-px w-10 bg-border" />
+        {!crm.ledgerOnly && <div className="my-4 h-px w-10 bg-border" />}
         {/* the booking link at hand: copy it for a client or look at it as they do */}
-        <div className="flex flex-col items-center gap-1.5">
+        {!crm.ledgerOnly && <div className="flex flex-col items-center gap-1.5">
           {booking?.published ? (
             <>
               <RailItem label={copied ? t("Link copied") : t("Copy booking link")} icon={copied ? CheckIcon : CopyIcon} onClick={async () => {
@@ -306,7 +306,7 @@ function Rail({ activePage, panel, onPanel, beta }: {
           ) : booking === null ? (
             <RailItem label={t("Set up online booking")} href="/online" icon={Link2Icon} />
           ) : null}
-        </div>
+        </div>}
         <div className="mt-auto flex flex-col items-center gap-1.5">
           <RailItem label={t("Help")} icon={CircleHelpIcon} active={HELP_PANELS.includes(panel as PanelId)} onClick={() => onPanel("help")} />
           <RailItem label={t("Settings")} icon={SettingsIcon} active={SETTINGS_PANELS.includes(panel as PanelId)} onClick={() => onPanel("notifications")} />
@@ -417,6 +417,7 @@ function useKnownNiche(usage: ReturnType<typeof usePlanUsage>) {
 /** The CRM's screens: bookings (the home), clients and what the business offers. */
 function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
   const offerIcon = crm.id === "cakes" ? CakeIcon : crm.id === "barber" ? ScissorsIcon : crm.id === "tattoo" ? PenToolIcon : SparklesIcon
+  if (crm.ledgerOnly) return [{ page: "dashboard", href: "/dashboard", label: t("Takings"), icon: WalletIcon }]
   return [
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
