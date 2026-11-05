@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 import {
-  CakeIcon, HistoryIcon, PenToolIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
+  CakeIcon, HistoryIcon, WalletIcon, PenToolIcon, CalendarDaysIcon, ChartColumnIcon, ClipboardListIcon, ScissorsIcon, SparklesIcon, UsersIcon, CheckIcon, ChevronsUpDownIcon, CircleHelpIcon, CopyIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LightbulbIcon,
   Link2Icon, LockIcon, LogOutIcon, MessageSquareTextIcon, MoonIcon, PlusIcon, QrCodeIcon, SearchIcon, ShapesIcon, SquarePenIcon, SunIcon,
   SettingsIcon, UserRoundIcon, XIcon,
 } from "lucide-react"
@@ -421,6 +421,7 @@ function crmNav(crm: NicheConfig, t: ReturnType<typeof useT>["t"]) {
     { page: "dashboard", href: "/dashboard", label: crm.kind === "order" ? t("Orders") : t("Appointments"), icon: crm.kind === "order" ? ClipboardListIcon : CalendarDaysIcon },
     { page: "clients", href: "/clients", label: t("Clients"), icon: UsersIcon },
     { page: "history", href: "/history", label: t("History"), icon: HistoryIcon },
+    { page: "ledger", href: "/ledger", label: t("Takings"), icon: WalletIcon },
     { page: "services", href: "/services", label: crm.kind === "order" ? t("Products") : t("Services"), icon: offerIcon },
     {
       page: "link", href: "/link", label: t("My page"), icon: Link2Icon,
