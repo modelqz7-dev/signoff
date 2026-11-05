@@ -1948,4 +1948,5 @@ export const uk: Record<string, string> = {
   "Any business": "Будь-який бізнес",
   "Takings and expenses by day": "Виручка та витрати по днях",
   "Save takings": "Зберегти виручку",
+  "Total for {year}": "Разом за {year}",
 }

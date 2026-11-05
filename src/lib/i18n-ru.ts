@@ -1948,4 +1948,5 @@ export const ru: Record<string, string> = {
   "Any business": "Любой бизнес",
   "Takings and expenses by day": "Выручка и расходы по дням",
   "Save takings": "Сохранить выручку",
+  "Total for {year}": "Итого за {year}",
 }

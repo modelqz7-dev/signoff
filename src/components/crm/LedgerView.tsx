@@ -17,16 +17,25 @@ export function LedgerView({ shopId }: { shopId: string }) {
   const { t } = useT()
   const ledger = useLedger(shopId)
   const [tab, setTab] = useState<Tab>("day")
-  const [day, setDay] = useState(() => dayKey(new Date()))
+  const [picked, setPicked] = useState<string | null>(null)
+  // opens on today, or on the latest day with figures when this month has none yet
+  const today = dayKey(new Date())
+  const latest = [...ledger.days.map((x) => x.day), ...ledger.expenses.map((x) => x.day)].sort().pop()
+  const hasThisMonth = ledger.days.some((x) => x.day.startsWith(today.slice(0, 7))) || ledger.expenses.some((x) => x.day.startsWith(today.slice(0, 7)))
+  const day = picked ?? (!ledger.loading && latest && !hasThisMonth ? latest : today)
   const [error, setError] = useState<string | null>(null)
   // a day's unsaved figures are saved before the screen moves on
   const flushRef = useRef<() => void>(() => {})
-  const go = (d: string) => { flushRef.current(); setDay(d) }
+  const go = (d: string) => { flushRef.current(); setPicked(d) }
   const goTab = (id: Tab) => { flushRef.current(); setTab(id) }
+
+  const thisYear = Number(today.slice(0, 4))
+  const dataYears = [...ledger.days.map((x) => Number(x.day.slice(0, 4))), ...ledger.expenses.map((x) => Number(x.day.slice(0, 4)))]
+  const years = Array.from({ length: Math.max(thisYear, ...dataYears) + 1 - Math.min(thisYear, ...dataYears) + 1 }, (_, i) => Math.min(thisYear, ...dataYears) + i)
 
   const tabs: [Tab, string][] = [["day", t("Day")], ["month", t("Month")], ["year", t("Year")]]
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? t("Couldn't save"))
-  const open = (d: string) => { flushRef.current(); setDay(d); setTab("day") }
+  const open = (d: string) => { flushRef.current(); setPicked(d); setTab("day") }
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-5 sm:p-8">
@@ -46,8 +55,8 @@ export function LedgerView({ shopId }: { shopId: string }) {
 
       {ledger.loading ? <p className="py-10 text-center text-sm text-muted-foreground">{t("Loading...")}</p>
         : tab === "day" ? <DayTab key={day} day={day} onDay={go} flushRef={flushRef} ledger={ledger} onError={fail} />
-        : tab === "month" ? <MonthTab ledger={ledger} initial={day.slice(0, 7)} onOpen={open} />
-        : <YearTab ledger={ledger} initial={Number(day.slice(0, 4))} />}
+        : tab === "month" ? <MonthTab ledger={ledger} years={years} initial={day.slice(0, 7)} onOpen={open} />
+        : <YearTab ledger={ledger} years={years} initial={Number(day.slice(0, 4))} />}
     </div>
   )
 }
@@ -112,6 +121,7 @@ function DayTab({ day, onDay, flushRef, ledger, onError }: { day: string; onDay:
         <Stat label={t("Expenses")} value={money(spentSum, locale)} />
         <Stat label={t("Left")} value={money(revenue - spentSum, locale)} />
       </div>
+      <YearStrip ledger={ledger} year={Number(day.slice(0, 4))} />
 
       <div className="flex flex-col gap-3 rounded-[22px] apple-card p-5">
         <h2 className="text-[16px] font-semibold">{t("Expenses")}</h2>
@@ -157,12 +167,10 @@ function Totals({ p, ledger }: { p: string; ledger: ReturnType<typeof useLedger>
   )
 }
 
-function MonthTab({ ledger, initial, onOpen }: { ledger: ReturnType<typeof useLedger>; initial: string; onOpen: (d: string) => void }) {
+function MonthTab({ ledger, years, initial, onOpen }: { ledger: ReturnType<typeof useLedger>; years: number[]; initial: string; onOpen: (d: string) => void }) {
   const { t, locale } = useT()
   const [month, setMonth] = useState(initial)
   const [y, m] = month.split("-").map(Number)
-  const go = (by: number) => { const d = new Date(y, m - 1 + by, 1); setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`) }
-  const label = new Date(y, m - 1, 1).toLocaleDateString(locale, { month: "long", year: "numeric" })
 
   const rows = useMemo(() => {
     const map = new Map<string, { cash: number; card: number; spent: number }>()
@@ -180,8 +188,9 @@ function MonthTab({ ledger, initial, onOpen }: { ledger: ReturnType<typeof useLe
 
   return (
     <div className="flex flex-col gap-6">
-      <Period label={label} onPrev={() => go(-1)} onNext={() => go(1)} />
+      <Period year={y} month={m} years={years} onChange={(yy, mm) => setMonth(`${yy}-${String(mm).padStart(2, "0")}`)} />
       <Totals p={month} ledger={ledger} />
+      <YearStrip ledger={ledger} year={y} />
       {byCategory.length > 0 && (
         <div className="flex flex-col gap-2.5 rounded-[22px] apple-card p-5">
           <h2 className="text-[16px] font-semibold">{t("Where the money went")}</h2>
@@ -209,12 +218,12 @@ function MonthTab({ ledger, initial, onOpen }: { ledger: ReturnType<typeof useLe
   )
 }
 
-function YearTab({ ledger, initial }: { ledger: ReturnType<typeof useLedger>; initial: number }) {
+function YearTab({ ledger, years, initial }: { ledger: ReturnType<typeof useLedger>; years: number[]; initial: number }) {
   const { t, locale } = useT()
   const [year, setYear] = useState(initial)
   return (
     <div className="flex flex-col gap-6">
-      <Period label={String(year)} onPrev={() => setYear(year - 1)} onNext={() => setYear(year + 1)} />
+      <Period year={year} years={years} onChange={(yy) => setYear(yy)} />
       <Totals p={String(year)} ledger={ledger} />
       <div className="overflow-hidden rounded-[22px] apple-card">
         {Array.from({ length: 12 }, (_, i) => {
@@ -234,13 +243,32 @@ function YearTab({ ledger, initial }: { ledger: ReturnType<typeof useLedger>; in
   )
 }
 
-function Period({ label, onPrev, onNext }: { label: string; onPrev: () => void; onNext: () => void }) {
-  const { t } = useT()
+function Period({ year, month, years, onChange }: { year: number; month?: number; years: number[]; onChange: (year: number, month: number) => void }) {
+  const { t, locale } = useT()
+  const m = month ?? 1
+  const step = (by: number) => { const d = month ? new Date(year, m - 1 + by, 1) : new Date(year + by, 0, 1); onChange(d.getFullYear(), d.getMonth() + 1) }
+  const names = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(2024, i, 1).toLocaleDateString(locale, { month: "long" }) }))
+  const all = years.includes(year) ? years : [...years, year].sort((a, b) => a - b)
   return (
     <div className="flex items-center gap-2">
-      <button type="button" onClick={onPrev} aria-label={t("Previous")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
-      <span className="flex-1 text-center text-[16px] font-medium capitalize">{label}</span>
-      <button type="button" onClick={onNext} aria-label={t("Next")} className="flex size-10 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
+      <button type="button" onClick={() => step(-1)} aria-label={t("Previous")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronLeftIcon className="size-4" /></button>
+      {month && <Picker value={m} onChange={(v) => onChange(year, v)} label={t("Month")} options={names} className="first-letter:uppercase" />}
+      <Picker value={year} onChange={(v) => onChange(v, m)} label={t("Year")} options={all.map((y) => ({ value: y, label: String(y) }))} />
+      <button type="button" onClick={() => step(1)} aria-label={t("Next")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-hover"><ChevronRightIcon className="size-4" /></button>
+    </div>
+  )
+}
+
+/** The year's running totals, shown on every screen, filled or not. */
+function YearStrip({ ledger, year }: { ledger: ReturnType<typeof useLedger>; year: number }) {
+  const { t, locale } = useT()
+  const s = totals(ledger.days, ledger.expenses, String(year))
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 rounded-[22px] bg-foreground/[0.05] px-5 py-3 text-[13.5px]">
+      <span className="font-medium">{t("Total for {year}", { year })}</span>
+      <span className="tabular-nums text-muted-foreground">{t("Takings")} <b className="font-semibold text-foreground">{money(s.revenue, locale)}</b></span>
+      <span className="tabular-nums text-muted-foreground">{t("Expenses")} <b className="font-semibold text-foreground">{money(s.spent, locale)}</b></span>
+      <span className="tabular-nums text-muted-foreground">{t("Profit")} <b className="font-semibold text-foreground">{money(s.profit, locale)}</b></span>
     </div>
   )
 }
